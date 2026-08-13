@@ -20,41 +20,24 @@
   html,body{height:100%}
   body{
     font-family:var(--font);
-    background:
-      radial-gradient(120% 90% at 50% -10%, #33206b 0%, var(--night) 45%, var(--night-2) 100%);
+    background:radial-gradient(120% 90% at 50% -10%, #33206b 0%, var(--night) 45%, var(--night-2) 100%);
     color:var(--cream);
     min-height:100dvh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
+    display:flex;align-items:center;justify-content:center;
     padding:20px 16px;
-    -webkit-font-smoothing:antialiased;
-    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;overflow-x:hidden;
   }
-  .app{
-    width:100%;
-    max-width:460px;
-    position:relative;
-  }
+  .app{width:100%;max-width:460px;position:relative}
   .card{
     background:linear-gradient(180deg,var(--surface) 0%,var(--surface-2) 100%);
-    border:1px solid var(--stroke);
-    border-radius:28px;
-    box-shadow:var(--shadow);
-    padding:30px 24px 34px;
-    position:relative;
-    overflow:hidden;
+    border:1px solid var(--stroke);border-radius:28px;box-shadow:var(--shadow);
+    padding:30px 24px 34px;position:relative;overflow:hidden;
   }
-  /* confetti dots pattern behind card header */
-  .brand{
-    display:flex;align-items:center;gap:11px;
-    margin-bottom:26px;
-  }
+  .brand{display:flex;align-items:center;gap:11px;margin-bottom:26px}
   .brand .logo{
     width:44px;height:44px;border-radius:13px;
     background:linear-gradient(135deg,var(--gold),var(--coral));
-    display:grid;place-items:center;
-    font-weight:800;font-size:20px;color:var(--night);
+    display:grid;place-items:center;font-weight:800;font-size:20px;color:var(--night);
     box-shadow:0 6px 18px -6px var(--coral);
   }
   .brand .name{font-weight:800;font-size:17px;letter-spacing:-.01em;line-height:1}
@@ -64,10 +47,7 @@
   .screen.active{display:block}
   @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 
-  h1{
-    font-size:27px;font-weight:800;line-height:1.08;letter-spacing:-.02em;
-    text-wrap:balance;margin-bottom:8px;
-  }
+  h1{font-size:27px;font-weight:800;line-height:1.08;letter-spacing:-.02em;text-wrap:balance;margin-bottom:8px}
   h1 .accent{color:var(--gold)}
   .sub{color:var(--cream-dim);font-size:14.5px;line-height:1.5;margin-bottom:26px;text-wrap:pretty}
 
@@ -79,51 +59,71 @@
     display:grid;place-items:center;font-weight:800;font-size:17px;color:var(--gold);
   }
   .rule .txt{font-size:15px;line-height:1.35}
-  .rule .txt b{color:var(--cream)}
-  .rule .txt span{color:var(--cream-dim)}
+  .rule .txt b{color:var(--cream)}.rule .txt span{color:var(--cream-dim)}
 
   .btn{
-    width:100%;border:none;cursor:pointer;
-    font-family:inherit;font-weight:800;font-size:16px;letter-spacing:.02em;
-    padding:17px;border-radius:16px;color:var(--night);
+    width:100%;border:none;cursor:pointer;font-family:inherit;font-weight:800;font-size:16px;
+    letter-spacing:.02em;padding:17px;border-radius:16px;color:var(--night);
     background:linear-gradient(135deg,var(--gold),var(--gold-deep));
     box-shadow:0 12px 26px -10px var(--gold-deep);
-    transition:transform .12s ease,box-shadow .12s ease,opacity .2s;
-    -webkit-tap-highlight-color:transparent;
+    transition:transform .12s ease,box-shadow .12s ease,opacity .2s;-webkit-tap-highlight-color:transparent;
   }
   .btn:active{transform:translateY(2px) scale(.99)}
   .btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
-  .btn.ghost{
-    background:transparent;color:var(--cream-dim);box-shadow:none;
-    border:1px solid var(--stroke);font-weight:700;font-size:14px;padding:13px;margin-top:12px;
-  }
+  .btn.ghost{background:transparent;color:var(--cream-dim);box-shadow:none;border:1px solid var(--stroke);font-weight:700;font-size:14px;padding:13px;margin-top:12px}
   .btn:focus-visible{outline:3px solid var(--violet);outline-offset:3px}
 
+  /* ---- Chance cards (hub) ---- */
+  .counter{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    background:var(--night-2);border:1px solid var(--stroke);border-radius:12px;
+    padding:9px;margin-bottom:20px;font-size:13px;color:var(--cream-dim);font-weight:600;
+  }
+  .counter b{color:var(--gold)}
+  .chances{display:flex;flex-direction:column;gap:14px;margin-bottom:8px}
+  .chance{
+    display:flex;align-items:center;gap:14px;text-align:left;width:100%;cursor:pointer;
+    background:var(--night-2);border:1px solid var(--stroke);border-radius:18px;padding:16px;
+    font-family:inherit;color:var(--cream);transition:.15s;-webkit-tap-highlight-color:transparent;
+  }
+  .chance:active{transform:scale(.99)}
+  .chance:focus-visible{outline:3px solid var(--violet);outline-offset:2px}
+  .chance .ic{
+    flex:0 0 auto;width:48px;height:48px;border-radius:14px;display:grid;place-items:center;font-size:24px;
+  }
+  .chance.insta .ic{background:linear-gradient(135deg,#feda75,#d62976 45%,#962fbf);color:#fff}
+  .chance.review .ic{background:linear-gradient(135deg,#fbbc05,#ea4335);color:#fff}
+  .chance .body{flex:1;min-width:0}
+  .chance .body .t{font-weight:800;font-size:15px}
+  .chance .body .d{font-size:12.5px;color:var(--cream-dim);margin-top:2px}
+  .chance .state{flex:0 0 auto;font-size:12px;font-weight:800;padding:6px 11px;border-radius:20px;white-space:nowrap}
+  .chance .state.todo{background:var(--gold);color:var(--night)}
+  .chance .state.done{background:rgba(57,217,138,.16);color:var(--mint)}
+  .chance.used{opacity:.55;cursor:default;pointer-events:none}
+
   /* ---- Wheel ---- */
-  .wheel-head{text-align:center;margin-bottom:18px}
+  .wheel-head{text-align:center;margin-bottom:16px}
   .wheel-head h2{font-size:21px;font-weight:800;letter-spacing:-.01em}
   .wheel-head p{color:var(--cream-dim);font-size:13.5px;margin-top:5px}
-  .wheel-wrap{
-    position:relative;width:100%;max-width:340px;aspect-ratio:1;margin:6px auto 24px;
-    display:grid;place-items:center;
+  .badge{
+    display:inline-flex;align-items:center;gap:6px;margin:0 auto 14px;
+    font-size:11px;font-weight:800;letter-spacing:.04em;padding:6px 12px;border-radius:20px;
   }
+  .badge.insta{background:linear-gradient(135deg,#feda75,#d62976 45%,#962fbf);color:#fff}
+  .badge.review{background:linear-gradient(135deg,#fbbc05,#ea4335);color:#fff}
+  .center{display:flex;justify-content:center}
+  .wheel-wrap{position:relative;width:100%;max-width:340px;aspect-ratio:1;margin:0 auto 22px;display:grid;place-items:center}
   .pointer{
-    position:absolute;top:-6px;left:50%;transform:translateX(-50%);
-    width:0;height:0;z-index:4;
-    border-left:15px solid transparent;border-right:15px solid transparent;
-    border-top:26px solid var(--cream);
+    position:absolute;top:-6px;left:50%;transform:translateX(-50%);width:0;height:0;z-index:4;
+    border-left:15px solid transparent;border-right:15px solid transparent;border-top:26px solid var(--cream);
     filter:drop-shadow(0 4px 6px rgba(0,0,0,.5));
   }
-  canvas#wheel{
-    width:100%;height:100%;border-radius:50%;
-    box-shadow:0 0 0 8px var(--surface),0 0 0 10px var(--gold),0 30px 50px -18px rgba(0,0,0,.7);
-  }
-  .hub{
+  canvas#wheel{width:100%;height:100%;border-radius:50%;box-shadow:0 0 0 8px var(--surface),0 0 0 10px var(--gold),0 30px 50px -18px rgba(0,0,0,.7)}
+  .hub-dot{
     position:absolute;width:58px;height:58px;border-radius:50%;z-index:3;
     background:radial-gradient(circle at 35% 30%,#fff,var(--gold) 70%);
-    display:grid;place-items:center;font-weight:800;color:var(--night);font-size:12px;
-    letter-spacing:.05em;box-shadow:0 6px 14px -4px rgba(0,0,0,.6);border:3px solid var(--night);
-    text-transform:uppercase;
+    display:grid;place-items:center;font-weight:800;color:var(--night);font-size:12px;letter-spacing:.05em;
+    box-shadow:0 6px 14px -4px rgba(0,0,0,.6);border:3px solid var(--night);text-transform:uppercase;
   }
 
   /* ---- Prize ---- */
@@ -141,25 +141,35 @@
   .code small{font-size:10px;letter-spacing:.14em;color:var(--cream-dim);font-weight:600}
   .fine{color:var(--cream-dim);font-size:11.5px;margin-top:16px;line-height:1.5}
 
+  /* ---- Done / blocked ---- */
+  .done-screen{text-align:center;padding:14px 0}
+  .done-screen .big{font-size:60px;margin-bottom:10px}
+  .done-screen h2{font-size:24px;font-weight:800;letter-spacing:-.01em;margin-bottom:10px}
+  .done-screen p{color:var(--cream-dim);font-size:14.5px;line-height:1.5;margin-bottom:6px}
+  .recap{display:flex;flex-direction:column;gap:10px;margin:20px 0 6px}
+  .recap .row{display:flex;align-items:center;gap:10px;background:var(--night-2);border:1px solid var(--stroke);border-radius:12px;padding:12px 14px;text-align:left}
+  .recap .row .e{font-size:22px}
+  .recap .row .l{flex:1}.recap .row .l b{display:block;font-size:14px}
+  .recap .row .l small{color:var(--cream-dim);font-size:12px}
+
   .dots{display:flex;gap:7px;justify-content:center;margin-top:22px}
   .dots i{width:7px;height:7px;border-radius:50%;background:var(--stroke);transition:.3s}
   .dots i.on{background:var(--gold);width:20px;border-radius:4px}
 
+  .reset{position:absolute;top:14px;right:16px;background:none;border:none;color:var(--cream-dim);font-size:10px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;opacity:.5;font-family:inherit}
   canvas#confetti{position:fixed;inset:0;pointer-events:none;z-index:50}
-
-  @media(prefers-reduced-motion:reduce){
-    .screen,.prize .emoji{animation:none}
-  }
+  @media(prefers-reduced-motion:reduce){.screen,.prize .emoji{animation:none}}
 </style>
 
 <canvas id="confetti"></canvas>
 
 <div class="app">
   <div class="card">
+    <button class="reset" onclick="resetDemo()" title="Réinitialiser la démo">↺ démo</button>
     <div class="brand">
-      <div class="logo" id="brandLogo">C</div>
+      <div class="logo">C</div>
       <div>
-        <div class="name" id="brandName">Café Lumière</div>
+        <div class="name">Café Lumière</div>
         <div class="tag">Jeu · Récompense</div>
       </div>
     </div>
@@ -167,28 +177,38 @@
     <!-- Screen 1: Rules -->
     <section class="screen active" id="s-rules">
       <h1>Scannez, jouez,<br><span class="accent">régalez-vous !</span></h1>
-      <p class="sub">Un petit geste, un cadeau à gagner à chaque visite. Suivez les 3 étapes.</p>
+      <p class="sub">Vous avez droit à <b>2 tours de roue</b> : un pour un suivi Instagram, un pour un avis Google. À chaque tour, un cadeau à gagner.</p>
       <div class="rules">
-        <div class="rule"><div class="num">1</div><div class="txt"><b>Laissez-nous un avis</b> <span>ou suivez-nous sur Instagram</span></div></div>
-        <div class="rule"><div class="num">2</div><div class="txt"><b>Revenez sur cette page</b> <span>en un simple retour</span></div></div>
-        <div class="rule"><div class="num">3</div><div class="txt"><b>Tournez la roue</b> <span>et découvrez votre cadeau</span></div></div>
+        <div class="rule"><div class="num">1</div><div class="txt"><b>Suivez-nous</b> <span>ou laissez un avis</span></div></div>
+        <div class="rule"><div class="num">2</div><div class="txt"><b>Revenez sur cette page</b></div></div>
+        <div class="rule"><div class="num">3</div><div class="txt"><b>Tournez la roue</b> <span>et gagnez</span></div></div>
       </div>
-      <button class="btn" onclick="go('review')">C'est parti&nbsp;→</button>
+      <button class="btn" onclick="show('s-hub')">C'est parti&nbsp;→</button>
       <div class="dots"><i class="on"></i><i></i><i></i></div>
     </section>
 
-    <!-- Screen 2: Review CTA -->
-    <section class="screen" id="s-review">
-      <h1>Étape 1 : <span class="accent">votre avis</span></h1>
-      <p class="sub">Choisissez comment nous soutenir. Le cadeau vous attend juste après — quoi qu'il arrive. 🎁</p>
-      <button class="btn" style="margin-bottom:12px;background:linear-gradient(135deg,#fbbc05,#ea4335);color:#fff" onclick="go('spin')">★ Laisser un avis Google</button>
-      <button class="btn" style="background:linear-gradient(135deg,#feda75,#d62976 45%,#962fbf);color:#fff" onclick="go('spin')">📸 Suivre sur Instagram</button>
-      <button class="btn ghost" onclick="go('spin')">Passer directement à la roue</button>
-      <div class="dots"><i></i><i class="on"></i><i></i></div>
+    <!-- Screen 2: Hub (2 chances) -->
+    <section class="screen" id="s-hub">
+      <h1>Vos <span class="accent">2 tours</span></h1>
+      <p class="sub">Débloquez chaque tour en réalisant l'action. Chacun ne peut être joué qu'une fois.</p>
+      <div class="counter">Tours restants : <b id="remaining">2</b>&nbsp;/&nbsp;2</div>
+      <div class="chances">
+        <button class="chance insta" id="c-insta" onclick="startPlay('insta')">
+          <div class="ic">📸</div>
+          <div class="body"><div class="t">Suivre sur Instagram</div><div class="d">1 tour de roue offert</div></div>
+          <div class="state todo" id="st-insta">Jouer</div>
+        </button>
+        <button class="chance review" id="c-review" onclick="startPlay('review')">
+          <div class="ic">★</div>
+          <div class="body"><div class="t">Laisser un avis Google</div><div class="d">1 tour de roue offert</div></div>
+          <div class="state todo" id="st-review">Jouer</div>
+        </button>
+      </div>
     </section>
 
     <!-- Screen 3: Wheel -->
     <section class="screen" id="s-spin">
+      <div class="center"><span class="badge" id="playBadge">Tour</span></div>
       <div class="wheel-head">
         <h2>Tournez la roue&nbsp;🎡</h2>
         <p>Un seul tour... croisez les doigts&nbsp;!</p>
@@ -196,10 +216,9 @@
       <div class="wheel-wrap">
         <div class="pointer"></div>
         <canvas id="wheel" width="680" height="680"></canvas>
-        <div class="hub">Spin</div>
+        <div class="hub-dot">Spin</div>
       </div>
       <button class="btn" id="spinBtn" onclick="spin()">Tourner la roue</button>
-      <div class="dots"><i></i><i></i><i class="on"></i></div>
     </section>
 
     <!-- Screen 4: Prize -->
@@ -211,140 +230,170 @@
         <p id="prizeDesc">À présenter à l'équipe lors de votre prochaine visite.</p>
         <div class="code"><small>CODE</small><span id="prizeCode">—</span></div>
         <p class="fine">Offre valable 30 jours, une seule fois, non cumulable. Le cadeau n'est pas conditionné à la note laissée.</p>
-        <button class="btn ghost" onclick="location.reload()">Rejouer la démo</button>
+        <button class="btn" id="nextBtn" onclick="afterPrize()">Continuer</button>
+      </div>
+    </section>
+
+    <!-- Screen 5: All done -->
+    <section class="screen" id="s-done">
+      <div class="done-screen">
+        <div class="big">🎉</div>
+        <h2>Vous avez tout joué !</h2>
+        <p>Vos 2 tours ont été utilisés. Merci de votre soutien&nbsp;❤️</p>
+        <div class="recap" id="recap"></div>
+        <p class="fine">Présentez vos codes en caisse. À très vite&nbsp;!</p>
       </div>
     </section>
   </div>
 </div>
 
 <script>
-/* ---------- Configurable prize table (this is what each business edits) ---------- */
-const PRIZES = [
-  {name:"Café offert",      emoji:"☕", weight:22, color:"#ff5d73"},
-  {name:"-10 %",            emoji:"🏷️", weight:20, color:"#8b6cff"},
-  {name:"Dessert offert",   emoji:"🍰", weight:12, color:"#39d98a"},
-  {name:"Rien cette fois",  emoji:"🎯", weight:14, color:"#5a4a86"},
-  {name:"Cocktail maison",  emoji:"🍹", weight:8,  color:"#ffc24d"},
-  {name:"-20 %",            emoji:"💸", weight:10, color:"#4fc3f7"},
-  {name:"Cadeau surprise",  emoji:"🎁", weight:6,  color:"#ff8a5c"},
-  {name:"1 visite -15 %",   emoji:"⭐", weight:8,  color:"#ff5d73"},
+/* ---------- Config ---------- */
+const BIZ="cafe-lumiere";                 // clé de stockage (une par établissement)
+const INSTA_URL="https://instagram.com";  // remplacer par le vrai compte
+const REVIEW_URL="https://google.com";    // remplacer par le vrai lien d'avis
+const PRIZES=[
+  {name:"Café offert",     emoji:"☕", weight:22, color:"#ff5d73"},
+  {name:"-10 %",           emoji:"🏷️", weight:20, color:"#8b6cff"},
+  {name:"Dessert offert",  emoji:"🍰", weight:12, color:"#39d98a"},
+  {name:"Rien cette fois", emoji:"🎯", weight:14, color:"#5a4a86"},
+  {name:"Cocktail maison", emoji:"🍹", weight:8,  color:"#ffc24d"},
+  {name:"-20 %",           emoji:"💸", weight:10, color:"#4fc3f7"},
+  {name:"Cadeau surprise", emoji:"🎁", weight:6,  color:"#ff8a5c"},
+  {name:"1 visite -15 %",  emoji:"⭐", weight:8,  color:"#ff5d73"},
 ];
-const N = PRIZES.length;
-const TAU = Math.PI*2;
-const seg = TAU/N;
+const N=PRIZES.length, TAU=Math.PI*2, seg=TAU/N;
+
+/* ---------- Persisted state ---------- */
+const KEY="roue_"+BIZ;
+function loadState(){try{return JSON.parse(localStorage.getItem(KEY))||{}}catch(e){return {}}}
+function saveState(s){localStorage.setItem(KEY,JSON.stringify(s))}
+let state=loadState(); // {insta:{prize,code}, review:{prize,code}}
+let currentPlay=null;
+
+function usedCount(){return (state.insta?1:0)+(state.review?1:0)}
+function refreshHub(){
+  document.getElementById('remaining').textContent=2-usedCount();
+  ['insta','review'].forEach(k=>{
+    const card=document.getElementById('c-'+k), st=document.getElementById('st-'+k);
+    if(state[k]){card.classList.add('used');st.className='state done';st.textContent='✓ Fait';}
+    else{card.classList.remove('used');st.className='state todo';st.textContent='Jouer';}
+  });
+  if(usedCount()>=2){buildRecap();show('s-done');}
+}
+
+/* ---------- Start a play ---------- */
+function startPlay(kind){
+  if(state[kind])return;
+  currentPlay=kind;
+  // ouvre le réseau/avis dans un nouvel onglet (en réel), puis affiche la roue
+  const url=kind==='insta'?INSTA_URL:REVIEW_URL;
+  try{window.open(url,'_blank','noopener');}catch(e){}
+  const badge=document.getElementById('playBadge');
+  if(kind==='insta'){badge.className='badge insta';badge.textContent='📸 Tour Instagram';}
+  else{badge.className='badge review';badge.textContent='★ Tour Avis Google';}
+  currentRot=currentRot%TAU;drawWheel(currentRot);
+  document.getElementById('spinBtn').disabled=false;
+  show('s-spin');
+}
 
 /* ---------- Draw wheel ---------- */
-const cv = document.getElementById('wheel');
-const ctx = cv.getContext('2d');
-const R = cv.width/2;
+const cv=document.getElementById('wheel'),ctx=cv.getContext('2d'),R=cv.width/2;
 function drawWheel(rot=0){
   ctx.clearRect(0,0,cv.width,cv.height);
   ctx.save();ctx.translate(R,R);ctx.rotate(rot);
   for(let i=0;i<N;i++){
-    const a0=i*seg, a1=a0+seg;
-    ctx.beginPath();ctx.moveTo(0,0);
-    ctx.arc(0,0,R-6,a0,a1);ctx.closePath();
+    const a0=i*seg;
+    ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,R-6,a0,a0+seg);ctx.closePath();
     ctx.fillStyle=PRIZES[i].color;ctx.fill();
     ctx.strokeStyle="rgba(21,12,41,.55)";ctx.lineWidth=3;ctx.stroke();
-    // label
-    ctx.save();
-    ctx.rotate(a0+seg/2);
-    ctx.textAlign="right";ctx.fillStyle="#150c29";
+    ctx.save();ctx.rotate(a0+seg/2);ctx.textAlign="right";ctx.fillStyle="#150c29";
     ctx.font="700 27px "+getComputedStyle(document.body).fontFamily;
-    ctx.fillText(PRIZES[i].emoji, R-30, -6);
+    ctx.fillText(PRIZES[i].emoji,R-30,-6);
     ctx.font="800 20px "+getComputedStyle(document.body).fontFamily;
-    const label=PRIZES[i].name.length>13?PRIZES[i].name.slice(0,12)+"…":PRIZES[i].name;
-    ctx.fillText(label, R-30, 20);
-    ctx.restore();
+    const l=PRIZES[i].name.length>13?PRIZES[i].name.slice(0,12)+"…":PRIZES[i].name;
+    ctx.fillText(l,R-30,20);ctx.restore();
   }
   ctx.restore();
 }
-drawWheel(0);
+let currentRot=0;drawWheel(0);
 
-/* ---------- Weighted pick ---------- */
 function pickIndex(){
-  const total=PRIZES.reduce((s,p)=>s+p.weight,0);
-  let r=Math.random()*total;
-  for(let i=0;i<N;i++){if((r-=PRIZES[i].weight)<0)return i;}
-  return N-1;
+  const tot=PRIZES.reduce((s,p)=>s+p.weight,0);let r=Math.random()*tot;
+  for(let i=0;i<N;i++){if((r-=PRIZES[i].weight)<0)return i;}return N-1;
 }
 
-/* ---------- Spin animation ---------- */
-let spinning=false, currentRot=0;
+/* ---------- Spin ---------- */
+let spinning=false;
 function spin(){
-  if(spinning)return;spinning=true;
+  if(spinning||!currentPlay)return;spinning=true;
   document.getElementById('spinBtn').disabled=true;
-  const idx=pickIndex();
-  // pointer sits at top = -90deg (=1.5*PI). center of seg idx must align there.
-  const segCenter=idx*seg+seg/2;
-  const target=(-Math.PI/2)-segCenter; // rotation to bring center under pointer
-  const turns=5+Math.floor(Math.random()*2);
-  const from=currentRot%TAU;
-  const to=turns*TAU + target;
-  const dur=4200, t0=performance.now();
-  const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
+  const idx=pickIndex(), segCenter=idx*seg+seg/2, target=(-Math.PI/2)-segCenter;
+  const turns=5+Math.floor(Math.random()*2), from=currentRot%TAU, to=turns*TAU+target;
+  const dur=4200,t0=performance.now(),reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
   function frame(now){
-    let p=Math.min((now-t0)/dur,1);
-    const e=reduce?1:1-Math.pow(1-p,3); // easeOutCubic
-    currentRot=from+(to-from)*e;
-    drawWheel(currentRot);
-    if(p<1)requestAnimationFrame(frame);
-    else{currentRot=to;setTimeout(()=>reveal(idx),450);}
+    let p=Math.min((now-t0)/dur,1);const e=reduce?1:1-Math.pow(1-p,3);
+    currentRot=from+(to-from)*e;drawWheel(currentRot);
+    if(p<1)requestAnimationFrame(frame);else{currentRot=to;spinning=false;setTimeout(()=>reveal(idx),450);}
   }
-  requestAnimationFrame(reduce?()=>{currentRot=to;drawWheel(to);setTimeout(()=>reveal(idx),300)}:frame);
+  if(reduce){currentRot=to;drawWheel(to);spinning=false;setTimeout(()=>reveal(idx),300);}
+  else requestAnimationFrame(frame);
 }
 
-/* ---------- Reveal ---------- */
+/* ---------- Reveal & persist ---------- */
 function reveal(idx){
-  const p=PRIZES[idx];
+  const p=PRIZES[idx], code="CL-"+Math.random().toString(36).slice(2,7).toUpperCase();
+  state[currentPlay]={prize:p.name,emoji:p.emoji,code};saveState(state);
   document.getElementById('prizeEmoji').textContent=p.emoji;
   document.getElementById('prizeName').textContent=p.name;
-  const code="CL-"+Math.random().toString(36).slice(2,7).toUpperCase();
   document.getElementById('prizeCode').textContent=code;
-  const desc=p.name.startsWith("Rien")
-    ? "Pas de chance cette fois ! Revenez vite retenter votre chance. 🙂"
-    : "À présenter à l'équipe lors de votre prochaine visite.";
-  document.getElementById('prizeDesc').textContent=desc;
-  document.querySelector('.code').style.display=p.name.startsWith("Rien")?"none":"inline-flex";
+  const rien=p.name.startsWith("Rien");
+  document.getElementById('prizeDesc').textContent=rien
+    ?"Pas de chance sur ce tour ! Il vous reste peut-être un autre tour. 🙂"
+    :"À présenter à l'équipe lors de votre prochaine visite.";
+  document.querySelector('.code').style.display=rien?"none":"inline-flex";
+  document.getElementById('nextBtn').textContent=usedCount()>=2?"Voir mes gains":"Continuer";
   show('s-prize');
-  if(!p.name.startsWith("Rien"))burst();
+  if(!rien)burst();
+}
+function afterPrize(){currentPlay=null;refreshHub();if(usedCount()<2)show('s-hub');}
+
+function buildRecap(){
+  const r=document.getElementById('recap');r.innerHTML="";
+  [['insta','📸 Suivi Instagram'],['review','★ Avis Google']].forEach(([k,label])=>{
+    const s=state[k];if(!s)return;
+    const row=document.createElement('div');row.className='row';
+    row.innerHTML=`<div class="e">${s.emoji}</div><div class="l"><b>${s.prize}</b><small>${label} · code ${s.code}</small></div>`;
+    r.appendChild(row);
+  });
 }
 
-/* ---------- Screen router ---------- */
+/* ---------- Router ---------- */
 function show(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   window.scrollTo({top:0,behavior:'smooth'});
 }
-function go(step){
-  if(step==='review')show('s-review');
-  else if(step==='spin')show('s-spin');
-}
+function resetDemo(){localStorage.removeItem(KEY);state={};currentPlay=null;refreshHub();show('s-rules');}
 
 /* ---------- Confetti ---------- */
-const cc=document.getElementById('confetti'),cx=cc.getContext('2d');
-let parts=[];
-function sizeC(){cc.width=innerWidth;cc.height=innerHeight;}
-sizeC();addEventListener('resize',sizeC);
+const cc=document.getElementById('confetti'),cx=cc.getContext('2d');let parts=[];
+function sizeC(){cc.width=innerWidth;cc.height=innerHeight;}sizeC();addEventListener('resize',sizeC);
 function burst(){
   if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;
   const cols=['#ffc24d','#ff5d73','#39d98a','#8b6cff','#4fc3f7','#fdf4e3'];
-  for(let i=0;i<160;i++){
-    parts.push({x:innerWidth/2,y:innerHeight*.35,
-      vx:(Math.random()-.5)*14,vy:Math.random()*-15-4,
-      g:.35+Math.random()*.2,size:6+Math.random()*7,
-      col:cols[i%cols.length],rot:Math.random()*TAU,vr:(Math.random()-.5)*.4,life:1});
-  }
+  for(let i=0;i<160;i++)parts.push({x:innerWidth/2,y:innerHeight*.35,vx:(Math.random()-.5)*14,vy:Math.random()*-15-4,g:.35+Math.random()*.2,size:6+Math.random()*7,col:cols[i%cols.length],rot:Math.random()*TAU,vr:(Math.random()-.5)*.4,life:1});
   if(parts.length<=160)requestAnimationFrame(anim);
 }
 function anim(){
   cx.clearRect(0,0,cc.width,cc.height);
-  parts.forEach(p=>{
-    p.vy+=p.g;p.x+=p.vx;p.y+=p.vy;p.rot+=p.vr;p.life-=.006;
+  parts.forEach(p=>{p.vy+=p.g;p.x+=p.vx;p.y+=p.vy;p.rot+=p.vr;p.life-=.006;
     cx.save();cx.translate(p.x,p.y);cx.rotate(p.rot);cx.globalAlpha=Math.max(p.life,0);
-    cx.fillStyle=p.col;cx.fillRect(-p.size/2,-p.size/2,p.size,p.size*.6);cx.restore();
-  });
+    cx.fillStyle=p.col;cx.fillRect(-p.size/2,-p.size/2,p.size,p.size*.6);cx.restore();});
   parts=parts.filter(p=>p.life>0&&p.y<cc.height+40);
   if(parts.length)requestAnimationFrame(anim);else cx.clearRect(0,0,cc.width,cc.height);
 }
+
+/* ---------- Init ---------- */
+refreshHub();
 </script>
