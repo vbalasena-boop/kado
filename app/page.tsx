@@ -21,6 +21,8 @@ export default function Home() {
           </a>
         </div>
         <p className="landing-fine">
+          Commerçant ? <a href="/login">Accéder à mon espace</a>
+          <br />
           Démo de test : <code>/cafe-lumiere</code> (nécessite la base configurée).
         </p>
       </div>
