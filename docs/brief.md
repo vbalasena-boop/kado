@@ -1,4 +1,4 @@
-# Project Brief — SpinReview (nom de travail)
+# Project Brief — Kado
 
 > Document produit selon la **BMAD Method** · Rôle : **Analyste (Mary)** · v0.1 · 2026-08-13
 
@@ -6,7 +6,7 @@
 
 ## Résumé exécutif
 
-**SpinReview** est un SaaS « scanne → joue → gagne » qui aide n'importe quel commerce
+**Kado** est un SaaS « scanne → joue → gagne » qui aide n'importe quel commerce
 ou professionnel de proximité à obtenir plus **d'avis Google** et plus **d'abonnés
 Instagram**, en transformant la demande d'avis en un **jeu de roue de la fortune**.
 

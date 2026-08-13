@@ -1,4 +1,4 @@
-# SpinReview 🎡
+# Kado 🎁
 
 SaaS « **scannez, jouez, gagnez** » : un jeu de roue de la fortune qui aide n'importe
 quel commerce à obtenir plus **d'avis Google** et **d'abonnés Instagram**.

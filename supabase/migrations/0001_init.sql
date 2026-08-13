@@ -1,4 +1,4 @@
--- SpinReview — schéma initial (Epic 1)
+-- Kado — schéma initial (Epic 1)
 -- À exécuter dans Supabase > SQL Editor.
 
 create extension if not exists "pgcrypto";

@@ -22,7 +22,7 @@ export function weightedIndex(prizes: Pick<Prize, "weight">[]): number {
   return prizes.length - 1;
 }
 
-/** Code de lot court et lisible, ex: "SR-4K9Q2". */
-export function generateCode(prefix = "SR"): string {
+/** Code de lot court et lisible, ex: "KD-4K9Q2". */
+export function generateCode(prefix = "KD"): string {
   return `${prefix}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
 }

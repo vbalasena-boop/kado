@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SpinReview — Roue de récompense",
+  title: "Kado — Roue de récompense",
   description:
     "Scannez, jouez, gagnez : plus d'avis Google et d'abonnés Instagram pour votre commerce.",
 };

@@ -1,4 +1,4 @@
-# PRD — SpinReview
+# PRD — Kado
 
 > Document produit selon la **BMAD Method** · Rôle : **PM (John)** · v0.1 · 2026-08-13
 > Source : `docs/brief.md`

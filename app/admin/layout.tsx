@@ -16,7 +16,7 @@ export default async function AdminLayout({
     return (
       <div className="dash">
         <header className="dash-top">
-          <div className="dash-brand">🎡 SpinReview · Admin</div>
+          <div className="dash-brand">🎡 Kado · Admin</div>
         </header>
         <main className="dash-main">
           <div className="dash-card">
@@ -34,7 +34,7 @@ export default async function AdminLayout({
   return (
     <div className="dash">
       <header className="dash-top">
-        <div className="dash-brand">🎡 SpinReview · Admin</div>
+        <div className="dash-brand">🎡 Kado · Admin</div>
         <div className="dash-user">
           <span>{user.email}</span>
           <form action="/auth/signout" method="post">

@@ -1,4 +1,4 @@
-# Architecture — SpinReview
+# Architecture — Kado
 
 > Document produit selon la **BMAD Method** · Rôle : **Architecte** · v0.1 · 2026-08-13
 > Sources : `docs/brief.md`, `docs/prd.md`

@@ -11,7 +11,7 @@ export default function Home() {
           <span>régalez-vous&nbsp;!</span>
         </h1>
         <p>
-          SpinReview transforme la demande d'avis en jeu&nbsp;: vos clients scannent,
+          Kado transforme la demande d'avis en jeu&nbsp;: vos clients scannent,
           jouent 2&nbsp;tours (un pour un suivi Instagram, un pour un avis Google) et
           gagnent un cadeau. Plus d'avis, plus d'abonnés, plus de visites.
         </p>

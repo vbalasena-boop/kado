@@ -15,7 +15,7 @@ export default async function DashboardLayout({
   return (
     <div className="dash">
       <header className="dash-top">
-        <div className="dash-brand">🎡 SpinReview</div>
+        <div className="dash-brand">🎡 Kado</div>
         <div className="dash-user">
           <span>{user.email}</span>
           <form action="/auth/signout" method="post">
