@@ -1,21 +1,92 @@
-# La Table d'Alice — Automatisation Kizomba x Meta
+# SpinReview 🎡
 
-Kit **n8n** pour convertir gratuitement les prospects venus des pubs **Meta (Facebook/Instagram)** en élèves de **cours de Kizomba**.
+SaaS « **scannez, jouez, gagnez** » : un jeu de roue de la fortune qui aide n'importe
+quel commerce à obtenir plus **d'avis Google** et **d'abonnés Instagram**.
+Chaque client scanne un QR code, débloque **2 tours** (un pour un suivi Instagram, un
+pour un avis Google) et gagne un cadeau.
 
-## Contenu
+> Projet cadré avec la **BMAD Method** — voir `docs/brief.md`, `docs/prd.md`,
+> `docs/architecture.md`.
 
-- 📘 **[docs/guide-n8n-meta-kizomba.md](docs/guide-n8n-meta-kizomba.md)** — le guide complet, pas à pas, en français (installation gratuite de n8n, connexion Meta Lead Ads, configuration).
-- ⚙️ **[workflows/meta-kizomba-lead-conversion.json](workflows/meta-kizomba-lead-conversion.json)** — le workflow n8n prêt à importer.
+---
 
-## Démarrage rapide
+## Ce qui est déjà construit (Epic 1)
 
-1. Installe n8n gratuitement (voir le guide, section 1).
-2. Dans n8n : **Import from File** → `workflows/meta-kizomba-lead-conversion.json`.
-3. Remplace les valeurs `REMPLACE_PAR_...` (Google Sheets, SMTP, Telegram, lien de réservation).
-4. Active le workflow. ✅
+- ✅ Page de jeu publique `/{slug}` (règles → 2 tours → cadeau + confettis)
+- ✅ **Verrou serveur des 2 tours** (impossible de rejouer, même en vidant le navigateur)
+- ✅ Tirage du cadeau **côté serveur** (anti-triche, stats fiables)
+- ✅ Base de données multi-établissements (Supabase + RLS)
+- ✅ Suspension d'un établissement = page publique bloquée
 
-## Ce que fait le workflow
+Prototype 100 % statique (sans base) toujours dispo : `prototype/roue.html`.
 
-Nouveau prospect Meta → enregistré dans Google Sheets → email de bienvenue instantané avec lien de réservation → alerte Telegram à l'équipe (rappel sous 5 min) → relance automatique à J+2.
+À venir : espace commerçant (config + QR + stats) et espace admin (gestion des accès).
 
-**Coût total : ≈ 0 €** (hors budget publicitaire Meta).
+---
+
+## Stack
+
+Next.js (App Router) · Supabase (Auth + Postgres) · déploiement Vercel — **offres gratuites**.
+
+---
+
+## Installation pas à pas (≈ 15 min, 0 €)
+
+### 1. Créer la base de données (Supabase)
+
+1. Va sur [supabase.com](https://supabase.com) → **New project** (gratuit).
+2. Une fois créé, ouvre **SQL Editor** et exécute le contenu de :
+   - `supabase/migrations/0001_init.sql` (crée les tables)
+   - puis `supabase/seed.sql` (ajoute la démo « Café Lumière »)
+3. Va dans **Settings → API** et note :
+   - **Project URL** → `SUPABASE_URL`
+   - clé **`service_role`** (secrète) → `SUPABASE_SERVICE_ROLE_KEY`
+
+### 2. Lancer en local (optionnel, pour tester)
+
+```bash
+npm install
+cp .env.example .env.local     # puis colle tes clés dedans
+npm run dev                     # ouvre http://localhost:3000/cafe-lumiere
+```
+
+### 3. Mettre en ligne (Vercel)
+
+1. Va sur [vercel.com](https://vercel.com) → **Add New → Project** → importe ce dépôt GitHub.
+2. Dans **Settings → Environment Variables**, ajoute :
+   - `SUPABASE_URL`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `PLAYER_COOKIE_SECRET` (une longue chaîne aléatoire de ton choix)
+   - `NEXT_PUBLIC_SITE_URL` (l'URL Vercel du site)
+3. **Deploy**. Ta page de démo : `https://ton-site.vercel.app/cafe-lumiere`
+
+---
+
+## Structure
+
+```
+app/
+  page.tsx              Accueil (vitrine)
+  [slug]/page.tsx       Page de jeu (serveur : charge la config)
+  [slug]/Game.tsx       Jeu (client : roue, écrans, appels API)
+  api/play/route.ts     Enregistre un tour + verrou + tirage serveur
+  api/health/route.ts   Health-check
+lib/
+  supabase/admin.ts     Client Supabase (serveur uniquement)
+  player.ts             Cookie joueur signé (verrou des 2 tours)
+  draw.ts               Tirage pondéré + génération de code
+supabase/
+  migrations/0001_init.sql   Schéma + RLS
+  seed.sql                   Données de démo
+docs/                    Documents BMAD (brief, PRD, architecture)
+prototype/roue.html      Prototype statique (sans base)
+```
+
+## Variables d'environnement
+
+| Variable | Rôle |
+|---|---|
+| `SUPABASE_URL` | URL du projet Supabase |
+| `SUPABASE_SERVICE_ROLE_KEY` | Clé secrète serveur (jamais côté navigateur) |
+| `PLAYER_COOKIE_SECRET` | Signe le cookie anonyme du joueur |
+| `NEXT_PUBLIC_SITE_URL` | URL publique (QR codes) |
