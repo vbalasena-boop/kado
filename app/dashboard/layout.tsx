@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getMyBusiness } from "@/lib/auth";
+import { isAdminEmail } from "@/lib/admin-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -11,12 +12,18 @@ export default async function DashboardLayout({
 }) {
   const { user, business } = await getMyBusiness();
   if (!user) redirect("/login");
+  const admin = isAdminEmail(user.email);
 
   return (
     <div className="dash">
       <header className="dash-top">
         <div className="dash-brand">🎡 Kado</div>
         <div className="dash-user">
+          {admin && (
+            <Link href="/admin" className="dash-signout">
+              🔑 Espace admin
+            </Link>
+          )}
           <span>{user.email}</span>
           <form action="/auth/signout" method="post">
             <button className="dash-signout" type="submit">
