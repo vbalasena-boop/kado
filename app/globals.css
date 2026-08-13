@@ -869,6 +869,82 @@ canvas#confetti {
   text-decoration: none;
   padding: 14px 24px;
 }
+/* ---- Admin ---- */
+.admin-create {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.admin-create input {
+  flex: 1 1 200px;
+  font-family: inherit;
+  font-size: 15px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #ddd5ee;
+  background: #faf9fe;
+  color: #241b3d;
+}
+.admin-create .btn {
+  width: auto;
+  flex: 0 0 auto;
+  padding: 12px 22px;
+}
+.admin-table-wrap {
+  overflow-x: auto;
+}
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.admin-table th,
+.admin-table td {
+  text-align: left;
+  padding: 14px 16px;
+  border-bottom: 1px solid #eee7f7;
+  white-space: nowrap;
+}
+.admin-table th {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #8a7fa6;
+  background: #faf8fe;
+}
+.admin-table td {
+  color: #33294f;
+}
+.admin-slug {
+  color: #6b3ff0;
+  text-decoration: none;
+  font-size: 13px;
+}
+.admin-email {
+  color: #6b6089;
+  font-size: 13px;
+}
+.btn-mini {
+  border: none;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+}
+.btn-mini.danger {
+  background: #ffe6ea;
+  color: #a01029;
+}
+.btn-mini.ok {
+  background: #e2f7ec;
+  color: #1a7a4a;
+}
+.btn-mini:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 @media (prefers-reduced-motion: reduce) {
   .screen,
   .prize .emoji {

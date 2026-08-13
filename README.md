@@ -67,6 +67,21 @@ npm run dev                     # ouvre http://localhost:3000/cafe-lumiere
 
 ---
 
+## Espace admin (toi)
+
+1. Ajoute ton e-mail dans la variable `ADMIN_EMAILS` (plusieurs possibles, séparés
+   par des virgules).
+2. Connecte-toi sur `/login` avec cet e-mail, puis va sur **`/admin`**.
+3. Depuis `/admin` tu peux :
+   - **Créer un compte** commerçant (nom + e-mail → génère slug, roue et cadeaux
+     par défaut, et envoie une invitation par mail) ;
+   - **Suspendre / Réactiver** un compte (= donner ou retirer l'accès : coupe la
+     page de jeu **et** l'espace commerçant) ;
+   - voir l'activité (tours joués) et le statut d'abonnement de chaque compte.
+
+> L'envoi des invitations utilise l'e-mail intégré de Supabase (limité). Pour un
+> usage réel, configure un SMTP dans Supabase (Authentication → Emails).
+
 ## Tester l'espace commerçant
 
 1. Va sur `/login`, entre ton e-mail, clique le lien reçu par mail.
