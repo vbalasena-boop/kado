@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getMyBusiness } from "@/lib/auth";
 import { isAdminEmail } from "@/lib/admin-guard";
+import { Icon } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
 
@@ -21,13 +22,13 @@ export default async function DashboardLayout({
         <div className="dash-user">
           {admin && (
             <Link href="/admin" className="dash-signout">
-              🔑 Espace admin
+              <Icon name="key" size={16} /> Espace admin
             </Link>
           )}
           <span>{user.email}</span>
           <form action="/auth/signout" method="post">
             <button className="dash-signout" type="submit">
-              Déconnexion
+              <Icon name="logout" size={16} /> Déconnexion
             </button>
           </form>
         </div>
@@ -58,14 +59,20 @@ export default async function DashboardLayout({
       ) : (
         <>
           <nav className="dash-nav">
-            <Link href="/dashboard">Vue d'ensemble</Link>
-            <Link href="/dashboard/wheel">Ma roue</Link>
-            <Link href="/dashboard/qr">QR code</Link>
+            <Link href="/dashboard">
+              <Icon name="dashboard" /> Vue d'ensemble
+            </Link>
+            <Link href="/dashboard/wheel">
+              <Icon name="wheel" /> Ma roue
+            </Link>
+            <Link href="/dashboard/qr">
+              <Icon name="qr" /> QR code
+            </Link>
             <Link href={`/${business.slug}?preview=1`} target="_blank">
-              🧪 Tester ma roue
+              <Icon name="test" /> Tester ma roue
             </Link>
             <Link href={`/${business.slug}`} target="_blank">
-              Voir ma page ↗
+              <Icon name="external" /> Voir ma page
             </Link>
           </nav>
           <main className="dash-main">{children}</main>

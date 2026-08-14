@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Icon } from "@/components/icons";
 
 export type AdminBusiness = {
   id: string;
@@ -148,6 +149,7 @@ export default function AdminClient({
             onChange={(e) => setEmail(e.target.value)}
           />
           <button className="btn" disabled={creating}>
+            <Icon name="add" size={18} />
             {creating ? "Création…" : "Créer + inviter"}
           </button>
         </form>
@@ -229,21 +231,21 @@ export default function AdminClient({
                             disabled={busy}
                             onClick={() => subscribe(b.id, "trial")}
                           >
-                            Essai 14 j
+                            <Icon name="event" size={15} /> Essai 14 j
                           </button>
                           <button
                             className="btn-mini ok"
                             disabled={busy}
                             onClick={() => subscribe(b.id, "month1")}
                           >
-                            +1 mois
+                            <Icon name="add" size={15} /> 1 mois
                           </button>
                           <button
                             className="btn-mini ok"
                             disabled={busy}
                             onClick={() => subscribe(b.id, "month6")}
                           >
-                            +6 mois
+                            <Icon name="add" size={15} /> 6 mois
                           </button>
                         </div>
                       </td>
@@ -255,7 +257,7 @@ export default function AdminClient({
                               disabled={busy}
                               onClick={() => setStatus(b.id, "suspended")}
                             >
-                              Suspendre
+                              <Icon name="block" size={15} /> Suspendre
                             </button>
                           ) : (
                             <button
@@ -263,7 +265,7 @@ export default function AdminClient({
                               disabled={busy}
                               onClick={() => setStatus(b.id, "active")}
                             >
-                              Réactiver
+                              <Icon name="check" size={15} /> Réactiver
                             </button>
                           )}
                           <button
@@ -271,7 +273,7 @@ export default function AdminClient({
                             disabled={busy}
                             onClick={() => remove(b.id, b.name)}
                           >
-                            Supprimer
+                            <Icon name="delete" size={15} /> Supprimer
                           </button>
                         </div>
                       </td>

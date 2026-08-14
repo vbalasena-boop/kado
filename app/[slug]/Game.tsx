@@ -60,8 +60,10 @@ function buildTheme(
   --night-2:${bg};
   --surface:${lighten(bg, 0.16)};
   --surface-2:${lighten(bg, 0.22)};
+  --surface-glass:${rgba(lighten(bg, 0.14), 0.72)};
+  --surface-glass-2:${rgba(lighten(bg, 0.2), 0.72)};
   --glow:${lighten(bg, 0.3)};
-  --stroke:rgba(253,244,227,.14);
+  --stroke:rgba(253,244,227,.16);
 }`;
   if (!bgImage) return vars;
   // image de fond + voile sombre pour la lisibilité
@@ -160,7 +162,34 @@ export default function Game({
         ctx.fillText(l, R - 30, 20);
         ctx.restore();
       });
+      // petites lumières sur le pourtour (tournent avec la roue)
+      for (let i = 0; i < prizes.length; i++) {
+        const a = i * seg;
+        const x = Math.cos(a) * (R - 15);
+        const y = Math.sin(a) * (R - 15);
+        ctx.beginPath();
+        ctx.arc(x, y, 3.4, 0, TAU);
+        ctx.fillStyle = "rgba(255,248,230,0.92)";
+        ctx.fill();
+      }
       ctx.restore();
+
+      // brillance fixe (effet vernis) + assombrissement du bord
+      const gloss = ctx.createRadialGradient(
+        R,
+        R * 0.72,
+        R * 0.1,
+        R,
+        R,
+        R
+      );
+      gloss.addColorStop(0, "rgba(255,255,255,0.18)");
+      gloss.addColorStop(0.55, "rgba(255,255,255,0.04)");
+      gloss.addColorStop(1, "rgba(0,0,0,0.16)");
+      ctx.beginPath();
+      ctx.arc(R, R, R - 6, 0, TAU);
+      ctx.fillStyle = gloss;
+      ctx.fill();
     },
     [prizes]
   );

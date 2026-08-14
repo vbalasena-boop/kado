@@ -58,10 +58,16 @@ body {
   margin-bottom: 12px;
 }
 .card {
-  background: linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
+  background: linear-gradient(
+    180deg,
+    var(--surface-glass, var(--surface)) 0%,
+    var(--surface-glass-2, var(--surface-2)) 100%
+  );
+  -webkit-backdrop-filter: blur(16px) saturate(1.1);
+  backdrop-filter: blur(16px) saturate(1.1);
   border: 1px solid var(--stroke);
   border-radius: 28px;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.08);
   padding: 30px 24px 34px;
   position: relative;
   overflow: hidden;
@@ -347,7 +353,7 @@ h1 .accent {
 }
 .pointer {
   position: absolute;
-  top: -6px;
+  top: -10px;
   left: 50%;
   transform: translateX(-50%);
   width: 0;
@@ -355,31 +361,32 @@ h1 .accent {
   z-index: 4;
   border-left: 15px solid transparent;
   border-right: 15px solid transparent;
-  border-top: 26px solid var(--cream);
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
+  border-top: 28px solid var(--gold);
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.55));
 }
 canvas#wheel {
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  box-shadow: 0 0 0 8px var(--surface), 0 0 0 10px var(--gold),
-    0 30px 50px -18px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 0 0 8px var(--surface-2), 0 0 0 11px var(--gold),
+    0 0 44px -8px var(--gold), 0 30px 50px -18px rgba(0, 0, 0, 0.7);
 }
 .hub-dot {
   position: absolute;
-  width: 58px;
-  height: 58px;
+  width: 62px;
+  height: 62px;
   border-radius: 50%;
   z-index: 3;
-  background: radial-gradient(circle at 35% 30%, #fff, var(--gold) 70%);
+  background: radial-gradient(circle at 35% 28%, #fff, var(--gold) 72%);
   display: grid;
   place-items: center;
   font-weight: 800;
-  color: var(--night);
+  color: var(--night-2);
   font-size: 12px;
-  letter-spacing: 0.05em;
-  box-shadow: 0 6px 14px -4px rgba(0, 0, 0, 0.6);
-  border: 3px solid var(--night);
+  letter-spacing: 0.06em;
+  box-shadow: 0 6px 16px -4px rgba(0, 0, 0, 0.65),
+    0 0 0 4px var(--surface-2), 0 0 0 6px var(--gold);
+  border: 3px solid var(--night-2);
   text-transform: uppercase;
 }
 .prize {
@@ -1283,4 +1290,33 @@ canvas#confetti {
 }
 .err {
   color: var(--g-red);
+}
+
+/* ---- Alignement icônes Material ---- */
+.dash-nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.dash-signout {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.dash .btn,
+.auth-page .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn-mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.dash-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
