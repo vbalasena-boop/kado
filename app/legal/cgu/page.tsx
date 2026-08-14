@@ -4,16 +4,13 @@ export default function CGU() {
   return (
     <article className="legal-doc">
       <h1>Conditions générales d'utilisation</h1>
-      <p className="legal-note">
-        ⚠️ Modèle à adapter (notamment tarifs et modalités d'abonnement) avant
-        mise en production.
-      </p>
 
-      <h2>1. Objet</h2>
+      <h2>1. Objet & éditeur</h2>
       <p>
-        Kado est un service en ligne permettant à un commerce de proposer un
-        jeu de roue de la fortune à ses clients, en échange d'un suivi sur les
-        réseaux sociaux ou d'un avis en ligne, afin de gagner un cadeau.
+        Kado est un service en ligne édité par Vobinson BALASENA (entrepreneur
+        individuel), permettant à un commerce de proposer un jeu de roue de la
+        fortune à ses clients, en échange d'un suivi sur les réseaux sociaux ou
+        d'un avis en ligne, afin de gagner un cadeau.
       </p>
 
       <h2>2. Compte commerçant</h2>
@@ -25,9 +22,11 @@ export default function CGU() {
 
       <h2>3. Abonnement</h2>
       <p>
-        L'accès au service est fourni sous forme d'abonnement (essai gratuit
-        puis formule payante — voir [page tarifs]). En cas de non-paiement ou
-        de fin d'abonnement, l'accès au jeu et à l'espace peut être suspendu.
+        L'accès au service est fourni sous forme d'abonnement : essai gratuit de
+        14 jours, puis formule payante (voir la page{" "}
+        <a href="/tarifs">Tarifs</a>). Le paiement est géré par Stripe. En cas
+        de non-paiement ou de fin d'abonnement, l'accès au jeu et à l'espace est
+        automatiquement suspendu.
       </p>
 
       <h2>4. Obligations du commerçant</h2>
@@ -53,7 +52,7 @@ export default function CGU() {
         peut suspendre un compte en cas de manquement aux présentes CGU.
       </p>
 
-      <p className="legal-date">Dernière mise à jour : [date].</p>
+      <p className="legal-date">Dernière mise à jour : 15 août 2026.</p>
     </article>
   );
 }

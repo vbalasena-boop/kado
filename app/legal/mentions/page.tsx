@@ -4,44 +4,38 @@ export default function Mentions() {
   return (
     <article className="legal-doc">
       <h1>Mentions légales</h1>
-      <p className="legal-note">
-        ⚠️ Modèle à compléter avec vos informations réelles avant mise en
-        production. Faites relire par un professionnel si besoin.
-      </p>
 
       <h2>Éditeur du service</h2>
       <p>
-        Le service <b>Kado</b> est édité par <b>[À COMPLÉTER : nom / raison
-        sociale]</b>, <b>[forme juridique]</b> au capital de <b>[montant]</b>,
-        immatriculée au RCS de <b>[ville]</b> sous le numéro <b>[SIREN/SIRET]</b>.
+        Le service <b>Kado</b> est édité par <b>Vobinson BALASENA</b>,
+        entrepreneur individuel (EI).
       </p>
       <ul>
-        <li>Siège social : [adresse complète]</li>
-        <li>E-mail : [e-mail de contact]</li>
-        <li>Téléphone : [téléphone]</li>
-        <li>Directeur de la publication : [nom]</li>
-        <li>TVA intracommunautaire : [numéro]</li>
+        <li>Immatriculé au RCS de Créteil sous le numéro <b>810&nbsp;067&nbsp;348</b></li>
+        <li>Siège / adresse : 3 Place Lucie Aubrac, 94600 Choisy-le-Roi, France</li>
+        <li>E-mail : vbalasena@instant-events.fr</li>
+        <li>Directeur de la publication : Vobinson BALASENA</li>
+        <li>TVA : TVA non applicable, article 293 B du CGI (franchise en base de TVA)</li>
       </ul>
 
       <h2>Hébergement</h2>
       <p>
         Le site est hébergé par <b>Vercel Inc.</b> (340 S Lemon Ave #4133,
-        Walnut, CA 91789, USA) et la base de données par <b>Supabase</b>. Les
-        données sont stockées dans l'Union européenne (région choisie :
-        Europe).
+        Walnut, CA 91789, USA) et la base de données par <b>Supabase</b>
+        (région Europe). L'envoi des e-mails est assuré par <b>Resend</b>.
       </p>
 
       <h2>Propriété intellectuelle</h2>
       <p>
         L'ensemble des contenus du service (hors contenus fournis par les
-        commerçants clients) est protégé. Les marques et logos tiers
-        (Google, Instagram…) appartiennent à leurs propriétaires respectifs.
+        commerçants clients) est protégé. Les marques et logos tiers (Google,
+        Instagram…) appartiennent à leurs propriétaires respectifs.
       </p>
 
       <h2>Contact</h2>
-      <p>Pour toute question : [e-mail de contact].</p>
+      <p>Pour toute question : vbalasena@instant-events.fr.</p>
 
-      <p className="legal-date">Dernière mise à jour : [date].</p>
+      <p className="legal-date">Dernière mise à jour : 15 août 2026.</p>
     </article>
   );
 }

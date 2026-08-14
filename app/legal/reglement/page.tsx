@@ -5,14 +5,16 @@ export default function Reglement() {
     <article className="legal-doc">
       <h1>Règlement du jeu</h1>
       <p className="legal-note">
-        ⚠️ Modèle type. Chaque commerçant doit l'adapter à son établissement et
-        à ses lots.
+        Règlement type applicable aux jeux proposés via Kado. Chaque
+        établissement organisateur reste responsable de ses lots et de leur
+        remise.
       </p>
 
       <h2>Article 1 — Organisateur</h2>
       <p>
-        Le jeu est organisé par l'établissement <b>[nom du commerce]</b> via
-        l'outil Kado. Il est gratuit et sans obligation d'achat.
+        Le jeu est organisé par l'établissement commerçant qui l'affiche, via
+        l'outil Kado (édité par Vobinson BALASENA, entrepreneur individuel). Il
+        est gratuit et sans obligation d'achat.
       </p>
 
       <h2>Article 2 — Participation</h2>
@@ -49,7 +51,7 @@ export default function Reglement() {
         pas à la teneur de l'avis.
       </p>
 
-      <p className="legal-date">Dernière mise à jour : [date].</p>
+      <p className="legal-date">Dernière mise à jour : 15 août 2026.</p>
     </article>
   );
 }
