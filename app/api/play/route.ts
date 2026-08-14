@@ -41,17 +41,44 @@ export async function POST(req: NextRequest) {
 
   const playerId = getOrCreatePlayerId();
 
-  const { data: prizes } = await supa
-    .from("prizes")
-    .select("id, label, emoji, weight, color, position")
-    .eq("business_id", biz.id)
-    .order("position", { ascending: true });
+  const [{ data: prizes }, { data: cfg }] = await Promise.all([
+    supa
+      .from("prizes")
+      .select("id, label, emoji, weight, color, position")
+      .eq("business_id", biz.id)
+      .order("position", { ascending: true }),
+    supa
+      .from("wheel_configs")
+      .select("daily_prize_limit")
+      .eq("business_id", biz.id)
+      .maybeSingle(),
+  ]);
 
   if (!prizes || prizes.length === 0) {
     return Response.json({ error: "no_prizes" }, { status: 409 });
   }
 
-  const idx = weightedIndex(prizes);
+  const isWin = (label: string) => !label.toLowerCase().includes("rien");
+
+  let idx = weightedIndex(prizes);
+
+  // Plafond de cadeaux par jour : au-delà, on force un "Rien" (si disponible)
+  const limit = cfg?.daily_prize_limit;
+  if (limit && limit > 0 && isWin(prizes[idx].label)) {
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    const { count } = await supa
+      .from("plays")
+      .select("*", { count: "exact", head: true })
+      .eq("business_id", biz.id)
+      .gte("created_at", start.toISOString())
+      .not("prize_label", "ilike", "%rien%");
+    if ((count ?? 0) >= limit) {
+      const noWin = prizes.findIndex((p) => !isWin(p.label));
+      if (noWin >= 0) idx = noWin;
+    }
+  }
+
   const prize = prizes[idx];
   const code = generateCode();
 

@@ -47,6 +47,16 @@ body {
   max-width: 460px;
   position: relative;
 }
+.preview-banner {
+  background: var(--gold);
+  color: var(--night);
+  font-weight: 800;
+  font-size: 12.5px;
+  text-align: center;
+  padding: 9px 12px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
 .card {
   background: linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
   border: 1px solid var(--stroke);

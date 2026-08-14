@@ -1,6 +1,7 @@
 import { readPlayerId } from "@/lib/player";
 import { getAdminClient } from "@/lib/supabase/admin";
-import { hasAccess } from "@/lib/auth";
+import { hasAccess, getSessionUser } from "@/lib/auth";
+import { isAdminEmail } from "@/lib/admin-guard";
 import Game from "./Game";
 
 export const dynamic = "force-dynamic";
@@ -19,8 +20,10 @@ function Unavailable({ message }: { message: string }) {
 
 export default async function Page({
   params,
+  searchParams,
 }: {
   params: { slug: string };
+  searchParams: { preview?: string };
 }) {
   let supa;
   try {
@@ -33,14 +36,29 @@ export default async function Page({
 
   const { data: biz } = await supa
     .from("businesses")
-    .select("id, slug, name, logo_url, status, subscription_ends_at")
+    .select(
+      "id, slug, name, logo_url, status, subscription_ends_at, owner_user_id"
+    )
     .eq("slug", params.slug)
     .maybeSingle();
 
   if (!biz) {
     return <Unavailable message="Cet établissement n'existe pas." />;
   }
-  if (!hasAccess(biz)) {
+
+  // Mode test : réservé au propriétaire connecté (ou à un admin)
+  let preview = false;
+  if (searchParams?.preview === "1") {
+    const user = await getSessionUser();
+    if (
+      user &&
+      (user.id === biz.owner_user_id || isAdminEmail(user.email))
+    ) {
+      preview = true;
+    }
+  }
+
+  if (!preview && !hasAccess(biz)) {
     return (
       <Unavailable message="Ce jeu est momentanément indisponible. Revenez plus tard." />
     );
@@ -64,7 +82,7 @@ export default async function Page({
   // Tours déjà joués par ce navigateur (verrou côté serveur)
   const played: Record<string, { label: string; code: string }> = {};
   const playerId = readPlayerId();
-  if (playerId) {
+  if (playerId && !preview) {
     const { data: rows } = await supa
       .from("plays")
       .select("play_type, prize_label, prize_code")
@@ -93,6 +111,7 @@ export default async function Page({
         }
       }
       played={played}
+      preview={preview}
     />
   );
 }

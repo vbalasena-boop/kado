@@ -61,6 +61,9 @@ export default async function DashboardLayout({
             <Link href="/dashboard">Vue d'ensemble</Link>
             <Link href="/dashboard/wheel">Ma roue</Link>
             <Link href="/dashboard/qr">QR code</Link>
+            <Link href={`/${business.slug}?preview=1`} target="_blank">
+              🧪 Tester ma roue
+            </Link>
             <Link href={`/${business.slug}`} target="_blank">
               Voir ma page ↗
             </Link>

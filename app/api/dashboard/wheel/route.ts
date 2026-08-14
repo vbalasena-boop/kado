@@ -17,6 +17,7 @@ export async function POST(req: NextRequest) {
       instagram_url?: string;
       review_url?: string;
       compliance_note?: string;
+      daily_prize_limit?: number | null;
     };
     prizes?: {
       label: string;
@@ -43,6 +44,10 @@ export async function POST(req: NextRequest) {
       review_url: cfg.review_url || null,
       compliance_note:
         cfg.compliance_note || "Le cadeau n'est pas conditionné à la note laissée.",
+      daily_prize_limit:
+        cfg.daily_prize_limit && cfg.daily_prize_limit > 0
+          ? Math.round(cfg.daily_prize_limit)
+          : null,
     },
     { onConflict: "business_id" }
   );

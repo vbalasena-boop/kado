@@ -13,6 +13,7 @@ type Config = {
   instagram_url: string | null;
   review_url: string | null;
   compliance_note: string | null;
+  daily_prize_limit?: number | null;
 };
 
 const FONT =
@@ -221,6 +222,26 @@ export default function WheelEditor({
             <p className="muted">
               Le « poids » définit la probabilité relative (total actuel :{" "}
               {totalWeight}). Un lot « Rien… » gère les cas sans gain.
+            </p>
+            <label className="field">
+              <span>Nombre de cadeaux max par jour (vide = illimité)</span>
+              <input
+                type="number"
+                min={0}
+                placeholder="illimité"
+                value={config.daily_prize_limit ?? ""}
+                onChange={(e) =>
+                  setConfig({
+                    ...config,
+                    daily_prize_limit:
+                      e.target.value === "" ? null : Number(e.target.value),
+                  })
+                }
+              />
+            </label>
+            <p className="muted" style={{ marginBottom: 12 }}>
+              Une fois ce nombre de cadeaux atteint dans la journée, la roue ne
+              donne plus que « Rien » (nécessite un lot « Rien… » dans la liste).
             </p>
             <div className="prize-list">
               {prizes.map((p, i) => (

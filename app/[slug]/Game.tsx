@@ -68,6 +68,7 @@ export default function Game({
   prizes,
   config,
   played: initialPlayed,
+  preview = false,
 }: {
   slug: string;
   name: string;
@@ -75,9 +76,12 @@ export default function Game({
   prizes: Prize[];
   config: Config;
   played: Played;
+  preview?: boolean;
 }) {
   const bothDone =
-    initialPlayed.instagram != null && initialPlayed.review != null;
+    !preview &&
+    initialPlayed.instagram != null &&
+    initialPlayed.review != null;
   const [screen, setScreen] = useState<Screen>(bothDone ? "done" : "rules");
   const [played, setPlayed] = useState<Played>(initialPlayed);
   const [current, setCurrent] = useState<PlayType | null>(null);
@@ -189,25 +193,51 @@ export default function Game({
 
   // ---------- Flow ----------
   function startPlay(kind: PlayType) {
-    if (played[kind]) return;
+    if (!preview && played[kind]) return;
     setError(null);
     setCurrent(kind);
-    const url = kind === "instagram" ? config.instagram_url : config.review_url;
-    if (url) {
-      try {
-        window.open(url, "_blank", "noopener");
-      } catch {
-        /* ignore */
+    // en mode test, on n'ouvre pas les liens (Instagram/Google)
+    if (!preview) {
+      const url = kind === "instagram" ? config.instagram_url : config.review_url;
+      if (url) {
+        try {
+          window.open(url, "_blank", "noopener");
+        } catch {
+          /* ignore */
+        }
       }
     }
     rotRef.current = rotRef.current % TAU;
     setScreen("spin");
   }
 
+  /** Tirage pondéré côté client (utilisé uniquement en mode test). */
+  function previewPick(): number {
+    const total = prizes.reduce((s, p) => s + Math.max(0, p.weight), 0);
+    if (total <= 0) return Math.floor(Math.random() * prizes.length);
+    let r = Math.random() * total;
+    for (let i = 0; i < prizes.length; i++) {
+      r -= Math.max(0, prizes[i].weight);
+      if (r < 0) return i;
+    }
+    return prizes.length - 1;
+  }
+
   async function spin() {
     if (spinning || !current) return;
     setSpinning(true);
     setError(null);
+
+    // Mode test : tirage local, illimité, rien n'est enregistré.
+    if (preview) {
+      const idx = previewPick();
+      const p = prizes[idx];
+      animateTo(idx, () =>
+        reveal({ label: p.label, emoji: p.emoji, code: null })
+      );
+      return;
+    }
+
     try {
       const res = await fetch("/api/play", {
         method: "POST",
@@ -292,6 +322,11 @@ export default function Game({
 
   function afterPrize() {
     setCurrent(null);
+    if (preview) {
+      setPlayed({}); // en test, on peut rejouer indéfiniment
+      setScreen("hub");
+      return;
+    }
     setScreen(usedCount >= 2 ? "done" : "hub");
   }
 
@@ -313,6 +348,11 @@ export default function Game({
       <style dangerouslySetInnerHTML={{ __html: themeCss }} />
       <canvas id="confetti" ref={confettiRef} />
       <div className="app">
+        {preview && (
+          <div className="preview-banner">
+            🧪 Mode test — illimité, rien n'est enregistré
+          </div>
+        )}
         <div className="card">
           <div className="brand">
             {logo}

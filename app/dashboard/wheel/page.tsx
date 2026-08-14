@@ -12,7 +12,9 @@ export default async function WheelPage() {
   const [{ data: config }, { data: prizes }] = await Promise.all([
     admin
       .from("wheel_configs")
-      .select("primary_color, instagram_url, review_url, compliance_note")
+      .select(
+        "primary_color, instagram_url, review_url, compliance_note, daily_prize_limit"
+      )
       .eq("business_id", business.id)
       .maybeSingle(),
     admin
