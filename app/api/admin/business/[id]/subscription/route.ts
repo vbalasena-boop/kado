@@ -1,0 +1,76 @@
+import { NextRequest } from "next/server";
+import { getAdminUser } from "@/lib/admin-guard";
+import { getAdminClient } from "@/lib/supabase/admin";
+
+export const dynamic = "force-dynamic";
+
+function addDays(base: Date, days: number) {
+  return new Date(base.getTime() + days * 864e5);
+}
+function addMonths(base: Date, months: number) {
+  const d = new Date(base);
+  d.setMonth(d.getMonth() + months);
+  return d;
+}
+
+/**
+ * Gère l'abonnement d'un établissement.
+ * action = 'trial' (essai 14j) | 'month1' (+1 mois) | 'month6' (+6 mois).
+ * Prolonger réactive l'accès et repart de la date de fin actuelle si elle
+ * est dans le futur (on n'écrase pas le temps déjà payé).
+ */
+export async function POST(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const admin = await getAdminUser();
+  if (!admin) return Response.json({ error: "forbidden" }, { status: 403 });
+
+  let body: { action?: string };
+  try {
+    body = await req.json();
+  } catch {
+    return Response.json({ error: "bad_request" }, { status: 400 });
+  }
+
+  const db = getAdminClient();
+  const { data: biz } = await db
+    .from("businesses")
+    .select("subscription_ends_at")
+    .eq("id", params.id)
+    .maybeSingle();
+  if (!biz) return Response.json({ error: "not_found" }, { status: 404 });
+
+  const now = new Date();
+  const current = biz.subscription_ends_at
+    ? new Date(biz.subscription_ends_at)
+    : now;
+  const base = current > now ? current : now;
+
+  let ends: Date;
+  let subStatus: string;
+  if (body.action === "trial") {
+    ends = addDays(now, 14);
+    subStatus = "trial";
+  } else if (body.action === "month1") {
+    ends = addMonths(base, 1);
+    subStatus = "active";
+  } else if (body.action === "month6") {
+    ends = addMonths(base, 6);
+    subStatus = "active";
+  } else {
+    return Response.json({ error: "invalid_action" }, { status: 400 });
+  }
+
+  const { error } = await db
+    .from("businesses")
+    .update({
+      subscription_ends_at: ends.toISOString(),
+      subscription_status: subStatus,
+      status: "active",
+    })
+    .eq("id", params.id);
+  if (error) return Response.json({ error: "update_failed" }, { status: 500 });
+
+  return Response.json({ ok: true, subscription_ends_at: ends.toISOString() });
+}

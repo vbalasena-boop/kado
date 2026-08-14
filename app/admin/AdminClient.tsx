@@ -9,10 +9,32 @@ export type AdminBusiness = {
   name: string;
   status: string;
   subscription_status: string;
+  subscription_ends_at: string | null;
   plays: number;
   owner_email: string;
   created_at: string;
 };
+
+/** Renvoie un libellé de temps restant + s'il est expiré. */
+function remaining(endsAt: string | null): { label: string; expired: boolean } {
+  if (!endsAt) return { label: "illimité", expired: false };
+  const ms = new Date(endsAt).getTime() - Date.now();
+  if (ms <= 0) return { label: "expiré", expired: true };
+  const days = Math.ceil(ms / 864e5);
+  if (days <= 1) return { label: "moins d'1 jour", expired: false };
+  if (days < 31) return { label: `${days} jours`, expired: false };
+  const months = Math.floor(days / 30);
+  return { label: `~${months} mois`, expired: false };
+}
+
+function fmtDate(s: string | null) {
+  if (!s) return "—";
+  return new Date(s).toLocaleDateString("fr-FR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
 
 export default function AdminClient({
   businesses,
@@ -40,8 +62,8 @@ export default function AdminClient({
       if (res.ok) {
         setMsg(
           d.warning
-            ? `⚠️ Établissement créé, mais : ${d.warning}`
-            : `✅ Établissement « ${name} » créé. Un e-mail d'invitation a été envoyé à ${email}.`
+            ? `⚠️ Établissement créé (essai 14 j), mais : ${d.warning}`
+            : `✅ « ${name} » créé avec un essai de 14 jours. Invitation envoyée à ${email}.`
         );
         setName("");
         setEmail("");
@@ -70,12 +92,42 @@ export default function AdminClient({
     }
   }
 
+  async function subscribe(id: string, action: "trial" | "month1" | "month6") {
+    setBusyId(id);
+    try {
+      await fetch(`/api/admin/business/${id}/subscription`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      router.refresh();
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function remove(id: string, name: string) {
+    if (
+      !confirm(
+        `Supprimer définitivement « ${name} » ?\nCette action est irréversible (roue, cadeaux et tours joués seront effacés).`
+      )
+    )
+      return;
+    setBusyId(id);
+    try {
+      await fetch(`/api/admin/business/${id}`, { method: "DELETE" });
+      router.refresh();
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   return (
     <>
       <h1 className="dash-h1">Gestion des comptes</h1>
       <p className="dash-sub">
-        Créez des établissements et gérez leurs accès. Suspendre coupe la page de
-        jeu <b>et</b> l'espace du commerçant ; réactiver restaure tout.
+        Créez des établissements, gérez leur abonnement et leurs accès. L'accès à
+        la roue se coupe automatiquement quand l'abonnement expire.
       </p>
 
       <div className="dash-card">
@@ -99,6 +151,9 @@ export default function AdminClient({
             {creating ? "Création…" : "Créer + inviter"}
           </button>
         </form>
+        <p className="muted" style={{ marginTop: 8 }}>
+          Chaque nouveau compte démarre avec un <b>essai gratuit de 14 jours</b>.
+        </p>
         {msg && <p className="save-msg" style={{ marginTop: 12 }}>{msg}</p>}
       </div>
 
@@ -112,59 +167,117 @@ export default function AdminClient({
                 <th>Tours</th>
                 <th>Abonnement</th>
                 <th>Statut</th>
-                <th>Action</th>
+                <th>Gérer l'abonnement</th>
+                <th>Accès</th>
               </tr>
             </thead>
             <tbody>
               {businesses.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="muted" style={{ padding: 22 }}>
+                  <td colSpan={7} className="muted" style={{ padding: 22 }}>
                     Aucun établissement pour l'instant.
                   </td>
                 </tr>
               ) : (
-                businesses.map((b) => (
-                  <tr key={b.id}>
-                    <td>
-                      <b>{b.name}</b>
-                      <br />
-                      <a
-                        href={`/${b.slug}`}
-                        target="_blank"
-                        className="admin-slug"
-                      >
-                        /{b.slug} ↗
-                      </a>
-                    </td>
-                    <td className="admin-email">{b.owner_email}</td>
-                    <td>{b.plays}</td>
-                    <td>{b.subscription_status}</td>
-                    <td>
-                      <span className={`pill ${b.status}`}>
-                        {b.status === "active" ? "Actif" : "Suspendu"}
-                      </span>
-                    </td>
-                    <td>
-                      {b.status === "active" ? (
-                        <button
-                          className="btn-mini danger"
-                          disabled={busyId === b.id}
-                          onClick={() => setStatus(b.id, "suspended")}
+                businesses.map((b) => {
+                  const rem = remaining(b.subscription_ends_at);
+                  const busy = busyId === b.id;
+                  return (
+                    <tr key={b.id}>
+                      <td>
+                        <b>{b.name}</b>
+                        <br />
+                        <a
+                          href={`/${b.slug}`}
+                          target="_blank"
+                          className="admin-slug"
                         >
-                          Suspendre
-                        </button>
-                      ) : (
-                        <button
-                          className="btn-mini ok"
-                          disabled={busyId === b.id}
-                          onClick={() => setStatus(b.id, "active")}
+                          /{b.slug} ↗
+                        </a>
+                      </td>
+                      <td className="admin-email">{b.owner_email}</td>
+                      <td>{b.plays}</td>
+                      <td>
+                        <div>{b.subscription_status}</div>
+                        <small
+                          className={rem.expired ? "sub-expired" : "sub-ok"}
                         >
-                          Réactiver
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))
+                          {rem.expired ? "⏰ expiré" : `${rem.label} restants`}
+                          <br />
+                          <span className="admin-email">
+                            {fmtDate(b.subscription_ends_at)}
+                          </span>
+                        </small>
+                      </td>
+                      <td>
+                        <span
+                          className={`pill ${
+                            rem.expired ? "suspended" : b.status
+                          }`}
+                        >
+                          {b.status === "suspended"
+                            ? "Suspendu"
+                            : rem.expired
+                            ? "Expiré"
+                            : "Actif"}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="sub-actions">
+                          <button
+                            className="btn-mini soft"
+                            disabled={busy}
+                            onClick={() => subscribe(b.id, "trial")}
+                          >
+                            Essai 14 j
+                          </button>
+                          <button
+                            className="btn-mini ok"
+                            disabled={busy}
+                            onClick={() => subscribe(b.id, "month1")}
+                          >
+                            +1 mois
+                          </button>
+                          <button
+                            className="btn-mini ok"
+                            disabled={busy}
+                            onClick={() => subscribe(b.id, "month6")}
+                          >
+                            +6 mois
+                          </button>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="sub-actions">
+                          {b.status === "active" ? (
+                            <button
+                              className="btn-mini danger"
+                              disabled={busy}
+                              onClick={() => setStatus(b.id, "suspended")}
+                            >
+                              Suspendre
+                            </button>
+                          ) : (
+                            <button
+                              className="btn-mini ok"
+                              disabled={busy}
+                              onClick={() => setStatus(b.id, "active")}
+                            >
+                              Réactiver
+                            </button>
+                          )}
+                          <button
+                            className="btn-mini danger"
+                            disabled={busy}
+                            onClick={() => remove(b.id, b.name)}
+                          >
+                            Supprimer
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

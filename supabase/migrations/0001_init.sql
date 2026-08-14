@@ -13,6 +13,7 @@ create table if not exists businesses (
     check (status in ('active', 'suspended')),
   subscription_status text not null default 'trial'
     check (subscription_status in ('trial', 'active', 'suspended')),
+  subscription_ends_at timestamptz,
   owner_user_id uuid,
   created_at timestamptz not null default now()
 );

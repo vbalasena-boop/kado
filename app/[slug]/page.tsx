@@ -1,5 +1,6 @@
 import { readPlayerId } from "@/lib/player";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { hasAccess } from "@/lib/auth";
 import Game from "./Game";
 
 export const dynamic = "force-dynamic";
@@ -32,16 +33,16 @@ export default async function Page({
 
   const { data: biz } = await supa
     .from("businesses")
-    .select("id, slug, name, logo_url, status")
+    .select("id, slug, name, logo_url, status, subscription_ends_at")
     .eq("slug", params.slug)
     .maybeSingle();
 
   if (!biz) {
     return <Unavailable message="Cet établissement n'existe pas." />;
   }
-  if (biz.status !== "active") {
+  if (!hasAccess(biz)) {
     return (
-      <Unavailable message="Ce jeu est momentanément suspendu. Revenez plus tard." />
+      <Unavailable message="Ce jeu est momentanément indisponible. Revenez plus tard." />
     );
   }
 

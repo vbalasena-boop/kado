@@ -60,10 +60,18 @@ export async function POST(req: NextRequest) {
     warning = "invitation e-mail non envoyée (vérifiez la config Auth).";
   }
 
-  // 3) crée l'établissement
+  // 3) crée l'établissement (essai gratuit de 14 jours)
+  const trialEnds = new Date(Date.now() + 14 * 864e5).toISOString();
   const { data: biz, error: bizErr } = await db
     .from("businesses")
-    .insert({ slug, name, status: "active", subscription_status: "trial", owner_user_id: ownerId })
+    .insert({
+      slug,
+      name,
+      status: "active",
+      subscription_status: "trial",
+      subscription_ends_at: trialEnds,
+      owner_user_id: ownerId,
+    })
     .select("id")
     .single();
   if (bizErr || !biz) {

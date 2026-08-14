@@ -12,7 +12,7 @@ export default async function AdminPage() {
   const { data: businesses } = await admin
     .from("businesses")
     .select(
-      "id, slug, name, status, subscription_status, owner_user_id, created_at"
+      "id, slug, name, status, subscription_status, subscription_ends_at, owner_user_id, created_at"
     )
     .order("created_at", { ascending: false });
 
@@ -37,6 +37,7 @@ export default async function AdminPage() {
     name: b.name,
     status: b.status,
     subscription_status: b.subscription_status,
+    subscription_ends_at: b.subscription_ends_at,
     plays: counts.get(b.id) ?? 0,
     owner_email: b.owner_user_id
       ? emailById.get(b.owner_user_id) ?? "(compte non trouvé)"

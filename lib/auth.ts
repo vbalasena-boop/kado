@@ -8,8 +8,23 @@ export type Business = {
   logo_url: string | null;
   status: string;
   subscription_status: string;
+  subscription_ends_at: string | null;
   owner_user_id: string | null;
 };
+
+/**
+ * L'établissement a-t-il accès (page de jeu + espace) ?
+ * Refusé si suspendu manuellement, ou si l'abonnement est expiré.
+ */
+export function hasAccess(b: {
+  status: string;
+  subscription_ends_at: string | null;
+}): boolean {
+  if (b.status === "suspended") return false;
+  if (b.subscription_ends_at && new Date(b.subscription_ends_at).getTime() < Date.now())
+    return false;
+  return true;
+}
 
 /** Utilisateur connecté (ou null). */
 export async function getSessionUser() {
@@ -34,7 +49,7 @@ export async function getMyBusiness(): Promise<{
   const { data } = await admin
     .from("businesses")
     .select(
-      "id, slug, name, logo_url, status, subscription_status, owner_user_id"
+      "id, slug, name, logo_url, status, subscription_status, subscription_ends_at, owner_user_id"
     )
     .eq("owner_user_id", user.id)
     .maybeSingle();
