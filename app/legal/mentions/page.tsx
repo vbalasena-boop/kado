@@ -12,7 +12,7 @@ export default function Mentions() {
       </p>
       <ul>
         <li>Immatriculé au RCS de Créteil sous le numéro <b>810&nbsp;067&nbsp;348</b></li>
-        <li>Siège / adresse : 3 Place Lucie Aubrac, 94600 Choisy-le-Roi, France</li>
+        <li>Siège / adresse : 5 rue Émile Cousin, 78000 Versailles, France</li>
         <li>E-mail : vbalasena@instant-events.fr</li>
         <li>Directeur de la publication : Vobinson BALASENA</li>
         <li>TVA : TVA non applicable, article 293 B du CGI (franchise en base de TVA)</li>
