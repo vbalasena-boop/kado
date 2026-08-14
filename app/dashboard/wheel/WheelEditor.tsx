@@ -148,7 +148,26 @@ export default function WheelEditor({
       ctx.fillText(p.emoji || "🎁", R - 22, 8);
       ctx.restore();
     });
+    // petites lumières sur le pourtour
+    for (let i = 0; i < prizes.length; i++) {
+      const a = i * seg;
+      const x = Math.cos(a) * (R - 12);
+      const y = Math.sin(a) * (R - 12);
+      ctx.beginPath();
+      ctx.arc(x, y, 3, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(255,248,230,0.92)";
+      ctx.fill();
+    }
     ctx.restore();
+    // brillance vernie
+    const gloss = ctx.createRadialGradient(R, R * 0.72, R * 0.1, R, R, R);
+    gloss.addColorStop(0, "rgba(255,255,255,0.18)");
+    gloss.addColorStop(0.55, "rgba(255,255,255,0.04)");
+    gloss.addColorStop(1, "rgba(0,0,0,0.16)");
+    ctx.beginPath();
+    ctx.arc(R, R, R - 4, 0, Math.PI * 2);
+    ctx.fillStyle = gloss;
+    ctx.fill();
   }, [prizes]);
 
   function update(i: number, patch: Partial<Prize>) {

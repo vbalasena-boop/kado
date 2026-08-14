@@ -86,9 +86,9 @@ function isNoWin(label: string) {
   return label.toLowerCase().includes("rien");
 }
 
-function InstagramGlyph() {
+function InstagramGlyph({ size = 26 }: { size?: number }) {
   return (
-    <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true">
+    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true">
       <rect
         x="3"
         y="3"
@@ -112,9 +112,9 @@ function InstagramGlyph() {
   );
 }
 
-function GoogleGlyph() {
+function GoogleGlyph({ size = 24 }: { size?: number }) {
   return (
-    <svg viewBox="0 0 48 48" width="24" height="24" aria-hidden="true">
+    <svg viewBox="0 0 48 48" width={size} height={size} aria-hidden="true">
       <path
         fill="#4285F4"
         d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z"
@@ -562,9 +562,15 @@ export default function Game({
             <section className="screen active">
               <div className="center">
                 <span className={`badge ${current}`}>
-                  {current === "instagram"
-                    ? "📸 Tour Instagram"
-                    : "★ Tour Avis Google"}
+                  {current === "instagram" ? (
+                    <>
+                      <InstagramGlyph size={15} /> Tour Instagram
+                    </>
+                  ) : (
+                    <>
+                      <GoogleGlyph size={15} /> Tour Avis Google
+                    </>
+                  )}
                 </span>
               </div>
               <div className="wheel-head">
