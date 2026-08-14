@@ -524,7 +524,11 @@ export default function Game({
                 <div className="hub-dot">Spin</div>
               </div>
               {error && <p className="err">{error}</p>}
-              <button className="btn" onClick={spin} disabled={spinning}>
+              <button
+                className="btn spin-cta"
+                onClick={spin}
+                disabled={spinning}
+              >
                 {spinning ? "La roue tourne…" : "Tourner la roue"}
               </button>
             </section>

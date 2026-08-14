@@ -532,6 +532,25 @@ canvas#confetti {
   pointer-events: none;
   z-index: 50;
 }
+.spin-cta:not(:disabled) {
+  animation: spinpulse 1.9s ease-in-out infinite;
+}
+@keyframes spinpulse {
+  0%,
+  100% {
+    transform: none;
+    box-shadow: 0 12px 26px -10px var(--gold-deep);
+  }
+  50% {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 18px 34px -8px var(--gold-deep), 0 0 22px -6px var(--gold);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spin-cta:not(:disabled) {
+    animation: none;
+  }
+}
 /* ---- Landing / vitrine ---- */
 .landing {
   width: 100%;
@@ -1233,6 +1252,21 @@ canvas#confetti {
 }
 
 /* ---- Stats ---- */
+.stat {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.stat-icon {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #e8f0fe;
+  color: var(--g-blue);
+  display: grid;
+  place-items: center;
+}
 .stat-n {
   color: var(--g-blue);
 }

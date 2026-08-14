@@ -1,5 +1,6 @@
 import { getMyBusiness } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { Icon } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
 
@@ -39,20 +40,40 @@ export default async function DashboardHome() {
 
       <div className="stat-grid">
         <div className="stat">
-          <div className="stat-n">{total}</div>
-          <div className="stat-l">Tours joués (total)</div>
+          <div className="stat-icon">
+            <Icon name="trending" size={22} />
+          </div>
+          <div>
+            <div className="stat-n">{total}</div>
+            <div className="stat-l">Tours joués (total)</div>
+          </div>
         </div>
         <div className="stat">
-          <div className="stat-n">{last30}</div>
-          <div className="stat-l">30 derniers jours</div>
+          <div className="stat-icon">
+            <Icon name="event" size={22} />
+          </div>
+          <div>
+            <div className="stat-n">{last30}</div>
+            <div className="stat-l">30 derniers jours</div>
+          </div>
         </div>
         <div className="stat">
-          <div className="stat-n">{insta}</div>
-          <div className="stat-l">📸 via Instagram</div>
+          <div className="stat-icon">
+            <Icon name="share" size={22} />
+          </div>
+          <div>
+            <div className="stat-n">{insta}</div>
+            <div className="stat-l">via Instagram</div>
+          </div>
         </div>
         <div className="stat">
-          <div className="stat-n">{review}</div>
-          <div className="stat-l">★ via Avis Google</div>
+          <div className="stat-icon">
+            <Icon name="star" size={22} />
+          </div>
+          <div>
+            <div className="stat-n">{review}</div>
+            <div className="stat-l">via Avis Google</div>
+          </div>
         </div>
       </div>
 
