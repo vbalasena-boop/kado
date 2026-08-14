@@ -25,6 +25,11 @@ export default function Home() {
           <br />
           Démo de test : <code>/cafe-lumiere</code> (nécessite la base configurée).
         </p>
+        <p className="landing-fine" style={{ marginTop: 10 }}>
+          <a href="/legal/mentions">Mentions légales</a> ·{" "}
+          <a href="/legal/confidentialite">Confidentialité</a> ·{" "}
+          <a href="/legal/cgu">CGU</a>
+        </p>
       </div>
     </main>
   );

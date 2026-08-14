@@ -666,6 +666,15 @@ export default function Game({
             </section>
           )}
         </div>
+        <footer className="game-footer">
+          <a href="/legal/reglement" target="_blank" rel="noopener">
+            Règlement du jeu
+          </a>
+          <span>·</span>
+          <a href="/legal/confidentialite" target="_blank" rel="noopener">
+            Confidentialité
+          </a>
+        </footer>
       </div>
     </>
   );
