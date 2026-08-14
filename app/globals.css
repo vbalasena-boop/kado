@@ -872,6 +872,33 @@ canvas#confetti {
   display: inline-flex;
   align-items: center;
 }
+.bg-preview {
+  width: 120px;
+  height: 72px;
+  flex: 0 0 auto;
+  border-radius: 12px;
+  border: 1px solid #e7e2f2;
+  background: #faf9fe;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.bg-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.bg-preview span {
+  font-size: 11px;
+  color: #8a7fa6;
+  text-align: center;
+}
+.bg-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
 .save-bar {
   display: flex;
   align-items: center;

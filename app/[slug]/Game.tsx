@@ -14,10 +14,20 @@ type Config = {
   primary_color: string;
   accent_color?: string | null;
   bg_color?: string | null;
+  bg_image_url?: string | null;
   instagram_url: string | null;
   review_url: string | null;
   compliance_note: string | null;
 };
+
+/** hex -> rgba(...) avec transparence. */
+function rgba(hex: string, a: number) {
+  const h = (hex || "#000000").replace("#", "");
+  const r = parseInt(h.slice(0, 2), 16) || 0;
+  const g = parseInt(h.slice(2, 4), 16) || 0;
+  const b = parseInt(h.slice(4, 6), 16) || 0;
+  return `rgba(${r},${g},${b},${a})`;
+}
 
 /** Mélange une couleur hex vers une cible [r,g,b] (amt 0..1). */
 function mix(hex: string, target: [number, number, number], amt: number) {
@@ -35,8 +45,13 @@ const lighten = (h: string, a: number) => mix(h, [255, 255, 255], a);
 const darken = (h: string, a: number) => mix(h, [0, 0, 0], a);
 
 /** Construit le thème CSS d'un commerce à partir de ses couleurs. */
-function buildTheme(primary: string, accent: string, bg: string) {
-  return `
+function buildTheme(
+  primary: string,
+  accent: string,
+  bg: string,
+  bgImage?: string | null
+) {
+  const vars = `
 :root{
   --gold:${primary};
   --gold-deep:${darken(primary, 0.16)};
@@ -47,6 +62,14 @@ function buildTheme(primary: string, accent: string, bg: string) {
   --surface-2:${lighten(bg, 0.22)};
   --glow:${lighten(bg, 0.3)};
   --stroke:rgba(253,244,227,.14);
+}`;
+  if (!bgImage) return vars;
+  // image de fond + voile sombre pour la lisibilité
+  return `${vars}
+body{
+  background:
+    linear-gradient(${rgba(bg, 0.82)}, ${rgba(bg, 0.94)}),
+    url("${bgImage.replace(/"/g, "")}") center center / cover no-repeat fixed !important;
 }`;
 }
 type Played = Record<string, { label: string; code: string }>;
@@ -340,7 +363,8 @@ export default function Game({
   const themeCss = buildTheme(
     config.primary_color || "#ffc24d",
     config.accent_color || "#ff5d73",
-    config.bg_color || "#150c29"
+    config.bg_color || "#150c29",
+    config.bg_image_url
   );
 
   return (

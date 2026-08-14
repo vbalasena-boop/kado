@@ -68,7 +68,7 @@ export default async function Page({
     supa
       .from("wheel_configs")
       .select(
-        "primary_color, accent_color, bg_color, instagram_url, review_url, compliance_note"
+        "primary_color, accent_color, bg_color, bg_image_url, instagram_url, review_url, compliance_note"
       )
       .eq("business_id", biz.id)
       .maybeSingle(),

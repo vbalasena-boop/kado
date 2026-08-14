@@ -26,6 +26,7 @@ create table if not exists wheel_configs (
   accent_color text not null default '#ff5d73',
   bg_color text not null default '#150c29',
   daily_prize_limit int,
+  bg_image_url text,
   instagram_url text,
   review_url text,
   compliance_note text

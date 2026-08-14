@@ -13,7 +13,7 @@ export default async function WheelPage() {
     admin
       .from("wheel_configs")
       .select(
-        "primary_color, instagram_url, review_url, compliance_note, daily_prize_limit"
+        "primary_color, instagram_url, review_url, compliance_note, daily_prize_limit, bg_image_url"
       )
       .eq("business_id", business.id)
       .maybeSingle(),
@@ -36,6 +36,7 @@ export default async function WheelPage() {
       }
       initialPrizes={prizes ?? []}
       initialLogoUrl={business.logo_url}
+      initialBgUrl={config?.bg_image_url ?? null}
     />
   );
 }

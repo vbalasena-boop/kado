@@ -33,10 +33,12 @@ export default function WheelEditor({
   initialConfig,
   initialPrizes,
   initialLogoUrl,
+  initialBgUrl,
 }: {
   initialConfig: Config;
   initialPrizes: Prize[];
   initialLogoUrl?: string | null;
+  initialBgUrl?: string | null;
 }) {
   const [config, setConfig] = useState<Config>(initialConfig);
   const [prizes, setPrizes] = useState<Prize[]>(
@@ -47,7 +49,9 @@ export default function WheelEditor({
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(initialLogoUrl ?? null);
+  const [bgUrl, setBgUrl] = useState<string | null>(initialBgUrl ?? null);
   const [uploading, setUploading] = useState(false);
+  const [uploadingBg, setUploadingBg] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   async function uploadLogo(e: React.ChangeEvent<HTMLInputElement>) {
@@ -73,6 +77,43 @@ export default function WheelEditor({
       setMsg("❌ Connexion impossible.");
     } finally {
       setUploading(false);
+    }
+  }
+
+  async function uploadBackground(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingBg(true);
+    setMsg(null);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/dashboard/background", {
+        method: "POST",
+        body: fd,
+      });
+      const d = await res.json().catch(() => ({}));
+      if (res.ok && d.bg_image_url) {
+        setBgUrl(d.bg_image_url);
+        setMsg("✅ Image de fond mise à jour !");
+      } else {
+        setMsg("❌ " + (d.error || "Échec de l'envoi de l'image."));
+      }
+    } catch {
+      setMsg("❌ Connexion impossible.");
+    } finally {
+      setUploadingBg(false);
+    }
+  }
+
+  async function removeBackground() {
+    setUploadingBg(true);
+    try {
+      await fetch("/api/dashboard/background", { method: "DELETE" });
+      setBgUrl(null);
+      setMsg("✅ Image de fond retirée.");
+    } finally {
+      setUploadingBg(false);
     }
   }
 
@@ -179,6 +220,46 @@ export default function WheelEditor({
               </label>
             </div>
             <p className="muted">PNG ou JPG, 3 Mo max. Il s'affiche sur ta page de jeu.</p>
+          </div>
+
+          <div className="dash-card">
+            <h2>Image de fond</h2>
+            <div className="logo-row">
+              <div className="bg-preview">
+                {bgUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={bgUrl} alt="Fond" />
+                ) : (
+                  <span>Aucune image</span>
+                )}
+              </div>
+              <div className="bg-actions">
+                <label className="btn-secondary logo-btn">
+                  {uploadingBg ? "Envoi…" : bgUrl ? "Changer l'image" : "Ajouter une image"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={uploadBackground}
+                    disabled={uploadingBg}
+                    hidden
+                  />
+                </label>
+                {bgUrl && (
+                  <button
+                    type="button"
+                    className="btn-mini danger"
+                    onClick={removeBackground}
+                    disabled={uploadingBg}
+                  >
+                    Retirer
+                  </button>
+                )}
+              </div>
+            </div>
+            <p className="muted">
+              Une photo de ton commerce ou de tes plats (JPG/PNG, 6 Mo max). Un
+              voile sombre est ajouté pour garder le texte lisible.
+            </p>
           </div>
 
           <div className="dash-card">
