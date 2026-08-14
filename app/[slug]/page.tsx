@@ -48,7 +48,9 @@ export default async function Page({
   const [{ data: config }, { data: prizes }] = await Promise.all([
     supa
       .from("wheel_configs")
-      .select("primary_color, instagram_url, review_url, compliance_note")
+      .select(
+        "primary_color, accent_color, bg_color, instagram_url, review_url, compliance_note"
+      )
       .eq("business_id", biz.id)
       .maybeSingle(),
     supa
@@ -81,6 +83,8 @@ export default async function Page({
       config={
         config ?? {
           primary_color: "#ffc24d",
+          accent_color: "#ff5d73",
+          bg_color: "#150c29",
           instagram_url: null,
           review_url: null,
           compliance_note:

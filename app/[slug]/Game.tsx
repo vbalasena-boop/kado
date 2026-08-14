@@ -12,10 +12,43 @@ type Prize = {
 };
 type Config = {
   primary_color: string;
+  accent_color?: string | null;
+  bg_color?: string | null;
   instagram_url: string | null;
   review_url: string | null;
   compliance_note: string | null;
 };
+
+/** Mélange une couleur hex vers une cible [r,g,b] (amt 0..1). */
+function mix(hex: string, target: [number, number, number], amt: number) {
+  const h = (hex || "#000000").replace("#", "");
+  if (h.length !== 6) return hex;
+  let r = parseInt(h.slice(0, 2), 16);
+  let g = parseInt(h.slice(2, 4), 16);
+  let b = parseInt(h.slice(4, 6), 16);
+  r = Math.round(r + (target[0] - r) * amt);
+  g = Math.round(g + (target[1] - g) * amt);
+  b = Math.round(b + (target[2] - b) * amt);
+  return "#" + [r, g, b].map((x) => x.toString(16).padStart(2, "0")).join("");
+}
+const lighten = (h: string, a: number) => mix(h, [255, 255, 255], a);
+const darken = (h: string, a: number) => mix(h, [0, 0, 0], a);
+
+/** Construit le thème CSS d'un commerce à partir de ses couleurs. */
+function buildTheme(primary: string, accent: string, bg: string) {
+  return `
+:root{
+  --gold:${primary};
+  --gold-deep:${darken(primary, 0.16)};
+  --coral:${accent};
+  --night:${lighten(bg, 0.05)};
+  --night-2:${bg};
+  --surface:${lighten(bg, 0.16)};
+  --surface-2:${lighten(bg, 0.22)};
+  --glow:${lighten(bg, 0.3)};
+  --stroke:rgba(253,244,227,.14);
+}`;
+}
 type Played = Record<string, { label: string; code: string }>;
 type PlayType = "instagram" | "review";
 type Screen = "rules" | "hub" | "spin" | "prize" | "done";
@@ -269,8 +302,15 @@ export default function Game({
     <div className="logo">{(name || "?").charAt(0).toUpperCase()}</div>
   );
 
+  const themeCss = buildTheme(
+    config.primary_color || "#ffc24d",
+    config.accent_color || "#ff5d73",
+    config.bg_color || "#150c29"
+  );
+
   return (
     <>
+      <style dangerouslySetInnerHTML={{ __html: themeCss }} />
       <canvas id="confetti" ref={confettiRef} />
       <div className="app">
         <div className="card">

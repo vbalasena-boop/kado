@@ -22,6 +22,8 @@ create table if not exists wheel_configs (
   id uuid primary key default gen_random_uuid(),
   business_id uuid not null unique references businesses(id) on delete cascade,
   primary_color text not null default '#ffc24d',
+  accent_color text not null default '#ff5d73',
+  bg_color text not null default '#150c29',
   instagram_url text,
   review_url text,
   compliance_note text
