@@ -33,6 +33,7 @@ export default async function WheelPage() {
         }
       }
       initialPrizes={prizes ?? []}
+      initialLogoUrl={business.logo_url}
     />
   );
 }

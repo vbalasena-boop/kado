@@ -31,9 +31,11 @@ const SWATCHES = [
 export default function WheelEditor({
   initialConfig,
   initialPrizes,
+  initialLogoUrl,
 }: {
   initialConfig: Config;
   initialPrizes: Prize[];
+  initialLogoUrl?: string | null;
 }) {
   const [config, setConfig] = useState<Config>(initialConfig);
   const [prizes, setPrizes] = useState<Prize[]>(
@@ -43,7 +45,35 @@ export default function WheelEditor({
   );
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string | null>(initialLogoUrl ?? null);
+  const [uploading, setUploading] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  async function uploadLogo(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setMsg(null);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/dashboard/logo", {
+        method: "POST",
+        body: fd,
+      });
+      const d = await res.json().catch(() => ({}));
+      if (res.ok && d.logo_url) {
+        setLogoUrl(d.logo_url);
+        setMsg("✅ Logo mis à jour !");
+      } else {
+        setMsg("❌ " + (d.error || "Échec de l'envoi du logo."));
+      }
+    } catch {
+      setMsg("❌ Connexion impossible.");
+    } finally {
+      setUploading(false);
+    }
+  }
 
   // Aperçu live de la roue
   useEffect(() => {
@@ -125,6 +155,31 @@ export default function WheelEditor({
 
       <div className="editor">
         <div className="editor-form">
+          <div className="dash-card">
+            <h2>Logo</h2>
+            <div className="logo-row">
+              <div className="logo-preview">
+                {logoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={logoUrl} alt="Logo" />
+                ) : (
+                  <span>Aucun logo</span>
+                )}
+              </div>
+              <label className="btn-secondary logo-btn">
+                {uploading ? "Envoi…" : logoUrl ? "Changer le logo" : "Ajouter un logo"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={uploadLogo}
+                  disabled={uploading}
+                  hidden
+                />
+              </label>
+            </div>
+            <p className="muted">PNG ou JPG, 3 Mo max. Il s'affiche sur ta page de jeu.</p>
+          </div>
+
           <div className="dash-card">
             <h2>Liens</h2>
             <label className="field">
