@@ -43,8 +43,8 @@ export default function Home() {
           <a className="v-btn primary" href="/cafe-lumiere">
             🎡 Voir la démo
           </a>
-          <a className="v-btn ghost" href="/login">
-            Accéder à mon espace
+          <a className="v-btn ghost" href="/tarifs">
+            Voir les tarifs
           </a>
         </div>
       </section>
@@ -89,6 +89,7 @@ export default function Home() {
 
       <footer className="v-footer">
         <span>© Kado</span>
+        <a href="/tarifs">Tarifs</a>
         <a href="/legal/mentions">Mentions légales</a>
         <a href="/legal/confidentialite">Confidentialité</a>
         <a href="/legal/cgu">CGU</a>

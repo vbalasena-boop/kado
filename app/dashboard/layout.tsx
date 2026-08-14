@@ -74,6 +74,9 @@ export default async function DashboardLayout({
             <Link href="/dashboard/leads">
               <Icon name="mail" /> Clients
             </Link>
+            <Link href="/dashboard/billing">
+              <Icon name="card" /> Abonnement
+            </Link>
             <Link href={`/${business.slug}?preview=1`} target="_blank">
               <Icon name="test" /> Tester ma roue
             </Link>

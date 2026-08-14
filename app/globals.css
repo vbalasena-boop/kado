@@ -1364,6 +1364,56 @@ canvas#confetti {
 .v-footer a:hover {
   color: var(--cream);
 }
+.v-plan {
+  background: linear-gradient(180deg, var(--surface), var(--surface-2));
+  border: 1px solid var(--gold);
+  border-radius: 24px;
+  padding: 32px 28px;
+  max-width: 380px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.7);
+}
+.v-plan-name {
+  font-weight: 800;
+  color: var(--gold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 14px;
+}
+.v-plan-price {
+  font-size: 46px;
+  font-weight: 800;
+  margin: 10px 0 2px;
+}
+.v-plan-price span {
+  font-size: 18px;
+  color: var(--cream-dim);
+  font-weight: 600;
+}
+.v-plan-sub {
+  color: var(--mint);
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+.v-plan-feats {
+  list-style: none;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0 0 22px;
+}
+.v-plan-feats li {
+  font-size: 14.5px;
+  color: var(--cream);
+}
+.v-plan-note {
+  color: var(--cream-dim);
+  font-size: 12px;
+  margin-top: 12px;
+}
 .sub-ok {
   color: #1a7a4a;
   font-weight: 600;

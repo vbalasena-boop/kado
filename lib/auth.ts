@@ -9,6 +9,8 @@ export type Business = {
   status: string;
   subscription_status: string;
   subscription_ends_at: string | null;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
   owner_user_id: string | null;
 };
 
@@ -49,7 +51,7 @@ export async function getMyBusiness(): Promise<{
   const { data } = await admin
     .from("businesses")
     .select(
-      "id, slug, name, logo_url, status, subscription_status, subscription_ends_at, owner_user_id"
+      "id, slug, name, logo_url, status, subscription_status, subscription_ends_at, stripe_customer_id, stripe_subscription_id, owner_user_id"
     )
     .eq("owner_user_id", user.id)
     .maybeSingle();
