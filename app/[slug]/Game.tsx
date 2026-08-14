@@ -171,6 +171,30 @@ export default function Game({
   const [leadConsent, setLeadConsent] = useState(false);
   const [leadSent, setLeadSent] = useState(false);
   const [leadBusy, setLeadBusy] = useState(false);
+  const [prizeQr, setPrizeQr] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    if (prize && prize.code && !isNoWin(prize.label)) {
+      import("qrcode")
+        .then(({ default: QRCode }) =>
+          QRCode.toDataURL(prize.code as string, {
+            width: 280,
+            margin: 1,
+            color: { dark: "#1b1035", light: "#ffffff" },
+          })
+        )
+        .then((u) => {
+          if (alive) setPrizeQr(u);
+        })
+        .catch(() => {});
+    } else {
+      setPrizeQr(null);
+    }
+    return () => {
+      alive = false;
+    };
+  }, [prize]);
 
   async function submitLead(e: React.FormEvent) {
     e.preventDefault();
@@ -639,6 +663,13 @@ export default function Game({
                       <small>CODE</small>
                       <span>{prize.code}</span>
                     </div>
+                    {prizeQr && (
+                      <img
+                        src={prizeQr}
+                        alt="QR du code cadeau"
+                        className="prize-qr"
+                      />
+                    )}
                   </>
                 )}
                 {config.collect_email &&

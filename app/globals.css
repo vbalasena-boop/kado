@@ -1155,6 +1155,34 @@ canvas#confetti {
   margin-top: 6px;
   color: #202124;
 }
+.prize-qr {
+  display: block;
+  width: 150px;
+  height: 150px;
+  margin: 14px auto 0;
+  background: #fff;
+  padding: 8px;
+  border-radius: 14px;
+}
+.scan-box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.scan-video {
+  width: 100%;
+  max-height: 320px;
+  background: #000;
+  border-radius: 12px;
+  object-fit: cover;
+}
+.scan-sep {
+  text-align: center;
+  color: #80868b;
+  font-size: 12px;
+  margin: 16px 0;
+  position: relative;
+}
 .toggle-field {
   display: flex;
   gap: 10px;
