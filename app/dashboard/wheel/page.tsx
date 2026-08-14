@@ -13,7 +13,7 @@ export default async function WheelPage() {
     admin
       .from("wheel_configs")
       .select(
-        "primary_color, instagram_url, review_url, compliance_note, daily_prize_limit, bg_image_url"
+        "primary_color, instagram_url, review_url, compliance_note, daily_prize_limit, bg_image_url, collect_email"
       )
       .eq("business_id", business.id)
       .maybeSingle(),

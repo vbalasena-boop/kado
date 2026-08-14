@@ -14,6 +14,7 @@ type Config = {
   review_url: string | null;
   compliance_note: string | null;
   daily_prize_limit?: number | null;
+  collect_email?: boolean | null;
 };
 
 const FONT =
@@ -314,6 +315,19 @@ export default function WheelEditor({
                   setConfig({ ...config, compliance_note: e.target.value })
                 }
               />
+            </label>
+            <label className="toggle-field">
+              <input
+                type="checkbox"
+                checked={!!config.collect_email}
+                onChange={(e) =>
+                  setConfig({ ...config, collect_email: e.target.checked })
+                }
+              />
+              <span>
+                <b>Collecter les e-mails des gagnants</b> (facultatif, avec
+                consentement) — pour te constituer une base clients.
+              </span>
             </label>
           </div>
 

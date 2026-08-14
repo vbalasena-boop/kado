@@ -15,6 +15,7 @@ type Config = {
   accent_color?: string | null;
   bg_color?: string | null;
   bg_image_url?: string | null;
+  collect_email?: boolean | null;
   instagram_url: string | null;
   review_url: string | null;
   compliance_note: string | null;
@@ -166,6 +167,28 @@ export default function Game({
   } | null>(null);
   const [spinning, setSpinning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [leadEmail, setLeadEmail] = useState("");
+  const [leadConsent, setLeadConsent] = useState(false);
+  const [leadSent, setLeadSent] = useState(false);
+  const [leadBusy, setLeadBusy] = useState(false);
+
+  async function submitLead(e: React.FormEvent) {
+    e.preventDefault();
+    if (!leadEmail.trim() || !leadConsent) return;
+    setLeadBusy(true);
+    try {
+      const res = await fetch("/api/lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug, email: leadEmail.trim() }),
+      });
+      if (res.ok) setLeadSent(true);
+    } catch {
+      /* silencieux : la capture est facultative */
+    } finally {
+      setLeadBusy(false);
+    }
+  }
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const confettiRef = useRef<HTMLCanvasElement | null>(null);
@@ -618,6 +641,39 @@ export default function Game({
                     </div>
                   </>
                 )}
+                {config.collect_email &&
+                  !preview &&
+                  !isNoWin(prize.label) &&
+                  (leadSent ? (
+                    <p className="lead-ok">✅ Merci, à bientôt&nbsp;!</p>
+                  ) : (
+                    <form className="lead-form" onSubmit={submitLead}>
+                      <label className="lead-label">
+                        📧 Recevez nos offres par e-mail (facultatif)
+                      </label>
+                      <div className="lead-row">
+                        <input
+                          type="email"
+                          placeholder="votre@email.fr"
+                          value={leadEmail}
+                          onChange={(e) => setLeadEmail(e.target.value)}
+                        />
+                        <button className="btn" type="submit" disabled={leadBusy}>
+                          OK
+                        </button>
+                      </div>
+                      <label className="lead-consent">
+                        <input
+                          type="checkbox"
+                          checked={leadConsent}
+                          onChange={(e) => setLeadConsent(e.target.checked)}
+                        />
+                        <span>
+                          J'accepte de recevoir des offres de ce commerce.
+                        </span>
+                      </label>
+                    </form>
+                  ))}
                 <p className="fine">
                   {config.compliance_note ||
                     "Le cadeau n'est pas conditionné à la note laissée."}

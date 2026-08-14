@@ -68,6 +68,12 @@ export default async function DashboardLayout({
             <Link href="/dashboard/qr">
               <Icon name="qr" /> QR code
             </Link>
+            <Link href="/dashboard/validate">
+              <Icon name="redeem" /> Valider un cadeau
+            </Link>
+            <Link href="/dashboard/leads">
+              <Icon name="mail" /> Clients
+            </Link>
             <Link href={`/${business.slug}?preview=1`} target="_blank">
               <Icon name="test" /> Tester ma roue
             </Link>

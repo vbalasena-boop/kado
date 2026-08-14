@@ -18,6 +18,7 @@ export async function POST(req: NextRequest) {
       review_url?: string;
       compliance_note?: string;
       daily_prize_limit?: number | null;
+      collect_email?: boolean;
     };
     prizes?: {
       label: string;
@@ -48,6 +49,7 @@ export async function POST(req: NextRequest) {
         cfg.daily_prize_limit && cfg.daily_prize_limit > 0
           ? Math.round(cfg.daily_prize_limit)
           : null,
+      collect_email: !!cfg.collect_email,
     },
     { onConflict: "business_id" }
   );
