@@ -1004,3 +1004,246 @@ canvas#confetti {
     animation: none;
   }
 }
+
+/* =========================================================
+   Material Design (style Google) — back-office uniquement
+   (la page de jeu /{slug} garde son thème festif)
+   ========================================================= */
+.dash,
+.auth-page {
+  --g-blue: #1a73e8;
+  --g-blue-dark: #1666d0;
+  --g-red: #d93025;
+  --g-green: #188038;
+  --g-bg: #f1f3f4;
+  --g-surface: #ffffff;
+  --g-ink: #202124;
+  --g-ink2: #5f6368;
+  --g-line: #dadce0;
+  --g-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3),
+    0 1px 3px 1px rgba(60, 64, 67, 0.15);
+  --g-font: "Roboto", "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+  font-family: var(--g-font);
+}
+
+/* ---- Login (Material) ---- */
+.auth-page {
+  position: fixed;
+  inset: 0;
+  overflow: auto;
+  background: var(--g-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.auth-card {
+  background: var(--g-surface);
+  border: 1px solid var(--g-line);
+  border-radius: 12px;
+  box-shadow: var(--g-shadow);
+  padding: 40px 32px;
+  max-width: 400px;
+  width: 100%;
+  color: var(--g-ink);
+}
+.auth-logo {
+  font-size: 44px;
+  text-align: center;
+  margin-bottom: 8px;
+}
+.auth-card h1 {
+  color: var(--g-ink);
+  font-weight: 400;
+  font-size: 24px;
+  margin-bottom: 18px;
+}
+.auth-card p {
+  color: var(--g-ink2);
+  font-size: 14px;
+}
+
+/* ---- Surfaces & typo ---- */
+.dash {
+  background: var(--g-bg);
+  color: var(--g-ink);
+}
+.dash-top {
+  background: var(--g-surface);
+  color: var(--g-ink);
+  box-shadow: var(--g-shadow);
+  border-bottom: none;
+}
+.dash-brand {
+  color: var(--g-ink);
+  font-weight: 500;
+}
+.dash-user {
+  color: var(--g-ink2);
+}
+.dash-nav {
+  background: var(--g-surface);
+  border-bottom: 1px solid var(--g-line);
+}
+.dash-nav a {
+  color: var(--g-ink2);
+  border-radius: 20px;
+  font-weight: 500;
+}
+.dash-nav a:hover {
+  background: #f1f3f4;
+  color: var(--g-ink);
+}
+.dash-h1 {
+  color: var(--g-ink);
+  font-weight: 400;
+}
+.dash-sub,
+.muted,
+.admin-email {
+  color: var(--g-ink2);
+}
+.dash-card,
+.stat {
+  background: var(--g-surface);
+  border: 1px solid var(--g-line);
+  border-radius: 12px;
+  box-shadow: var(--g-shadow);
+}
+.dash-card h2 {
+  color: var(--g-ink);
+  font-weight: 500;
+}
+.dash-banner {
+  background: #fef7e0;
+  color: #7a4f01;
+}
+
+/* ---- Boutons Material ---- */
+.dash .btn,
+.auth-page .btn {
+  background: var(--g-blue);
+  color: #fff;
+  border-radius: 20px;
+  box-shadow: none;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+.dash .btn:hover,
+.auth-page .btn:hover {
+  background: var(--g-blue-dark);
+  box-shadow: var(--g-shadow);
+}
+.dash .btn:active,
+.auth-page .btn:active {
+  transform: none;
+}
+.dash .btn.ghost,
+.auth-page .btn.ghost {
+  background: transparent;
+  color: var(--g-blue);
+  border: 1px solid var(--g-line);
+}
+.dash-signout {
+  background: transparent;
+  color: var(--g-blue);
+  border: 1px solid var(--g-line);
+  border-radius: 20px;
+  font-weight: 500;
+}
+.btn-secondary {
+  background: transparent;
+  color: var(--g-blue);
+  border: 1px solid var(--g-line);
+  border-radius: 20px;
+}
+.btn-mini {
+  border-radius: 20px;
+  font-weight: 500;
+}
+.btn-mini.ok {
+  background: #e6f4ea;
+  color: var(--g-green);
+}
+.btn-mini.danger {
+  background: #fce8e6;
+  color: var(--g-red);
+}
+.btn-mini.soft {
+  background: #e8f0fe;
+  color: var(--g-blue);
+}
+
+/* ---- Chips (statuts) ---- */
+.pill {
+  border-radius: 20px;
+  font-weight: 500;
+}
+.pill.active {
+  background: #e6f4ea;
+  color: var(--g-green);
+}
+.pill.suspended {
+  background: #fce8e6;
+  color: var(--g-red);
+}
+
+/* ---- Stats ---- */
+.stat-n {
+  color: var(--g-blue);
+}
+.stat-l {
+  color: var(--g-ink2);
+}
+.dist-fill {
+  background: linear-gradient(90deg, #669df6, var(--g-blue));
+}
+.dist-bar {
+  background: #e8eaed;
+}
+
+/* ---- Champs de saisie Material ---- */
+.dash input,
+.auth-input,
+.admin-create input,
+.field input,
+.prize-row input:not(.p-color) {
+  background: var(--g-surface) !important;
+  border: 1px solid var(--g-line) !important;
+  color: var(--g-ink) !important;
+  border-radius: 8px;
+}
+.dash input:focus,
+.auth-input:focus,
+.field input:focus {
+  outline: none;
+  border-color: var(--g-blue) !important;
+  box-shadow: 0 0 0 1px var(--g-blue);
+}
+.field span {
+  color: var(--g-ink2);
+}
+
+/* ---- Tableau admin ---- */
+.admin-table th {
+  background: #f8f9fa;
+  color: var(--g-ink2);
+}
+.admin-table th,
+.admin-table td {
+  border-bottom: 1px solid #eceff1;
+}
+.admin-table td {
+  color: var(--g-ink);
+}
+.admin-slug,
+.dash-nav a[target] {
+  color: var(--g-blue);
+}
+.save-msg,
+.sub-ok {
+  color: var(--g-green);
+}
+.err {
+  color: var(--g-red);
+}

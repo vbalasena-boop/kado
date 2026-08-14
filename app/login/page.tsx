@@ -56,11 +56,9 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="landing">
-      <div className="landing-card" style={{ textAlign: "left" }}>
-        <div className="landing-logo" style={{ textAlign: "center" }}>
-          🎡
-        </div>
+    <main className="auth-page">
+      <div className="auth-card">
+        <div className="auth-logo">🎡</div>
         <h1 style={{ textAlign: "center" }}>Espace commerçant</h1>
 
         {step === "email" ? (
