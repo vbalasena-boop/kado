@@ -1,3 +1,5 @@
+import { Logo } from "@/components/Logo";
+
 export const dynamic = "force-dynamic";
 
 /* --- Logos de marque (SVG, rendu côté serveur) --- */
@@ -85,8 +87,16 @@ const PLAN_FEATURES = [
 export default function Home() {
   return (
     <main className="vitrine">
+      <header className="v-topbar">
+        <Logo size={30} />
+        <nav className="v-topnav">
+          <a href="/tarifs">Tarifs</a>
+          <a href="/login" className="v-topnav-cta">Espace commerçant</a>
+        </nav>
+      </header>
+
       <section className="v-hero">
-        <div className="v-badge">🎡 Kado</div>
+        <div className="v-badge">🎁 Avis · Abonnés · Fidélité</div>
         <div className="v-wheel" aria-hidden="true">
           <span className="v-wheel-disc" />
           <span className="v-wheel-pin" />

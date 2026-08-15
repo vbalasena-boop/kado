@@ -1365,9 +1365,51 @@ canvas#confetti {
   color: var(--cream);
 }
 
+/* ---- Logo & barre du haut ---- */
+.kado-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+.kado-logo-text {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--cream);
+  line-height: 1;
+}
+.v-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0 2px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.v-topnav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.v-topnav a {
+  color: var(--cream-dim);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 13px;
+  border-radius: 11px;
+}
+.v-topnav a:hover {
+  color: var(--cream);
+}
+.v-topnav-cta {
+  color: var(--night) !important;
+  background: linear-gradient(135deg, var(--gold), var(--gold-deep));
+  box-shadow: 0 8px 20px -10px var(--gold-deep);
+}
+
 /* ---- Vitrine v2 : héros enrichi ---- */
 .v-hero {
-  padding: 46px 0 22px;
+  padding: 30px 0 22px;
 }
 .v-wheel {
   width: 140px;
