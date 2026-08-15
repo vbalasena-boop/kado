@@ -107,6 +107,36 @@ export default function AdminClient({
     }
   }
 
+  async function changeOwner(id: string, current: string) {
+    const email = window.prompt(
+      "Nouvelle adresse e-mail du propriétaire de cet établissement :",
+      current
+    );
+    if (email === null) return;
+    const clean = email.trim();
+    if (!clean) return;
+    setBusyId(id);
+    setMsg(null);
+    try {
+      const res = await fetch(`/api/admin/business/${id}/owner`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: clean }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setMsg(`✅ Propriétaire de ce compte mis à jour : ${clean}`);
+        router.refresh();
+      } else {
+        setMsg("❌ " + (d.error || "Échec du changement de propriétaire."));
+      }
+    } catch {
+      setMsg("❌ Connexion impossible.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   async function remove(id: string, name: string) {
     if (
       !confirm(
@@ -197,7 +227,17 @@ export default function AdminClient({
                           /{b.slug} ↗
                         </a>
                       </td>
-                      <td className="admin-email">{b.owner_email}</td>
+                      <td className="admin-email">
+                        {b.owner_email || "(non lié)"}
+                        <br />
+                        <button
+                          className="admin-owner-btn"
+                          disabled={busy}
+                          onClick={() => changeOwner(b.id, b.owner_email)}
+                        >
+                          Changer le propriétaire
+                        </button>
+                      </td>
                       <td>{b.plays}</td>
                       <td>
                         <div>{b.subscription_status}</div>

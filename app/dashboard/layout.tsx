@@ -45,7 +45,25 @@ export default async function DashboardLayout({
 
       {!business ? (
         <main className="dash-main">
-          <Onboarding />
+          {admin ? (
+            <div className="dash-card onboarding">
+              <h2>Espace administrateur 🔑</h2>
+              <p className="onboarding-lead">
+                Tu es connecté en tant qu'<b>administrateur Kado</b>. Ce compte ne
+                gère aucun établissement commerçant — rends-toi dans l'espace
+                admin pour gérer les comptes.
+              </p>
+              <Link
+                href="/admin"
+                className="btn"
+                style={{ textDecoration: "none", display: "block", textAlign: "center" }}
+              >
+                Accéder à l'espace admin →
+              </Link>
+            </div>
+          ) : (
+            <Onboarding />
+          )}
         </main>
       ) : (
         <>
