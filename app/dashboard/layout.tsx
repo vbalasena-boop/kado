@@ -4,6 +4,7 @@ import { getMyBusiness } from "@/lib/auth";
 import { isAdminEmail } from "@/lib/admin-guard";
 import { Icon } from "@/components/icons";
 import { KadoMark } from "@/components/Logo";
+import { Onboarding } from "./Onboarding";
 
 export const dynamic = "force-dynamic";
 
@@ -44,18 +45,7 @@ export default async function DashboardLayout({
 
       {!business ? (
         <main className="dash-main">
-          <div className="dash-card">
-            <h2>Aucun établissement lié à ce compte</h2>
-            <p>
-              Votre compte est bien connecté, mais aucun établissement ne lui est
-              rattaché. L'administrateur doit créer votre établissement et le
-              lier à cette adresse e-mail (Epic 3).
-            </p>
-            <p className="muted">
-              Pour tester dès maintenant, liez la démo à votre compte via SQL —
-              voir le README.
-            </p>
-          </div>
+          <Onboarding />
         </main>
       ) : (
         <>

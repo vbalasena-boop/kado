@@ -1,0 +1,77 @@
+import { NextRequest } from "next/server";
+import { getSessionUser } from "@/lib/auth";
+import { getAdminClient } from "@/lib/supabase/admin";
+import { DEFAULT_PRIZES, slugify } from "@/lib/defaults";
+
+export const dynamic = "force-dynamic";
+
+/**
+ * Inscription self-service : le commerçant connecté crée son propre
+ * établissement (essai gratuit de 14 jours). Roue + cadeaux par défaut.
+ */
+export async function POST(req: NextRequest) {
+  const user = await getSessionUser();
+  if (!user) return Response.json({ error: "unauthorized" }, { status: 401 });
+
+  const db = getAdminClient();
+
+  // Déjà un établissement rattaché à ce compte ? on ne recrée pas.
+  const { data: existing } = await db
+    .from("businesses")
+    .select("id, slug")
+    .eq("owner_user_id", user.id)
+    .maybeSingle();
+  if (existing) return Response.json({ ok: true, slug: existing.slug });
+
+  let body: { name?: string };
+  try {
+    body = await req.json();
+  } catch {
+    return Response.json({ error: "bad_request" }, { status: 400 });
+  }
+  const name = (body.name || "").trim();
+  if (!name) return Response.json({ error: "name_required" }, { status: 400 });
+
+  // slug unique
+  const base = slugify(name);
+  let slug = base;
+  for (let i = 2; i < 100; i++) {
+    const { data: exists } = await db
+      .from("businesses")
+      .select("id")
+      .eq("slug", slug)
+      .maybeSingle();
+    if (!exists) break;
+    slug = `${base}-${i}`;
+  }
+
+  // établissement (essai gratuit de 14 jours)
+  const trialEnds = new Date(Date.now() + 14 * 864e5).toISOString();
+  const { data: biz, error: bizErr } = await db
+    .from("businesses")
+    .insert({
+      slug,
+      name,
+      status: "active",
+      subscription_status: "trial",
+      subscription_ends_at: trialEnds,
+      owner_user_id: user.id,
+    })
+    .select("id")
+    .single();
+  if (bizErr || !biz) {
+    return Response.json({ error: "create_failed" }, { status: 500 });
+  }
+
+  // config + cadeaux par défaut
+  await db.from("wheel_configs").insert({
+    business_id: biz.id,
+    primary_color: "#ffc24d",
+    compliance_note: "Le cadeau n'est pas conditionné à la note laissée.",
+  });
+  await db.from("prizes").insert(
+    DEFAULT_PRIZES.map((p, i) => ({ ...p, business_id: biz.id, position: i }))
+  );
+
+  return Response.json({ ok: true, slug });
+}
