@@ -195,6 +195,7 @@ export default function Home() {
         <a href="/legal/mentions">Mentions légales</a>
         <a href="/legal/confidentialite">Confidentialité</a>
         <a href="/legal/cgu">CGU</a>
+        <a href="/legal/cgv">CGV</a>
         <a href="/login">Espace commerçant</a>
       </footer>
     </main>

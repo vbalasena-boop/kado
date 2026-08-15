@@ -19,6 +19,7 @@ export default function LegalLayout({
           <Link href="/legal/mentions">Mentions légales</Link>
           <Link href="/legal/confidentialite">Confidentialité</Link>
           <Link href="/legal/cgu">CGU</Link>
+          <Link href="/legal/cgv">CGV</Link>
           <Link href="/legal/reglement">Règlement du jeu</Link>
         </nav>
       </header>
