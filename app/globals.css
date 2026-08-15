@@ -1370,26 +1370,34 @@ canvas#confetti {
   padding: 46px 0 22px;
 }
 .v-wheel {
-  width: 132px;
-  height: 132px;
+  width: 140px;
+  height: 140px;
   border-radius: 50%;
   margin: 6px auto 24px;
   position: relative;
-  background: conic-gradient(
-    var(--coral) 0 60deg,
-    var(--violet) 60deg 120deg,
-    var(--mint) 120deg 180deg,
-    var(--gold) 180deg 240deg,
-    #4fc3f7 240deg 300deg,
-    var(--coral) 300deg 360deg
-  );
-  box-shadow: 0 0 0 6px var(--night-2),
-    0 20px 42px -14px rgba(0, 0, 0, 0.7),
-    inset 0 0 0 3px rgba(255, 255, 255, 0.16);
-  animation: v-spin 22s linear infinite;
+  box-shadow: 0 0 0 5px var(--night-2), 0 0 0 7px rgba(255, 194, 77, 0.55),
+    0 22px 44px -14px rgba(0, 0, 0, 0.7);
+}
+.v-wheel-disc {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: repeating-conic-gradient(
+      rgba(21, 12, 41, 0.5) 0 1.4deg,
+      transparent 1.4deg 60deg
+    ),
+    conic-gradient(
+      #ff5d73 0 60deg,
+      #ffc24d 60deg 120deg,
+      #39d98a 120deg 180deg,
+      #4fc3f7 180deg 240deg,
+      #8b6cff 240deg 300deg,
+      #ff8a5c 300deg 360deg
+    );
+  animation: v-spin 20s linear infinite;
 }
 @media (prefers-reduced-motion: reduce) {
-  .v-wheel {
+  .v-wheel-disc {
     animation: none;
   }
 }
@@ -1398,17 +1406,34 @@ canvas#confetti {
     transform: rotate(360deg);
   }
 }
+/* vernis fixe */
+.v-wheel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(
+    120% 85% at 32% 22%,
+    rgba(255, 255, 255, 0.32),
+    rgba(255, 255, 255, 0) 55%
+  );
+}
+/* moyeu doré fixe */
 .v-wheel::after {
   content: "";
   position: absolute;
-  inset: 37%;
+  inset: 38%;
   border-radius: 50%;
-  background: var(--night-2);
-  border: 3px solid rgba(255, 255, 255, 0.22);
+  z-index: 1;
+  background: radial-gradient(circle at 40% 35%, #fff6df, var(--gold) 72%);
+  border: 3px solid var(--night-2);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 }
 .v-wheel-pin {
   position: absolute;
-  top: -11px;
+  top: -12px;
   left: 50%;
   transform: translateX(-50%);
   width: 0;

@@ -88,6 +88,7 @@ export default function Home() {
       <section className="v-hero">
         <div className="v-badge">🎡 Kado</div>
         <div className="v-wheel" aria-hidden="true">
+          <span className="v-wheel-disc" />
           <span className="v-wheel-pin" />
         </div>
         <h1>
