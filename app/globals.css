@@ -2294,3 +2294,13 @@ canvas#confetti {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* ---- Titres de sections statistiques (admin) ---- */
+.stat-h {
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--g-ink2);
+  margin: 24px 0 10px;
+}

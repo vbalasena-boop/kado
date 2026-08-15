@@ -16,6 +16,21 @@ export type AdminBusiness = {
   created_at: string;
 };
 
+export type AdminStats = {
+  bizTotal: number;
+  bizActive: number;
+  bizTrial: number;
+  bizSuspended: number;
+  playsTotal: number;
+  playsMonth: number;
+  playsToday: number;
+  insta: number;
+  review: number;
+  won: number;
+  redeemed: number;
+  leads: number;
+};
+
 /** Renvoie un libellé de temps restant + s'il est expiré. */
 function remaining(endsAt: string | null): { label: string; expired: boolean } {
   if (!endsAt) return { label: "illimité", expired: false };
@@ -39,9 +54,13 @@ function fmtDate(s: string | null) {
 
 export default function AdminClient({
   businesses,
+  stats,
 }: {
   businesses: AdminBusiness[];
+  stats: AdminStats;
 }) {
+  const redemptionRate =
+    stats.won > 0 ? Math.round((stats.redeemed / stats.won) * 100) : 0;
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -160,6 +179,67 @@ export default function AdminClient({
         Créez des établissements, gérez leur abonnement et leurs accès. L'accès à
         la roue se coupe automatiquement quand l'abonnement expire.
       </p>
+
+      {/* ---- Statistiques plateforme ---- */}
+      <div className="stat-h">Établissements</div>
+      <div className="stat-grid">
+        <div className="stat">
+          <div className="stat-icon"><Icon name="chart" size={22} /></div>
+          <div><div className="stat-n">{stats.bizTotal}</div><div className="stat-l">Total</div></div>
+        </div>
+        <div className="stat">
+          <div className="stat-icon"><Icon name="check" size={22} /></div>
+          <div><div className="stat-n">{stats.bizActive}</div><div className="stat-l">Avec accès</div></div>
+        </div>
+        <div className="stat">
+          <div className="stat-icon"><Icon name="event" size={22} /></div>
+          <div><div className="stat-n">{stats.bizTrial}</div><div className="stat-l">En essai</div></div>
+        </div>
+        <div className="stat">
+          <div className="stat-icon"><Icon name="block" size={22} /></div>
+          <div><div className="stat-n">{stats.bizSuspended}</div><div className="stat-l">Suspendus</div></div>
+        </div>
+      </div>
+
+      <div className="stat-h">Activité — tours joués</div>
+      <div className="stat-grid">
+        <div className="stat">
+          <div className="stat-icon"><Icon name="trending" size={22} /></div>
+          <div><div className="stat-n">{stats.playsTotal}</div><div className="stat-l">Total</div></div>
+        </div>
+        <div className="stat">
+          <div className="stat-icon"><Icon name="event" size={22} /></div>
+          <div><div className="stat-n">{stats.playsMonth}</div><div className="stat-l">Ce mois-ci</div></div>
+        </div>
+        <div className="stat">
+          <div className="stat-icon"><Icon name="event" size={22} /></div>
+          <div><div className="stat-n">{stats.playsToday}</div><div className="stat-l">Aujourd'hui</div></div>
+        </div>
+        <div className="stat">
+          <div className="stat-icon"><Icon name="share" size={22} /></div>
+          <div><div className="stat-n">{stats.insta}</div><div className="stat-l">via Instagram</div></div>
+        </div>
+        <div className="stat">
+          <div className="stat-icon"><Icon name="star" size={22} /></div>
+          <div><div className="stat-n">{stats.review}</div><div className="stat-l">via Avis Google</div></div>
+        </div>
+      </div>
+
+      <div className="stat-h">Cadeaux &amp; clients</div>
+      <div className="stat-grid">
+        <div className="stat">
+          <div className="stat-icon"><Icon name="redeem" size={22} /></div>
+          <div><div className="stat-n">{stats.won}</div><div className="stat-l">Cadeaux gagnés</div></div>
+        </div>
+        <div className="stat">
+          <div className="stat-icon"><Icon name="check" size={22} /></div>
+          <div><div className="stat-n">{stats.redeemed}</div><div className="stat-l">Récupérés en caisse · {redemptionRate}%</div></div>
+        </div>
+        <div className="stat">
+          <div className="stat-icon"><Icon name="mail" size={22} /></div>
+          <div><div className="stat-n">{stats.leads}</div><div className="stat-l">E-mails capturés</div></div>
+        </div>
+      </div>
 
       <div className="dash-card">
         <h2>Créer un compte commerçant</h2>

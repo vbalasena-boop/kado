@@ -1,8 +1,11 @@
 import { getAdminUser } from "@/lib/admin-guard";
 import { getAdminClient } from "@/lib/supabase/admin";
-import AdminClient, { AdminBusiness } from "./AdminClient";
+import AdminClient, { AdminBusiness, AdminStats } from "./AdminClient";
 
 export const dynamic = "force-dynamic";
+
+const isWin = (l: string | null) =>
+  !!l && !l.toLowerCase().includes("rien");
 
 export default async function AdminPage() {
   const user = await getAdminUser();
@@ -16,9 +19,17 @@ export default async function AdminPage() {
     )
     .order("created_at", { ascending: false });
 
-  const { data: playRows } = await admin.from("plays").select("business_id");
+  const { data: playRows } = await admin
+    .from("plays")
+    .select("business_id, play_type, prize_label, redeemed_at, created_at");
+
+  const { count: leadsCount } = await admin
+    .from("leads")
+    .select("*", { count: "exact", head: true });
+
+  const rowsPlays = playRows ?? [];
   const counts = new Map<string, number>();
-  for (const r of playRows ?? [])
+  for (const r of rowsPlays)
     counts.set(r.business_id, (counts.get(r.business_id) ?? 0) + 1);
 
   // e-mails des propriétaires
@@ -45,5 +56,37 @@ export default async function AdminPage() {
     created_at: b.created_at,
   }));
 
-  return <AdminClient businesses={rows} />;
+  // ---- Statistiques plateforme ----
+  const now = Date.now();
+  const startMonth = new Date();
+  startMonth.setDate(1);
+  startMonth.setHours(0, 0, 0, 0);
+  const startDay = new Date();
+  startDay.setHours(0, 0, 0, 0);
+
+  const bizList = businesses ?? [];
+  const stats: AdminStats = {
+    bizTotal: bizList.length,
+    bizActive: bizList.filter(
+      (b) =>
+        b.status !== "suspended" &&
+        (!b.subscription_ends_at ||
+          new Date(b.subscription_ends_at).getTime() > now)
+    ).length,
+    bizTrial: bizList.filter((b) => b.subscription_status === "trial").length,
+    bizSuspended: bizList.filter((b) => b.status === "suspended").length,
+    playsTotal: rowsPlays.length,
+    playsMonth: rowsPlays.filter(
+      (p) => new Date(p.created_at) >= startMonth
+    ).length,
+    playsToday: rowsPlays.filter((p) => new Date(p.created_at) >= startDay)
+      .length,
+    insta: rowsPlays.filter((p) => p.play_type === "instagram").length,
+    review: rowsPlays.filter((p) => p.play_type === "review").length,
+    won: rowsPlays.filter((p) => isWin(p.prize_label)).length,
+    redeemed: rowsPlays.filter((p) => p.redeemed_at).length,
+    leads: leadsCount ?? 0,
+  };
+
+  return <AdminClient businesses={rows} stats={stats} />;
 }

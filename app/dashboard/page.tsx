@@ -12,7 +12,7 @@ export default async function DashboardHome() {
   const since = new Date(Date.now() - 30 * 864e5).toISOString();
   const { data: plays } = await admin
     .from("plays")
-    .select("play_type, prize_label, created_at")
+    .select("play_type, prize_label, created_at, redeemed_at")
     .eq("business_id", business.id);
 
   const rows = plays ?? [];
@@ -20,6 +20,16 @@ export default async function DashboardHome() {
   const insta = rows.filter((r) => r.play_type === "instagram").length;
   const review = rows.filter((r) => r.play_type === "review").length;
   const last30 = rows.filter((r) => r.created_at >= since).length;
+  const won = rows.filter(
+    (r) => r.prize_label && !r.prize_label.toLowerCase().includes("rien")
+  ).length;
+  const redeemed = rows.filter((r) => (r as any).redeemed_at).length;
+  const redemptionRate = won > 0 ? Math.round((redeemed / won) * 100) : 0;
+
+  const { count: leadsCount } = await admin
+    .from("leads")
+    .select("*", { count: "exact", head: true })
+    .eq("business_id", business.id);
 
   const dist = new Map<string, number>();
   for (const r of rows) {
@@ -73,6 +83,33 @@ export default async function DashboardHome() {
           <div>
             <div className="stat-n">{review}</div>
             <div className="stat-l">via Avis Google</div>
+          </div>
+        </div>
+        <div className="stat">
+          <div className="stat-icon">
+            <Icon name="redeem" size={22} />
+          </div>
+          <div>
+            <div className="stat-n">{won}</div>
+            <div className="stat-l">Cadeaux gagnés</div>
+          </div>
+        </div>
+        <div className="stat">
+          <div className="stat-icon">
+            <Icon name="check" size={22} />
+          </div>
+          <div>
+            <div className="stat-n">{redeemed}</div>
+            <div className="stat-l">Récupérés en caisse · {redemptionRate}%</div>
+          </div>
+        </div>
+        <div className="stat">
+          <div className="stat-icon">
+            <Icon name="mail" size={22} />
+          </div>
+          <div>
+            <div className="stat-n">{leadsCount ?? 0}</div>
+            <div className="stat-l">E-mails capturés</div>
           </div>
         </div>
       </div>
