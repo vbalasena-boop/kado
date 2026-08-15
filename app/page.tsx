@@ -88,7 +88,7 @@ export default function Home() {
   return (
     <main className="vitrine">
       <header className="v-topbar">
-        <Logo size={30} />
+        <Logo size={42} />
         <nav className="v-topnav">
           <a href="/tarifs">Tarifs</a>
           <a href="/login" className="v-topnav-cta">Espace commerçant</a>
