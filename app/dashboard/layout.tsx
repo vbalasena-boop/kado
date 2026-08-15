@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getMyBusiness } from "@/lib/auth";
 import { isAdminEmail } from "@/lib/admin-guard";
 import { Icon } from "@/components/icons";
+import { KadoMark } from "@/components/Logo";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +19,7 @@ export default async function DashboardLayout({
   return (
     <div className="dash">
       <header className="dash-top">
-        <div className="dash-brand">🎡 Kado</div>
+        <div className="dash-brand"><KadoMark size={22} /> Kado</div>
         <div className="dash-user">
           {admin && (
             <Link href="/admin" className="dash-signout">
