@@ -1666,10 +1666,21 @@ canvas#confetti {
   margin-bottom: 18px;
 }
 .pp-logo {
-  width: 46px;
-  height: 46px;
-  border-radius: 12px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
   object-fit: cover;
+  border: 2px solid #e8a13c;
+}
+.pp-wheel {
+  margin: 2px 0 10px;
+  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.16));
+}
+.pp-wheel-svg {
+  width: 132px;
+  height: 132px;
+  display: block;
+  margin: 0 auto;
 }
 .pp-logo-ph {
   display: grid;
@@ -1698,11 +1709,14 @@ canvas#confetti {
   margin: 0 auto 18px;
 }
 .pp-qr {
-  width: 210px;
-  height: 210px;
+  width: 200px;
+  height: 200px;
   display: block;
   margin: 0 auto 10px;
-  border-radius: 14px;
+  border: 5px solid #1b1035;
+  border-radius: 16px;
+  padding: 8px;
+  background: #fff;
 }
 .pp-scan {
   font-size: 13px;

@@ -26,6 +26,54 @@ function GGlyph({ size = 18 }: { size?: number }) {
   );
 }
 
+function PosterWheel() {
+  return (
+    <svg viewBox="0 0 100 100" className="pp-wheel-svg" aria-hidden="true">
+      <defs>
+        <linearGradient id="pp-gold" x1="30" y1="30" x2="70" y2="70" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#ffd36b" />
+          <stop offset="1" stopColor="#f0a52e" />
+        </linearGradient>
+      </defs>
+      <g stroke="#fff" strokeWidth="1.2" strokeLinejoin="round">
+        <path d="M50 50 L50 6 A44 44 0 0 1 88.1 28 Z" fill="#ff5d73" />
+        <path d="M50 50 L88.1 28 A44 44 0 0 1 88.1 72 Z" fill="#ffc24d" />
+        <path d="M50 50 L88.1 72 A44 44 0 0 1 50 94 Z" fill="#39d98a" />
+        <path d="M50 50 L50 94 A44 44 0 0 1 11.9 72 Z" fill="#4fc3f7" />
+        <path d="M50 50 L11.9 72 A44 44 0 0 1 11.9 28 Z" fill="#8b6cff" />
+        <path d="M50 50 L11.9 28 A44 44 0 0 1 50 6 Z" fill="#ff8a5c" />
+      </g>
+      <g fontSize="9" textAnchor="middle">
+        <text x="65" y="27">🎁</text>
+        <text x="80" y="53">☕</text>
+        <text x="65" y="79">🍰</text>
+        <text x="35" y="79">⭐</text>
+        <text x="20" y="53">🏷️</text>
+        <text x="35" y="27">🍹</text>
+      </g>
+      <ellipse cx="38" cy="32" rx="26" ry="17" fill="#fff" opacity="0.2" />
+      <g fill="#fff">
+        <circle cx="94" cy="50" r="1.4" />
+        <circle cx="88.1" cy="72" r="1.4" />
+        <circle cx="72" cy="88.1" r="1.4" />
+        <circle cx="50" cy="94" r="1.4" />
+        <circle cx="28" cy="88.1" r="1.4" />
+        <circle cx="11.9" cy="72" r="1.4" />
+        <circle cx="6" cy="50" r="1.4" />
+        <circle cx="11.9" cy="28" r="1.4" />
+        <circle cx="28" cy="11.9" r="1.4" />
+        <circle cx="50" cy="6" r="1.4" />
+        <circle cx="72" cy="11.9" r="1.4" />
+        <circle cx="88.1" cy="28" r="1.4" />
+      </g>
+      <circle cx="50" cy="50" r="44" fill="none" stroke="#f0a52e" strokeWidth="3" />
+      <circle cx="50" cy="50" r="12.5" fill="url(#pp-gold)" stroke="#1b1035" strokeWidth="3" />
+      <circle cx="46" cy="46" r="3.2" fill="#fff" opacity="0.55" />
+      <path d="M50 17 L44 4 L56 4 Z" fill="url(#pp-gold)" stroke="#1b1035" strokeWidth="1" />
+    </svg>
+  );
+}
+
 export default async function QrPage() {
   const { business } = await getMyBusiness();
   if (!business) return null;
@@ -76,6 +124,10 @@ export default async function QrPage() {
             </div>
           )}
           <div className="pp-name">{business.name}</div>
+        </div>
+
+        <div className="pp-wheel">
+          <PosterWheel />
         </div>
 
         <div className="pp-title">Tentez votre chance&nbsp;! 🎁</div>
