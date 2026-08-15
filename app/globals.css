@@ -1364,6 +1364,205 @@ canvas#confetti {
 .v-footer a:hover {
   color: var(--cream);
 }
+
+/* ---- Vitrine v2 : héros enrichi ---- */
+.v-hero {
+  padding: 46px 0 22px;
+}
+.v-wheel {
+  width: 132px;
+  height: 132px;
+  border-radius: 50%;
+  margin: 6px auto 24px;
+  position: relative;
+  background: conic-gradient(
+    var(--coral) 0 60deg,
+    var(--violet) 60deg 120deg,
+    var(--mint) 120deg 180deg,
+    var(--gold) 180deg 240deg,
+    #4fc3f7 240deg 300deg,
+    var(--coral) 300deg 360deg
+  );
+  box-shadow: 0 0 0 6px var(--night-2),
+    0 20px 42px -14px rgba(0, 0, 0, 0.7),
+    inset 0 0 0 3px rgba(255, 255, 255, 0.16);
+  animation: v-spin 22s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .v-wheel {
+    animation: none;
+  }
+}
+@keyframes v-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.v-wheel::after {
+  content: "";
+  position: absolute;
+  inset: 37%;
+  border-radius: 50%;
+  background: var(--night-2);
+  border: 3px solid rgba(255, 255, 255, 0.22);
+}
+.v-wheel-pin {
+  position: absolute;
+  top: -11px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-top: 17px solid var(--gold);
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45));
+  z-index: 2;
+}
+.v-brands {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 2px 0 22px;
+}
+.v-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  background: var(--night-2);
+  border: 1px solid var(--stroke);
+  border-radius: 999px;
+  padding: 8px 16px 8px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--cream);
+}
+.v-brand svg {
+  display: block;
+}
+.v-brand.insta {
+  border-color: rgba(225, 48, 108, 0.5);
+  background: linear-gradient(
+    100deg,
+    rgba(131, 58, 180, 0.25),
+    rgba(225, 48, 108, 0.22),
+    rgba(253, 176, 61, 0.22)
+  );
+}
+.v-trust {
+  display: flex;
+  gap: 8px 18px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 18px;
+  font-size: 12.5px;
+  color: var(--cream-dim);
+}
+.v-trust b {
+  color: var(--mint);
+  font-weight: 800;
+  margin-right: 3px;
+}
+
+/* ---- Vitrine v2 : pour qui ---- */
+.v-audience {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.v-chip {
+  background: var(--night-2);
+  border: 1px solid var(--stroke);
+  border-radius: 999px;
+  padding: 9px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cream);
+}
+.v-audience-note {
+  text-align: center;
+  color: var(--cream-dim);
+  margin-top: 20px;
+  font-size: 15px;
+}
+.v-audience-note b {
+  color: var(--gold);
+}
+
+/* ---- Vitrine v2 : atouts avec icônes ---- */
+.v-benefit {
+  align-items: center;
+}
+.v-ico {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  border-radius: 13px;
+  display: grid;
+  place-items: center;
+  color: var(--gold);
+  background: rgba(255, 194, 77, 0.12);
+  border: 1px solid rgba(255, 194, 77, 0.28);
+}
+
+/* ---- Vitrine v2 : bloc tarif ---- */
+.v-pricecard {
+  background: linear-gradient(180deg, var(--surface), var(--surface-2));
+  border: 1px solid var(--gold);
+  border-radius: 24px;
+  padding: 34px 28px;
+  max-width: 440px;
+  margin: 0 auto;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+.v-pricecard .pc-name {
+  color: var(--gold);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  font-size: 14px;
+}
+.v-pricecard .pc-price {
+  font-size: 46px;
+  font-weight: 800;
+  margin: 6px 0 0;
+  letter-spacing: -0.02em;
+}
+.v-pricecard .pc-price small {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--cream-dim);
+}
+.v-pricecard .pc-note {
+  color: var(--cream-dim);
+  font-size: 13px;
+}
+.v-pricecard ul {
+  list-style: none;
+  text-align: left;
+  max-width: 300px;
+  margin: 22px auto;
+  display: grid;
+  gap: 11px;
+}
+.v-pricecard li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 14px;
+  color: var(--cream);
+}
+.v-pricecard li svg {
+  color: var(--mint);
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+.v-pricecard .v-btn {
+  display: inline-block;
+}
+
 .v-plan {
   background: linear-gradient(180deg, var(--surface), var(--surface-2));
   border: 1px solid var(--gold);
