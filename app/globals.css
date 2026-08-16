@@ -1,17 +1,20 @@
 :root {
-  --night: #1b1035;
-  --night-2: #150c29;
-  --surface: #2a1a55;
-  --surface-2: #34215f;
-  --gold: #ffc24d;
-  --gold-deep: #f0a52e;
+  /* Direction « Festif raffiné » — prune profond + or, contrastes premium */
+  --night: #17092e;
+  --night-2: #110720;
+  --surface: #241641;
+  --surface-2: #2e1b52;
+  --gold: #f5b841;
+  --gold-deep: #e0a020;
   --coral: #ff5d73;
-  --mint: #39d98a;
+  --mint: #3dd9a0;
   --violet: #8b6cff;
-  --cream: #fdf4e3;
-  --cream-dim: #c9bfe0;
-  --stroke: rgba(253, 244, 227, 0.14);
-  --glow: #33206b;
+  --cream: #ede7fb;
+  --cream-dim: #b3a6d2;
+  --stroke: rgba(237, 231, 251, 0.14);
+  --glow: #3a2568;
+  /* Dégradé signature « coucher de soleil » (roue + gros boutons) */
+  --sunset: linear-gradient(135deg, #ff6b4a, #f5b841 55%, #ff4e87);
   --shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.7);
   --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, sans-serif;
@@ -1289,9 +1292,9 @@ canvas#confetti {
   border-radius: 16px;
 }
 .v-btn.primary {
-  color: var(--night);
-  background: linear-gradient(135deg, var(--gold), var(--gold-deep));
-  box-shadow: 0 12px 26px -10px var(--gold-deep);
+  color: #2a0e10;
+  background: var(--sunset);
+  box-shadow: 0 14px 30px -10px rgba(255, 78, 135, 0.5);
 }
 .v-btn.ghost {
   color: var(--cream);
@@ -1426,9 +1429,9 @@ canvas#confetti {
   color: var(--cream);
 }
 .v-topnav-cta {
-  color: var(--night) !important;
-  background: linear-gradient(135deg, var(--gold), var(--gold-deep));
-  box-shadow: 0 8px 20px -10px var(--gold-deep);
+  color: #2a0e10 !important;
+  background: var(--sunset);
+  box-shadow: 0 8px 20px -10px rgba(255, 78, 135, 0.5);
 }
 
 /* ---- Vitrine v2 : héros enrichi ---- */
@@ -2534,15 +2537,15 @@ canvas#confetti {
   z-index: 2;
 }
 .hw-btn {
-  background: linear-gradient(180deg, var(--gold), var(--gold-deep));
-  color: #1b1035;
+  background: var(--sunset);
+  color: #2a0e10;
   font-weight: 800;
   padding: 11px 22px;
   border-radius: 999px;
   font-size: 0.95rem;
   border: none;
   cursor: pointer;
-  box-shadow: 0 8px 20px rgba(240, 165, 46, 0.35);
+  box-shadow: 0 8px 20px rgba(255, 78, 135, 0.4);
   transition: transform 0.12s, box-shadow 0.12s;
 }
 .hw-btn:hover:not(:disabled) { transform: translateY(-1px); }
@@ -3565,7 +3568,7 @@ html { scroll-behavior: smooth; }
 }
 .v-btn.primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 20px 38px -12px var(--gold-deep);
+  box-shadow: 0 22px 42px -12px rgba(255, 78, 135, 0.6);
 }
 .v-btn.primary:active { transform: translateY(0); }
 .v-btn.ghost:hover {
@@ -3612,7 +3615,12 @@ html { scroll-behavior: smooth; }
   height: 460px;
   max-width: 90vw;
   transform: translateX(-50%);
-  background: radial-gradient(circle, rgba(255, 194, 77, 0.14), transparent 62%);
+  background: radial-gradient(
+    circle,
+    rgba(255, 107, 74, 0.14),
+    rgba(255, 78, 135, 0.06) 45%,
+    transparent 66%
+  );
   pointer-events: none;
   z-index: 0;
 }
