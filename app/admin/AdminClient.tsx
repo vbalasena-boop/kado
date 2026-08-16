@@ -114,13 +114,76 @@ export default function AdminClient({
 
   async function subscribe(id: string, action: "trial" | "month1" | "month6") {
     setBusyId(id);
+    setMsg(null);
     try {
-      await fetch(`/api/admin/business/${id}/subscription`, {
+      const res = await fetch(`/api/admin/business/${id}/subscription`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action }),
       });
+      const d = await res.json().catch(() => ({}));
+      if (res.ok) {
+        const gift =
+          action === "trial"
+            ? "14 jours d'essai"
+            : action === "month6"
+            ? "6 mois"
+            : "1 mois";
+        setMsg(
+          `✅ ${gift} ajouté(s).` +
+            (d.emailSent
+              ? " Le commerçant a été prévenu par e-mail."
+              : " (E-mail non envoyé — vérifiez la config Resend.)")
+        );
+      }
       router.refresh();
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function refund(id: string, name: string) {
+    const raw = window.prompt(
+      `Rembourser « ${name} ».\n\nMontant en euros (laissez vide pour rembourser intégralement le dernier paiement) :`,
+      ""
+    );
+    if (raw === null) return;
+    const trimmed = raw.trim().replace(",", ".");
+    const amount = trimmed === "" ? undefined : Number(trimmed);
+    if (amount !== undefined && (!isFinite(amount) || amount <= 0)) {
+      setMsg("❌ Montant invalide.");
+      return;
+    }
+    if (
+      !confirm(
+        amount
+          ? `Confirmer le remboursement de ${amount} € à « ${name} » ?`
+          : `Confirmer le remboursement intégral du dernier paiement de « ${name} » ?`
+      )
+    )
+      return;
+    setBusyId(id);
+    setMsg(null);
+    try {
+      const res = await fetch(`/api/admin/business/${id}/refund`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(amount ? { amount } : {}),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setMsg(
+          `✅ Remboursement de ${d.amount} effectué.` +
+            (d.emailSent
+              ? ` E-mail de confirmation envoyé à ${d.ownerEmail}.`
+              : " (E-mail non envoyé — vérifiez la config Resend.)")
+        );
+        router.refresh();
+      } else {
+        setMsg("❌ " + (d.error || "Échec du remboursement."));
+      }
+    } catch {
+      setMsg("❌ Connexion impossible.");
     } finally {
       setBusyId(null);
     }
@@ -388,6 +451,13 @@ export default function AdminClient({
                               <Icon name="check" size={15} /> Réactiver
                             </button>
                           )}
+                          <button
+                            className="btn-mini soft"
+                            disabled={busy}
+                            onClick={() => refund(b.id, b.name)}
+                          >
+                            <Icon name="redeem" size={15} /> Rembourser
+                          </button>
                           <button
                             className="btn-mini danger"
                             disabled={busy}

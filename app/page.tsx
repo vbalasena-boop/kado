@@ -163,13 +163,22 @@ const JSON_LD = {
   publisher: { "@type": "Organization", name: "Kado" },
 };
 
-export default function Home() {
+export default function Home({
+  searchParams,
+}: {
+  searchParams?: { deleted?: string };
+}) {
   return (
     <main className="vitrine">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}
       />
+      {searchParams?.deleted === "1" && (
+        <div className="v-flash" role="status">
+          ✅ Votre compte a bien été supprimé. Merci d'avoir utilisé Kado.
+        </div>
+      )}
       <header className="v-topbar">
         <Logo size={42} />
         <nav className="v-topnav">
