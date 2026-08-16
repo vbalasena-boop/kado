@@ -176,23 +176,27 @@ export default function AdminClient({
     }
   }
 
-  async function subscribe(id: string, action: "trial" | "month1" | "month6") {
+  async function subscribe(
+    id: string,
+    action: "trial" | "months",
+    months?: number
+  ) {
     setBusyId(id);
     setMsg(null);
     try {
       const res = await fetch(`/api/admin/business/${id}/subscription`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action }),
+        body: JSON.stringify(
+          action === "months" ? { action, months } : { action }
+        ),
       });
       const d = await res.json().catch(() => ({}));
       if (res.ok) {
         const gift =
           action === "trial"
             ? "14 jours d'essai"
-            : action === "month6"
-            ? "6 mois"
-            : "1 mois";
+            : `${months} mois`;
         setMsg(
           `✅ ${gift} ajouté(s).` +
             (d.emailSent
@@ -204,6 +208,21 @@ export default function AdminClient({
     } finally {
       setBusyId(null);
     }
+  }
+
+  /** Demande le nombre de mois gratuits (1 à 24) puis les ajoute. */
+  function giftMonths(id: string, name: string) {
+    const raw = window.prompt(
+      `Offrir des mois gratuits à « ${name} ».\n\nCombien de mois ? (1 à 24)`,
+      "1"
+    );
+    if (raw === null) return;
+    const n = Math.round(Number(raw.trim().replace(",", ".")));
+    if (!Number.isFinite(n) || n < 1 || n > 24) {
+      setMsg("❌ Nombre de mois invalide (1 à 24).");
+      return;
+    }
+    subscribe(id, "months", n);
   }
 
   async function refund(id: string, name: string) {
@@ -562,16 +581,9 @@ export default function AdminClient({
                           <button
                             className="btn-mini ok"
                             disabled={busy}
-                            onClick={() => subscribe(b.id, "month1")}
+                            onClick={() => giftMonths(b.id, b.name)}
                           >
-                            <Icon name="add" size={15} /> 1 mois
-                          </button>
-                          <button
-                            className="btn-mini ok"
-                            disabled={busy}
-                            onClick={() => subscribe(b.id, "month6")}
-                          >
-                            <Icon name="add" size={15} /> 6 mois
+                            <Icon name="add" size={15} /> Offrir des mois…
                           </button>
                         </div>
                       </td>

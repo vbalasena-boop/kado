@@ -28,7 +28,7 @@ export async function POST(
   const admin = await getAdminUser();
   if (!admin) return Response.json({ error: "forbidden" }, { status: 403 });
 
-  let body: { action?: string };
+  let body: { action?: string; months?: number };
   try {
     body = await req.json();
   } catch {
@@ -51,15 +51,27 @@ export async function POST(
 
   let ends: Date;
   let subStatus: string;
+  let monthsGiven = 0;
   if (body.action === "trial") {
     ends = addDays(now, 14);
     subStatus = "trial";
   } else if (body.action === "month1") {
     ends = addMonths(base, 1);
     subStatus = "active";
+    monthsGiven = 1;
   } else if (body.action === "month6") {
     ends = addMonths(base, 6);
     subStatus = "active";
+    monthsGiven = 6;
+  } else if (body.action === "months") {
+    // nombre de mois libre (1 à 24)
+    const n = Math.round(Number(body.months));
+    if (!Number.isFinite(n) || n < 1 || n > 24) {
+      return Response.json({ error: "invalid_months" }, { status: 400 });
+    }
+    ends = addMonths(base, n);
+    subStatus = "active";
+    monthsGiven = n;
   } else {
     return Response.json({ error: "invalid_action" }, { status: 400 });
   }
@@ -78,9 +90,7 @@ export async function POST(
   const giftLabel =
     body.action === "trial"
       ? "14 jours d'essai offerts"
-      : body.action === "month6"
-      ? "6 mois offerts"
-      : "1 mois offert";
+      : `${monthsGiven} mois offert${monthsGiven > 1 ? "s" : ""}`;
   const endsFr = ends.toLocaleDateString("fr-FR", {
     day: "2-digit",
     month: "long",
