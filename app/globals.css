@@ -1581,6 +1581,23 @@ canvas#confetti {
 .v-audience-note b {
   color: var(--gold);
 }
+.v-audience-lead {
+  text-align: center;
+  color: var(--cream-dim);
+  font-size: 16px;
+  line-height: 1.6;
+  max-width: 52ch;
+  margin: -6px auto 24px;
+}
+.v-audience-lead b { color: var(--cream); }
+.v-hero-sectors {
+  color: var(--cream-dim);
+  font-size: 14.5px;
+  line-height: 1.5;
+  max-width: 40ch;
+  margin: -14px auto 24px;
+}
+.v-hero-sectors b { color: var(--gold); }
 
 /* ---- Vitrine v2 : atouts avec icônes ---- */
 .v-benefit {

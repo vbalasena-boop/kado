@@ -95,7 +95,7 @@ function LoyaltyCardMock() {
   return (
     <div className="lc-mock" aria-hidden="true">
       <div className="lc-mock-head">
-        <div className="lc-mock-brand">☕ Café Lumière</div>
+        <div className="lc-mock-brand">💇 Salon Éléonore</div>
         <div className="lc-mock-badge">
           {filled} / {goal}
         </div>
@@ -107,12 +107,12 @@ function LoyaltyCardMock() {
       <div className="lc-mock-grid">
         {Array.from({ length: goal }, (_, i) => (
           <span key={i} className={`lc-mock-stamp${i < filled ? " on" : ""}`}>
-            {i < filled ? "⭐" : i + 1}
+            {i < filled ? "💅" : i + 1}
           </span>
         ))}
       </div>
       <div className="lc-mock-reward">
-        🎁 <b>{goal} tampons</b> = un dessert offert
+        🎁 <b>{goal} visites</b> = un brushing offert
       </div>
     </div>
   );
@@ -261,6 +261,10 @@ export default function Home({
           Le jeu de roue de la fortune qui booste votre réputation Google et
           votre Instagram — sans effort, à chaque visite.
         </p>
+        <p className="v-hero-sectors">
+          Restaurant · Coiffeur · Boutique · Boulangerie · Salle de sport…{" "}
+          <b>Kado s'adapte à votre métier.</b>
+        </p>
         <div className="v-brands">
           <span className="v-brand"><GoogleGlyph /> Plus d'avis 5★</span>
           <span className="v-brand insta"><InstagramGlyph /> Plus d'abonnés</span>
@@ -336,7 +340,13 @@ export default function Home({
       </section>
 
       <section className="v-section">
-        <h2>Pour tous les commerces</h2>
+        <h2>Pensé pour tous les commerces</h2>
+        <p className="v-audience-lead">
+          Roue de la fortune ou carte de fidélité : Kado s'adapte à votre
+          activité, vos couleurs et vos récompenses. Peu importe votre métier,
+          l'objectif est le même — <b>plus d'avis, plus d'abonnés, plus de
+          clients qui reviennent</b>.
+        </p>
         <div className="v-audience">
           {AUDIENCE.map((a) => (
             <span className="v-chip" key={a}>{a}</span>
