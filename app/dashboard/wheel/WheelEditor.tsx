@@ -38,7 +38,15 @@ const SWATCHES = [
   "#f06292",
 ];
 
-const STAMP_EMOJIS = ["⭐", "☕", "🍕", "🧁", "💇", "💅", "🌸", "❤️", "🔥", "✨"];
+const STAMP_EMOJIS = [
+  "⭐", "☕", "🍕", "🍔", "🥐", "🧁", "🍰", "🍦",
+  "🍷", "🍺", "🍸", "💇", "💅", "🌸", "❤️", "🔥",
+  "✨", "🎯", "🏆", "👍",
+];
+const REWARD_EMOJIS = [
+  "🎁", "☕", "🍰", "🍕", "🍔", "🍦", "🥐", "🍷",
+  "🍺", "💐", "💇", "💅", "🎟️", "💶", "🏆", "❤️",
+];
 
 export default function WheelEditor({
   initialConfig,
@@ -233,6 +241,7 @@ export default function WheelEditor({
   const noChannel = showRoue && !igEnabled && !rvEnabled;
 
   const stampEmoji = config.loyalty_stamp_emoji || "⭐";
+  const rewardEmoji = config.loyalty_reward_emoji || "🎁";
   const goal = config.loyalty_goal ?? 10;
 
   return (
@@ -496,42 +505,58 @@ export default function WheelEditor({
                       }
                     />
                   </label>
-                  <label className="field">
+                  <label className="field" style={{ marginBottom: 6 }}>
                     <span>Emoji de la récompense</span>
-                    <input
-                      type="text"
-                      placeholder="🎁"
-                      maxLength={4}
-                      value={config.loyalty_reward_emoji ?? ""}
-                      onChange={(e) =>
-                        setConfig({
-                          ...config,
-                          loyalty_reward_emoji: e.target.value,
-                        })
-                      }
-                      style={{ maxWidth: 90 }}
-                    />
                   </label>
-
-                  <label className="field">
-                    <span>Emoji du tampon (affiché sur la carte client)</span>
-                  </label>
-                  <div className="stamp-picker">
-                    {STAMP_EMOJIS.map((e) => (
+                  <div className="emoji-picker">
+                    {REWARD_EMOJIS.map((e) => (
                       <button
                         type="button"
                         key={e}
-                        className={`stamp-opt${stampEmoji === e ? " on" : ""}`}
+                        className={`emoji-opt${rewardEmoji === e ? " on" : ""}`}
                         onClick={() =>
-                          setConfig({ ...config, loyalty_stamp_emoji: e })
+                          setConfig({ ...config, loyalty_reward_emoji: e })
                         }
+                        aria-label={`Emoji ${e}`}
                       >
                         {e}
                       </button>
                     ))}
                     <input
                       type="text"
-                      className="stamp-custom"
+                      className="emoji-custom"
+                      maxLength={4}
+                      value={rewardEmoji}
+                      onChange={(e) =>
+                        setConfig({
+                          ...config,
+                          loyalty_reward_emoji: e.target.value,
+                        })
+                      }
+                      placeholder="Autre"
+                    />
+                  </div>
+
+                  <label className="field" style={{ marginBottom: 6 }}>
+                    <span>Emoji du tampon (affiché sur la carte client)</span>
+                  </label>
+                  <div className="emoji-picker">
+                    {STAMP_EMOJIS.map((e) => (
+                      <button
+                        type="button"
+                        key={e}
+                        className={`emoji-opt${stampEmoji === e ? " on" : ""}`}
+                        onClick={() =>
+                          setConfig({ ...config, loyalty_stamp_emoji: e })
+                        }
+                        aria-label={`Emoji ${e}`}
+                      >
+                        {e}
+                      </button>
+                    ))}
+                    <input
+                      type="text"
+                      className="emoji-custom"
                       maxLength={4}
                       value={stampEmoji}
                       onChange={(e) =>
@@ -545,21 +570,32 @@ export default function WheelEditor({
                   </div>
 
                   <div className="fid-preview-box">
-                    <b>Aperçu de la carte</b>
-                    <div className="fid-preview-grid">
-                      {Array.from({ length: goal }, (_, i) => (
-                        <span
-                          key={i}
-                          className={`fid-preview-stamp${i < 3 ? " filled" : ""}`}
-                        >
-                          {i < 3 ? stampEmoji : (i + 1)}
-                        </span>
-                      ))}
+                    <div className="fid-preview-title">
+                      <Icon name="loyalty" size={16} /> Aperçu de la carte client
                     </div>
-                    <p className="muted">
-                      {goal} tampons = {config.loyalty_reward_emoji || "🎁"}{" "}
-                      {config.loyalty_reward || "une récompense offerte"}
-                    </p>
+                    <div className="fid-preview-card">
+                      <div className="fid-preview-head">
+                        <b>{config.loyalty_reward_emoji || "🎁"} Carte de fidélité</b>
+                        <small>3 / {goal}</small>
+                      </div>
+                      <div className="fid-preview-grid">
+                        {Array.from({ length: goal }, (_, i) => (
+                          <span
+                            key={i}
+                            className={`fid-preview-stamp${i < 3 ? " filled" : ""}`}
+                          >
+                            {i < 3 ? stampEmoji : i + 1}
+                          </span>
+                        ))}
+                      </div>
+                      <div className="fid-preview-goal">
+                        {goal} tampons ={" "}
+                        <b>
+                          {config.loyalty_reward_emoji || "🎁"}{" "}
+                          {config.loyalty_reward || "une récompense offerte"}
+                        </b>
+                      </div>
+                    </div>
                   </div>
                 </>
               )}
