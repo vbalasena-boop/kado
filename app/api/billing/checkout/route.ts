@@ -12,6 +12,12 @@ const PRICE_MAP: Record<string, string | undefined> = {
   complet: process.env.STRIPE_PRICE_COMPLET,
 };
 
+// Option « Installation clé en main » (paiement unique sur la 1re facture)
+const SETUP_MAP: Record<string, string | undefined> = {
+  remote: process.env.STRIPE_PRICE_SETUP_REMOTE,
+  onsite: process.env.STRIPE_PRICE_SETUP_ONSITE,
+};
+
 function resolvePriceId(plan: string): string | null {
   return PRICE_MAP[plan] || process.env.STRIPE_PRICE_ID || null;
 }
@@ -23,7 +29,7 @@ export async function POST(req: NextRequest) {
   }
   const biz = business;
 
-  let body: { plan?: string } = {};
+  let body: { plan?: string; setup?: string } = {};
   try {
     body = await req.json();
   } catch {
@@ -37,6 +43,18 @@ export async function POST(req: NextRequest) {
   const priceId = resolvePriceId(plan);
   if (!priceId) {
     return Response.json({ error: "no_price_configured" }, { status: 500 });
+  }
+
+  // Option installation : refuse plutôt que d'ignorer silencieusement
+  // (sinon le client croirait l'avoir achetée sans être facturé).
+  const setup =
+    body.setup === "remote" || body.setup === "onsite" ? body.setup : null;
+  const setupPriceId = setup ? SETUP_MAP[setup] : null;
+  if (setup && !setupPriceId) {
+    return Response.json(
+      { error: "setup_not_configured" },
+      { status: 500 }
+    );
   }
 
   const user = await getSessionUser();
@@ -71,13 +89,18 @@ export async function POST(req: NextRequest) {
 
     await db.from("businesses").update({ plan }).eq("id", biz.id);
 
+    const lineItems: { price: string; quantity: number }[] = [
+      { price: priceId, quantity: 1 },
+    ];
+    if (setupPriceId) lineItems.push({ price: setupPriceId, quantity: 1 });
+
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer: customerId,
-      line_items: [{ price: priceId, quantity: 1 }],
+      line_items: lineItems,
       success_url: `${origin}/dashboard/billing?success=1`,
       cancel_url: `${origin}/dashboard/billing`,
-      metadata: { business_id: biz.id, plan },
+      metadata: { business_id: biz.id, plan, ...(setup ? { setup } : {}) },
       subscription_data: { metadata: { business_id: biz.id, plan } },
       allow_promotion_codes: true,
     });

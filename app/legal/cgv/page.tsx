@@ -45,6 +45,15 @@ export default function CGV() {
         Le client choisit sa formule à la souscription et peut en changer à tout
         moment depuis son espace.
       </p>
+      <p>
+        Une prestation optionnelle d'<b>installation clé en main</b> est
+        proposée au moment de la souscription&nbsp;: configuration complète de
+        l'espace par le vendeur, à distance (<b>79&nbsp;€</b>) ou sur place
+        (<b>129&nbsp;€</b>, incluant la pose de l'affiche et une courte
+        formation de l'équipe). Cette prestation est facturée en une seule fois,
+        avec le premier paiement, et réalisée sous 72&nbsp;h ouvrées après prise
+        de contact.
+      </p>
 
       <h2>3. Prix</h2>
       <p>

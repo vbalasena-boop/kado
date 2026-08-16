@@ -65,6 +65,7 @@ export default function BillingClient({
 }) {
   const [loading, setLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(currentPlan);
+  const [setupOpt, setSetupOpt] = useState<"none" | "remote" | "onsite">("none");
   const [changingPlan, setChangingPlan] = useState(false);
   const [planMsg, setPlanMsg] = useState<string | null>(null);
   const [confirm, setConfirm] = useState("");
@@ -85,6 +86,8 @@ export default function BillingClient({
         alert(
           d.error === "no_price_configured"
             ? "Abonnement non configuré (tarif Stripe manquant)."
+            : d.error === "setup_not_configured"
+            ? "Option installation non configurée (tarif Stripe manquant)."
             : d.detail
             ? `Erreur Stripe : ${d.detail}`
             : "Action indisponible."
@@ -190,13 +193,59 @@ export default function BillingClient({
             {loading ? "…" : "Gérer mon abonnement"}
           </button>
         ) : (
-          <button
-            className="btn"
-            onClick={() => go("/api/billing/checkout", { plan: selectedPlan })}
-            disabled={loading}
-          >
-            {loading ? "…" : "S'abonner"}
-          </button>
+          <>
+            <div className="setup-addon">
+              <b>🛠️ Installation clé en main <span className="setup-addon-tag">option</span></b>
+              <p className="muted">
+                On configure tout pour vous : roue à vos couleurs, cadeaux
+                adaptés à votre métier, liens Google &amp; Instagram, carte de
+                fidélité et affiche prête à imprimer. Réglée une seule fois,
+                avec votre premier paiement.
+              </p>
+              <div className="setup-addon-opts">
+                <button
+                  type="button"
+                  className={`addon-chip${setupOpt === "none" ? " on" : ""}`}
+                  onClick={() => setSetupOpt("none")}
+                >
+                  <b>Non merci</b>
+                  <span>je configure moi-même</span>
+                </button>
+                <button
+                  type="button"
+                  className={`addon-chip${setupOpt === "remote" ? " on" : ""}`}
+                  onClick={() => setSetupOpt("remote")}
+                >
+                  <b>À distance · 79 €</b>
+                  <span>config complète + affiche PDF</span>
+                </button>
+                <button
+                  type="button"
+                  className={`addon-chip${setupOpt === "onsite" ? " on" : ""}`}
+                  onClick={() => setSetupOpt("onsite")}
+                >
+                  <b>Sur place · 129 €</b>
+                  <span>+ pose de l'affiche &amp; formation</span>
+                </button>
+              </div>
+            </div>
+            <button
+              className="btn"
+              onClick={() =>
+                go("/api/billing/checkout", {
+                  plan: selectedPlan,
+                  ...(setupOpt !== "none" ? { setup: setupOpt } : {}),
+                })
+              }
+              disabled={loading}
+            >
+              {loading
+                ? "…"
+                : setupOpt === "none"
+                ? "S'abonner"
+                : `S'abonner + installation (${setupOpt === "remote" ? "79" : "129"} €)`}
+            </button>
+          </>
         )}
         {hasSubscription && (
           <p className="muted" style={{ marginTop: 12, fontSize: ".9rem" }}>

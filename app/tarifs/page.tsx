@@ -163,6 +163,38 @@ export default function Tarifs() {
       </section>
 
       <section className="v-section">
+        <div className="v-setup">
+          <h3>🛠️ Pas le temps de configurer ? On s'occupe de tout.</h3>
+          <p>
+            Avec l'option <b>Installation clé en main</b>, on paramètre votre
+            espace de A à Z : roue à vos couleurs, cadeaux adaptés à votre
+            métier, liens Google &amp; Instagram, carte de fidélité et affiche
+            QR prête à poser. À régler une seule fois, au moment de votre
+            abonnement.
+          </p>
+          <div className="v-setup-opts">
+            <div className="v-setup-opt">
+              <b>À distance — 79 €</b>
+              <small>
+                Configuration complète de votre espace + affiche PDF à imprimer.
+                Prêt sous 24 h ouvrées.
+              </small>
+            </div>
+            <div className="v-setup-opt">
+              <b>Sur place — 129 €</b>
+              <small>
+                Tout ça + on vient poser l'affiche et former votre équipe
+                (15 min). Vous n'avez rien à faire.
+              </small>
+            </div>
+          </div>
+          <p className="v-setup-note">
+            Option proposée au moment de l'abonnement, dans votre espace.
+          </p>
+        </div>
+      </section>
+
+      <section className="v-section">
         <h2>Ce que ça vous rapporte</h2>
         <div className="v-benefits">
           {VALUE.map((v) => (

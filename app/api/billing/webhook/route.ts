@@ -94,6 +94,62 @@ export async function POST(req: NextRequest) {
           }
           await applySubscription(sub);
         }
+
+        // Option « Installation clé en main » achetée avec l'abonnement
+        const setup = session.metadata?.setup;
+        const businessId = session.metadata?.business_id;
+        if ((setup === "remote" || setup === "onsite") && businessId) {
+          const db = getAdminClient();
+          await db
+            .from("businesses")
+            .update({
+              setup_option: setup,
+              setup_paid_at: new Date().toISOString(),
+            })
+            .eq("id", businessId);
+
+          const label =
+            setup === "onsite"
+              ? "Installation sur place (129 €)"
+              : "Installation à distance (79 €)";
+          const { email, businessName } = await getOwnerContact(db, businessId);
+
+          if (email) {
+            await sendEmail({
+              to: email,
+              subject: "Votre installation clé en main est réservée",
+              html: emailLayout({
+                preview: "Nous configurons Kado pour vous.",
+                heading: "Installation clé en main réservée !",
+                emoji: "🛠️",
+                bodyHtml: `Bonjour,<br><br>Merci pour votre confiance ! Votre option <b>${label}</b>${
+                  businessName ? ` pour <b>${businessName}</b>` : ""
+                } est bien enregistrée.<br><br>Nous vous contactons <b>sous 24&nbsp;h ouvrées</b> pour organiser la configuration complète de votre espace (roue, cadeaux, liens, affiche${
+                  setup === "onsite" ? ", venue sur place et formation de l'équipe" : ""
+                }). Vous n'avez rien à préparer.`,
+                footnote: "Une question ? Répondez simplement à cet e-mail.",
+              }),
+            });
+          }
+
+          const adminEmail = (process.env.ADMIN_EMAILS || "")
+            .split(",")[0]
+            ?.trim();
+          if (adminEmail) {
+            await sendEmail({
+              to: adminEmail,
+              subject: `Nouvelle installation à réaliser — ${businessName ?? businessId}`,
+              html: emailLayout({
+                preview: "Un client a acheté l'installation clé en main.",
+                heading: "Nouvelle installation vendue !",
+                emoji: "🛠️",
+                bodyHtml: `Client : <b>${businessName ?? businessId}</b><br>Option : <b>${label}</b><br>Contact : <b>${
+                  email ?? "e-mail introuvable"
+                }</b><br><br>À contacter sous 24 h ouvrées.`,
+              }),
+            });
+          }
+        }
         break;
       }
       case "customer.subscription.created":
