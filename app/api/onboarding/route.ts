@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     .maybeSingle();
   if (existing) return Response.json({ ok: true, slug: existing.slug });
 
-  let body: { name?: string; category?: string };
+  let body: { name?: string; category?: string; plan?: string };
   try {
     body = await req.json();
   } catch {
@@ -32,6 +32,9 @@ export async function POST(req: NextRequest) {
   }
   const name = (body.name || "").trim();
   if (!name) return Response.json({ error: "name_required" }, { status: 400 });
+  const plan = ["roue", "fidelite", "complet"].includes(body.plan ?? "")
+    ? body.plan!
+    : "roue";
 
   // slug unique
   const base = slugify(name);
@@ -53,6 +56,7 @@ export async function POST(req: NextRequest) {
     .insert({
       slug,
       name,
+      plan,
       status: "active",
       subscription_status: "trial",
       subscription_ends_at: trialEnds,
@@ -69,6 +73,7 @@ export async function POST(req: NextRequest) {
     business_id: biz.id,
     primary_color: "#ffc24d",
     compliance_note: "Le cadeau n'est pas conditionné à la note laissée.",
+    loyalty_enabled: plan === "fidelite" || plan === "complet",
   });
   const prizes = prizesForCategory(body.category);
   await db.from("prizes").insert(

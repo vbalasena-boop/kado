@@ -12,7 +12,19 @@ export type Business = {
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
   owner_user_id: string | null;
+  plan: string;
 };
+
+export type Plan = "roue" | "fidelite" | "complet";
+
+export function hasModule(
+  b: { plan: string; subscription_status: string },
+  module: "roue" | "fidelite"
+): boolean {
+  if (b.subscription_status === "trial") return true;
+  if (b.plan === "complet") return true;
+  return b.plan === module;
+}
 
 /**
  * L'établissement a-t-il accès (page de jeu + espace) ?
@@ -51,7 +63,7 @@ export async function getMyBusiness(): Promise<{
   const { data } = await admin
     .from("businesses")
     .select(
-      "id, slug, name, logo_url, status, subscription_status, subscription_ends_at, stripe_customer_id, stripe_subscription_id, owner_user_id"
+      "id, slug, name, logo_url, status, subscription_status, subscription_ends_at, stripe_customer_id, stripe_subscription_id, owner_user_id, plan"
     )
     .eq("owner_user_id", user.id)
     .maybeSingle();

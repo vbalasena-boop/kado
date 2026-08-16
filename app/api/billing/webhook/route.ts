@@ -18,12 +18,16 @@ async function applySubscription(sub: Stripe.Subscription) {
     ? new Date((sub as any).current_period_end * 1000).toISOString()
     : null;
 
-  const patch = {
+  const plan = sub.metadata?.plan;
+  const patch: Record<string, unknown> = {
     stripe_subscription_id: sub.id,
     subscription_status: active ? "active" : "suspended",
     status: active ? "active" : "suspended",
     subscription_ends_at: endsAt,
   };
+  if (plan && ["roue", "fidelite", "complet"].includes(plan)) {
+    patch.plan = plan;
+  }
 
   const query = db.from("businesses").update(patch);
   if (businessId) await query.eq("id", businessId);

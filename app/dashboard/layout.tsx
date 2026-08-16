@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getMyBusiness } from "@/lib/auth";
+import { getMyBusiness, hasModule } from "@/lib/auth";
 import { isAdminEmail } from "@/lib/admin-guard";
 import { Icon } from "@/components/icons";
 import { KadoMark } from "@/components/Logo";
@@ -71,27 +71,47 @@ export default async function DashboardLayout({
             <Link href="/dashboard">
               <Icon name="dashboard" /> Vue d'ensemble
             </Link>
-            <Link href="/dashboard/wheel">
-              <Icon name="wheel" /> Ma roue
-            </Link>
-            <Link href="/dashboard/qr">
-              <Icon name="qr" /> QR code
-            </Link>
+            {hasModule(business, "roue") && (
+              <Link href="/dashboard/wheel">
+                <Icon name="wheel" /> Ma roue
+              </Link>
+            )}
+            {hasModule(business, "fidelite") && !hasModule(business, "roue") && (
+              <Link href="/dashboard/wheel">
+                <Icon name="wheel" /> Fidélité
+              </Link>
+            )}
+            {hasModule(business, "roue") && (
+              <Link href="/dashboard/qr">
+                <Icon name="qr" /> QR code
+              </Link>
+            )}
             <Link href="/dashboard/validate">
-              <Icon name="redeem" /> Valider un cadeau
+              <Icon name="redeem" /> Valider en caisse
             </Link>
-            <Link href="/dashboard/leads">
-              <Icon name="mail" /> Clients
-            </Link>
+            {hasModule(business, "roue") && (
+              <Link href="/dashboard/leads">
+                <Icon name="mail" /> Clients
+              </Link>
+            )}
             <Link href="/dashboard/billing">
               <Icon name="card" /> Abonnement
             </Link>
-            <Link href={`/${business.slug}?preview=1`} target="_blank">
-              <Icon name="test" /> Tester ma roue
-            </Link>
-            <Link href={`/${business.slug}`} target="_blank">
-              <Icon name="external" /> Voir ma page
-            </Link>
+            {hasModule(business, "roue") && (
+              <>
+                <Link href={`/${business.slug}?preview=1`} target="_blank">
+                  <Icon name="test" /> Tester ma roue
+                </Link>
+                <Link href={`/${business.slug}`} target="_blank">
+                  <Icon name="external" /> Voir ma page
+                </Link>
+              </>
+            )}
+            {hasModule(business, "fidelite") && (
+              <Link href={`/${business.slug}/fidelite`} target="_blank">
+                <Icon name="external" /> Carte fidélité
+              </Link>
+            )}
           </nav>
           <main className="dash-main">{children}</main>
         </>

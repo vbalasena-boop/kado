@@ -37,7 +37,7 @@ export default async function FidelitePage({
 
   const { data: cfg } = await db
     .from("wheel_configs")
-    .select("loyalty_enabled, loyalty_goal, loyalty_reward, loyalty_reward_emoji")
+    .select("loyalty_enabled, loyalty_goal, loyalty_reward, loyalty_reward_emoji, loyalty_stamp_emoji")
     .eq("business_id", biz.id)
     .maybeSingle();
 
@@ -55,6 +55,7 @@ export default async function FidelitePage({
       goal={cfg.loyalty_goal}
       reward={cfg.loyalty_reward}
       rewardEmoji={cfg.loyalty_reward_emoji}
+      stampEmoji={cfg.loyalty_stamp_emoji || "⭐"}
     />
   );
 }

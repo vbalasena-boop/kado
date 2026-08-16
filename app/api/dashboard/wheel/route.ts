@@ -25,6 +25,7 @@ export async function POST(req: NextRequest) {
       loyalty_goal?: number;
       loyalty_reward?: string;
       loyalty_reward_emoji?: string;
+      loyalty_stamp_emoji?: string;
     };
     prizes?: {
       label: string;
@@ -75,6 +76,7 @@ export async function POST(req: NextRequest) {
         (cfg.loyalty_reward || "").trim().slice(0, 60) ||
         "Une récompense offerte",
       loyalty_reward_emoji: (cfg.loyalty_reward_emoji || "🎁").slice(0, 8),
+      loyalty_stamp_emoji: (cfg.loyalty_stamp_emoji || "⭐").slice(0, 8),
     },
     { onConflict: "business_id" }
   );

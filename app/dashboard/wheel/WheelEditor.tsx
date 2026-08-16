@@ -21,6 +21,7 @@ type Config = {
   loyalty_goal?: number | null;
   loyalty_reward?: string | null;
   loyalty_reward_emoji?: string | null;
+  loyalty_stamp_emoji?: string | null;
 };
 
 const FONT =
@@ -36,16 +37,22 @@ const SWATCHES = [
   "#f06292",
 ];
 
+const STAMP_EMOJIS = ["⭐", "☕", "🍕", "🧁", "💇", "💅", "🌸", "❤️", "🔥", "✨"];
+
 export default function WheelEditor({
   initialConfig,
   initialPrizes,
   initialLogoUrl,
   initialBgUrl,
+  showRoue = true,
+  showFidelite = true,
 }: {
   initialConfig: Config;
   initialPrizes: Prize[];
   initialLogoUrl?: string | null;
   initialBgUrl?: string | null;
+  showRoue?: boolean;
+  showFidelite?: boolean;
 }) {
   const [config, setConfig] = useState<Config>(initialConfig);
   const [prizes, setPrizes] = useState<Prize[]>(
@@ -76,12 +83,12 @@ export default function WheelEditor({
       const d = await res.json().catch(() => ({}));
       if (res.ok && d.logo_url) {
         setLogoUrl(d.logo_url);
-        setMsg("✅ Logo mis à jour !");
+        setMsg("Logo mis à jour !");
       } else {
-        setMsg("❌ " + (d.error || "Échec de l'envoi du logo."));
+        setMsg("Échec de l'envoi du logo.");
       }
     } catch {
-      setMsg("❌ Connexion impossible.");
+      setMsg("Connexion impossible.");
     } finally {
       setUploading(false);
     }
@@ -102,12 +109,12 @@ export default function WheelEditor({
       const d = await res.json().catch(() => ({}));
       if (res.ok && d.bg_image_url) {
         setBgUrl(d.bg_image_url);
-        setMsg("✅ Image de fond mise à jour !");
+        setMsg("Image de fond mise à jour !");
       } else {
-        setMsg("❌ " + (d.error || "Échec de l'envoi de l'image."));
+        setMsg("Échec de l'envoi de l'image.");
       }
     } catch {
-      setMsg("❌ Connexion impossible.");
+      setMsg("Connexion impossible.");
     } finally {
       setUploadingBg(false);
     }
@@ -118,14 +125,14 @@ export default function WheelEditor({
     try {
       await fetch("/api/dashboard/background", { method: "DELETE" });
       setBgUrl(null);
-      setMsg("✅ Image de fond retirée.");
+      setMsg("Image de fond retirée.");
     } finally {
       setUploadingBg(false);
     }
   }
 
-  // Aperçu live de la roue
   useEffect(() => {
+    if (!showRoue) return;
     const cv = canvasRef.current;
     if (!cv || prizes.length === 0) return;
     const ctx = cv.getContext("2d");
@@ -155,7 +162,6 @@ export default function WheelEditor({
       ctx.fillText(p.emoji || "🎁", R - 22, 8);
       ctx.restore();
     });
-    // petites lumières sur le pourtour
     for (let i = 0; i < prizes.length; i++) {
       const a = i * seg;
       const x = Math.cos(a) * (R - 12);
@@ -166,7 +172,6 @@ export default function WheelEditor({
       ctx.fill();
     }
     ctx.restore();
-    // brillance vernie
     const gloss = ctx.createRadialGradient(R, R * 0.72, R * 0.1, R, R, R);
     gloss.addColorStop(0, "rgba(255,255,255,0.18)");
     gloss.addColorStop(0.55, "rgba(255,255,255,0.04)");
@@ -175,7 +180,7 @@ export default function WheelEditor({
     ctx.arc(R, R, R - 4, 0, Math.PI * 2);
     ctx.fillStyle = gloss;
     ctx.fill();
-  }, [prizes]);
+  }, [prizes, showRoue]);
 
   function update(i: number, patch: Partial<Prize>) {
     setPrizes((ps) => ps.map((p, j) => (j === i ? { ...p, ...patch } : p)));
@@ -199,13 +204,13 @@ export default function WheelEditor({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ config, prizes }),
       });
-      if (res.ok) setMsg("✅ Enregistré !");
+      if (res.ok) setMsg("Enregistré !");
       else {
         const d = await res.json().catch(() => ({}));
-        setMsg("❌ " + (d.error || "Échec de l'enregistrement."));
+        setMsg(d.error || "Échec de l'enregistrement.");
       }
     } catch {
-      setMsg("❌ Connexion impossible.");
+      setMsg("Connexion impossible.");
     } finally {
       setSaving(false);
     }
@@ -214,333 +219,389 @@ export default function WheelEditor({
   const totalWeight = prizes.reduce((s, p) => s + Math.max(0, Number(p.weight) || 0), 0);
   const igEnabled = config.instagram_enabled !== false;
   const rvEnabled = config.review_enabled !== false;
-  const noChannel = !igEnabled && !rvEnabled;
+  const noChannel = showRoue && !igEnabled && !rvEnabled;
+
+  const stampEmoji = config.loyalty_stamp_emoji || "⭐";
+  const goal = config.loyalty_goal ?? 10;
 
   return (
     <>
-      <h1 className="dash-h1">Ma roue</h1>
+      <h1 className="dash-h1">{showRoue ? "Ma roue" : "Ma fidélité"}</h1>
       <p className="dash-sub">
-        Configurez vos cadeaux, vos liens et vos couleurs. L'aperçu se met à jour
-        en direct.
+        {showRoue
+          ? "Configurez vos cadeaux, vos liens et vos couleurs. L'aperçu se met à jour en direct."
+          : "Configurez votre carte de fidélité : récompense, nombre de tampons, emoji."}
       </p>
 
       <div className="editor">
         <div className="editor-form">
-          <div className="dash-card">
-            <h2>Logo</h2>
-            <div className="logo-row">
-              <div className="logo-preview">
-                {logoUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={logoUrl} alt="Logo" />
-                ) : (
-                  <span>Aucun logo</span>
-                )}
-              </div>
-              <label className="btn-secondary logo-btn">
-                {uploading ? "Envoi…" : logoUrl ? "Changer le logo" : "Ajouter un logo"}
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={uploadLogo}
-                  disabled={uploading}
-                  hidden
-                />
-              </label>
-            </div>
-            <p className="muted">PNG ou JPG, 3 Mo max. Il s'affiche sur ta page de jeu.</p>
-          </div>
-
-          <div className="dash-card">
-            <h2>Image de fond</h2>
-            <div className="logo-row">
-              <div className="bg-preview">
-                {bgUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={bgUrl} alt="Fond" />
-                ) : (
-                  <span>Aucune image</span>
-                )}
-              </div>
-              <div className="bg-actions">
-                <label className="btn-secondary logo-btn">
-                  {uploadingBg ? "Envoi…" : bgUrl ? "Changer l'image" : "Ajouter une image"}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={uploadBackground}
-                    disabled={uploadingBg}
-                    hidden
-                  />
-                </label>
-                {bgUrl && (
-                  <button
-                    type="button"
-                    className="btn-mini danger"
-                    onClick={removeBackground}
-                    disabled={uploadingBg}
-                  >
-                    Retirer
-                  </button>
-                )}
-              </div>
-            </div>
-            <p className="muted">
-              Une photo de ton commerce ou de tes plats (JPG/PNG, 6 Mo max). Un
-              voile sombre est ajouté pour garder le texte lisible.
-            </p>
-          </div>
-
-          <div className="dash-card">
-            <h2>Canaux &amp; liens</h2>
-            <p className="muted" style={{ marginBottom: 14 }}>
-              Choisissez ce que vous proposez à vos clients : Instagram, les avis
-              Google, ou les deux. Chaque canal activé donne <b>un tour de roue</b>.
-            </p>
-
-            {igEnabled && !rvEnabled && (
-              <p className="muted" style={{ marginBottom: 14 }}>
-                🎯 Vos clients auront <b>1 tour</b> (Instagram uniquement).
-              </p>
-            )}
-            {rvEnabled && !igEnabled && (
-              <p className="muted" style={{ marginBottom: 14 }}>
-                🎯 Vos clients auront <b>1 tour</b> (avis Google uniquement).
-              </p>
-            )}
-
-            <label className="toggle-field">
-              <input
-                type="checkbox"
-                checked={igEnabled}
-                onChange={(e) =>
-                  setConfig({ ...config, instagram_enabled: e.target.checked })
-                }
-              />
-              <span>
-                <b>Proposer le tour Instagram</b> — un suivi de votre compte contre
-                un tour de roue.
-              </span>
-            </label>
-            {igEnabled && (
-              <label className="field">
-                <span>Lien Instagram</span>
-                <input
-                  type="url"
-                  placeholder="https://instagram.com/mon-compte"
-                  value={config.instagram_url ?? ""}
-                  onChange={(e) =>
-                    setConfig({ ...config, instagram_url: e.target.value })
-                  }
-                />
-              </label>
-            )}
-
-            <label className="toggle-field" style={{ marginTop: 6 }}>
-              <input
-                type="checkbox"
-                checked={rvEnabled}
-                onChange={(e) =>
-                  setConfig({ ...config, review_enabled: e.target.checked })
-                }
-              />
-              <span>
-                <b>Proposer le tour Avis Google</b> — un avis contre un tour de
-                roue.
-              </span>
-            </label>
-            {rvEnabled && (
-              <label className="field">
-                <span>Lien d'avis Google</span>
-                <input
-                  type="url"
-                  placeholder="https://g.page/r/..."
-                  value={config.review_url ?? ""}
-                  onChange={(e) =>
-                    setConfig({ ...config, review_url: e.target.value })
-                  }
-                />
-              </label>
-            )}
-
-            {!igEnabled && !rvEnabled && (
-              <p className="onboarding-err" style={{ marginTop: 4 }}>
-                ⚠️ Activez au moins un canal, sinon vos clients n'auront aucun tour.
-              </p>
-            )}
-
-            <label className="field">
-              <span>Mention légale (conformité)</span>
-              <input
-                type="text"
-                value={config.compliance_note ?? ""}
-                onChange={(e) =>
-                  setConfig({ ...config, compliance_note: e.target.value })
-                }
-              />
-            </label>
-            <label className="toggle-field">
-              <input
-                type="checkbox"
-                checked={!!config.collect_email}
-                onChange={(e) =>
-                  setConfig({ ...config, collect_email: e.target.checked })
-                }
-              />
-              <span>
-                <b>Collecter les e-mails des gagnants</b> (facultatif, avec
-                consentement) — pour te constituer une base clients.
-              </span>
-            </label>
-          </div>
-
-          <div className="dash-card">
-            <h2>Carte de fidélité 🎟️</h2>
-            <p className="muted" style={{ marginBottom: 14 }}>
-              Une carte à tampons digitale, sans appli : vos clients cumulent des
-              tampons à chaque passage et gagnent une récompense. Vous validez
-              chaque tampon en caisse (onglet « Valider un cadeau »).
-            </p>
-            <label className="toggle-field">
-              <input
-                type="checkbox"
-                checked={!!config.loyalty_enabled}
-                onChange={(e) =>
-                  setConfig({ ...config, loyalty_enabled: e.target.checked })
-                }
-              />
-              <span>
-                <b>Activer la carte de fidélité</b> — un lien « Ma carte » sera
-                proposé à vos clients.
-              </span>
-            </label>
-
-            {config.loyalty_enabled && (
-              <>
-                <label className="field">
-                  <span>Nombre de tampons pour gagner (2 à 30)</span>
-                  <input
-                    type="number"
-                    min={2}
-                    max={30}
-                    value={config.loyalty_goal ?? 10}
-                    onChange={(e) =>
-                      setConfig({
-                        ...config,
-                        loyalty_goal: Number(e.target.value),
-                      })
-                    }
-                  />
-                </label>
-                <label className="field">
-                  <span>Récompense à la carte complète</span>
-                  <input
-                    type="text"
-                    placeholder="Ex. Une boisson offerte"
-                    value={config.loyalty_reward ?? ""}
-                    onChange={(e) =>
-                      setConfig({ ...config, loyalty_reward: e.target.value })
-                    }
-                  />
-                </label>
-                <label className="field">
-                  <span>Emoji de la récompense</span>
-                  <input
-                    type="text"
-                    placeholder="🎁"
-                    maxLength={4}
-                    value={config.loyalty_reward_emoji ?? ""}
-                    onChange={(e) =>
-                      setConfig({
-                        ...config,
-                        loyalty_reward_emoji: e.target.value,
-                      })
-                    }
-                    style={{ maxWidth: 90 }}
-                  />
-                </label>
-                <p className="muted">
-                  Exemple : « {config.loyalty_goal ?? 10} tampons ={" "}
-                  {config.loyalty_reward_emoji || "🎁"}{" "}
-                  {config.loyalty_reward || "une récompense offerte"} ».
-                </p>
-              </>
-            )}
-          </div>
-
-          <div className="dash-card">
-            <h2>Cadeaux</h2>
-            <p className="muted">
-              Le « poids » définit la probabilité relative (total actuel :{" "}
-              {totalWeight}). Un lot « Rien… » gère les cas sans gain.
-            </p>
-            <label className="field">
-              <span>Nombre de cadeaux max par jour (vide = illimité)</span>
-              <input
-                type="number"
-                min={0}
-                placeholder="illimité"
-                value={config.daily_prize_limit ?? ""}
-                onChange={(e) =>
-                  setConfig({
-                    ...config,
-                    daily_prize_limit:
-                      e.target.value === "" ? null : Number(e.target.value),
-                  })
-                }
-              />
-            </label>
-            <p className="muted" style={{ marginBottom: 12 }}>
-              Une fois ce nombre de cadeaux atteint dans la journée, la roue ne
-              donne plus que « Rien » (nécessite un lot « Rien… » dans la liste).
-            </p>
-            <div className="prize-list">
-              {prizes.map((p, i) => (
-                <div className="prize-row" key={i}>
-                  <input
-                    className="p-emoji"
-                    value={p.emoji}
-                    onChange={(e) => update(i, { emoji: e.target.value })}
-                    aria-label="Emoji"
-                  />
-                  <input
-                    className="p-label"
-                    value={p.label}
-                    onChange={(e) => update(i, { label: e.target.value })}
-                    aria-label="Nom du lot"
-                  />
-                  <input
-                    className="p-weight"
-                    type="number"
-                    min={0}
-                    value={p.weight}
-                    onChange={(e) =>
-                      update(i, { weight: Number(e.target.value) })
-                    }
-                    aria-label="Poids"
-                  />
-                  <input
-                    className="p-color"
-                    type="color"
-                    value={p.color}
-                    onChange={(e) => update(i, { color: e.target.value })}
-                    aria-label="Couleur"
-                  />
-                  <button
-                    className="p-del"
-                    onClick={() => removePrize(i)}
-                    aria-label="Supprimer"
-                    disabled={prizes.length <= 1}
-                  >
-                    ✕
-                  </button>
+          {showRoue && (
+            <>
+              <div className="dash-card">
+                <h2>Logo</h2>
+                <div className="logo-row">
+                  <div className="logo-preview">
+                    {logoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={logoUrl} alt="Logo" />
+                    ) : (
+                      <span>Aucun logo</span>
+                    )}
+                  </div>
+                  <label className="btn-secondary logo-btn">
+                    {uploading ? "Envoi…" : logoUrl ? "Changer le logo" : "Ajouter un logo"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={uploadLogo}
+                      disabled={uploading}
+                      hidden
+                    />
+                  </label>
                 </div>
-              ))}
+                <p className="muted">PNG ou JPG, 3 Mo max. Il s'affiche sur ta page de jeu.</p>
+              </div>
+
+              <div className="dash-card">
+                <h2>Image de fond</h2>
+                <div className="logo-row">
+                  <div className="bg-preview">
+                    {bgUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={bgUrl} alt="Fond" />
+                    ) : (
+                      <span>Aucune image</span>
+                    )}
+                  </div>
+                  <div className="bg-actions">
+                    <label className="btn-secondary logo-btn">
+                      {uploadingBg ? "Envoi…" : bgUrl ? "Changer l'image" : "Ajouter une image"}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={uploadBackground}
+                        disabled={uploadingBg}
+                        hidden
+                      />
+                    </label>
+                    {bgUrl && (
+                      <button
+                        type="button"
+                        className="btn-mini danger"
+                        onClick={removeBackground}
+                        disabled={uploadingBg}
+                      >
+                        Retirer
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <p className="muted">
+                  Une photo de ton commerce ou de tes plats (JPG/PNG, 6 Mo max). Un
+                  voile sombre est ajouté pour garder le texte lisible.
+                </p>
+              </div>
+
+              <div className="dash-card">
+                <h2>Canaux &amp; liens</h2>
+                <p className="muted" style={{ marginBottom: 14 }}>
+                  Choisissez ce que vous proposez à vos clients : Instagram, les avis
+                  Google, ou les deux. Chaque canal activé donne <b>un tour de roue</b>.
+                </p>
+
+                {igEnabled && !rvEnabled && (
+                  <p className="muted" style={{ marginBottom: 14 }}>
+                    Vos clients auront <b>1 tour</b> (Instagram uniquement).
+                  </p>
+                )}
+                {rvEnabled && !igEnabled && (
+                  <p className="muted" style={{ marginBottom: 14 }}>
+                    Vos clients auront <b>1 tour</b> (avis Google uniquement).
+                  </p>
+                )}
+
+                <label className="toggle-field">
+                  <input
+                    type="checkbox"
+                    checked={igEnabled}
+                    onChange={(e) =>
+                      setConfig({ ...config, instagram_enabled: e.target.checked })
+                    }
+                  />
+                  <span>
+                    <b>Proposer le tour Instagram</b> — un suivi de votre compte contre
+                    un tour de roue.
+                  </span>
+                </label>
+                {igEnabled && (
+                  <label className="field">
+                    <span>Lien Instagram</span>
+                    <input
+                      type="url"
+                      placeholder="https://instagram.com/mon-compte"
+                      value={config.instagram_url ?? ""}
+                      onChange={(e) =>
+                        setConfig({ ...config, instagram_url: e.target.value })
+                      }
+                    />
+                  </label>
+                )}
+
+                <label className="toggle-field" style={{ marginTop: 6 }}>
+                  <input
+                    type="checkbox"
+                    checked={rvEnabled}
+                    onChange={(e) =>
+                      setConfig({ ...config, review_enabled: e.target.checked })
+                    }
+                  />
+                  <span>
+                    <b>Proposer le tour Avis Google</b> — un avis contre un tour de
+                    roue.
+                  </span>
+                </label>
+                {rvEnabled && (
+                  <label className="field">
+                    <span>Lien d'avis Google</span>
+                    <input
+                      type="url"
+                      placeholder="https://g.page/r/..."
+                      value={config.review_url ?? ""}
+                      onChange={(e) =>
+                        setConfig({ ...config, review_url: e.target.value })
+                      }
+                    />
+                  </label>
+                )}
+
+                {!igEnabled && !rvEnabled && (
+                  <p className="onboarding-err" style={{ marginTop: 4 }}>
+                    Activez au moins un canal, sinon vos clients n'auront aucun tour.
+                  </p>
+                )}
+
+                <label className="field">
+                  <span>Mention légale (conformité)</span>
+                  <input
+                    type="text"
+                    value={config.compliance_note ?? ""}
+                    onChange={(e) =>
+                      setConfig({ ...config, compliance_note: e.target.value })
+                    }
+                  />
+                </label>
+                <label className="toggle-field">
+                  <input
+                    type="checkbox"
+                    checked={!!config.collect_email}
+                    onChange={(e) =>
+                      setConfig({ ...config, collect_email: e.target.checked })
+                    }
+                  />
+                  <span>
+                    <b>Collecter les e-mails des gagnants</b> (facultatif, avec
+                    consentement) — pour te constituer une base clients.
+                  </span>
+                </label>
+              </div>
+            </>
+          )}
+
+          {showFidelite && (
+            <div className="dash-card">
+              <h2>Carte de fidélité</h2>
+              <p className="muted" style={{ marginBottom: 14 }}>
+                Une carte à tampons digitale, sans appli : vos clients cumulent des
+                tampons à chaque passage et gagnent une récompense. Vous validez
+                chaque tampon en caisse (onglet « Valider en caisse »).
+              </p>
+              <label className="toggle-field">
+                <input
+                  type="checkbox"
+                  checked={!!config.loyalty_enabled}
+                  onChange={(e) =>
+                    setConfig({ ...config, loyalty_enabled: e.target.checked })
+                  }
+                />
+                <span>
+                  <b>Activer la carte de fidélité</b> — un lien « Ma carte » sera
+                  proposé à vos clients.
+                </span>
+              </label>
+
+              {config.loyalty_enabled && (
+                <>
+                  <label className="field">
+                    <span>Nombre de tampons pour gagner (2 à 30)</span>
+                    <input
+                      type="number"
+                      min={2}
+                      max={30}
+                      value={goal}
+                      onChange={(e) =>
+                        setConfig({
+                          ...config,
+                          loyalty_goal: Number(e.target.value),
+                        })
+                      }
+                    />
+                  </label>
+                  <label className="field">
+                    <span>Récompense à la carte complète</span>
+                    <input
+                      type="text"
+                      placeholder="Ex. Une boisson offerte"
+                      value={config.loyalty_reward ?? ""}
+                      onChange={(e) =>
+                        setConfig({ ...config, loyalty_reward: e.target.value })
+                      }
+                    />
+                  </label>
+                  <label className="field">
+                    <span>Emoji de la récompense</span>
+                    <input
+                      type="text"
+                      placeholder="🎁"
+                      maxLength={4}
+                      value={config.loyalty_reward_emoji ?? ""}
+                      onChange={(e) =>
+                        setConfig({
+                          ...config,
+                          loyalty_reward_emoji: e.target.value,
+                        })
+                      }
+                      style={{ maxWidth: 90 }}
+                    />
+                  </label>
+
+                  <label className="field">
+                    <span>Emoji du tampon (affiché sur la carte client)</span>
+                  </label>
+                  <div className="stamp-picker">
+                    {STAMP_EMOJIS.map((e) => (
+                      <button
+                        type="button"
+                        key={e}
+                        className={`stamp-opt${stampEmoji === e ? " on" : ""}`}
+                        onClick={() =>
+                          setConfig({ ...config, loyalty_stamp_emoji: e })
+                        }
+                      >
+                        {e}
+                      </button>
+                    ))}
+                    <input
+                      type="text"
+                      className="stamp-custom"
+                      maxLength={4}
+                      value={stampEmoji}
+                      onChange={(e) =>
+                        setConfig({
+                          ...config,
+                          loyalty_stamp_emoji: e.target.value,
+                        })
+                      }
+                      placeholder="Autre"
+                    />
+                  </div>
+
+                  <div className="fid-preview-box">
+                    <b>Aperçu de la carte</b>
+                    <div className="fid-preview-grid">
+                      {Array.from({ length: goal }, (_, i) => (
+                        <span
+                          key={i}
+                          className={`fid-preview-stamp${i < 3 ? " filled" : ""}`}
+                        >
+                          {i < 3 ? stampEmoji : (i + 1)}
+                        </span>
+                      ))}
+                    </div>
+                    <p className="muted">
+                      {goal} tampons = {config.loyalty_reward_emoji || "🎁"}{" "}
+                      {config.loyalty_reward || "une récompense offerte"}
+                    </p>
+                  </div>
+                </>
+              )}
             </div>
-            <button className="btn-secondary" onClick={addPrize}>
-              + Ajouter un cadeau
-            </button>
-          </div>
+          )}
+
+          {showRoue && (
+            <div className="dash-card">
+              <h2>Cadeaux</h2>
+              <p className="muted">
+                Le « poids » définit la probabilité relative (total actuel :{" "}
+                {totalWeight}). Un lot « Rien… » gère les cas sans gain.
+              </p>
+              <label className="field">
+                <span>Nombre de cadeaux max par jour (vide = illimité)</span>
+                <input
+                  type="number"
+                  min={0}
+                  placeholder="illimité"
+                  value={config.daily_prize_limit ?? ""}
+                  onChange={(e) =>
+                    setConfig({
+                      ...config,
+                      daily_prize_limit:
+                        e.target.value === "" ? null : Number(e.target.value),
+                    })
+                  }
+                />
+              </label>
+              <p className="muted" style={{ marginBottom: 12 }}>
+                Une fois ce nombre de cadeaux atteint dans la journée, la roue ne
+                donne plus que « Rien » (nécessite un lot « Rien… » dans la liste).
+              </p>
+              <div className="prize-list">
+                {prizes.map((p, i) => (
+                  <div className="prize-row" key={i}>
+                    <input
+                      className="p-emoji"
+                      value={p.emoji}
+                      onChange={(e) => update(i, { emoji: e.target.value })}
+                      aria-label="Emoji"
+                    />
+                    <input
+                      className="p-label"
+                      value={p.label}
+                      onChange={(e) => update(i, { label: e.target.value })}
+                      aria-label="Nom du lot"
+                    />
+                    <input
+                      className="p-weight"
+                      type="number"
+                      min={0}
+                      value={p.weight}
+                      onChange={(e) =>
+                        update(i, { weight: Number(e.target.value) })
+                      }
+                      aria-label="Poids"
+                    />
+                    <input
+                      className="p-color"
+                      type="color"
+                      value={p.color}
+                      onChange={(e) => update(i, { color: e.target.value })}
+                      aria-label="Couleur"
+                    />
+                    <button
+                      className="p-del"
+                      onClick={() => removePrize(i)}
+                      aria-label="Supprimer"
+                      disabled={prizes.length <= 1}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button className="btn-secondary" onClick={addPrize}>
+                + Ajouter un cadeau
+              </button>
+            </div>
+          )}
 
           <div className="save-bar">
             <button className="btn" onClick={save} disabled={saving || noChannel}>
@@ -550,12 +611,14 @@ export default function WheelEditor({
           </div>
         </div>
 
-        <div className="editor-preview">
-          <div className="dash-card preview-card">
-            <h2>Aperçu</h2>
-            <canvas ref={canvasRef} width={520} height={520} className="preview-wheel" />
+        {showRoue && (
+          <div className="editor-preview">
+            <div className="dash-card preview-card">
+              <h2>Aperçu</h2>
+              <canvas ref={canvasRef} width={520} height={520} className="preview-wheel" />
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </>
   );

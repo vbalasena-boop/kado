@@ -1,6 +1,7 @@
 import { readPlayerId } from "@/lib/player";
+import { redirect } from "next/navigation";
 import { getAdminClient } from "@/lib/supabase/admin";
-import { hasAccess, getSessionUser } from "@/lib/auth";
+import { hasAccess, hasModule, getSessionUser } from "@/lib/auth";
 import { isAdminEmail } from "@/lib/admin-guard";
 import Game from "./Game";
 
@@ -39,7 +40,7 @@ export default async function Page({
   const { data: biz } = await supa
     .from("businesses")
     .select(
-      "id, slug, name, logo_url, status, subscription_ends_at, owner_user_id"
+      "id, slug, name, logo_url, status, subscription_ends_at, owner_user_id, plan, subscription_status"
     )
     .eq("slug", params.slug)
     .maybeSingle();
@@ -64,6 +65,11 @@ export default async function Page({
     return (
       <Unavailable message="Ce jeu est momentanément indisponible. Revenez plus tard." />
     );
+  }
+
+  const bizForPlan = { plan: biz.plan ?? "roue", subscription_status: biz.subscription_status ?? "trial" };
+  if (!preview && !hasModule(bizForPlan, "roue")) {
+    redirect(`/${biz.slug}/fidelite`);
   }
 
   const [{ data: config }, { data: prizes }] = await Promise.all([

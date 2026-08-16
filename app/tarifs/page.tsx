@@ -6,19 +6,53 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Tarifs",
   description:
-    "Kado Pro : 29 €/mois, sans engagement, essai gratuit 14 jours. Tout inclus : roue personnalisable, avis Google, Instagram, statistiques et validation en caisse.",
+    "Kado : 3 formules pour booster votre commerce. Roue 29 EUR/mois, Fidélité 19 EUR/mois, Complet 44 EUR/mois. Essai gratuit 14 jours, sans engagement.",
   alternates: { canonical: "/tarifs" },
 };
 
-const FEATURES = [
-  "Roue de la fortune illimitée",
-  "Avis Google + abonnés Instagram",
-  "Personnalisation (logo, couleurs, fond)",
-  "Affiche & QR code à imprimer",
-  "Validation des cadeaux en caisse (scan)",
-  "Capture d'e-mails clients (base marketing)",
-  "Statistiques et export CSV",
-  "Anti-triche & conformité RGPD",
+const PLANS = [
+  {
+    id: "fidelite",
+    name: "Fidélité",
+    price: "19",
+    desc: "Idéal pour fidéliser vos clients réguliers",
+    features: [
+      "Carte à tampons digitale",
+      "Récompense personnalisable",
+      "QR code client + validation en caisse",
+      "Statistiques d'inscription",
+      "Anti-triche & conformité RGPD",
+    ],
+  },
+  {
+    id: "complet",
+    name: "Complet",
+    price: "44",
+    desc: "Roue + fidélité — le meilleur rapport qualité/prix",
+    popular: true,
+    features: [
+      "Tout ce qui est dans Roue",
+      "Tout ce qui est dans Fidélité",
+      "Le tarif combiné le plus avantageux",
+      "4 EUR d'économie par mois",
+    ],
+  },
+  {
+    id: "roue",
+    name: "Roue",
+    price: "29",
+    desc: "Boostez vos avis et vos abonnés",
+    features: [
+      "Roue de la fortune illimitée",
+      "Avis Google + abonnés Instagram",
+      "Personnalisation (logo, couleurs, fond)",
+      "Affiche & QR code à imprimer",
+      "Validation en caisse (scan)",
+      "Capture d'e-mails (base marketing)",
+      "Statistiques et export CSV",
+      "Anti-triche & conformité RGPD",
+    ],
+  },
 ];
 
 const REASSURE = [
@@ -38,15 +72,19 @@ const VALUE = [
     d: "Un abonné Instagram, c'est un client que vous pouvez toucher gratuitement à chaque promo, nouveauté ou événement.",
   },
   {
-    t: "Le cadeau ramène en boutique",
-    d: "Un lot à récupérer sur place, c'est une visite de plus — et souvent un achat qui couvre largement le coût du cadeau.",
+    t: "La fidélité qui rapporte",
+    d: "Un programme de fidélité digital augmente la fréquence des visites de 20 à 30 %. Vos clients reviennent plus souvent, et dépensent plus.",
   },
 ];
 
 const FAQ = [
   {
     q: "L'essai est-il vraiment gratuit ?",
-    a: "Oui. 14 jours, sans carte bancaire. Vous n'êtes débité que si vous décidez de continuer après l'essai.",
+    a: "Oui. 14 jours, sans carte bancaire. Vous n'êtes débité que si vous décidez de continuer après l'essai. Pendant l'essai, toutes les fonctionnalités sont accessibles.",
+  },
+  {
+    q: "Puis-je changer de formule ?",
+    a: "Oui, à tout moment depuis votre espace. Le changement prend effet immédiatement avec un prorata sur votre prochaine facture.",
   },
   {
     q: "Y a-t-il un engagement ?",
@@ -76,13 +114,13 @@ export default function Tarifs() {
       </header>
 
       <section className="v-hero" style={{ paddingBottom: 10 }}>
-        <div className="v-badge">🎡 Un seul tarif, tout compris</div>
+        <div className="v-badge">3 formules, sans engagement</div>
         <h1>
-          Un tarif <span>simple</span>
+          Choisissez votre <span>formule</span>
         </h1>
         <p className="v-lede">
-          Tout Kado, sans engagement. Essai gratuit de 14 jours, puis abonnement
-          mensuel résiliable quand vous voulez.
+          Essai gratuit de 14 jours avec toutes les fonctionnalités, puis
+          abonnement mensuel résiliable quand vous voulez.
         </p>
         <div className="tarif-reassure">
           {REASSURE.map((r) => (
@@ -95,25 +133,33 @@ export default function Tarifs() {
         </div>
       </section>
 
-      <section className="v-section" style={{ display: "flex", justifyContent: "center" }}>
-        <div className="v-plan">
-          <div className="v-plan-name">Kado Pro</div>
-          <div className="v-plan-price">
-            29&nbsp;€<span>/mois</span>
-          </div>
-          <div className="v-plan-sub">14 jours d'essai gratuit · sans carte bancaire</div>
-          <ul className="v-plan-feats">
-            {FEATURES.map((f) => (
-              <li key={f}>✓ {f}</li>
-            ))}
-          </ul>
-          <a className="v-btn primary" href="/login" style={{ display: "block" }}>
-            Commencer l'essai gratuit →
-          </a>
-          <p className="v-plan-note">
-            Sans engagement · résiliable à tout moment depuis votre espace.
-          </p>
+      <section className="v-section">
+        <div className="v-plans-row">
+          {PLANS.map((p) => (
+            <div
+              className={`v-plan${p.popular ? " popular" : ""}`}
+              key={p.id}
+            >
+              {p.popular && <div className="v-plan-pop">Le plus populaire</div>}
+              <div className="v-plan-name">{p.name}</div>
+              <div className="v-plan-price">
+                {p.price}&nbsp;€<span>/mois</span>
+              </div>
+              <div className="v-plan-sub">{p.desc}</div>
+              <ul className="v-plan-feats">
+                {p.features.map((f) => (
+                  <li key={f}>✓ {f}</li>
+                ))}
+              </ul>
+              <a className="v-btn primary" href="/login" style={{ display: "block" }}>
+                Commencer l'essai gratuit →
+              </a>
+            </div>
+          ))}
         </div>
+        <p className="v-plan-note" style={{ textAlign: "center", marginTop: 16 }}>
+          14 jours d'essai gratuit · sans carte bancaire · toutes fonctionnalités incluses
+        </p>
       </section>
 
       <section className="v-section">

@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
 
   const { data: cfg } = await db
     .from("wheel_configs")
-    .select("loyalty_enabled, loyalty_goal, loyalty_reward, loyalty_reward_emoji")
+    .select("loyalty_enabled, loyalty_goal, loyalty_reward, loyalty_reward_emoji, loyalty_stamp_emoji")
     .eq("business_id", biz.id)
     .maybeSingle();
   if (!cfg?.loyalty_enabled) {
@@ -96,5 +96,6 @@ export async function POST(req: NextRequest) {
     rewardCode: card.reward_ready ? card.reward_code : null,
     reward: cfg.loyalty_reward,
     rewardEmoji: cfg.loyalty_reward_emoji,
+    stampEmoji: cfg.loyalty_stamp_emoji || "⭐",
   });
 }

@@ -1,4 +1,4 @@
-import { getMyBusiness } from "@/lib/auth";
+import { getMyBusiness, hasModule } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
 import WheelEditor from "./WheelEditor";
 
@@ -13,7 +13,7 @@ export default async function WheelPage() {
     admin
       .from("wheel_configs")
       .select(
-        "primary_color, instagram_url, review_url, compliance_note, daily_prize_limit, bg_image_url, collect_email, instagram_enabled, review_enabled, loyalty_enabled, loyalty_goal, loyalty_reward, loyalty_reward_emoji"
+        "primary_color, instagram_url, review_url, compliance_note, daily_prize_limit, bg_image_url, collect_email, instagram_enabled, review_enabled, loyalty_enabled, loyalty_goal, loyalty_reward, loyalty_reward_emoji, loyalty_stamp_emoji"
       )
       .eq("business_id", business.id)
       .maybeSingle(),
@@ -37,6 +37,8 @@ export default async function WheelPage() {
       initialPrizes={prizes ?? []}
       initialLogoUrl={business.logo_url}
       initialBgUrl={config?.bg_image_url ?? null}
+      showRoue={hasModule(business, "roue")}
+      showFidelite={hasModule(business, "fidelite")}
     />
   );
 }

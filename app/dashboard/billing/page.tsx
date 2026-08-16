@@ -24,6 +24,8 @@ export default async function BillingPage({
       statusLabel={labels[business.subscription_status] || business.subscription_status}
       endsAt={business.subscription_ends_at}
       success={searchParams?.success === "1"}
+      currentPlan={business.plan || "roue"}
+      isTrial={business.subscription_status === "trial"}
     />
   );
 }

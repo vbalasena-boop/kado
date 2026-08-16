@@ -20,6 +20,7 @@ export default function LoyaltyCard({
   goal,
   reward,
   rewardEmoji,
+  stampEmoji = "⭐",
 }: {
   slug: string;
   name: string;
@@ -27,6 +28,7 @@ export default function LoyaltyCard({
   goal: number;
   reward: string;
   rewardEmoji: string;
+  stampEmoji?: string;
 }) {
   const [email, setEmail] = useState("");
   const [card, setCard] = useState<CardData | null>(null);
@@ -177,7 +179,7 @@ export default function LoyaltyCard({
                   key={i}
                   className={`fid-stamp${i < card.stamps ? " on" : ""}`}
                 >
-                  {i < card.stamps ? "🎁" : i + 1}
+                  {i < card.stamps ? stampEmoji : i + 1}
                 </span>
               ))}
             </div>
