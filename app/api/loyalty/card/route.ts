@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { generateCode } from "@/lib/draw";
+import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +12,12 @@ const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
  * identifiée par son e-mail. Renvoie l'état public de la carte + les réglages.
  */
 export async function POST(req: NextRequest) {
+  // Anti-abus : 20 ouvertures de carte/min max par IP
+  const ip = clientIp(req);
+  if (!(await rateLimit(`loyalty:${ip}`, 20, 60))) {
+    return Response.json({ error: "rate_limited" }, { status: 429 });
+  }
+
   let body: { slug?: string; email?: string };
   try {
     body = await req.json();

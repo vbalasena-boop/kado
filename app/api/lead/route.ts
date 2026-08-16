@@ -1,10 +1,17 @@
 import { NextRequest } from "next/server";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
 /** Enregistre un e-mail (opt-in) laissé par un joueur pour un établissement. */
 export async function POST(req: NextRequest) {
+  // Anti-abus : 10 soumissions/min max par IP
+  const ip = clientIp(req);
+  if (!(await rateLimit(`lead:${ip}`, 10, 60))) {
+    return Response.json({ error: "rate_limited" }, { status: 429 });
+  }
+
   let body: { slug?: string; email?: string; phone?: string };
   try {
     body = await req.json();

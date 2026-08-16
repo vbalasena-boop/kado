@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { getOrCreatePlayerId } from "@/lib/player";
 import { weightedIndex, generateCode } from "@/lib/draw";
+import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,12 @@ const VALID_TYPES = ["instagram", "review"] as const;
  *   empêche de rejouer le même type → renvoie 409 "déjà joué".
  */
 export async function POST(req: NextRequest) {
+  // Anti-abus : 30 tours/min max par IP
+  const ip = clientIp(req);
+  if (!(await rateLimit(`play:${ip}`, 30, 60))) {
+    return Response.json({ error: "rate_limited" }, { status: 429 });
+  }
+
   let body: { slug?: string; playType?: string };
   try {
     body = await req.json();
