@@ -21,6 +21,10 @@ export async function POST(req: NextRequest) {
       collect_email?: boolean;
       instagram_enabled?: boolean;
       review_enabled?: boolean;
+      loyalty_enabled?: boolean;
+      loyalty_goal?: number;
+      loyalty_reward?: string;
+      loyalty_reward_emoji?: string;
     };
     prizes?: {
       label: string;
@@ -62,6 +66,15 @@ export async function POST(req: NextRequest) {
       collect_email: !!cfg.collect_email,
       instagram_enabled: igEnabled,
       review_enabled: rvEnabled,
+      loyalty_enabled: !!cfg.loyalty_enabled,
+      loyalty_goal: Math.min(
+        30,
+        Math.max(2, Math.round(Number(cfg.loyalty_goal) || 10))
+      ),
+      loyalty_reward:
+        (cfg.loyalty_reward || "").trim().slice(0, 60) ||
+        "Une récompense offerte",
+      loyalty_reward_emoji: (cfg.loyalty_reward_emoji || "🎁").slice(0, 8),
     },
     { onConflict: "business_id" }
   );

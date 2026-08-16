@@ -17,6 +17,10 @@ type Config = {
   collect_email?: boolean | null;
   instagram_enabled?: boolean | null;
   review_enabled?: boolean | null;
+  loyalty_enabled?: boolean | null;
+  loyalty_goal?: number | null;
+  loyalty_reward?: string | null;
+  loyalty_reward_emoji?: string | null;
 };
 
 const FONT =
@@ -388,6 +392,80 @@ export default function WheelEditor({
                 consentement) — pour te constituer une base clients.
               </span>
             </label>
+          </div>
+
+          <div className="dash-card">
+            <h2>Carte de fidélité 🎟️</h2>
+            <p className="muted" style={{ marginBottom: 14 }}>
+              Une carte à tampons digitale, sans appli : vos clients cumulent des
+              tampons à chaque passage et gagnent une récompense. Vous validez
+              chaque tampon en caisse (onglet « Valider un cadeau »).
+            </p>
+            <label className="toggle-field">
+              <input
+                type="checkbox"
+                checked={!!config.loyalty_enabled}
+                onChange={(e) =>
+                  setConfig({ ...config, loyalty_enabled: e.target.checked })
+                }
+              />
+              <span>
+                <b>Activer la carte de fidélité</b> — un lien « Ma carte » sera
+                proposé à vos clients.
+              </span>
+            </label>
+
+            {config.loyalty_enabled && (
+              <>
+                <label className="field">
+                  <span>Nombre de tampons pour gagner (2 à 30)</span>
+                  <input
+                    type="number"
+                    min={2}
+                    max={30}
+                    value={config.loyalty_goal ?? 10}
+                    onChange={(e) =>
+                      setConfig({
+                        ...config,
+                        loyalty_goal: Number(e.target.value),
+                      })
+                    }
+                  />
+                </label>
+                <label className="field">
+                  <span>Récompense à la carte complète</span>
+                  <input
+                    type="text"
+                    placeholder="Ex. Une boisson offerte"
+                    value={config.loyalty_reward ?? ""}
+                    onChange={(e) =>
+                      setConfig({ ...config, loyalty_reward: e.target.value })
+                    }
+                  />
+                </label>
+                <label className="field">
+                  <span>Emoji de la récompense</span>
+                  <input
+                    type="text"
+                    placeholder="🎁"
+                    maxLength={4}
+                    value={config.loyalty_reward_emoji ?? ""}
+                    onChange={(e) =>
+                      setConfig({
+                        ...config,
+                        loyalty_reward_emoji: e.target.value,
+                      })
+                    }
+                    style={{ maxWidth: 90 }}
+                  />
+                </label>
+                <p className="muted">
+                  Exemple : « {config.loyalty_goal ?? 10} tampons ={" "}
+                  {config.loyalty_reward_emoji || "🎁"}{" "}
+                  {config.loyalty_reward || "une récompense offerte"} ».
+                </p>
+              </>
+            )}
           </div>
 
           <div className="dash-card">

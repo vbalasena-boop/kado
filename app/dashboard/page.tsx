@@ -18,7 +18,7 @@ export default async function DashboardHome() {
       .eq("business_id", business.id),
     admin
       .from("wheel_configs")
-      .select("instagram_url, review_url")
+      .select("instagram_url, review_url, loyalty_enabled")
       .eq("business_id", business.id)
       .maybeSingle(),
   ]);

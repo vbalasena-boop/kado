@@ -21,6 +21,7 @@ type Config = {
   compliance_note: string | null;
   instagram_enabled?: boolean | null;
   review_enabled?: boolean | null;
+  loyalty_enabled?: boolean | null;
 };
 
 /** hex -> rgba(...) avec transparence. */
@@ -813,6 +814,11 @@ export default function Game({
             </section>
           )}
         </div>
+        {config.loyalty_enabled && (
+          <a className="fid-link" href={`/${slug}/fidelite`}>
+            🎟️ Ma carte de fidélité
+          </a>
+        )}
         <footer className="game-footer">
           <a href="/legal/reglement" target="_blank" rel="noopener">
             Règlement du jeu

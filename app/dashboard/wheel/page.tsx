@@ -13,7 +13,7 @@ export default async function WheelPage() {
     admin
       .from("wheel_configs")
       .select(
-        "primary_color, instagram_url, review_url, compliance_note, daily_prize_limit, bg_image_url, collect_email, instagram_enabled, review_enabled"
+        "primary_color, instagram_url, review_url, compliance_note, daily_prize_limit, bg_image_url, collect_email, instagram_enabled, review_enabled, loyalty_enabled, loyalty_goal, loyalty_reward, loyalty_reward_emoji"
       )
       .eq("business_id", business.id)
       .maybeSingle(),

@@ -9,6 +9,18 @@ type Result = {
   redeemed_at?: string;
 } | null;
 
+type LoyaltyView = {
+  email: string;
+  code: string;
+  stamps: number;
+  goal: number;
+  rewardsEarned: number;
+  rewardReady: boolean;
+  reward: string;
+  rewardEmoji: string;
+};
+type LoyaltyResult = { status: string; card?: LoyaltyView } | null;
+
 const LABELS: Record<string, { txt: string; cls: string }> = {
   valid: { txt: "✅ Code valide — cadeau à remettre", cls: "ok" },
   redeemed: { txt: "✅ Cadeau remis et marqué comme utilisé", cls: "ok" },
@@ -18,7 +30,46 @@ const LABELS: Record<string, { txt: string; cls: string }> = {
   not_found: { txt: "❌ Code introuvable", cls: "bad" },
 };
 
+const FID_LABELS: Record<string, { txt: string; cls: string }> = {
+  stamped: { txt: "✅ Tampon ajouté", cls: "ok" },
+  completed: { txt: "🎉 Carte complète — récompense débloquée !", cls: "ok" },
+  reward_pending: {
+    txt: "⚠️ Récompense en attente — remettez-la avant d'ajouter un nouveau tampon.",
+    cls: "warn",
+  },
+  collected: { txt: "✅ Récompense remise", cls: "ok" },
+  nothing_to_collect: { txt: "Aucune récompense à remettre.", cls: "warn" },
+  not_found: { txt: "❌ Carte introuvable", cls: "bad" },
+  loyalty_off: {
+    txt: "La carte de fidélité n'est pas activée. Activez-la dans « Ma roue ».",
+    cls: "warn",
+  },
+};
+
 export default function ValidateClient() {
+  const [tab, setTab] = useState<"gift" | "loyalty">("gift");
+  const [fidQuery, setFidQuery] = useState("");
+  const [fidResult, setFidResult] = useState<LoyaltyResult>(null);
+  const [fidLoading, setFidLoading] = useState(false);
+
+  async function fidCall(action: "stamp" | "collect", queryArg?: string) {
+    const q = (queryArg ?? fidQuery).trim();
+    if (!q) return;
+    setFidLoading(true);
+    try {
+      const res = await fetch("/api/dashboard/loyalty/stamp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: q, action }),
+      });
+      setFidResult(await res.json());
+    } catch {
+      setFidResult({ status: "not_found" });
+    } finally {
+      setFidLoading(false);
+    }
+  }
+
   const [code, setCode] = useState("");
   const [result, setResult] = useState<Result>(null);
   const [loading, setLoading] = useState(false);
@@ -83,9 +134,16 @@ export default function ValidateClient() {
           if (codes && codes.length) {
             const val = String(codes[0].rawValue || "").trim();
             if (val) {
-              setCode(val.toUpperCase());
               stopScan();
-              call("check", val);
+              // Un QR "FID-…" est une carte de fidélité → onglet fidélité
+              if (/^fid-/i.test(val)) {
+                setTab("loyalty");
+                setFidQuery(val.toUpperCase());
+                fidCall("stamp", val);
+              } else {
+                setCode(val.toUpperCase());
+                call("check", val);
+              }
               return;
             }
           }
@@ -102,15 +160,33 @@ export default function ValidateClient() {
   }
 
   const r = result ? LABELS[result.status] : null;
+  const fr = fidResult ? FID_LABELS[fidResult.status] : null;
 
   return (
     <>
-      <h1 className="dash-h1">Valider un cadeau</h1>
+      <h1 className="dash-h1">Valider en caisse</h1>
       <p className="dash-sub">
-        Scannez le QR code du client, ou saisissez son code, pour vérifier puis
-        marquer le cadeau comme utilisé.
+        Scannez le QR code du client, ou saisissez son code : un{" "}
+        <b>cadeau roue</b> (KD-…) est marqué comme remis, une{" "}
+        <b>carte de fidélité</b> (FID-…) reçoit un tampon.
       </p>
 
+      <div className="val-tabs">
+        <button
+          className={`val-tab${tab === "gift" ? " on" : ""}`}
+          onClick={() => setTab("gift")}
+        >
+          🎁 Cadeau (roue)
+        </button>
+        <button
+          className={`val-tab${tab === "loyalty" ? " on" : ""}`}
+          onClick={() => setTab("loyalty")}
+        >
+          🎟️ Fidélité
+        </button>
+      </div>
+
+      {tab === "gift" ? (
       <div className="dash-card" style={{ maxWidth: 520 }}>
         {scanning ? (
           <div className="scan-box">
@@ -173,6 +249,83 @@ export default function ValidateClient() {
           </div>
         )}
       </div>
+      ) : (
+      <div className="dash-card" style={{ maxWidth: 520 }}>
+        <p className="muted" style={{ marginTop: 0 }}>
+          Scannez le QR de la carte du client, saisissez son <b>code de
+          carte</b> (FID-…) ou son <b>e-mail</b> pour ajouter un tampon.
+        </p>
+
+        {!scanning && (
+          <button className="btn" onClick={startScan} disabled={fidLoading}>
+            <Icon name="qr" size={18} /> Scanner un QR code
+          </button>
+        )}
+
+        <div className="scan-sep">ou saisir</div>
+
+        <label className="field">
+          <span>Code de carte (FID-…) ou e-mail du client</span>
+          <input
+            type="text"
+            placeholder="FID-XXXXX ou client@email.fr"
+            value={fidQuery}
+            onChange={(e) => {
+              setFidQuery(e.target.value);
+              setFidResult(null);
+            }}
+          />
+        </label>
+
+        <div className="sub-actions">
+          <button
+            className="btn"
+            onClick={() => fidCall("stamp")}
+            disabled={fidLoading || !fidQuery.trim()}
+          >
+            {fidLoading ? "…" : "+ Ajouter un tampon"}
+          </button>
+          <button
+            className="btn-secondary"
+            onClick={() => fidCall("collect")}
+            disabled={fidLoading || !fidQuery.trim()}
+          >
+            🎁 Remettre la récompense
+          </button>
+        </div>
+
+        {fr && (
+          <div className={`redeem-result ${fr.cls}`}>
+            <b>{fr.txt}</b>
+            {fidResult?.card && (
+              <div className="fid-recap">
+                <div className="fid-recap-line">
+                  Client&nbsp;: <b>{fidResult.card.email}</b>
+                </div>
+                <div className="fid-recap-line">
+                  Progression&nbsp;:{" "}
+                  <b>
+                    {fidResult.card.stamps} / {fidResult.card.goal}
+                  </b>{" "}
+                  tampons
+                  {fidResult.card.rewardsEarned > 0 && (
+                    <> · déjà gagné {fidResult.card.rewardsEarned}×</>
+                  )}
+                </div>
+                {fidResult.card.rewardReady && (
+                  <div className="fid-recap-reward">
+                    🎁 Récompense à remettre&nbsp;:{" "}
+                    <b>
+                      {fidResult.card.rewardEmoji} {fidResult.card.reward}
+                    </b>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+      )}
     </>
   );
 }
