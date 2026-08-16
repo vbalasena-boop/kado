@@ -19,19 +19,22 @@ export default async function BillingPage({
     suspended: "Suspendu / inactif",
   };
 
-  // Installation clé en main déjà achetée ? (tolérant si la colonne manque)
+  // Installation clé en main déjà achetée ? Téléphone connu ?
+  // (tolérant si les colonnes manquent)
   let setupPaid = false;
   let setupOption: string | null = null;
+  let hasPhone = false;
   try {
     const { data } = await getAdminClient()
       .from("businesses")
-      .select("setup_option, setup_paid_at")
+      .select("setup_option, setup_paid_at, phone")
       .eq("id", business.id)
       .maybeSingle();
     setupPaid = !!data?.setup_paid_at;
     setupOption = data?.setup_option ?? null;
+    hasPhone = !!data?.phone;
   } catch {
-    /* colonne absente : on considère non achetée */
+    /* colonnes absentes : valeurs par défaut */
   }
 
   return (
@@ -45,6 +48,7 @@ export default async function BillingPage({
       isTrial={business.subscription_status === "trial"}
       setupPaid={setupPaid}
       setupOption={setupOption}
+      hasPhone={hasPhone}
     />
   );
 }

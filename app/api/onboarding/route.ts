@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     .maybeSingle();
   if (existing) return Response.json({ ok: true, slug: existing.slug });
 
-  let body: { name?: string; category?: string; plan?: string };
+  let body: { name?: string; category?: string; plan?: string; phone?: string };
   try {
     body = await req.json();
   } catch {
@@ -35,6 +35,9 @@ export async function POST(req: NextRequest) {
   const plan = ["roue", "fidelite", "complet"].includes(body.plan ?? "")
     ? body.plan!
     : "roue";
+  // Téléphone : on ne garde que chiffres, + et espaces
+  const phone =
+    (body.phone || "").replace(/[^\d+ .-]/g, "").trim().slice(0, 20) || null;
 
   // slug unique
   const base = slugify(name);
@@ -66,6 +69,11 @@ export async function POST(req: NextRequest) {
     .single();
   if (bizErr || !biz) {
     return Response.json({ error: "create_failed" }, { status: 500 });
+  }
+
+  // Téléphone : mise à jour séparée et tolérante (colonne facultative)
+  if (phone) {
+    await db.from("businesses").update({ phone }).eq("id", biz.id);
   }
 
   // config + cadeaux par défaut

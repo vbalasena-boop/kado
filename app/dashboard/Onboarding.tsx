@@ -30,22 +30,29 @@ const PLANS = [
 
 export function Onboarding() {
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
   const [category, setCategory] = useState("autre");
   const [plan, setPlan] = useState("complet");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  const phoneOk = phone.replace(/\D/g, "").length >= 9;
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     const n = name.trim();
     if (!n || busy) return;
+    if (!phoneOk) {
+      setErr("Entrez un numéro de téléphone valide (ex. 06 12 34 56 78).");
+      return;
+    }
     setBusy(true);
     setErr(null);
     try {
       const res = await fetch("/api/onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: n, category, plan }),
+        body: JSON.stringify({ name: n, category, plan, phone: phone.trim() }),
       });
       if (res.ok) {
         window.location.href = "/dashboard";
@@ -92,6 +99,21 @@ export function Onboarding() {
         onChange={(e) => setName(e.target.value)}
         placeholder="Ex. Salon Éléonore"
         maxLength={60}
+      />
+
+      <label htmlFor="biz-phone" style={{ marginTop: 12 }}>
+        Téléphone (pour vous accompagner)
+      </label>
+      <input
+        id="biz-phone"
+        className="onboarding-input"
+        type="tel"
+        inputMode="tel"
+        autoComplete="tel"
+        value={phone}
+        onChange={(e) => setPhone(e.target.value)}
+        placeholder="06 12 34 56 78"
+        maxLength={20}
       />
 
       <label style={{ marginTop: 16 }}>Formule souhaitée (modifiable plus tard)</label>

@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "not_authenticated" }, { status: 401 });
   }
 
-  let body: { setup?: string } = {};
+  let body: { setup?: string; phone?: string } = {};
   try {
     body = await req.json();
   } catch {
@@ -31,6 +31,8 @@ export async function POST(req: NextRequest) {
 
   const setup =
     body.setup === "remote" || body.setup === "onsite" ? body.setup : null;
+  const phone =
+    (body.phone || "").replace(/[^\d+ .-]/g, "").trim().slice(0, 20) || null;
   if (!setup) {
     return Response.json({ error: "invalid_setup" }, { status: 400 });
   }
@@ -43,6 +45,11 @@ export async function POST(req: NextRequest) {
   const stripe = getStripe();
   const db = getAdminClient();
   const origin = new URL(req.url).origin;
+
+  // Téléphone fourni à la réservation : on l'enregistre (tolérant)
+  if (phone) {
+    await db.from("businesses").update({ phone }).eq("id", business.id);
+  }
 
   try {
     let customerId = (business as any).stripe_customer_id as string | null;

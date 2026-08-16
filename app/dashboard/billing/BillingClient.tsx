@@ -58,6 +58,7 @@ export default function BillingClient({
   isTrial,
   setupPaid = false,
   setupOption = null,
+  hasPhone = false,
 }: {
   hasSubscription: boolean;
   statusLabel: string;
@@ -68,11 +69,15 @@ export default function BillingClient({
   isTrial: boolean;
   setupPaid?: boolean;
   setupOption?: string | null;
+  hasPhone?: boolean;
 }) {
   const [loading, setLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(currentPlan);
   const [setupOpt, setSetupOpt] = useState<"none" | "remote" | "onsite">("none");
   const [postOpt, setPostOpt] = useState<"remote" | "onsite">("remote");
+  const [setupPhone, setSetupPhone] = useState("");
+  const phoneNeeded = !hasPhone;
+  const phoneOk = setupPhone.replace(/\D/g, "").length >= 9;
   const [changingPlan, setChangingPlan] = useState(false);
   const [planMsg, setPlanMsg] = useState<string | null>(null);
   const [confirm, setConfirm] = useState("");
@@ -305,16 +310,40 @@ export default function BillingClient({
                   <span>+ pose de l'affiche &amp; formation</span>
                 </button>
               </div>
+              {phoneNeeded && (
+                <label className="field" style={{ marginTop: 14 }}>
+                  <span>Votre téléphone (pour organiser l'installation)</span>
+                  <input
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    placeholder="06 12 34 56 78"
+                    value={setupPhone}
+                    onChange={(e) => setSetupPhone(e.target.value)}
+                    maxLength={20}
+                  />
+                </label>
+              )}
               <button
                 className="btn"
                 style={{ marginTop: 14 }}
-                onClick={() => go("/api/billing/setup", { setup: postOpt })}
-                disabled={loading}
+                onClick={() =>
+                  go("/api/billing/setup", {
+                    setup: postOpt,
+                    ...(phoneNeeded ? { phone: setupPhone.trim() } : {}),
+                  })
+                }
+                disabled={loading || (phoneNeeded && !phoneOk)}
               >
                 {loading
                   ? "…"
                   : `Réserver l'installation (${postOpt === "remote" ? "79" : "129"} €)`}
               </button>
+              {phoneNeeded && !phoneOk && setupPhone.length > 0 && (
+                <p className="err" style={{ marginTop: 8 }}>
+                  Entrez un numéro valide (ex. 06 12 34 56 78).
+                </p>
+              )}
               <p className="muted" style={{ marginTop: 10, fontSize: ".85rem" }}>
                 Paiement unique et sécurisé via Stripe. Réalisée sous 72 h
                 ouvrées après prise de contact.

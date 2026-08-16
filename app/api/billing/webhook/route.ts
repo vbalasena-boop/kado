@@ -114,6 +114,19 @@ export async function POST(req: NextRequest) {
               : "Installation à distance (79 €)";
           const { email, businessName } = await getOwnerContact(db, businessId);
 
+          // Téléphone du commerçant (colonne facultative → lecture tolérante)
+          let phone: string | null = null;
+          try {
+            const { data: p } = await db
+              .from("businesses")
+              .select("phone")
+              .eq("id", businessId)
+              .maybeSingle();
+            phone = (p as any)?.phone ?? null;
+          } catch {
+            /* ignore */
+          }
+
           if (email) {
             await sendEmail({
               to: email,
@@ -143,8 +156,10 @@ export async function POST(req: NextRequest) {
                 preview: "Un client a acheté l'installation clé en main.",
                 heading: "Nouvelle installation vendue !",
                 emoji: "🛠️",
-                bodyHtml: `Client : <b>${businessName ?? businessId}</b><br>Option : <b>${label}</b><br>Contact : <b>${
-                  email ?? "e-mail introuvable"
+                bodyHtml: `Client : <b>${businessName ?? businessId}</b><br>Option : <b>${label}</b><br>E-mail : <b>${
+                  email ?? "introuvable"
+                }</b><br>Téléphone : <b>${
+                  phone ?? "non renseigné"
                 }</b><br><br>À contacter sous 24 h ouvrées.`,
               }),
             });
