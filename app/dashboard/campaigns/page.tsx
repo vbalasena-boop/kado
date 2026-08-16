@@ -9,8 +9,23 @@ export default async function CampaignsPage() {
   if (!business) return null;
 
   const db = getAdminClient();
+  const isTrial = business.subscription_status === "trial";
 
-  // Audience : leads opt-in + fidélité avec accord marketing (dédupliquée)
+  // Option campagnes active ? (colonne récente → tolérant)
+  let addonOn = false;
+  try {
+    const { data } = await db
+      .from("businesses")
+      .select("campaigns_addon")
+      .eq("id", business.id)
+      .maybeSingle();
+    addonOn = !!(data as any)?.campaigns_addon;
+  } catch {
+    /* migration non passée */
+  }
+  const hasAccess = isTrial || addonOn;
+
+  // Audience opt-in dédupliquée
   const emails = new Set<string>();
   const { data: leads } = await db
     .from("leads")
@@ -34,28 +49,38 @@ export default async function CampaignsPage() {
   }
 
   // Historique + quota
-  let history: { subject: string; sent_count: number; created_at: string }[] =
-    [];
-  let lastAt: string | null = null;
+  let history: {
+    id: string;
+    subject: string;
+    sent_count: number;
+    created_at: string;
+    scheduled_for: string | null;
+    sent_at: string | null;
+  }[] = [];
+  let lastCreatedAt: string | null = null;
   try {
     const { data: rows } = await db
       .from("campaigns")
-      .select("subject, sent_count, created_at")
+      .select("id, subject, sent_count, created_at, scheduled_for, sent_at")
       .eq("business_id", business.id)
       .order("created_at", { ascending: false })
       .limit(10);
-    history = rows ?? [];
-    lastAt = rows?.[0]?.created_at ?? null;
+    history = (rows as any) ?? [];
+    lastCreatedAt = history[0]?.created_at ?? null;
   } catch {
-    /* table absente */
+    /* table / colonnes absentes */
   }
 
   return (
     <CampaignsClient
+      hasAccess={hasAccess}
+      isTrial={isTrial}
+      addonOn={addonOn}
+      hasSubscription={!!business.stripe_subscription_id}
       audience={emails.size}
       businessName={business.name}
       history={history}
-      lastAt={lastAt}
+      lastAt={lastCreatedAt}
     />
   );
 }

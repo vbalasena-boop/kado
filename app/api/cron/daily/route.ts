@@ -1,6 +1,15 @@
 import { NextRequest } from "next/server";
 import { getAdminClient } from "@/lib/supabase/admin";
-import { sendEmail, emailLayout, getOwnerContact } from "@/lib/email";
+import {
+  sendEmail,
+  sendBatch,
+  emailLayout,
+  getOwnerContact,
+} from "@/lib/email";
+import {
+  buildCampaignAudience,
+  buildCampaignPayloads,
+} from "@/lib/campaigns";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -22,7 +31,13 @@ export async function GET(req: NextRequest) {
   }
 
   const db = getAdminClient();
-  const out = { reminders: 0, birthdays: 0, recaps: 0, errors: [] as string[] };
+  const out = {
+    reminders: 0,
+    birthdays: 0,
+    campaigns: 0,
+    recaps: 0,
+    errors: [] as string[],
+  };
 
   // ── 1. Relance fin d'essai (J-3) ────────────────────────────────
   try {
@@ -137,7 +152,54 @@ export async function GET(req: NextRequest) {
     out.errors.push(`birthdays: ${e?.message ?? "error"}`);
   }
 
-  // ── 3. Récap hebdo (le lundi) ───────────────────────────────────
+  // ── 3. Campagnes programmées arrivées à échéance ────────────────
+  try {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const { data: due, error } = await db
+      .from("campaigns")
+      .select("id, business_id, subject, body")
+      .is("sent_at", null)
+      .not("scheduled_for", "is", null)
+      .lte("scheduled_for", todayStr);
+    if (error) throw new Error(error.message);
+
+    for (const c of due ?? []) {
+      const doneStamp = { sent_at: new Date().toISOString() };
+      const { data: biz } = await db
+        .from("businesses")
+        .select("id, name, slug, status, subscription_status, campaigns_addon")
+        .eq("id", c.business_id)
+        .maybeSingle();
+      const entitled =
+        biz &&
+        biz.status === "active" &&
+        (biz.subscription_status === "trial" || (biz as any).campaigns_addon);
+      if (!entitled) {
+        // commerce inactif ou option résiliée : on classe sans envoyer
+        await db.from("campaigns").update(doneStamp).eq("id", c.id);
+        continue;
+      }
+      const recipients = await buildCampaignAudience(db, biz.id);
+      const { email: owner } = await getOwnerContact(db, biz.id);
+      const payloads = buildCampaignPayloads(
+        { id: biz.id, name: biz.name, slug: biz.slug },
+        owner ?? undefined,
+        c.subject,
+        c.body,
+        recipients
+      );
+      const sent = await sendBatch(payloads);
+      await db
+        .from("campaigns")
+        .update({ ...doneStamp, sent_count: sent })
+        .eq("id", c.id);
+      out.campaigns++;
+    }
+  } catch (e: any) {
+    out.errors.push(`campaigns: ${e?.message ?? "error"}`);
+  }
+
+  // ── 4. Récap hebdo (le lundi) ───────────────────────────────────
   try {
     const isMonday = new Date().getUTCDay() === 1;
     if (isMonday) {

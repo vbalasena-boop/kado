@@ -1,31 +1,45 @@
 import { NextRequest } from "next/server";
 import { getMyBusiness, getSessionUser } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
-import { sendBatch, emailLayout } from "@/lib/email";
-import { unsubToken } from "@/lib/unsub";
+import { sendBatch } from "@/lib/email";
+import {
+  buildCampaignAudience,
+  buildCampaignPayloads,
+} from "@/lib/campaigns";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const SITE = "https://kado-app.fr";
-const MAX_RECIPIENTS = 500;
-
-function escapeHtml(s: string) {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+/** L'accès campagnes : inclus pendant l'essai, sinon option payante. */
+async function hasCampaignAccess(business: {
+  id: string;
+  subscription_status: string;
+}) {
+  if (business.subscription_status === "trial") return true;
+  try {
+    const { data } = await getAdminClient()
+      .from("businesses")
+      .select("campaigns_addon")
+      .eq("id", business.id)
+      .maybeSingle();
+    return !!(data as any)?.campaigns_addon;
+  } catch {
+    return false;
+  }
 }
 
-/** Envoie une campagne e-mail aux clients ayant donné leur accord. */
+/** Envoie (ou programme) une campagne e-mail aux clients opt-in. */
 export async function POST(req: NextRequest) {
   const { business } = await getMyBusiness();
   if (!business) {
     return Response.json({ error: "not_authenticated" }, { status: 401 });
   }
+  if (!(await hasCampaignAccess(business))) {
+    return Response.json({ error: "addon_required" }, { status: 403 });
+  }
 
-  let body: { subject?: string; message?: string };
+  let body: { subject?: string; message?: string; scheduledFor?: string };
   try {
     body = await req.json();
   } catch {
@@ -37,9 +51,27 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "missing_content" }, { status: 400 });
   }
 
+  // Programmation éventuelle (date au format YYYY-MM-DD, demain → +60 j)
+  let scheduledFor: string | null = null;
+  if (body.scheduledFor) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(body.scheduledFor)) {
+      return Response.json({ error: "bad_date" }, { status: 400 });
+    }
+    const target = new Date(`${body.scheduledFor}T00:00:00Z`).getTime();
+    const today = new Date(new Date().toISOString().slice(0, 10)).getTime();
+    if (
+      !Number.isFinite(target) ||
+      target <= today ||
+      target > today + 60 * 864e5
+    ) {
+      return Response.json({ error: "bad_date" }, { status: 400 });
+    }
+    scheduledFor = body.scheduledFor;
+  }
+
   const db = getAdminClient();
 
-  // Quota : 1 campagne par 24 h
+  // Quota : 1 campagne créée par 24 h
   try {
     const dayAgo = new Date(Date.now() - 24 * 3600e3).toISOString();
     const { count } = await db
@@ -54,59 +86,34 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "migration_missing" }, { status: 500 });
   }
 
-  // Audience : leads opt-in + cartes de fidélité avec accord marketing
-  const emails = new Set<string>();
-  const { data: leads } = await db
-    .from("leads")
-    .select("email, unsubscribed_at")
-    .eq("business_id", business.id)
-    .not("email", "is", null);
-  for (const l of leads ?? []) {
-    if (l.email && !l.unsubscribed_at) emails.add(l.email.toLowerCase());
-  }
-  try {
-    const { data: cards } = await db
-      .from("loyalty_cards")
-      .select("email, marketing_ok, unsubscribed_at")
-      .eq("business_id", business.id)
-      .eq("marketing_ok", true);
-    for (const c of cards ?? []) {
-      if (c.email && !c.unsubscribed_at) emails.add(c.email.toLowerCase());
+  // Campagne programmée : on l'enregistre, le cron quotidien l'enverra
+  if (scheduledFor) {
+    const { error } = await db.from("campaigns").insert({
+      business_id: business.id,
+      subject,
+      body: message,
+      sent_count: 0,
+      scheduled_for: scheduledFor,
+    });
+    if (error) {
+      return Response.json({ error: "save_failed" }, { status: 500 });
     }
-  } catch {
-    /* colonnes absentes */
+    return Response.json({ ok: true, scheduled: true, scheduledFor });
   }
 
-  const list = [...emails].slice(0, MAX_RECIPIENTS);
-  if (list.length === 0) {
+  // Envoi immédiat
+  const recipients = await buildCampaignAudience(db, business.id);
+  if (recipients.length === 0) {
     return Response.json({ error: "no_audience" }, { status: 400 });
   }
-
   const user = await getSessionUser();
-  const bodyHtml = escapeHtml(message).replace(/\n/g, "<br>");
-
-  const payloads = list.map((to) => {
-    const t = unsubToken(business.id, to);
-    const unsub = `${SITE}/api/unsubscribe?b=${business.id}&e=${encodeURIComponent(
-      Buffer.from(to).toString("base64url")
-    )}&t=${t}`;
-    return {
-      to,
-      subject,
-      fromName: `${business.name} via Kado`,
-      replyTo: user?.email ?? undefined,
-      html: emailLayout({
-        preview: subject,
-        heading: subject,
-        emoji: "💌",
-        bodyHtml: `${bodyHtml}<br><br><a href="${SITE}/${business.slug}" style="display:inline-block;background:linear-gradient(135deg,#ff6b4a,#ff4e87);color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:12px;">Voir ${escapeHtml(business.name)}</a>`,
-        footnote: `Vous recevez cet e-mail car vous avez accepté les offres de ${escapeHtml(
-          business.name
-        )}. <a href="${unsub}" style="color:#9a94b4;">Se désinscrire</a>`,
-      }),
-    };
-  });
-
+  const payloads = buildCampaignPayloads(
+    { id: business.id, name: business.name, slug: business.slug },
+    user?.email ?? undefined,
+    subject,
+    message,
+    recipients
+  );
   const sent = await sendBatch(payloads);
 
   await db.from("campaigns").insert({
@@ -114,7 +121,33 @@ export async function POST(req: NextRequest) {
     subject,
     body: message,
     sent_count: sent,
+    sent_at: new Date().toISOString(),
   });
 
   return Response.json({ ok: true, sent });
+}
+
+/** Annule une campagne programmée (pas encore envoyée). */
+export async function DELETE(req: NextRequest) {
+  const { business } = await getMyBusiness();
+  if (!business) {
+    return Response.json({ error: "not_authenticated" }, { status: 401 });
+  }
+  let body: { id?: string };
+  try {
+    body = await req.json();
+  } catch {
+    return Response.json({ error: "bad_request" }, { status: 400 });
+  }
+  if (!body.id) return Response.json({ error: "missing_id" }, { status: 400 });
+
+  const db = getAdminClient();
+  const { error } = await db
+    .from("campaigns")
+    .delete()
+    .eq("id", body.id)
+    .eq("business_id", business.id)
+    .is("sent_at", null);
+  if (error) return Response.json({ error: "delete_failed" }, { status: 500 });
+  return Response.json({ ok: true });
 }

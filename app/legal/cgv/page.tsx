@@ -58,7 +58,10 @@ export default function CGV() {
       <h2>3. Prix</h2>
       <p>
         Les abonnements sont facturés mensuellement&nbsp;: <b>Roue 29&nbsp;€/mois</b>,{" "}
-        <b>Fidélité 19&nbsp;€/mois</b>, <b>Complet 44&nbsp;€/mois</b>. La TVA
+        <b>Fidélité 19&nbsp;€/mois</b>, <b>Complet 44&nbsp;€/mois</b>. Une option{" "}
+        <b>«&nbsp;Campagnes e-mail&nbsp;» à 15&nbsp;€/mois</b>, sans engagement,
+        peut être activée et désactivée à tout moment depuis l'espace client
+        (prorata appliqué). La TVA
         n'étant pas applicable (art. 293 B du CGI), ces montants sont nets. En
         cas de changement de formule en cours de période, un prorata est appliqué
         sur la facture suivante. Les prix peuvent évoluer&nbsp;; toute évolution
