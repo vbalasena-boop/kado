@@ -35,6 +35,7 @@ export default function LoyaltyCard({
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [qr, setQr] = useState<string | null>(null);
+  const [offline, setOffline] = useState(false);
 
   // Pré-remplissage depuis une visite précédente
   useEffect(() => {
@@ -83,7 +84,14 @@ export default function LoyaltyCard({
       const d = await res.json().catch(() => ({}));
       if (res.ok && d.ok) {
         setCard(d as CardData);
+        setOffline(false);
         localStorage.setItem(`kado-fid-${slug}`, clean);
+        // Copie locale pour un affichage hors connexion (le code ne change pas)
+        try {
+          localStorage.setItem(`kado-fid-card-${slug}`, JSON.stringify(d));
+        } catch {
+          /* stockage plein : tant pis */
+        }
       } else {
         setErr(
           d.error === "loyalty_off"
@@ -92,16 +100,37 @@ export default function LoyaltyCard({
         );
       }
     } catch {
-      setErr("Connexion impossible. Réessayez.");
+      // Pas de réseau : on affiche la dernière carte connue (le QR reste valable)
+      const cached = readCachedCard();
+      if (cached) {
+        setCard(cached);
+        setOffline(true);
+        setErr(null);
+      } else {
+        setErr("Connexion impossible. Réessayez.");
+      }
     } finally {
       setBusy(false);
+    }
+  }
+
+  function readCachedCard(): CardData | null {
+    try {
+      const raw = localStorage.getItem(`kado-fid-card-${slug}`);
+      if (!raw) return null;
+      const d = JSON.parse(raw);
+      return d && d.code ? (d as CardData) : null;
+    } catch {
+      return null;
     }
   }
 
   function reset() {
     setCard(null);
     setQr(null);
+    setOffline(false);
     localStorage.removeItem(`kado-fid-${slug}`);
+    localStorage.removeItem(`kado-fid-card-${slug}`);
   }
 
   const logo = logoUrl ? (
@@ -161,6 +190,13 @@ export default function LoyaltyCard({
           </section>
         ) : (
           <section className="screen active">
+            {offline && (
+              <div className="fid-offline" role="status">
+                📶 Mode hors connexion — voici votre dernière carte connue.
+                Votre code reste valable, les tampons se mettront à jour au
+                retour du réseau.
+              </div>
+            )}
             {card.rewardReady && (
               <div className="fid-reward">
                 <div className="fid-reward-emoji">{card.rewardEmoji}</div>
