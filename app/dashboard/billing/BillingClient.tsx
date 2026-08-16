@@ -85,6 +85,8 @@ export default function BillingClient({
         alert(
           d.error === "no_price_configured"
             ? "Abonnement non configuré (tarif Stripe manquant)."
+            : d.detail
+            ? `Erreur Stripe : ${d.detail}`
             : "Action indisponible."
         );
         setLoading(false);
