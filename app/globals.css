@@ -2554,6 +2554,106 @@ canvas#confetti {
   }
 }
 
+/* ===== Aperçu carte de fidélité (accueil) ===== */
+.v-preview.alt {
+  grid-template-columns: 0.95fr 1.05fr;
+}
+.lc-frame {
+  justify-self: center;
+  width: 340px;
+  max-width: 90vw;
+}
+.lc-mock {
+  background: linear-gradient(155deg, #fffaf0, #fff);
+  border-radius: 22px;
+  padding: 22px;
+  color: #1b1035;
+  box-shadow: 0 26px 60px -24px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(255, 255, 255, 0.06);
+  transform: rotate(-2deg);
+}
+.lc-mock-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.lc-mock-brand {
+  font-weight: 800;
+  font-size: 1rem;
+  color: #1b1035;
+}
+.lc-mock-badge {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--gold-deep);
+  background: rgba(240, 165, 46, 0.14);
+  padding: 4px 12px;
+  border-radius: 99px;
+}
+.lc-mock-title {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #8b7fae;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+.lc-mock-progress {
+  height: 8px;
+  border-radius: 99px;
+  background: rgba(27, 16, 53, 0.08);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.lc-mock-progress span {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--gold), var(--gold-deep));
+}
+.lc-mock-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.lc-mock-stamp {
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #b8b0cc;
+  border: 2px dashed rgba(27, 16, 53, 0.18);
+  background: rgba(27, 16, 53, 0.02);
+}
+.lc-mock-stamp.on {
+  color: #1b1035;
+  font-size: 1.25rem;
+  border: 2px solid var(--gold-deep);
+  background: linear-gradient(160deg, var(--gold), var(--gold-deep));
+  box-shadow: 0 5px 12px rgba(240, 165, 46, 0.35);
+  transform: rotate(-5deg);
+}
+.lc-mock-reward {
+  text-align: center;
+  font-size: 0.95rem;
+  color: #4a3d6b;
+  padding-top: 14px;
+  border-top: 1px dashed rgba(27, 16, 53, 0.14);
+}
+.lc-mock-reward b { color: #1b1035; }
+@media (max-width: 760px) {
+  .v-preview.alt {
+    grid-template-columns: 1fr;
+  }
+  .lc-frame {
+    order: -1;
+  }
+}
+
 /* ===== Zone dangereuse (suppression de compte) — back-office ===== */
 .danger-zone {
   margin-top: 26px;

@@ -89,6 +89,35 @@ function PreviewWheel() {
   );
 }
 
+function LoyaltyCardMock() {
+  const goal = 10;
+  const filled = 6;
+  return (
+    <div className="lc-mock" aria-hidden="true">
+      <div className="lc-mock-head">
+        <div className="lc-mock-brand">☕ Café Lumière</div>
+        <div className="lc-mock-badge">
+          {filled} / {goal}
+        </div>
+      </div>
+      <div className="lc-mock-title">Carte de fidélité</div>
+      <div className="lc-mock-progress">
+        <span style={{ width: `${(filled / goal) * 100}%` }} />
+      </div>
+      <div className="lc-mock-grid">
+        {Array.from({ length: goal }, (_, i) => (
+          <span key={i} className={`lc-mock-stamp${i < filled ? " on" : ""}`}>
+            {i < filled ? "⭐" : i + 1}
+          </span>
+        ))}
+      </div>
+      <div className="lc-mock-reward">
+        🎁 <b>{goal} tampons</b> = un dessert offert
+      </div>
+    </div>
+  );
+}
+
 const STEPS = [
   { n: "1", t: "Vos clients scannent", d: "Un QR code sur la table, le ticket ou un sticker. Aucune application à installer." },
   { n: "2", t: "Ils suivent & laissent un avis", d: "Un tour de roue pour un suivi Instagram, un tour pour un avis Google." },
@@ -282,6 +311,27 @@ export default function Home({
             <div className="pv-cta">Tourner la roue 🎁</div>
             <div className="pv-foot">Suivez-nous · Laissez un avis</div>
           </div>
+        </div>
+      </section>
+
+      <section className="v-section v-preview alt">
+        <div className="lc-frame" aria-hidden="true">
+          <LoyaltyCardMock />
+        </div>
+        <div className="pv-copy">
+          <div className="v-badge" style={{ marginBottom: 14 }}>🎟️ Fidélité digitale</div>
+          <h2>La carte à tampons, sans le carton</h2>
+          <p className="pv-lede">
+            Vos clients cumulent des tampons à chaque passage et gagnent une
+            récompense. Une carte digitale, retrouvée par e-mail — rien à
+            télécharger, rien à perdre.
+          </p>
+          <ul className="pv-points">
+            <li><Ico name="check" /> Identifiée par e-mail, jamais perdue</li>
+            <li><Ico name="check" /> Récompense &amp; tampons personnalisables</li>
+            <li><Ico name="check" /> Validation d'un tampon en un scan en caisse</li>
+          </ul>
+          <a className="v-btn primary" href="/login?signup=1">Créer mon compte gratuit →</a>
         </div>
       </section>
 
