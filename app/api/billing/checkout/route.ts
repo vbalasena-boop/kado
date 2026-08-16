@@ -29,12 +29,13 @@ export async function POST(req: NextRequest) {
   }
   const biz = business;
 
-  let body: { plan?: string; setup?: string } = {};
+  let body: { plan?: string; setup?: string; address?: string } = {};
   try {
     body = await req.json();
   } catch {
     // pas de corps = formule actuelle
   }
+  const address = (body.address || "").trim().slice(0, 200) || null;
 
   const plan = ["roue", "fidelite", "complet"].includes(body.plan ?? "")
     ? body.plan!
@@ -88,6 +89,10 @@ export async function POST(req: NextRequest) {
     }
 
     await db.from("businesses").update({ plan }).eq("id", biz.id);
+    // Adresse fournie pour l'installation sur place (tolérant)
+    if (address) {
+      await db.from("businesses").update({ address }).eq("id", biz.id);
+    }
 
     const lineItems: { price: string; quantity: number }[] = [
       { price: priceId, quantity: 1 },

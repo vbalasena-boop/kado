@@ -15,6 +15,7 @@ export type AdminBusiness = {
   owner_email: string;
   created_at: string;
   phone: string | null;
+  address: string | null;
   plan: string | null;
   setup_option: string | null;
   setup_paid_at: string | null;
@@ -381,6 +382,9 @@ export default function AdminClient({
                       )}{" "}
                       · ✉️ {b.owner_email}
                     </span>
+                    {b.setup_option === "onsite" && (
+                      <span>📍 {b.address ?? "adresse non renseignée"}</span>
+                    )}
                   </div>
                   <button
                     className="btn-mini ok"

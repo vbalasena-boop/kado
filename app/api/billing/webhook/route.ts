@@ -204,15 +204,17 @@ export async function POST(req: NextRequest) {
               : "Installation à distance (79 €)";
           const { email, businessName } = await getOwnerContact(db, businessId);
 
-          // Téléphone du commerçant (colonne facultative → lecture tolérante)
+          // Téléphone et adresse du commerçant (lecture tolérante)
           let phone: string | null = null;
+          let address: string | null = null;
           try {
             const { data: p } = await db
               .from("businesses")
-              .select("phone")
+              .select("phone, address")
               .eq("id", businessId)
               .maybeSingle();
             phone = (p as any)?.phone ?? null;
+            address = (p as any)?.address ?? null;
           } catch {
             /* ignore */
           }
@@ -250,6 +252,8 @@ export async function POST(req: NextRequest) {
                   email ?? "introuvable"
                 }</b><br>Téléphone : <b>${
                   phone ?? "non renseigné"
+                }</b><br>Adresse : <b>${
+                  address ?? "non renseignée"
                 }</b><br><br>À contacter sous 24 h ouvrées.`,
               }),
             });

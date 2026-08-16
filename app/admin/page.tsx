@@ -47,6 +47,7 @@ export default async function AdminPage() {
   type Extra = {
     id: string;
     phone: string | null;
+    address: string | null;
     plan: string | null;
     setup_option: string | null;
     setup_paid_at: string | null;
@@ -56,7 +57,7 @@ export default async function AdminPage() {
   try {
     const { data: extras } = await admin
       .from("businesses")
-      .select("id, phone, plan, setup_option, setup_paid_at, setup_done_at");
+      .select("id, phone, address, plan, setup_option, setup_paid_at, setup_done_at");
     for (const e of (extras ?? []) as Extra[]) extraById.set(e.id, e);
   } catch {
     /* colonnes absentes : valeurs par défaut */
@@ -77,6 +78,7 @@ export default async function AdminPage() {
         : "(non lié)",
       created_at: b.created_at,
       phone: x?.phone ?? null,
+      address: x?.address ?? null,
       plan: x?.plan ?? null,
       setup_option: x?.setup_option ?? null,
       setup_paid_at: x?.setup_paid_at ?? null,

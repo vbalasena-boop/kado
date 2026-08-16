@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "not_authenticated" }, { status: 401 });
   }
 
-  let body: { setup?: string; phone?: string } = {};
+  let body: { setup?: string; phone?: string; address?: string } = {};
   try {
     body = await req.json();
   } catch {
@@ -33,6 +33,7 @@ export async function POST(req: NextRequest) {
     body.setup === "remote" || body.setup === "onsite" ? body.setup : null;
   const phone =
     (body.phone || "").replace(/[^\d+ .-]/g, "").trim().slice(0, 20) || null;
+  const address = (body.address || "").trim().slice(0, 200) || null;
   if (!setup) {
     return Response.json({ error: "invalid_setup" }, { status: 400 });
   }
@@ -46,9 +47,12 @@ export async function POST(req: NextRequest) {
   const db = getAdminClient();
   const origin = new URL(req.url).origin;
 
-  // Téléphone fourni à la réservation : on l'enregistre (tolérant)
+  // Téléphone / adresse fournis à la réservation : enregistrés (tolérant)
   if (phone) {
     await db.from("businesses").update({ phone }).eq("id", business.id);
+  }
+  if (address) {
+    await db.from("businesses").update({ address }).eq("id", business.id);
   }
 
   try {

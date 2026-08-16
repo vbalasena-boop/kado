@@ -60,6 +60,7 @@ export default function BillingClient({
   setupOption = null,
   hasPhone = false,
   slug = "",
+  initialAddress = "",
 }: {
   hasSubscription: boolean;
   statusLabel: string;
@@ -72,14 +73,17 @@ export default function BillingClient({
   setupOption?: string | null;
   hasPhone?: boolean;
   slug?: string;
+  initialAddress?: string;
 }) {
   const [loading, setLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(currentPlan);
   const [setupOpt, setSetupOpt] = useState<"none" | "remote" | "onsite">("none");
   const [postOpt, setPostOpt] = useState<"remote" | "onsite">("remote");
   const [setupPhone, setSetupPhone] = useState("");
+  const [setupAddress, setSetupAddress] = useState(initialAddress);
   const phoneNeeded = !hasPhone;
   const phoneOk = setupPhone.replace(/\D/g, "").length >= 9;
+  const addressOk = setupAddress.trim().length >= 8;
   const [changingPlan, setChangingPlan] = useState(false);
   const [planMsg, setPlanMsg] = useState<string | null>(null);
   const [confirm, setConfirm] = useState("");
@@ -271,6 +275,18 @@ export default function BillingClient({
                   <span>+ pose de l'affiche &amp; formation</span>
                 </button>
               </div>
+              {setupOpt === "onsite" && (
+                <label className="field" style={{ marginTop: 12, marginBottom: 0 }}>
+                  <span>Adresse du commerce (pour venir vous installer)</span>
+                  <input
+                    type="text"
+                    placeholder="12 rue des Fleurs, 75011 Paris"
+                    value={setupAddress}
+                    onChange={(e) => setSetupAddress(e.target.value)}
+                    maxLength={200}
+                  />
+                </label>
+              )}
             </div>
             <button
               className="btn"
@@ -278,9 +294,12 @@ export default function BillingClient({
                 go("/api/billing/checkout", {
                   plan: selectedPlan,
                   ...(setupOpt !== "none" ? { setup: setupOpt } : {}),
+                  ...(setupOpt === "onsite"
+                    ? { address: setupAddress.trim() }
+                    : {}),
                 })
               }
-              disabled={loading}
+              disabled={loading || (setupOpt === "onsite" && !addressOk)}
             >
               {loading
                 ? "…"
@@ -350,6 +369,18 @@ export default function BillingClient({
                   />
                 </label>
               )}
+              {postOpt === "onsite" && (
+                <label className="field" style={{ marginTop: 14 }}>
+                  <span>Adresse du commerce (pour venir vous installer)</span>
+                  <input
+                    type="text"
+                    placeholder="12 rue des Fleurs, 75011 Paris"
+                    value={setupAddress}
+                    onChange={(e) => setSetupAddress(e.target.value)}
+                    maxLength={200}
+                  />
+                </label>
+              )}
               <button
                 className="btn"
                 style={{ marginTop: 14 }}
@@ -357,9 +388,16 @@ export default function BillingClient({
                   go("/api/billing/setup", {
                     setup: postOpt,
                     ...(phoneNeeded ? { phone: setupPhone.trim() } : {}),
+                    ...(postOpt === "onsite"
+                      ? { address: setupAddress.trim() }
+                      : {}),
                   })
                 }
-                disabled={loading || (phoneNeeded && !phoneOk)}
+                disabled={
+                  loading ||
+                  (phoneNeeded && !phoneOk) ||
+                  (postOpt === "onsite" && !addressOk)
+                }
               >
                 {loading
                   ? "…"

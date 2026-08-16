@@ -24,15 +24,17 @@ export default async function BillingPage({
   let setupPaid = false;
   let setupOption: string | null = null;
   let hasPhone = false;
+  let address = "";
   try {
     const { data } = await getAdminClient()
       .from("businesses")
-      .select("setup_option, setup_paid_at, phone")
+      .select("setup_option, setup_paid_at, phone, address")
       .eq("id", business.id)
       .maybeSingle();
     setupPaid = !!data?.setup_paid_at;
     setupOption = data?.setup_option ?? null;
     hasPhone = !!data?.phone;
+    address = (data as any)?.address ?? "";
   } catch {
     /* colonnes absentes : valeurs par défaut */
   }
@@ -50,6 +52,7 @@ export default async function BillingPage({
       setupOption={setupOption}
       hasPhone={hasPhone}
       slug={business.slug}
+      initialAddress={address}
     />
   );
 }
