@@ -4108,3 +4108,27 @@ html { scroll-behavior: smooth; }
   cursor: pointer;
 }
 .camp-cancel:hover { background: rgba(217, 48, 37, 0.06); }
+
+/* ───── Admin : notes internes + actions installation ───── */
+.admin-note {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #7a6a00;
+  background: #fef7e0;
+  border-radius: 8px;
+  padding: 3px 8px;
+  display: inline-block;
+  max-width: 260px;
+  white-space: normal;
+  line-height: 1.4;
+}
+.setup-todo-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
+  flex: 0 0 auto;
+}
+@media (max-width: 560px) {
+  .setup-todo-actions { flex-direction: row; align-items: center; }
+}

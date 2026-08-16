@@ -20,6 +20,7 @@ export type AdminBusiness = {
   setup_option: string | null;
   setup_paid_at: string | null;
   setup_done_at: string | null;
+  admin_note: string | null;
 };
 
 const PLAN_LABEL: Record<string, string> = {
@@ -116,6 +117,45 @@ export default function AdminClient({
     setBusyId(id);
     try {
       await fetch(`/api/admin/business/${id}/setup-done`, { method: "POST" });
+      router.refresh();
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function saveNote(id: string, current: string | null) {
+    const note = window.prompt(
+      "Note interne (visible uniquement par vous) :",
+      current ?? ""
+    );
+    if (note === null) return;
+    setBusyId(id);
+    try {
+      await fetch(`/api/admin/business/${id}/note`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ note }),
+      });
+      router.refresh();
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function resetCounters(id: string, name: string) {
+    if (
+      !confirm(
+        `Remettre les compteurs de « ${name} » à zéro ?\n\nSupprime tous les tours joués et leurs codes cadeaux (utile après vos tests d'installation). Les cartes de fidélité et e-mails capturés sont conservés.`
+      )
+    )
+      return;
+    setBusyId(id);
+    setMsg(null);
+    try {
+      const res = await fetch(`/api/admin/business/${id}/reset`, {
+        method: "POST",
+      });
+      setMsg(res.ok ? `✅ Compteurs de « ${name} » remis à zéro.` : "❌ Échec de la remise à zéro.");
       router.refresh();
     } finally {
       setBusyId(null);
@@ -385,14 +425,26 @@ export default function AdminClient({
                     {b.setup_option === "onsite" && (
                       <span>📍 {b.address ?? "adresse non renseignée"}</span>
                     )}
+                    {b.admin_note && (
+                      <span className="admin-note">📝 {b.admin_note}</span>
+                    )}
                   </div>
-                  <button
-                    className="btn-mini ok"
-                    disabled={busyId === b.id}
-                    onClick={() => markSetupDone(b.id, b.name)}
-                  >
-                    <Icon name="check" size={15} /> Faite
-                  </button>
+                  <div className="setup-todo-actions">
+                    <button
+                      className="btn-mini soft"
+                      disabled={busyId === b.id}
+                      onClick={() => saveNote(b.id, b.admin_note)}
+                    >
+                      📝 Note
+                    </button>
+                    <button
+                      className="btn-mini ok"
+                      disabled={busyId === b.id}
+                      onClick={() => markSetupDone(b.id, b.name)}
+                    >
+                      <Icon name="check" size={15} /> Marquer comme faite
+                    </button>
+                  </div>
                 </li>
               ))}
           </ul>
@@ -436,6 +488,9 @@ export default function AdminClient({
                         >
                           /{b.slug} ↗
                         </a>
+                        {b.admin_note && (
+                          <div className="admin-note">📝 {b.admin_note}</div>
+                        )}
                       </td>
                       <td className="admin-email">
                         {b.owner_email || "(non lié)"}
@@ -545,6 +600,20 @@ export default function AdminClient({
                             onClick={() => refund(b.id, b.name)}
                           >
                             <Icon name="redeem" size={15} /> Rembourser
+                          </button>
+                          <button
+                            className="btn-mini soft"
+                            disabled={busy}
+                            onClick={() => saveNote(b.id, b.admin_note)}
+                          >
+                            📝 Note
+                          </button>
+                          <button
+                            className="btn-mini soft"
+                            disabled={busy}
+                            onClick={() => resetCounters(b.id, b.name)}
+                          >
+                            🔄 RAZ compteurs
                           </button>
                           <button
                             className="btn-mini danger"

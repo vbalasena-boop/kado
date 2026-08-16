@@ -1,0 +1,26 @@
+import { NextRequest } from "next/server";
+import { getAdminUser } from "@/lib/admin-guard";
+import { getAdminClient } from "@/lib/supabase/admin";
+
+export const dynamic = "force-dynamic";
+
+/**
+ * Remet les compteurs de jeu d'un établissement à zéro : supprime tous les
+ * tours joués (et leurs codes cadeaux). Les cartes de fidélité et les
+ * e-mails capturés sont conservés. Utile après une installation/des tests.
+ */
+export async function POST(
+  _req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const admin = await getAdminUser();
+  if (!admin) return Response.json({ error: "forbidden" }, { status: 403 });
+
+  const { error } = await getAdminClient()
+    .from("plays")
+    .delete()
+    .eq("business_id", params.id);
+  if (error) return Response.json({ error: "delete_failed" }, { status: 500 });
+
+  return Response.json({ ok: true });
+}

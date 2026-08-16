@@ -52,12 +52,13 @@ export default async function AdminPage() {
     setup_option: string | null;
     setup_paid_at: string | null;
     setup_done_at: string | null;
+    admin_note: string | null;
   };
   const extraById = new Map<string, Extra>();
   try {
     const { data: extras } = await admin
       .from("businesses")
-      .select("id, phone, address, plan, setup_option, setup_paid_at, setup_done_at");
+      .select("id, phone, address, plan, setup_option, setup_paid_at, setup_done_at, admin_note");
     for (const e of (extras ?? []) as Extra[]) extraById.set(e.id, e);
   } catch {
     /* colonnes absentes : valeurs par défaut */
@@ -83,6 +84,7 @@ export default async function AdminPage() {
       setup_option: x?.setup_option ?? null,
       setup_paid_at: x?.setup_paid_at ?? null,
       setup_done_at: x?.setup_done_at ?? null,
+      admin_note: x?.admin_note ?? null,
     };
   });
 
