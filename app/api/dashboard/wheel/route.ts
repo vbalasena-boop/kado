@@ -26,6 +26,7 @@ export async function POST(req: NextRequest) {
       loyalty_reward?: string;
       loyalty_reward_emoji?: string;
       loyalty_stamp_emoji?: string;
+      game_type?: string;
     };
     prizes?: {
       label: string;
@@ -77,6 +78,9 @@ export async function POST(req: NextRequest) {
         "Une récompense offerte",
       loyalty_reward_emoji: (cfg.loyalty_reward_emoji || "🎁").slice(0, 8),
       loyalty_stamp_emoji: (cfg.loyalty_stamp_emoji || "⭐").slice(0, 8),
+      game_type: ["wheel", "scratch", "slot"].includes(cfg.game_type ?? "")
+        ? cfg.game_type
+        : "wheel",
     },
     { onConflict: "business_id" }
   );

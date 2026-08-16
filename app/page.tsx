@@ -84,7 +84,7 @@ const PLANS = [
     price: "29",
     desc: "Boostez vos avis & abonnés",
     features: [
-      "Roue de la fortune illimitée",
+      "3 jeux : roue, grattage, machine à sous",
       "Avis Google + Instagram",
       "Personnalisation complète",
       "QR code, stats, validation",

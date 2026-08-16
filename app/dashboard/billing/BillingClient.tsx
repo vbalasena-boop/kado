@@ -9,7 +9,7 @@ const PLANS = [
     label: "Roue",
     price: "29",
     features: [
-      "Roue de la fortune illimitée",
+      "3 jeux : roue, grattage, machine à sous",
       "Avis Google + Instagram",
       "Personnalisation complète",
       "QR code, stats, validation",

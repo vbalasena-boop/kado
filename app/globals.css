@@ -3830,3 +3830,138 @@ html { scroll-behavior: smooth; }
 @media (max-width: 560px) {
   .setup-todo-list li { flex-direction: column; align-items: flex-start; }
 }
+
+/* ───── Sélecteur de type de jeu (éditeur) ───── */
+.game-type-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+@media (max-width: 560px) {
+  .game-type-grid { grid-template-columns: 1fr; }
+}
+.game-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 16px 12px;
+  border-radius: 14px;
+  border: 2px solid var(--g-line);
+  background: #fff;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.12s, box-shadow 0.12s, transform 0.1s;
+}
+.game-chip:hover { border-color: var(--g-blue); transform: translateY(-1px); }
+.game-chip.on {
+  border-color: var(--g-blue);
+  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.15);
+  background: rgba(26, 115, 232, 0.05);
+}
+.game-chip-e { font-size: 30px; }
+.game-chip b { font-size: 14px; color: var(--g-ink); }
+.game-chip small { font-size: 12px; color: #5f6368; line-height: 1.35; }
+
+/* ───── Machine à sous (jeu public) ───── */
+.slot-machine {
+  margin: 20px auto 8px;
+  padding: 16px;
+  max-width: 320px;
+  border-radius: 22px;
+  background: linear-gradient(180deg, var(--surface), var(--surface-2));
+  border: 2px solid var(--gold);
+  box-shadow: 0 18px 44px -18px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.slot-window {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 14px;
+  padding: 14px;
+}
+.slot-reel {
+  width: 74px;
+  height: 92px;
+  display: grid;
+  place-items: center;
+  font-size: 44px;
+  background: linear-gradient(180deg, #fff, #efeaf8);
+  border-radius: 10px;
+  box-shadow: inset 0 14px 16px rgba(0, 0, 0, 0.12),
+    inset 0 -14px 16px rgba(0, 0, 0, 0.16);
+}
+.slot-reel.spin {
+  animation: slot-shake 0.16s linear infinite;
+  filter: blur(0.6px);
+}
+@keyframes slot-shake {
+  0% { transform: translateY(-3px); }
+  50% { transform: translateY(3px); }
+  100% { transform: translateY(-3px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .slot-reel.spin { animation: none; filter: none; }
+}
+
+/* ───── Carte à gratter (jeu public) ───── */
+.scratch-wrap {
+  margin: 18px auto 8px;
+  width: min(340px, 90vw);
+  text-align: center;
+}
+.scratch-card {
+  position: relative;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 18px 44px -18px rgba(0, 0, 0, 0.7);
+}
+.scratch-under {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 14px;
+  background: linear-gradient(160deg, #fffdf6, #ffe9c2);
+  color: #1b1035;
+  text-align: center;
+}
+.scratch-under b { font-size: 1.15rem; line-height: 1.25; }
+.scratch-emoji { font-size: 2.8rem; line-height: 1; }
+.scratch-foil {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: auto;
+  touch-action: none;
+  cursor: crosshair;
+}
+.scratch-hint {
+  text-align: center;
+  color: var(--cream);
+  opacity: 0.85;
+  font-size: 0.95rem;
+  margin: 12px 0 0;
+}
+.scratch-reveal {
+  margin-top: 12px;
+  background: none;
+  border: 1px solid var(--stroke);
+  color: var(--cream-dim);
+  padding: 8px 16px;
+  border-radius: 99px;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+.scratch-reveal:hover { color: var(--cream); border-color: rgba(255,255,255,.35); }
+.scratch-placeholder {
+  font-size: 5rem;
+  text-align: center;
+  margin: 26px 0;
+  filter: drop-shadow(0 12px 22px rgba(0, 0, 0, 0.4));
+}

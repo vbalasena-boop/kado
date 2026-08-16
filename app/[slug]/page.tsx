@@ -76,7 +76,7 @@ export default async function Page({
     supa
       .from("wheel_configs")
       .select(
-        "primary_color, accent_color, bg_color, bg_image_url, collect_email, instagram_url, review_url, compliance_note, instagram_enabled, review_enabled, loyalty_enabled"
+        "primary_color, accent_color, bg_color, bg_image_url, collect_email, instagram_url, review_url, compliance_note, instagram_enabled, review_enabled, loyalty_enabled, game_type"
       )
       .eq("business_id", biz.id)
       .maybeSingle(),
@@ -119,6 +119,7 @@ export default async function Page({
           instagram_enabled: true,
           review_enabled: true,
           loyalty_enabled: false,
+          game_type: "wheel",
         }
       }
       played={played}

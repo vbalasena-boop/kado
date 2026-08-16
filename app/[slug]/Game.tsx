@@ -22,6 +22,55 @@ type Config = {
   instagram_enabled?: boolean | null;
   review_enabled?: boolean | null;
   loyalty_enabled?: boolean | null;
+  game_type?: string | null;
+};
+
+type GameType = "wheel" | "scratch" | "slot";
+
+/** Libellés adaptés au jeu choisi par le commerçant. */
+const GAME_TEXTS: Record<
+  GameType,
+  {
+    one: string;
+    two: string;
+    offered: string;
+    rule3: string;
+    head: string;
+    sub: string;
+    cta: string;
+    ctaBusy: string;
+  }
+> = {
+  wheel: {
+    one: "1 tour de roue",
+    two: "2 tours de roue",
+    offered: "1 tour de roue offert",
+    rule3: "Tournez la roue",
+    head: "Tournez la roue 🎡",
+    sub: "Un seul tour… croisez les doigts !",
+    cta: "Tourner la roue",
+    ctaBusy: "La roue tourne…",
+  },
+  scratch: {
+    one: "1 carte à gratter",
+    two: "2 cartes à gratter",
+    offered: "1 carte à gratter offerte",
+    rule3: "Grattez votre carte",
+    head: "Grattez votre carte 🎫",
+    sub: "Frottez la surface avec le doigt… suspense !",
+    cta: "Découvrir ma carte",
+    ctaBusy: "Préparation…",
+  },
+  slot: {
+    one: "1 partie",
+    two: "2 parties",
+    offered: "1 partie offerte",
+    rule3: "Lancez la machine",
+    head: "Lancez la machine 🎰",
+    sub: "Trois rouleaux… croisez les doigts !",
+    cta: "Lancer la machine",
+    ctaBusy: "Ça tourne…",
+  },
 };
 
 /** hex -> rgba(...) avec transparence. */
@@ -148,6 +197,129 @@ function GoogleGlyph({ size = 24 }: { size?: number }) {
   );
 }
 
+/** Carte à gratter : un voile métallisé que l'on efface au doigt. */
+function ScratchCard({
+  emoji,
+  label,
+  onDone,
+}: {
+  emoji: string;
+  label: string;
+  onDone: () => void;
+}) {
+  const cvRef = useRef<HTMLCanvasElement | null>(null);
+  const doneRef = useRef(false);
+  const movesRef = useRef(0);
+
+  useEffect(() => {
+    const cv = cvRef.current;
+    if (!cv) return;
+    const ctx = cv.getContext("2d");
+    if (!ctx) return;
+    const g = ctx.createLinearGradient(0, 0, cv.width, cv.height);
+    g.addColorStop(0, "#c3c3cf");
+    g.addColorStop(0.5, "#8e8ea0");
+    g.addColorStop(1, "#c3c3cf");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, cv.width, cv.height);
+    // motif de pièces + consigne
+    ctx.fillStyle = "rgba(255,255,255,0.28)";
+    for (let i = 0; i < 24; i++) {
+      ctx.beginPath();
+      ctx.arc(
+        (i * 97) % cv.width,
+        (i * 53) % cv.height,
+        3 + (i % 4),
+        0,
+        TAU
+      );
+      ctx.fill();
+    }
+    ctx.fillStyle = "rgba(30,25,50,0.55)";
+    ctx.font = `800 26px ${FONT}`;
+    ctx.textAlign = "center";
+    ctx.fillText("Grattez ici ✨", cv.width / 2, cv.height / 2 + 9);
+  }, []);
+
+  function finish() {
+    if (doneRef.current) return;
+    doneRef.current = true;
+    haptic([0, 40, 30, 70]);
+    setTimeout(onDone, 350);
+  }
+
+  function scratchAt(clientX: number, clientY: number) {
+    const cv = cvRef.current;
+    if (!cv || doneRef.current) return;
+    const ctx = cv.getContext("2d");
+    if (!ctx) return;
+    const r = cv.getBoundingClientRect();
+    const x = ((clientX - r.left) / r.width) * cv.width;
+    const y = ((clientY - r.top) / r.height) * cv.height;
+    ctx.globalCompositeOperation = "destination-out";
+    ctx.beginPath();
+    ctx.arc(x, y, 30, 0, TAU);
+    ctx.fill();
+    movesRef.current++;
+    if (movesRef.current % 12 === 0) checkProgress();
+  }
+
+  function checkProgress() {
+    const cv = cvRef.current;
+    if (!cv || doneRef.current) return;
+    const ctx = cv.getContext("2d");
+    if (!ctx) return;
+    try {
+      const data = ctx.getImageData(0, 0, cv.width, cv.height).data;
+      const step = 14;
+      let clear = 0;
+      let total = 0;
+      for (let y = 0; y < cv.height; y += step) {
+        for (let x = 0; x < cv.width; x += step) {
+          total++;
+          if (data[(y * cv.width + x) * 4 + 3] < 40) clear++;
+        }
+      }
+      if (total > 0 && clear / total > 0.45) finish();
+    } catch {
+      /* ignore */
+    }
+  }
+
+  return (
+    <div className="scratch-wrap">
+      <div className="scratch-card">
+        <div className="scratch-under" aria-hidden="true">
+          <span className="scratch-emoji">{emoji}</span>
+          <b>{label}</b>
+        </div>
+        <canvas
+          ref={cvRef}
+          width={340}
+          height={210}
+          className="scratch-foil"
+          onPointerDown={(e) => {
+            try {
+              (e.target as Element).setPointerCapture(e.pointerId);
+            } catch {
+              /* ignore */
+            }
+            scratchAt(e.clientX, e.clientY);
+          }}
+          onPointerMove={(e) => {
+            if (e.buttons > 0 || e.pressure > 0)
+              scratchAt(e.clientX, e.clientY);
+          }}
+          onPointerUp={checkProgress}
+        />
+      </div>
+      <button className="scratch-reveal" onClick={finish}>
+        Tout révéler
+      </button>
+    </div>
+  );
+}
+
 export default function Game({
   slug,
   name,
@@ -175,6 +347,13 @@ export default function Game({
   const enabledChannels = channels.length > 0 ? channels : (["instagram", "review"] as PlayType[]);
   const totalTurns = enabledChannels.length;
 
+  // Jeu choisi par le commerçant (roue par défaut)
+  const gameType: GameType =
+    config.game_type === "scratch" || config.game_type === "slot"
+      ? config.game_type
+      : "wheel";
+  const T = GAME_TEXTS[gameType];
+
   const allDone =
     !preview && enabledChannels.every((k) => initialPlayed[k] != null);
   const [screen, setScreen] = useState<Screen>(allDone ? "done" : "rules");
@@ -192,6 +371,14 @@ export default function Game({
   const [leadSent, setLeadSent] = useState(false);
   const [leadBusy, setLeadBusy] = useState(false);
   const [prizeQr, setPrizeQr] = useState<string | null>(null);
+  // Machine à sous : contenu des 3 rouleaux
+  const [reels, setReels] = useState<string[]>(["🎁", "⭐", "🍀"]);
+  // Carte à gratter : lot en attente de révélation
+  const [scratchPrize, setScratchPrize] = useState<{
+    label: string;
+    emoji: string;
+    code: string | null;
+  } | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -399,9 +586,7 @@ export default function Game({
     if (preview) {
       const idx = previewPick();
       const p = prizes[idx];
-      animateTo(idx, () =>
-        reveal({ label: p.label, emoji: p.emoji, code: null })
-      );
+      animate(idx, { label: p.label, emoji: p.emoji, code: null });
       return;
     }
 
@@ -418,9 +603,11 @@ export default function Game({
           ...p,
           [current]: { label: data.label, code: data.code },
         }));
-        animateTo(indexOfLabel(data.label), () =>
-          reveal({ label: data.label, emoji: emojiOfLabel(data.label), code: data.code })
-        );
+        animate(indexOfLabel(data.label), {
+          label: data.label,
+          emoji: emojiOfLabel(data.label),
+          code: data.code,
+        });
         return;
       }
       if (!res.ok) {
@@ -433,13 +620,70 @@ export default function Game({
         ...p,
         [current]: { label: data.label, code: data.code },
       }));
-      animateTo(data.index, () =>
-        reveal({ label: data.label, emoji: data.emoji, code: data.code })
-      );
+      animate(data.index, {
+        label: data.label,
+        emoji: data.emoji,
+        code: data.code,
+      });
     } catch {
       setError("Connexion impossible. Réessayez.");
       setSpinning(false);
     }
+  }
+
+  /** Lance l'animation du jeu choisi, puis révèle le lot. */
+  function animate(
+    idx: number,
+    p: { label: string; emoji: string; code: string | null }
+  ) {
+    if (gameType === "scratch") {
+      // La carte s'affiche : c'est le grattage qui révélera le lot.
+      setSpinning(false);
+      setScratchPrize(p);
+      return;
+    }
+    if (gameType === "slot") {
+      animateSlot(idx, () => reveal(p));
+      return;
+    }
+    animateTo(idx, () => reveal(p));
+  }
+
+  /** Machine à sous : 3 rouleaux qui s'arrêtent l'un après l'autre. */
+  function animateSlot(idx: number, done: () => void) {
+    const target = prizes[idx]?.emoji || "🎁";
+    const pool = prizes.map((p) => p.emoji || "🎁");
+    const reduce = matchMedia("(prefers-reduced-motion:reduce)").matches;
+    if (reduce) {
+      setReels([target, target, target]);
+      setSpinning(false);
+      setTimeout(done, 300);
+      return;
+    }
+    const stopped = [false, false, false];
+    const iv = window.setInterval(() => {
+      setReels((r) =>
+        r.map((v, i) =>
+          stopped[i] ? v : pool[Math.floor(Math.random() * pool.length)]
+        )
+      );
+    }, 80);
+    [900, 1550, 2200].forEach((t, i) => {
+      window.setTimeout(() => {
+        stopped[i] = true;
+        setReels((r) => {
+          const n = [...r];
+          n[i] = target;
+          return n;
+        });
+        haptic(15);
+        if (i === 2) {
+          window.clearInterval(iv);
+          setSpinning(false);
+          window.setTimeout(done, 500);
+        }
+      }, t);
+    });
   }
 
   function indexOfLabel(label: string) {
@@ -492,6 +736,8 @@ export default function Game({
 
   function afterPrize() {
     setCurrent(null);
+    setScratchPrize(null);
+    setReels(["🎁", "⭐", "🍀"]);
     if (preview) {
       setPlayed({}); // en test, on peut rejouer indéfiniment
       setScreen("hub");
@@ -543,13 +789,13 @@ export default function Game({
               <p className="sub">
                 {totalTurns === 2 ? (
                   <>
-                    Vous avez droit à <b>2 tours de roue</b> : un pour un suivi
-                    Instagram, un pour un avis Google. À chaque tour, un cadeau à
-                    gagner.
+                    Vous avez droit à <b>{T.two}</b> : une chance pour un suivi
+                    Instagram, une pour un avis Google. À chaque fois, un cadeau
+                    à gagner.
                   </>
                 ) : (
                   <>
-                    Vous avez droit à <b>1 tour de roue</b>{" "}
+                    Vous avez droit à <b>{T.one}</b>{" "}
                     {enabledChannels[0] === "instagram"
                       ? "pour un suivi Instagram"
                       : "pour un avis Google"}
@@ -581,7 +827,7 @@ export default function Game({
                 <div className="rule">
                   <div className="num">3</div>
                   <div className="txt">
-                    <b>Tournez la roue</b> <span>et gagnez</span>
+                    <b>{T.rule3}</b> <span>et gagnez</span>
                   </div>
                 </div>
               </div>
@@ -602,21 +848,21 @@ export default function Game({
               <h1>
                 {totalTurns === 2 ? (
                   <>
-                    Vos <span className="accent">2 tours</span>
+                    Vos <span className="accent">2 chances</span>
                   </>
                 ) : (
                   <>
-                    Votre <span className="accent">tour</span>
+                    Votre <span className="accent">chance</span>
                   </>
                 )}
               </h1>
               <p className="sub">
                 {totalTurns === 2
-                  ? "Débloquez chaque tour en réalisant l'action. Chacun ne peut être joué qu'une fois."
-                  : "Réalisez l'action pour débloquer votre tour de roue."}
+                  ? "Débloquez chaque chance en réalisant l'action. Chacune ne peut être jouée qu'une fois."
+                  : `Réalisez l'action pour débloquer ${T.one}.`}
               </p>
               <div className="counter">
-                Tours restants : <b>{totalTurns - usedCount}</b>
+                Chances restantes : <b>{totalTurns - usedCount}</b>
                 &nbsp;/&nbsp;{totalTurns}
               </div>
               <div className="chances">
@@ -631,7 +877,7 @@ export default function Game({
                     </div>
                     <div className="body">
                       <div className="t">Suivre sur Instagram</div>
-                      <div className="d">1 tour de roue offert</div>
+                      <div className="d">{T.offered}</div>
                     </div>
                     <div className={`state ${played.instagram ? "done" : "todo"}`}>
                       {played.instagram ? "✓ Fait" : "Jouer"}
@@ -649,7 +895,7 @@ export default function Game({
                     </div>
                     <div className="body">
                       <div className="t">Laisser un avis Google</div>
-                      <div className="d">1 tour de roue offert</div>
+                      <div className="d">{T.offered}</div>
                     </div>
                     <div className={`state ${played.review ? "done" : "todo"}`}>
                       {played.review ? "✓ Fait" : "Jouer"}
@@ -677,22 +923,61 @@ export default function Game({
                 </span>
               </div>
               <div className="wheel-head">
-                <h2>Tournez la roue&nbsp;🎡</h2>
-                <p>Un seul tour... croisez les doigts&nbsp;!</p>
+                <h2>{T.head}</h2>
+                <p>{T.sub}</p>
               </div>
-              <div className="wheel-wrap">
-                <div className="pointer" />
-                <canvas id="wheel" ref={canvasRef} width={680} height={680} />
-                <div className="hub-dot">Spin</div>
-              </div>
+
+              {gameType === "wheel" && (
+                <div className="wheel-wrap">
+                  <div className="pointer" />
+                  <canvas id="wheel" ref={canvasRef} width={680} height={680} />
+                  <div className="hub-dot">Spin</div>
+                </div>
+              )}
+
+              {gameType === "slot" && (
+                <div className="slot-machine">
+                  <div className="slot-window">
+                    {reels.map((e, i) => (
+                      <div
+                        key={i}
+                        className={`slot-reel${spinning ? " spin" : ""}`}
+                      >
+                        {e}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {gameType === "scratch" &&
+                (scratchPrize ? (
+                  <ScratchCard
+                    emoji={scratchPrize.emoji}
+                    label={scratchPrize.label}
+                    onDone={() => reveal(scratchPrize)}
+                  />
+                ) : (
+                  <div className="scratch-placeholder" aria-hidden="true">
+                    🎫
+                  </div>
+                ))}
+
               {error && <p className="err">{error}</p>}
-              <button
-                className="btn spin-cta"
-                onClick={spin}
-                disabled={spinning}
-              >
-                {spinning ? "La roue tourne…" : "Tourner la roue"}
-              </button>
+
+              {gameType === "scratch" && scratchPrize ? (
+                <p className="scratch-hint">
+                  👆 Frottez la carte avec votre doigt
+                </p>
+              ) : (
+                <button
+                  className="btn spin-cta"
+                  onClick={spin}
+                  disabled={spinning}
+                >
+                  {spinning ? T.ctaBusy : T.cta}
+                </button>
+              )}
             </section>
           )}
 
@@ -780,8 +1065,8 @@ export default function Game({
                 <h2>Vous avez tout joué&nbsp;!</h2>
                 <p>
                   {totalTurns === 2
-                    ? "Vos 2 tours ont été utilisés."
-                    : "Votre tour a été utilisé."}{" "}
+                    ? "Vos 2 chances ont été utilisées."
+                    : "Votre chance a été utilisée."}{" "}
                   Merci de votre soutien&nbsp;❤️
                 </p>
                 <div className="recap">

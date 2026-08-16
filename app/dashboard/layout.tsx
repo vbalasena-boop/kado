@@ -73,7 +73,7 @@ export default async function DashboardLayout({
             </Link>
             {hasModule(business, "roue") && (
               <Link href="/dashboard/wheel">
-                <Icon name="wheel" /> Ma roue
+                <Icon name="wheel" /> Mon jeu
               </Link>
             )}
             {hasModule(business, "fidelite") && !hasModule(business, "roue") && (
@@ -100,7 +100,7 @@ export default async function DashboardLayout({
             {hasModule(business, "roue") && (
               <>
                 <Link href={`/${business.slug}?preview=1`} target="_blank">
-                  <Icon name="test" /> Tester ma roue
+                  <Icon name="test" /> Tester mon jeu
                 </Link>
                 <Link href={`/${business.slug}`} target="_blank">
                   <Icon name="external" /> Voir ma page

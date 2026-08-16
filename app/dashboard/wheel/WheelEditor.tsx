@@ -23,7 +23,14 @@ type Config = {
   loyalty_reward?: string | null;
   loyalty_reward_emoji?: string | null;
   loyalty_stamp_emoji?: string | null;
+  game_type?: string | null;
 };
+
+const GAME_TYPES = [
+  { id: "wheel", emoji: "🎡", label: "Roue de la fortune", desc: "Le grand classique, effet garanti" },
+  { id: "scratch", emoji: "🎫", label: "Carte à gratter", desc: "On gratte avec le doigt, suspense !" },
+  { id: "slot", emoji: "🎰", label: "Machine à sous", desc: "Trois rouleaux, ambiance casino" },
+];
 
 const FONT =
   '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
@@ -246,10 +253,10 @@ export default function WheelEditor({
 
   return (
     <>
-      <h1 className="dash-h1">{showRoue ? "Ma roue" : "Ma fidélité"}</h1>
+      <h1 className="dash-h1">{showRoue ? "Mon jeu" : "Ma fidélité"}</h1>
       <p className="dash-sub">
         {showRoue
-          ? "Configurez vos cadeaux, vos liens et vos couleurs. L'aperçu se met à jour en direct."
+          ? "Choisissez votre jeu, vos cadeaux, vos liens et vos couleurs. L'aperçu se met à jour en direct."
           : "Configurez votre carte de fidélité : récompense, nombre de tampons, emoji."}
       </p>
 
@@ -320,6 +327,30 @@ export default function WheelEditor({
                   Une photo de ton commerce ou de tes plats (JPG/PNG, 6 Mo max). Un
                   voile sombre est ajouté pour garder le texte lisible.
                 </p>
+              </div>
+
+              <div className="dash-card">
+                <h2>Type de jeu</h2>
+                <p className="muted" style={{ marginBottom: 14 }}>
+                  Roue, carte à gratter ou machine à sous — même principe dans
+                  les trois cas : vos cadeaux, vos probabilités, votre code à
+                  valider en caisse.
+                </p>
+                <div className="game-type-grid">
+                  {GAME_TYPES.map((g) => (
+                    <button
+                      type="button"
+                      key={g.id}
+                      className={`game-chip${(config.game_type ?? "wheel") === g.id ? " on" : ""}`}
+                      onClick={() => setConfig({ ...config, game_type: g.id })}
+                      aria-pressed={(config.game_type ?? "wheel") === g.id}
+                    >
+                      <span className="game-chip-e">{g.emoji}</span>
+                      <b>{g.label}</b>
+                      <small>{g.desc}</small>
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="dash-card">
@@ -695,6 +726,16 @@ export default function WheelEditor({
             <div className="dash-card preview-card">
               <h2>Aperçu</h2>
               <canvas ref={canvasRef} width={520} height={520} className="preview-wheel" />
+              {(config.game_type ?? "wheel") !== "wheel" && (
+                <p className="muted" style={{ marginTop: 10 }}>
+                  {config.game_type === "scratch" ? "🎫" : "🎰"} Vos clients
+                  joueront à la{" "}
+                  {config.game_type === "scratch"
+                    ? "carte à gratter"
+                    : "machine à sous"}{" "}
+                  avec ces mêmes cadeaux et probabilités.
+                </p>
+              )}
             </div>
           </div>
         )}
