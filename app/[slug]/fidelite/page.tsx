@@ -1,5 +1,5 @@
 import { getAdminClient } from "@/lib/supabase/admin";
-import { hasAccess } from "@/lib/auth";
+import { hasAccess, hasModule } from "@/lib/auth";
 import LoyaltyCard from "./LoyaltyCard";
 
 export const dynamic = "force-dynamic";
@@ -26,13 +26,18 @@ export default async function FidelitePage({
   const db = getAdminClient();
   const { data: biz } = await db
     .from("businesses")
-    .select("id, name, logo_url, status, subscription_ends_at")
+    .select("id, name, logo_url, status, subscription_ends_at, plan, subscription_status")
     .eq("slug", params.slug)
     .maybeSingle();
 
   if (!biz) return <Unavailable message="Cet établissement n'existe pas." />;
   if (!hasAccess(biz)) {
     return <Unavailable message="Ce service est momentanément indisponible." />;
+  }
+  if (!hasModule({ plan: biz.plan ?? "roue", subscription_status: biz.subscription_status ?? "trial" }, "fidelite")) {
+    return (
+      <Unavailable message="Ce commerce ne propose pas encore de carte de fidélité." />
+    );
   }
 
   const { data: cfg } = await db

@@ -109,7 +109,7 @@ export default async function DashboardLayout({
             )}
             {hasModule(business, "fidelite") && (
               <Link href={`/${business.slug}/fidelite`} target="_blank">
-                <Icon name="external" /> Carte fidélité
+                <Icon name="loyalty" /> Carte fidélité
               </Link>
             )}
           </nav>

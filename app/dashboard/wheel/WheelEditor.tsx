@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Icon } from "@/components/icons";
 
 type Prize = {
   label: string;
@@ -46,6 +47,7 @@ export default function WheelEditor({
   initialBgUrl,
   showRoue = true,
   showFidelite = true,
+  plan = "roue",
 }: {
   initialConfig: Config;
   initialPrizes: Prize[];
@@ -53,7 +55,10 @@ export default function WheelEditor({
   initialBgUrl?: string | null;
   showRoue?: boolean;
   showFidelite?: boolean;
+  plan?: string;
 }) {
+  // La section fidélité est verrouillée si la formule ne l'inclut pas.
+  const fideliteLocked = !showFidelite;
   const [config, setConfig] = useState<Config>(initialConfig);
   const [prizes, setPrizes] = useState<Prize[]>(
     initialPrizes.length
@@ -407,18 +412,46 @@ export default function WheelEditor({
             </>
           )}
 
-          {showFidelite && (
-            <div className="dash-card">
-              <h2>Carte de fidélité</h2>
+          {(showFidelite || showRoue) && (
+            <div className={`dash-card fid-card${fideliteLocked ? " locked" : ""}`}>
+              <div className="fid-card-head">
+                <h2>
+                  <Icon name="loyalty" size={20} /> Carte de fidélité
+                </h2>
+                {fideliteLocked && (
+                  <span className="fid-lock-tag">
+                    <Icon name="lock" size={13} /> Formule Complet ou Fidélité
+                  </span>
+                )}
+              </div>
               <p className="muted" style={{ marginBottom: 14 }}>
                 Une carte à tampons digitale, sans appli : vos clients cumulent des
                 tampons à chaque passage et gagnent une récompense. Vous validez
                 chaque tampon en caisse (onglet « Valider en caisse »).
               </p>
-              <label className="toggle-field">
+
+              {fideliteLocked && (
+                <div className="fid-lock-banner">
+                  <Icon name="lock" size={18} />
+                  <div>
+                    <b>Fonctionnalité verrouillée</b>
+                    <span>
+                      La carte de fidélité est incluse dans les formules{" "}
+                      <b>Complet</b> (44 €) et <b>Fidélité</b> (19 €). Passez à
+                      l'une d'elles pour l'activer.
+                    </span>
+                  </div>
+                  <a href="/dashboard/billing" className="btn-mini-upgrade">
+                    Changer de formule →
+                  </a>
+                </div>
+              )}
+
+              <label className={`toggle-field${fideliteLocked ? " is-disabled" : ""}`}>
                 <input
                   type="checkbox"
                   checked={!!config.loyalty_enabled}
+                  disabled={fideliteLocked}
                   onChange={(e) =>
                     setConfig({ ...config, loyalty_enabled: e.target.checked })
                   }
@@ -429,7 +462,7 @@ export default function WheelEditor({
                 </span>
               </label>
 
-              {config.loyalty_enabled && (
+              {config.loyalty_enabled && !fideliteLocked && (
                 <>
                   <label className="field">
                     <span>Nombre de tampons pour gagner (2 à 30)</span>

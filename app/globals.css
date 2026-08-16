@@ -3138,3 +3138,87 @@ canvas#confetti {
   padding-bottom: 6px;
   border-bottom: 2px solid var(--g-line);
 }
+
+/* ───── Carte de fidélité verrouillée (éditeur) ───── */
+.fid-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.fid-card-head h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+.fid-card-head h2 svg { color: var(--g-blue); }
+.fid-lock-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #b06000;
+  background: #fef7e0;
+  padding: 4px 10px;
+  border-radius: 99px;
+}
+.fid-card.locked { position: relative; }
+.fid-lock-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(26,115,232,.06), rgba(52,168,83,.06));
+  border: 1px solid var(--g-line);
+}
+.fid-lock-banner > svg { color: var(--g-blue); flex: 0 0 auto; }
+.fid-lock-banner b { display: block; color: var(--g-ink); font-size: 14px; }
+.fid-lock-banner span { display: block; color: var(--g-ink2); font-size: 13px; line-height: 1.45; }
+.btn-mini-upgrade {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  align-self: center;
+  background: var(--g-blue);
+  color: #fff;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 99px;
+  transition: background .15s;
+}
+.btn-mini-upgrade:hover { background: #1666cc; }
+@media (max-width: 560px) {
+  .fid-lock-banner { flex-direction: column; align-items: flex-start; }
+  .btn-mini-upgrade { align-self: stretch; text-align: center; }
+}
+.toggle-field.is-disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+.toggle-field.is-disabled input { cursor: not-allowed; }
+
+/* ───── Navigation dashboard — style Google plus soigné ───── */
+.dash-nav {
+  gap: 4px;
+  padding: 10px 18px;
+}
+.dash-nav a {
+  padding: 9px 15px;
+  transition: background .15s, color .15s;
+}
+.dash-nav a svg {
+  color: var(--g-ink2);
+  transition: color .15s;
+}
+.dash-nav a:hover svg { color: var(--g-blue); }
+.dash-nav a[target] svg { color: var(--g-blue); }
+.dash-nav a[target]:hover { background: rgba(26,115,232,.08); }
+.dash-signout svg,
+.dash-brand svg { vertical-align: middle; }

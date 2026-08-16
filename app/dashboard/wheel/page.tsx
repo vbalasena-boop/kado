@@ -39,6 +39,7 @@ export default async function WheelPage() {
       initialBgUrl={config?.bg_image_url ?? null}
       showRoue={hasModule(business, "roue")}
       showFidelite={hasModule(business, "fidelite")}
+      plan={business.plan}
     />
   );
 }
