@@ -67,6 +67,7 @@ export default function WheelEditor({
   );
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [isErr, setIsErr] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(initialLogoUrl ?? null);
   const [bgUrl, setBgUrl] = useState<string | null>(initialBgUrl ?? null);
   const [uploading, setUploading] = useState(false);
@@ -203,18 +204,23 @@ export default function WheelEditor({
   async function save() {
     setSaving(true);
     setMsg(null);
+    setIsErr(false);
     try {
       const res = await fetch("/api/dashboard/wheel", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ config, prizes }),
       });
-      if (res.ok) setMsg("Enregistré !");
-      else {
+      if (res.ok) {
+        setIsErr(false);
+        setMsg("Enregistré !");
+      } else {
         const d = await res.json().catch(() => ({}));
-        setMsg(d.error || "Échec de l'enregistrement.");
+        setIsErr(true);
+        setMsg(d.detail || d.error || "Échec de l'enregistrement.");
       }
     } catch {
+      setIsErr(true);
       setMsg("Connexion impossible.");
     } finally {
       setSaving(false);
@@ -640,7 +646,11 @@ export default function WheelEditor({
             <button className="btn" onClick={save} disabled={saving || noChannel}>
               {saving ? "Enregistrement…" : "Enregistrer"}
             </button>
-            {msg && <span className="save-msg">{msg}</span>}
+            {msg && (
+              <span className={isErr ? "save-msg is-err" : "save-msg"}>
+                {msg}
+              </span>
+            )}
           </div>
         </div>
 

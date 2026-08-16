@@ -3203,6 +3203,7 @@ canvas#confetti {
   cursor: not-allowed;
 }
 .toggle-field.is-disabled input { cursor: not-allowed; }
+.save-msg.is-err { color: var(--g-red); font-weight: 600; }
 
 /* ───── Navigation dashboard — style Google plus soigné ───── */
 .dash-nav {

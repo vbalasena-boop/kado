@@ -80,7 +80,11 @@ export async function POST(req: NextRequest) {
     },
     { onConflict: "business_id" }
   );
-  if (cfgErr) return Response.json({ error: "config_error" }, { status: 500 });
+  if (cfgErr)
+    return Response.json(
+      { error: "config_error", detail: cfgErr.message },
+      { status: 500 }
+    );
 
   // remplace la liste des cadeaux
   const prizes = (body.prizes ?? [])
