@@ -9,6 +9,7 @@ import {
 import {
   buildCampaignAudience,
   buildCampaignPayloads,
+  DAILY_CHUNK,
 } from "@/lib/campaigns";
 
 export const dynamic = "force-dynamic";
@@ -152,19 +153,69 @@ export async function GET(req: NextRequest) {
     out.errors.push(`birthdays: ${e?.message ?? "error"}`);
   }
 
-  // ── 3. Campagnes programmées arrivées à échéance ────────────────
+  // ── 3a. Campagnes programmées arrivées à échéance ───────────────
+  // On les transforme en file d'envoi étalé (traitée juste après).
   try {
     const todayStr = new Date().toISOString().slice(0, 10);
     const { data: due, error } = await db
       .from("campaigns")
-      .select("id, business_id, subject, body")
+      .select("id, business_id")
       .is("sent_at", null)
       .not("scheduled_for", "is", null)
       .lte("scheduled_for", todayStr);
     if (error) throw new Error(error.message);
 
     for (const c of due ?? []) {
-      const doneStamp = { sent_at: new Date().toISOString() };
+      const { data: biz } = await db
+        .from("businesses")
+        .select("id, status, subscription_status, campaigns_addon")
+        .eq("id", c.business_id)
+        .maybeSingle();
+      const entitled =
+        biz &&
+        biz.status === "active" &&
+        (biz.subscription_status === "trial" || (biz as any).campaigns_addon);
+      if (!entitled) {
+        // commerce inactif ou option résiliée : classée sans envoi
+        await db
+          .from("campaigns")
+          .update({ sent_at: new Date().toISOString() })
+          .eq("id", c.id);
+        continue;
+      }
+      const audience = await buildCampaignAudience(db, c.business_id);
+      await db
+        .from("campaigns")
+        .update({
+          scheduled_for: null,
+          ...(audience.length > 0
+            ? { pending_recipients: audience }
+            : { sent_at: new Date().toISOString() }),
+        })
+        .eq("id", c.id);
+    }
+  } catch (e: any) {
+    out.errors.push(`scheduled: ${e?.message ?? "error"}`);
+  }
+
+  // ── 3b. Envoi étalé : une fournée par jour et par campagne ──────
+  try {
+    const { data: drips, error } = await db
+      .from("campaigns")
+      .select("id, business_id, subject, body, sent_count, pending_recipients")
+      .is("sent_at", null)
+      .not("pending_recipients", "is", null);
+    if (error) throw new Error(error.message);
+
+    for (const c of drips ?? []) {
+      const pending: string[] = (c as any).pending_recipients ?? [];
+      if (pending.length === 0) {
+        await db
+          .from("campaigns")
+          .update({ pending_recipients: null, sent_at: new Date().toISOString() })
+          .eq("id", c.id);
+        continue;
+      }
       const { data: biz } = await db
         .from("businesses")
         .select("id, name, slug, status, subscription_status, campaigns_addon")
@@ -175,23 +226,33 @@ export async function GET(req: NextRequest) {
         biz.status === "active" &&
         (biz.subscription_status === "trial" || (biz as any).campaigns_addon);
       if (!entitled) {
-        // commerce inactif ou option résiliée : on classe sans envoyer
-        await db.from("campaigns").update(doneStamp).eq("id", c.id);
+        await db
+          .from("campaigns")
+          .update({ pending_recipients: null, sent_at: new Date().toISOString() })
+          .eq("id", c.id);
         continue;
       }
-      const recipients = await buildCampaignAudience(db, biz.id);
+
+      const chunk = pending.slice(0, DAILY_CHUNK);
+      const rest = pending.slice(DAILY_CHUNK);
       const { email: owner } = await getOwnerContact(db, biz.id);
-      const payloads = buildCampaignPayloads(
-        { id: biz.id, name: biz.name, slug: biz.slug },
-        owner ?? undefined,
-        c.subject,
-        c.body,
-        recipients
+      const sent = await sendBatch(
+        buildCampaignPayloads(
+          { id: biz.id, name: biz.name, slug: biz.slug },
+          owner ?? undefined,
+          c.subject,
+          c.body,
+          chunk
+        )
       );
-      const sent = await sendBatch(payloads);
       await db
         .from("campaigns")
-        .update({ ...doneStamp, sent_count: sent })
+        .update({
+          sent_count: (c.sent_count || 0) + sent,
+          ...(rest.length > 0
+            ? { pending_recipients: rest }
+            : { pending_recipients: null, sent_at: new Date().toISOString() }),
+        })
         .eq("id", c.id);
       out.campaigns++;
     }

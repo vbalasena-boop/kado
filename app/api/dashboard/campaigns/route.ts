@@ -5,37 +5,41 @@ import { sendBatch } from "@/lib/email";
 import {
   buildCampaignAudience,
   buildCampaignPayloads,
+  TRIAL_MAX_RECIPIENTS,
+  DAILY_CHUNK,
 } from "@/lib/campaigns";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-/** L'accès campagnes : inclus pendant l'essai, sinon option payante. */
-async function hasCampaignAccess(business: {
-  id: string;
-  subscription_status: string;
-}) {
-  if (business.subscription_status === "trial") return true;
-  try {
-    const { data } = await getAdminClient()
-      .from("businesses")
-      .select("campaigns_addon")
-      .eq("id", business.id)
-      .maybeSingle();
-    return !!(data as any)?.campaigns_addon;
-  } catch {
-    return false;
-  }
-}
-
-/** Envoie (ou programme) une campagne e-mail aux clients opt-in. */
+/**
+ * Envoie ou programme une campagne e-mail.
+ * - Essai gratuit : 10 destinataires max par campagne (découverte).
+ * - Option payée : envoi étalé (100 e-mails/jour max) pour respecter les
+ *   limites d'envoi — la suite part automatiquement via le cron quotidien.
+ */
 export async function POST(req: NextRequest) {
   const { business } = await getMyBusiness();
   if (!business) {
     return Response.json({ error: "not_authenticated" }, { status: 401 });
   }
-  if (!(await hasCampaignAccess(business))) {
+
+  const isTrial = business.subscription_status === "trial";
+  const db = getAdminClient();
+
+  let addonOn = false;
+  try {
+    const { data } = await db
+      .from("businesses")
+      .select("campaigns_addon")
+      .eq("id", business.id)
+      .maybeSingle();
+    addonOn = !!(data as any)?.campaigns_addon;
+  } catch {
+    /* migration non passée */
+  }
+  if (!isTrial && !addonOn) {
     return Response.json({ error: "addon_required" }, { status: 403 });
   }
 
@@ -69,24 +73,32 @@ export async function POST(req: NextRequest) {
     scheduledFor = body.scheduledFor;
   }
 
-  const db = getAdminClient();
-
-  // Quota : 1 campagne créée par 24 h
+  // Quota : 1 campagne créée / 24 h, et jamais deux campagnes en cours
   try {
     const dayAgo = new Date(Date.now() - 24 * 3600e3).toISOString();
-    const { count } = await db
-      .from("campaigns")
-      .select("*", { count: "exact", head: true })
-      .eq("business_id", business.id)
-      .gte("created_at", dayAgo);
-    if ((count ?? 0) > 0) {
+    const [{ count: recent }, { count: inFlight }] = await Promise.all([
+      db
+        .from("campaigns")
+        .select("*", { count: "exact", head: true })
+        .eq("business_id", business.id)
+        .gte("created_at", dayAgo),
+      db
+        .from("campaigns")
+        .select("*", { count: "exact", head: true })
+        .eq("business_id", business.id)
+        .is("sent_at", null),
+    ]);
+    if ((recent ?? 0) > 0) {
       return Response.json({ error: "quota" }, { status: 429 });
+    }
+    if ((inFlight ?? 0) > 0) {
+      return Response.json({ error: "in_progress" }, { status: 429 });
     }
   } catch {
     return Response.json({ error: "migration_missing" }, { status: 500 });
   }
 
-  // Campagne programmée : on l'enregistre, le cron quotidien l'enverra
+  // Campagne programmée : enregistrée, le cron la démarrera le jour J
   if (scheduledFor) {
     const { error } = await db.from("campaigns").insert({
       business_id: business.id,
@@ -102,32 +114,54 @@ export async function POST(req: NextRequest) {
   }
 
   // Envoi immédiat
-  const recipients = await buildCampaignAudience(db, business.id);
-  if (recipients.length === 0) {
+  const audience = await buildCampaignAudience(db, business.id);
+  if (audience.length === 0) {
     return Response.json({ error: "no_audience" }, { status: 400 });
   }
-  const user = await getSessionUser();
-  const payloads = buildCampaignPayloads(
-    { id: business.id, name: business.name, slug: business.slug },
-    user?.email ?? undefined,
-    subject,
-    message,
-    recipients
-  );
-  const sent = await sendBatch(payloads);
 
+  const user = await getSessionUser();
+  const bizInfo = { id: business.id, name: business.name, slug: business.slug };
+
+  if (isTrial && !addonOn) {
+    // Essai : une seule fournée, plafonnée à 10 destinataires
+    const recipients = audience.slice(0, TRIAL_MAX_RECIPIENTS);
+    const sent = await sendBatch(
+      buildCampaignPayloads(bizInfo, user?.email ?? undefined, subject, message, recipients)
+    );
+    await db.from("campaigns").insert({
+      business_id: business.id,
+      subject,
+      body: message,
+      sent_count: sent,
+      sent_at: new Date().toISOString(),
+    });
+    return Response.json({
+      ok: true,
+      sent,
+      trialCapped: audience.length > TRIAL_MAX_RECIPIENTS,
+    });
+  }
+
+  // Option payée : première fournée maintenant, le reste étalé par le cron
+  const chunk = audience.slice(0, DAILY_CHUNK);
+  const rest = audience.slice(DAILY_CHUNK);
+  const sent = await sendBatch(
+    buildCampaignPayloads(bizInfo, user?.email ?? undefined, subject, message, chunk)
+  );
   await db.from("campaigns").insert({
     business_id: business.id,
     subject,
     body: message,
     sent_count: sent,
-    sent_at: new Date().toISOString(),
+    ...(rest.length > 0
+      ? { pending_recipients: rest }
+      : { sent_at: new Date().toISOString() }),
   });
 
-  return Response.json({ ok: true, sent });
+  return Response.json({ ok: true, sent, remaining: rest.length });
 }
 
-/** Annule une campagne programmée (pas encore envoyée). */
+/** Annule une campagne programmée, ou stoppe l'envoi étalé restant. */
 export async function DELETE(req: NextRequest) {
   const { business } = await getMyBusiness();
   if (!business) {
@@ -142,12 +176,27 @@ export async function DELETE(req: NextRequest) {
   if (!body.id) return Response.json({ error: "missing_id" }, { status: 400 });
 
   const db = getAdminClient();
-  const { error } = await db
+  const { data: camp } = await db
     .from("campaigns")
-    .delete()
+    .select("id, sent_count, sent_at")
     .eq("id", body.id)
     .eq("business_id", business.id)
-    .is("sent_at", null);
+    .maybeSingle();
+  if (!camp || camp.sent_at) {
+    return Response.json({ error: "not_cancellable" }, { status: 400 });
+  }
+
+  if ((camp.sent_count ?? 0) > 0) {
+    // envoi étalé démarré : on stoppe le reste, l'historique est conservé
+    const { error } = await db
+      .from("campaigns")
+      .update({ pending_recipients: null, sent_at: new Date().toISOString() })
+      .eq("id", camp.id);
+    if (error) return Response.json({ error: "delete_failed" }, { status: 500 });
+    return Response.json({ ok: true, stopped: true });
+  }
+
+  const { error } = await db.from("campaigns").delete().eq("id", camp.id);
   if (error) return Response.json({ error: "delete_failed" }, { status: 500 });
   return Response.json({ ok: true });
 }

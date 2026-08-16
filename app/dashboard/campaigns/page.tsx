@@ -56,16 +56,29 @@ export default async function CampaignsPage() {
     created_at: string;
     scheduled_for: string | null;
     sent_at: string | null;
+    remaining: number;
   }[] = [];
   let lastCreatedAt: string | null = null;
   try {
     const { data: rows } = await db
       .from("campaigns")
-      .select("id, subject, sent_count, created_at, scheduled_for, sent_at")
+      .select(
+        "id, subject, sent_count, created_at, scheduled_for, sent_at, pending_recipients"
+      )
       .eq("business_id", business.id)
       .order("created_at", { ascending: false })
       .limit(10);
-    history = (rows as any) ?? [];
+    history = ((rows as any) ?? []).map((r: any) => ({
+      id: r.id,
+      subject: r.subject,
+      sent_count: r.sent_count,
+      created_at: r.created_at,
+      scheduled_for: r.scheduled_for ?? null,
+      sent_at: r.sent_at ?? null,
+      remaining: Array.isArray(r.pending_recipients)
+        ? r.pending_recipients.length
+        : 0,
+    }));
     lastCreatedAt = history[0]?.created_at ?? null;
   } catch {
     /* table / colonnes absentes */

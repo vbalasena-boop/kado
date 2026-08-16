@@ -9,6 +9,7 @@ type HistoryRow = {
   created_at: string;
   scheduled_for: string | null;
   sent_at: string | null;
+  remaining: number;
 };
 
 function fmtDate(s: string) {
@@ -96,12 +97,14 @@ export default function CampaignsClient({
     }
   }
 
+  const effective = isTrial && !addonOn ? Math.min(audience, 10) : audience;
+
   async function send() {
     if (!canSend) return;
     const confirmMsg =
       mode === "later"
-        ? `Programmer cette campagne pour le ${fmtDate(date)} (envoyée le matin) à ~${audience} client${audience > 1 ? "s" : ""} ?`
-        : `Envoyer cette campagne maintenant à ${audience} client${audience > 1 ? "s" : ""} ?`;
+        ? `Programmer cette campagne pour le ${fmtDate(date)} (envoyée le matin) à ~${effective} client${effective > 1 ? "s" : ""} ?`
+        : `Envoyer cette campagne maintenant à ${effective} client${effective > 1 ? "s" : ""} ?`;
     if (!window.confirm(confirmMsg)) return;
     setBusy(true);
     setResult(null);
@@ -121,16 +124,22 @@ export default function CampaignsClient({
         setResult(
           d.scheduled
             ? `🕒 Campagne programmée pour le ${fmtDate(d.scheduledFor)} !`
+            : d.remaining > 0
+            ? `✅ ${d.sent} e-mails envoyés aujourd'hui — les ${d.remaining} restants partiront automatiquement les prochains jours (envoi étalé).`
+            : d.trialCapped
+            ? `✅ Envoyée à ${d.sent} clients (limite d'essai : 10 destinataires — l'option envoie à toute votre base).`
             : `✅ Campagne envoyée à ${d.sent} client${d.sent > 1 ? "s" : ""} !`
         );
         setSubject("");
         setMessage("");
-        setTimeout(() => window.location.reload(), 1800);
+        setTimeout(() => window.location.reload(), 2600);
       } else {
         setIsErr(true);
         setResult(
           d.error === "quota"
             ? "Une campagne a déjà été créée ces dernières 24 h."
+            : d.error === "in_progress"
+            ? "Une campagne est déjà en cours d'envoi ou programmée — attendez sa fin (ou annulez-la dans l'historique)."
             : d.error === "no_audience"
             ? "Aucun client n'a encore accepté de recevoir vos offres."
             : d.error === "addon_required"
@@ -151,7 +160,7 @@ export default function CampaignsClient({
   }
 
   async function cancelPending(id: string) {
-    if (!window.confirm("Annuler cette campagne programmée ?")) return;
+    if (!window.confirm("Annuler / stopper cette campagne ?")) return;
     try {
       await fetch("/api/dashboard/campaigns", {
         method: "DELETE",
@@ -217,7 +226,19 @@ export default function CampaignsClient({
         Envoyez une offre ou une actualité aux clients qui ont accepté de
         recevoir vos e-mails (roue + carte de fidélité).
         {isTrial && !addonOn && (
-          <> <b>Inclus pendant votre essai</b> — ensuite en option (15 €/mois).</>
+          <>
+            {" "}
+            <b>Pendant l'essai : 10 destinataires max par campagne.</b> Avec
+            l'option (15 €/mois), toute votre base est couverte, envoyée par
+            vagues quotidiennes.
+          </>
+        )}
+        {addonOn && (
+          <>
+            {" "}
+            Les grandes campagnes partent par <b>vagues de 100 e-mails/jour</b>{" "}
+            pour protéger votre réputation d'expéditeur.
+          </>
         )}
       </p>
 
@@ -310,7 +331,7 @@ export default function CampaignsClient({
             ? "…"
             : mode === "later"
             ? "Programmer la campagne"
-            : `Envoyer à ${audience} client${audience > 1 ? "s" : ""}`}
+            : `Envoyer à ${effective} client${effective > 1 ? "s" : ""}`}
         </button>
         {result && (
           <p
@@ -335,6 +356,17 @@ export default function CampaignsClient({
                   <span>
                     Envoyée le {fmtDate(h.sent_at)} · {h.sent_count}{" "}
                     destinataire{h.sent_count > 1 ? "s" : ""}
+                  </span>
+                ) : h.remaining > 0 ? (
+                  <span className="camp-pending">
+                    📤 En cours : {h.sent_count} envoyés · {h.remaining}{" "}
+                    restants (vagues quotidiennes){" "}
+                    <button
+                      className="camp-cancel"
+                      onClick={() => cancelPending(h.id)}
+                    >
+                      Stopper
+                    </button>
                   </span>
                 ) : (
                   <span className="camp-pending">

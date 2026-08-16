@@ -3,7 +3,12 @@ import { emailLayout } from "@/lib/email";
 import { unsubToken } from "@/lib/unsub";
 
 export const SITE = "https://kado-app.fr";
-export const MAX_RECIPIENTS = 500;
+/** Garde-fou technique : toute la base part (étalée), dans cette limite. */
+export const MAX_RECIPIENTS = 5000;
+/** Essai gratuit : 10 destinataires max par campagne (1 campagne/jour). */
+export const TRIAL_MAX_RECIPIENTS = 10;
+/** Option payée : envoi étalé, ce nombre d'e-mails par jour maximum. */
+export const DAILY_CHUNK = 100;
 
 export function escapeHtml(s: string) {
   return s
