@@ -24,6 +24,9 @@ type Config = {
   loyalty_reward_emoji?: string | null;
   loyalty_stamp_emoji?: string | null;
   game_type?: string | null;
+  birthday_enabled?: boolean | null;
+  birthday_reward?: string | null;
+  referral_enabled?: boolean | null;
 };
 
 const GAME_TYPES = [
@@ -628,6 +631,60 @@ export default function WheelEditor({
                       </div>
                     </div>
                   </div>
+
+                  <hr className="fid-sep" />
+
+                  <label className="toggle-field">
+                    <input
+                      type="checkbox"
+                      checked={!!config.birthday_enabled}
+                      onChange={(e) =>
+                        setConfig({
+                          ...config,
+                          birthday_enabled: e.target.checked,
+                        })
+                      }
+                    />
+                    <span>
+                      <b>🎂 Offre d'anniversaire</b> — vos clients reçoivent
+                      automatiquement un e-mail avec votre offre le jour de leur
+                      anniversaire.
+                    </span>
+                  </label>
+                  {config.birthday_enabled && (
+                    <label className="field">
+                      <span>Votre offre d'anniversaire</span>
+                      <input
+                        type="text"
+                        placeholder="Ex. Un dessert offert cette semaine"
+                        value={config.birthday_reward ?? ""}
+                        onChange={(e) =>
+                          setConfig({
+                            ...config,
+                            birthday_reward: e.target.value,
+                          })
+                        }
+                      />
+                    </label>
+                  )}
+
+                  <label className="toggle-field" style={{ marginTop: 6 }}>
+                    <input
+                      type="checkbox"
+                      checked={!!config.referral_enabled}
+                      onChange={(e) =>
+                        setConfig({
+                          ...config,
+                          referral_enabled: e.target.checked,
+                        })
+                      }
+                    />
+                    <span>
+                      <b>🤝 Parrainage client</b> — quand un client invite un ami
+                      qui crée sa carte, le parrain gagne <b>+1 tampon</b>{" "}
+                      (1 fois par ami inscrit).
+                    </span>
+                  </label>
                 </>
               )}
             </div>

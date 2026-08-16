@@ -20,8 +20,10 @@ function Unavailable({ message }: { message: string }) {
 
 export default async function FidelitePage({
   params,
+  searchParams,
 }: {
   params: { slug: string };
+  searchParams?: { parrain?: string };
 }) {
   const db = getAdminClient();
   const { data: biz } = await db
@@ -61,6 +63,7 @@ export default async function FidelitePage({
       reward={cfg.loyalty_reward}
       rewardEmoji={cfg.loyalty_reward_emoji}
       stampEmoji={cfg.loyalty_stamp_emoji || "⭐"}
+      parrain={searchParams?.parrain?.trim() || null}
     />
   );
 }

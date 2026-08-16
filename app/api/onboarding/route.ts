@@ -24,7 +24,13 @@ export async function POST(req: NextRequest) {
     .maybeSingle();
   if (existing) return Response.json({ ok: true, slug: existing.slug });
 
-  let body: { name?: string; category?: string; plan?: string; phone?: string };
+  let body: {
+    name?: string;
+    category?: string;
+    plan?: string;
+    phone?: string;
+    parrain?: string;
+  };
   try {
     body = await req.json();
   } catch {
@@ -74,6 +80,22 @@ export async function POST(req: NextRequest) {
   // Téléphone : mise à jour séparée et tolérante (colonne facultative)
   if (phone) {
     await db.from("businesses").update({ phone }).eq("id", biz.id);
+  }
+
+  // Parrainage commerçant : on relie le filleul à son parrain (tolérant)
+  const parrainSlug = (body.parrain || "").trim().toLowerCase();
+  if (parrainSlug && parrainSlug !== slug) {
+    const { data: sponsor } = await db
+      .from("businesses")
+      .select("id")
+      .eq("slug", parrainSlug)
+      .maybeSingle();
+    if (sponsor && sponsor.id !== biz.id) {
+      await db
+        .from("businesses")
+        .update({ referred_by: sponsor.id })
+        .eq("id", biz.id);
+    }
   }
 
   // config + cadeaux par défaut

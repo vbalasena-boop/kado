@@ -94,6 +94,9 @@ export default async function DashboardLayout({
                 <Icon name="mail" /> Clients
               </Link>
             )}
+            <Link href="/dashboard/campaigns">
+              <Icon name="share" /> Campagnes
+            </Link>
             <Link href="/dashboard/billing">
               <Icon name="card" /> Abonnement
             </Link>

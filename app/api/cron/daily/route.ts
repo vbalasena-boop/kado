@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
   }
 
   const db = getAdminClient();
-  const out = { reminders: 0, recaps: 0, errors: [] as string[] };
+  const out = { reminders: 0, birthdays: 0, recaps: 0, errors: [] as string[] };
 
   // ── 1. Relance fin d'essai (J-3) ────────────────────────────────
   try {
@@ -73,7 +73,71 @@ export async function GET(req: NextRequest) {
     out.errors.push(`reminders: ${e?.message ?? "error"}`);
   }
 
-  // ── 2. Récap hebdo (le lundi) ───────────────────────────────────
+  // ── 2. Anniversaires du jour ────────────────────────────────────
+  try {
+    const today = new Date();
+    const day = today.getUTCDate();
+    const month = today.getUTCMonth() + 1;
+    const { data: cards, error } = await db
+      .from("loyalty_cards")
+      .select("id, email, business_id, birthday_sent_at, unsubscribed_at")
+      .eq("birthday_day", day)
+      .eq("birthday_month", month);
+    if (error) throw new Error(error.message);
+
+    if (cards && cards.length > 0) {
+      const bizIds = [...new Set(cards.map((c) => c.business_id))];
+      const [{ data: cfgs }, { data: bizs }] = await Promise.all([
+        db
+          .from("wheel_configs")
+          .select("business_id, birthday_enabled, birthday_reward")
+          .in("business_id", bizIds),
+        db.from("businesses").select("id, name, status").in("id", bizIds),
+      ]);
+      const cfgBy = new Map((cfgs ?? []).map((c: any) => [c.business_id, c]));
+      const bizBy = new Map((bizs ?? []).map((b: any) => [b.id, b]));
+      const yearAgo = Date.now() - 300 * 864e5; // marge : 1 envoi max / ~an
+
+      for (const c of cards) {
+        const cfg: any = cfgBy.get(c.business_id);
+        const biz: any = bizBy.get(c.business_id);
+        if (!cfg?.birthday_enabled || !biz || biz.status !== "active") continue;
+        if (c.unsubscribed_at) continue;
+        if (
+          c.birthday_sent_at &&
+          new Date(c.birthday_sent_at).getTime() > yearAgo
+        )
+          continue;
+
+        const res = await sendEmail({
+          to: c.email,
+          subject: `Joyeux anniversaire de la part de ${biz.name} ! 🎂`,
+          fromName: `${biz.name} via Kado`,
+          html: emailLayout({
+            preview: "Une surprise vous attend.",
+            heading: "Joyeux anniversaire ! 🎂",
+            emoji: "🎉",
+            bodyHtml: `Toute l'équipe de <b>${biz.name}</b> vous souhaite un très joyeux anniversaire !<br><br>Pour l'occasion&nbsp;: <b>${
+              cfg.birthday_reward || "une surprise offerte"
+            }</b>.<br><br>Montrez simplement cet e-mail en caisse lors de votre prochaine visite. À très vite !`,
+            footnote:
+              "Offre liée à votre carte de fidélité, valable une fois.",
+          }),
+        });
+        if (res.ok) {
+          await db
+            .from("loyalty_cards")
+            .update({ birthday_sent_at: new Date().toISOString() })
+            .eq("id", c.id);
+          out.birthdays++;
+        }
+      }
+    }
+  } catch (e: any) {
+    out.errors.push(`birthdays: ${e?.message ?? "error"}`);
+  }
+
+  // ── 3. Récap hebdo (le lundi) ───────────────────────────────────
   try {
     const isMonday = new Date().getUTCDay() === 1;
     if (isMonday) {

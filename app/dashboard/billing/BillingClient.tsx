@@ -59,6 +59,7 @@ export default function BillingClient({
   setupPaid = false,
   setupOption = null,
   hasPhone = false,
+  slug = "",
 }: {
   hasSubscription: boolean;
   statusLabel: string;
@@ -70,6 +71,7 @@ export default function BillingClient({
   setupPaid?: boolean;
   setupOption?: string | null;
   hasPhone?: boolean;
+  slug?: string;
 }) {
   const [loading, setLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(currentPlan);
@@ -83,6 +85,30 @@ export default function BillingClient({
   const [confirm, setConfirm] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [delErr, setDelErr] = useState<string | null>(null);
+  const [refCopied, setRefCopied] = useState(false);
+
+  async function copyReferral() {
+    const url = `${window.location.origin}/login?signup=1&p=${slug}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "Kado",
+          text: `Essaie Kado pour ton commerce (14 jours gratuits) : ${url}`,
+          url,
+        });
+        return;
+      }
+    } catch {
+      /* partage annulé */
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setRefCopied(true);
+      setTimeout(() => setRefCopied(false), 2500);
+    } catch {
+      /* ignore */
+    }
+  }
 
   async function go(path: string, body?: object) {
     setLoading(true);
@@ -395,6 +421,21 @@ export default function BillingClient({
             {planMsg}
           </p>
         )}
+      </div>
+
+      <div className="dash-card" style={{ maxWidth: 520 }}>
+        <h2>🤝 Parrainez un commerçant</h2>
+        <p className="muted" style={{ marginBottom: 12 }}>
+          Vous connaissez un commerçant à qui Kado ferait du bien ? Partagez
+          votre lien : dès qu'il s'abonne, <b>votre prochain mois est
+          offert</b>. Sans limite — chaque filleul abonné = 1 mois gratuit.
+        </p>
+        <div className="ref-link-box">
+          <code>kado-app.fr/login?signup=1&p={slug}</code>
+        </div>
+        <button className="btn" onClick={copyReferral} style={{ marginTop: 12 }}>
+          {refCopied ? "✅ Lien copié !" : "Partager mon lien de parrainage"}
+        </button>
       </div>
 
       <div className="danger-zone" style={{ maxWidth: 520 }}>

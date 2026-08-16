@@ -11,7 +11,16 @@ type CardData = {
   rewardCode: string | null;
   reward: string;
   rewardEmoji: string;
+  birthdayEnabled?: boolean;
+  referralEnabled?: boolean;
+  birthdaySet?: boolean;
+  marketingOk?: boolean;
 };
+
+const MONTHS = [
+  "janvier", "février", "mars", "avril", "mai", "juin",
+  "juillet", "août", "septembre", "octobre", "novembre", "décembre",
+];
 
 export default function LoyaltyCard({
   slug,
@@ -21,6 +30,7 @@ export default function LoyaltyCard({
   reward,
   rewardEmoji,
   stampEmoji = "⭐",
+  parrain = null,
 }: {
   slug: string;
   name: string;
@@ -29,6 +39,7 @@ export default function LoyaltyCard({
   reward: string;
   rewardEmoji: string;
   stampEmoji?: string;
+  parrain?: string | null;
 }) {
   const [email, setEmail] = useState("");
   const [card, setCard] = useState<CardData | null>(null);
@@ -36,6 +47,63 @@ export default function LoyaltyCard({
   const [err, setErr] = useState<string | null>(null);
   const [qr, setQr] = useState<string | null>(null);
   const [offline, setOffline] = useState(false);
+  const [bDay, setBDay] = useState("");
+  const [bMonth, setBMonth] = useState("");
+  const [bBusy, setBBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  async function saveExtra(patch: {
+    birthday_day?: number;
+    birthday_month?: number;
+    marketing_ok?: boolean;
+  }) {
+    try {
+      const res = await fetch("/api/loyalty/extra", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug, email: email.trim().toLowerCase(), ...patch }),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  async function saveBirthday() {
+    const d = Number(bDay);
+    const m = Number(bMonth);
+    if (!d || !m) return;
+    setBBusy(true);
+    const ok = await saveExtra({ birthday_day: d, birthday_month: m });
+    setBBusy(false);
+    if (ok && card) setCard({ ...card, birthdaySet: true });
+  }
+
+  async function toggleMarketing(v: boolean) {
+    if (card) setCard({ ...card, marketingOk: v });
+    await saveExtra({ marketing_ok: v });
+  }
+
+  async function shareReferral() {
+    if (!card) return;
+    const url = `${window.location.origin}/${slug}/fidelite?parrain=${card.code}`;
+    const text = `Rejoins la carte de fidélité de ${name} et cumule des récompenses : ${url}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: name, text, url });
+        return;
+      }
+    } catch {
+      /* partage annulé */
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch {
+      /* ignore */
+    }
+  }
 
   // Pré-remplissage depuis une visite précédente
   useEffect(() => {
@@ -79,7 +147,11 @@ export default function LoyaltyCard({
       const res = await fetch("/api/loyalty/card", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug, email: clean }),
+        body: JSON.stringify({
+          slug,
+          email: clean,
+          ...(parrain ? { parrain } : {}),
+        }),
       });
       const d = await res.json().catch(() => ({}));
       if (res.ok && d.ok) {
@@ -261,6 +333,73 @@ export default function LoyaltyCard({
               )}
               <div className="fid-code">{card.code}</div>
             </div>
+
+            {card.referralEnabled && (
+              <div className="fid-extra">
+                <b>🤝 Invitez un ami, gagnez +1 tampon</b>
+                <p>
+                  Quand votre ami crée sa carte via votre lien, vous gagnez un
+                  tampon.
+                </p>
+                <button className="btn" onClick={shareReferral}>
+                  {copied ? "✅ Lien copié !" : "Partager mon lien"}
+                </button>
+              </div>
+            )}
+
+            {card.birthdayEnabled && !card.birthdaySet && (
+              <div className="fid-extra">
+                <b>🎂 Votre anniversaire (facultatif)</b>
+                <p>Recevez une surprise le jour J.</p>
+                <div className="fid-bday-row">
+                  <select
+                    value={bDay}
+                    onChange={(e) => setBDay(e.target.value)}
+                    aria-label="Jour"
+                  >
+                    <option value="">Jour</option>
+                    {Array.from({ length: 31 }, (_, i) => (
+                      <option key={i + 1} value={i + 1}>
+                        {i + 1}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={bMonth}
+                    onChange={(e) => setBMonth(e.target.value)}
+                    aria-label="Mois"
+                  >
+                    <option value="">Mois</option>
+                    {MONTHS.map((m, i) => (
+                      <option key={m} value={i + 1}>
+                        {m}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    className="btn"
+                    onClick={saveBirthday}
+                    disabled={bBusy || !bDay || !bMonth}
+                  >
+                    OK
+                  </button>
+                </div>
+              </div>
+            )}
+            {card.birthdayEnabled && card.birthdaySet && (
+              <p className="fid-bday-ok">🎂 Anniversaire enregistré — surprise le jour J !</p>
+            )}
+
+            {!card.marketingOk && (
+              <label className="fid-consent">
+                <input
+                  type="checkbox"
+                  checked={false}
+                  onChange={(e) => toggleMarketing(e.target.checked)}
+                />
+                <span>Recevoir les offres de {name} par e-mail</span>
+              </label>
+            )}
 
             <button className="btn-ghost-line" onClick={() => load(email || "")}>
               🔄 Actualiser

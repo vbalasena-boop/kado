@@ -49,12 +49,29 @@ export function Onboarding() {
     setBusy(true);
     setErr(null);
     try {
+      let parrain: string | null = null;
+      try {
+        parrain = localStorage.getItem("kado-parrain");
+      } catch {
+        /* ignore */
+      }
       const res = await fetch("/api/onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: n, category, plan, phone: phone.trim() }),
+        body: JSON.stringify({
+          name: n,
+          category,
+          plan,
+          phone: phone.trim(),
+          ...(parrain ? { parrain } : {}),
+        }),
       });
       if (res.ok) {
+        try {
+          localStorage.removeItem("kado-parrain");
+        } catch {
+          /* ignore */
+        }
         window.location.href = "/dashboard";
         return;
       }

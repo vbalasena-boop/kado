@@ -5,9 +5,20 @@ type SendArgs = {
   subject: string;
   html: string;
   text?: string;
+  replyTo?: string;
+  fromName?: string;
 };
 
 type SendResult = { ok: boolean; skipped?: boolean; error?: string };
+
+function fromAddress(fromName?: string) {
+  const base = process.env.EMAIL_FROM || "Kado <bonjour@kado-app.fr>";
+  if (!fromName) return base;
+  // remplace le nom d'affichage en conservant l'adresse
+  const m = base.match(/<([^>]+)>/);
+  const addr = m ? m[1] : base;
+  return `${fromName.replace(/[<>"]/g, "")} <${addr}>`;
+}
 
 /**
  * Envoie un e-mail transactionnel via l'API Resend.
@@ -19,9 +30,10 @@ export async function sendEmail({
   subject,
   html,
   text,
+  replyTo,
+  fromName,
 }: SendArgs): Promise<SendResult> {
   const key = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM || "Kado <bonjour@kado-app.fr>";
   if (!key) {
     console.warn("[email] RESEND_API_KEY manquant — e-mail non envoyé:", subject);
     return { ok: false, skipped: true };
@@ -33,7 +45,14 @@ export async function sendEmail({
         Authorization: `Bearer ${key}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ from, to, subject, html, text }),
+      body: JSON.stringify({
+        from: fromAddress(fromName),
+        to,
+        subject,
+        html,
+        text,
+        ...(replyTo ? { reply_to: replyTo } : {}),
+      }),
     });
     if (!res.ok) {
       const t = await res.text().catch(() => "");
@@ -45,6 +64,40 @@ export async function sendEmail({
     console.error("[email] exception", e);
     return { ok: false, error: "exception" };
   }
+}
+
+/**
+ * Envoi groupé (campagnes) via l'API batch de Resend, par paquets de 100.
+ * Renvoie le nombre d'e-mails acceptés.
+ */
+export async function sendBatch(emails: SendArgs[]): Promise<number> {
+  const key = process.env.RESEND_API_KEY;
+  if (!key || emails.length === 0) return 0;
+  let sent = 0;
+  for (let i = 0; i < emails.length; i += 100) {
+    const chunk = emails.slice(i, i + 100).map((e) => ({
+      from: fromAddress(e.fromName),
+      to: e.to,
+      subject: e.subject,
+      html: e.html,
+      ...(e.replyTo ? { reply_to: e.replyTo } : {}),
+    }));
+    try {
+      const res = await fetch("https://api.resend.com/emails/batch", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${key}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(chunk),
+      });
+      if (res.ok) sent += chunk.length;
+      else console.error("[email] batch échec", res.status);
+    } catch (e) {
+      console.error("[email] batch exception", e);
+    }
+  }
+  return sent;
 }
 
 /** Récupère le nom de l'établissement + l'e-mail de son propriétaire. */

@@ -27,6 +27,9 @@ export async function POST(req: NextRequest) {
       loyalty_reward_emoji?: string;
       loyalty_stamp_emoji?: string;
       game_type?: string;
+      birthday_enabled?: boolean;
+      birthday_reward?: string;
+      referral_enabled?: boolean;
     };
     prizes?: {
       label: string;
@@ -81,6 +84,11 @@ export async function POST(req: NextRequest) {
       game_type: ["wheel", "scratch", "slot"].includes(cfg.game_type ?? "")
         ? cfg.game_type
         : "wheel",
+      birthday_enabled: !!cfg.birthday_enabled,
+      birthday_reward:
+        (cfg.birthday_reward || "").trim().slice(0, 80) ||
+        "Une surprise offerte",
+      referral_enabled: !!cfg.referral_enabled,
     },
     { onConflict: "business_id" }
   );

@@ -49,6 +49,7 @@ export default async function BillingPage({
       setupPaid={setupPaid}
       setupOption={setupOption}
       hasPhone={hasPhone}
+      slug={business.slug}
     />
   );
 }

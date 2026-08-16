@@ -95,6 +95,96 @@ export async function POST(req: NextRequest) {
           await applySubscription(sub);
         }
 
+        // Parrainage commerçant : 1 mois offert au parrain quand le
+        // filleul règle son premier abonnement (une seule fois).
+        try {
+          const refBizId = session.metadata?.business_id;
+          if (refBizId && session.subscription) {
+            const db = getAdminClient();
+            const { data: refBiz } = await db
+              .from("businesses")
+              .select("id, name, referred_by, referral_rewarded_at")
+              .eq("id", refBizId)
+              .maybeSingle();
+            if (refBiz?.referred_by && !refBiz.referral_rewarded_at) {
+              const { data: sponsor } = await db
+                .from("businesses")
+                .select("id, name, stripe_subscription_id, subscription_ends_at")
+                .eq("id", refBiz.referred_by)
+                .maybeSingle();
+              if (sponsor) {
+                // marque la récompense AVANT de l'accorder (anti-doublon)
+                await db
+                  .from("businesses")
+                  .update({ referral_rewarded_at: new Date().toISOString() })
+                  .eq("id", refBiz.id);
+
+                let granted = false;
+                if (sponsor.stripe_subscription_id) {
+                  // parrain abonné : 100 % de remise sur sa prochaine facture
+                  try {
+                    const coupon = await stripe.coupons.create({
+                      percent_off: 100,
+                      duration: "once",
+                      name: "Parrainage Kado — 1 mois offert",
+                    });
+                    await stripe.subscriptions.update(
+                      sponsor.stripe_subscription_id,
+                      { coupon: coupon.id } as any
+                    );
+                    granted = true;
+                  } catch {
+                    /* repli ci-dessous */
+                  }
+                }
+                if (!granted) {
+                  // parrain en essai (ou échec Stripe) : +30 jours d'accès
+                  const base = Math.max(
+                    Date.now(),
+                    sponsor.subscription_ends_at
+                      ? new Date(sponsor.subscription_ends_at).getTime()
+                      : 0
+                  );
+                  await db
+                    .from("businesses")
+                    .update({
+                      subscription_ends_at: new Date(
+                        base + 30 * 864e5
+                      ).toISOString(),
+                      status: "active",
+                    })
+                    .eq("id", sponsor.id);
+                }
+
+                const { email: spEmail } = await getOwnerContact(
+                  db,
+                  sponsor.id
+                );
+                if (spEmail) {
+                  await sendEmail({
+                    to: spEmail,
+                    subject: "1 mois offert — merci pour le parrainage ! 🎉",
+                    html: emailLayout({
+                      preview: "Votre filleul vient de s'abonner à Kado.",
+                      heading: "1 mois offert ! 🎉",
+                      emoji: "🤝",
+                      bodyHtml: `Bonne nouvelle : <b>${
+                        refBiz.name ?? "votre filleul"
+                      }</b> vient de s'abonner à Kado grâce à vous.<br><br>Pour vous remercier, <b>votre prochain mois est offert</b>${
+                        sponsor.stripe_subscription_id
+                          ? " (remise de 100 % appliquée automatiquement sur votre prochaine facture)"
+                          : " (30 jours d'accès ajoutés à votre compte)"
+                      }.<br><br>Continuez à partager votre lien de parrainage : chaque nouveau commerçant abonné = un mois offert !`,
+                    }),
+                  });
+                }
+              }
+            }
+          }
+        } catch {
+          /* le parrainage ne doit jamais bloquer le webhook */
+        }
+
         // Option « Installation clé en main » achetée avec l'abonnement
         const setup = session.metadata?.setup;
         const businessId = session.metadata?.business_id;

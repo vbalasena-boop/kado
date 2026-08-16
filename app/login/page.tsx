@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -8,6 +8,18 @@ function LoginInner() {
   const router = useRouter();
   const params = useSearchParams();
   const isSignup = params.get("signup") === "1";
+
+  // Lien de parrainage commerçant (?p=slug) : mémorisé jusqu'à l'inscription
+  useEffect(() => {
+    const p = params.get("p");
+    if (p) {
+      try {
+        localStorage.setItem("kado-parrain", p);
+      } catch {
+        /* ignore */
+      }
+    }
+  }, [params]);
 
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");

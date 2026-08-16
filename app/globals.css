@@ -1044,6 +1044,16 @@ canvas#confetti {
   display: flex;
   align-items: center;
   gap: 14px;
+  position: sticky;
+  bottom: 12px;
+  z-index: 30;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--g-line);
+  box-shadow: 0 10px 30px -12px rgba(60, 64, 67, 0.4);
 }
 .save-bar .btn {
   width: auto;
@@ -3965,3 +3975,113 @@ html { scroll-behavior: smooth; }
   margin: 26px 0;
   filter: drop-shadow(0 12px 22px rgba(0, 0, 0, 0.4));
 }
+
+/* ───── Fidélité : blocs extras (parrainage, anniversaire, consentement) ───── */
+.fid-sep {
+  border: none;
+  border-top: 1px dashed var(--g-line);
+  margin: 18px 0 14px;
+}
+.fid-extra {
+  margin: 14px 0 0;
+  padding: 16px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--stroke);
+  text-align: center;
+}
+.fid-extra b { display: block; color: var(--cream); font-size: 1rem; margin-bottom: 4px; }
+.fid-extra p { color: var(--cream-dim); font-size: 0.88rem; margin: 0 0 12px; line-height: 1.5; }
+.fid-extra .btn { width: 100%; }
+.fid-bday-row {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+.fid-bday-row select {
+  flex: 1 1 0;
+  padding: 12px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--stroke);
+  background: var(--night-2);
+  color: var(--cream);
+  font-size: 15px;
+  font-family: inherit;
+}
+.fid-bday-row .btn { flex: 0 0 auto; width: auto; padding: 12px 18px; }
+.fid-bday-ok {
+  text-align: center;
+  color: var(--mint);
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 14px 0 0;
+}
+.fid-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 14px auto 0;
+  max-width: 320px;
+  color: var(--cream-dim);
+  font-size: 0.85rem;
+  line-height: 1.45;
+  cursor: pointer;
+}
+.fid-consent input { margin-top: 2px; accent-color: var(--gold); }
+
+/* ───── Parrainage commerçant (page Abonnement) ───── */
+.ref-link-box {
+  background: rgba(26, 115, 232, 0.05);
+  border: 1px dashed var(--g-line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  overflow-x: auto;
+}
+.ref-link-box code {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 13px;
+  color: var(--g-blue);
+  white-space: nowrap;
+}
+
+/* ───── Campagnes e-mail ───── */
+.camp-textarea {
+  width: 100%;
+  font-family: inherit;
+  font-size: 15px;
+  padding: 13px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--g-line);
+  background: #fff;
+  color: var(--g-ink);
+  resize: vertical;
+  line-height: 1.55;
+}
+.camp-textarea:focus { outline: 2px solid var(--g-blue); outline-offset: 1px; }
+.camp-quota {
+  background: #fef7e0;
+  color: #7a4f01;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+.camp-history {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.camp-history li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--g-line);
+  border-radius: 10px;
+}
+.camp-history b { color: var(--g-ink); font-size: 14.5px; }
+.camp-history span { color: #5f6368; font-size: 12.5px; }
