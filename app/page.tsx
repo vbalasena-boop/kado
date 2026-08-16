@@ -55,6 +55,40 @@ function Ico({ name }: { name: string }) {
   }
 }
 
+function PreviewWheel() {
+  return (
+    <svg viewBox="0 0 100 100" className="pv-wheel-svg" aria-hidden="true">
+      <defs>
+        <linearGradient id="pv-gold" x1="30" y1="30" x2="70" y2="70" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#ffd36b" />
+          <stop offset="1" stopColor="#f0a52e" />
+        </linearGradient>
+      </defs>
+      <g stroke="#fff" strokeWidth="1.2" strokeLinejoin="round">
+        <path d="M50 50 L50 6 A44 44 0 0 1 88.1 28 Z" fill="#ff5d73" />
+        <path d="M50 50 L88.1 28 A44 44 0 0 1 88.1 72 Z" fill="#ffc24d" />
+        <path d="M50 50 L88.1 72 A44 44 0 0 1 50 94 Z" fill="#39d98a" />
+        <path d="M50 50 L50 94 A44 44 0 0 1 11.9 72 Z" fill="#4fc3f7" />
+        <path d="M50 50 L11.9 72 A44 44 0 0 1 11.9 28 Z" fill="#8b6cff" />
+        <path d="M50 50 L11.9 28 A44 44 0 0 1 50 6 Z" fill="#ff8a5c" />
+      </g>
+      <g fontSize="9" textAnchor="middle">
+        <text x="65" y="27">🎁</text>
+        <text x="80" y="53">☕</text>
+        <text x="65" y="79">🍰</text>
+        <text x="35" y="79">⭐</text>
+        <text x="20" y="53">🏷️</text>
+        <text x="35" y="27">🍹</text>
+      </g>
+      <ellipse cx="38" cy="32" rx="26" ry="17" fill="#fff" opacity="0.2" />
+      <circle cx="50" cy="50" r="44" fill="none" stroke="#f0a52e" strokeWidth="3" />
+      <circle cx="50" cy="50" r="12.5" fill="url(#pv-gold)" stroke="#1b1035" strokeWidth="3" />
+      <circle cx="46" cy="46" r="3.2" fill="#fff" opacity="0.55" />
+      <path d="M50 17 L44 4 L56 4 Z" fill="url(#pv-gold)" stroke="#1b1035" strokeWidth="1" />
+    </svg>
+  );
+}
+
 const STEPS = [
   { n: "1", t: "Vos clients scannent", d: "Un QR code sur la table, le ticket ou un sticker. Aucune application à installer." },
   { n: "2", t: "Ils suivent & laissent un avis", d: "Un tour de roue pour un suivi Instagram, un tour pour un avis Google." },
@@ -84,9 +118,58 @@ const PLAN_FEATURES = [
   "Anti-triche & conformité RGPD",
 ];
 
+const FAQ = [
+  {
+    q: "C'est légal d'offrir un cadeau contre un avis ?",
+    a: "Le cadeau récompense la participation au jeu, jamais le contenu ou la note de l'avis. Le client est libre de laisser l'avis qu'il souhaite — ou aucun — et gagne quand même sa chance de tourner la roue. Kado respecte les règles de Google et le droit français de la consommation.",
+  },
+  {
+    q: "Mes clients doivent-ils installer une application ?",
+    a: "Non, jamais. Ils scannent votre QR code avec l'appareil photo de leur téléphone, et la roue s'ouvre directement dans le navigateur. Aucune installation, aucun compte à créer.",
+  },
+  {
+    q: "Combien ça coûte ?",
+    a: "29 € par mois, sans engagement, résiliable à tout moment. Vous démarrez avec 14 jours d'essai gratuit, sans carte bancaire.",
+  },
+  {
+    q: "Pour quels commerces ?",
+    a: "Tous les commerces qui reçoivent du public : restaurants, bars, coiffeurs, instituts, boutiques, boulangeries, salles de sport, fleuristes… Si vous avez des clients, Kado est fait pour vous.",
+  },
+  {
+    q: "Comment ça s'installe ?",
+    a: "En 2 minutes. Vous créez votre espace, choisissez vos cadeaux (pré-remplis selon votre métier), imprimez votre affiche avec le QR code et la posez sur vos tables ou votre comptoir. C'est prêt.",
+  },
+  {
+    q: "Est-ce que je maîtrise les cadeaux distribués ?",
+    a: "Oui. Vous fixez la probabilité de chaque lot, un plafond de cadeaux par jour, et chaque gain doit être validé par un code en caisse. Vous gardez le contrôle total sur vos coûts.",
+  },
+];
+
+const JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "Kado",
+  applicationCategory: "BusinessApplication",
+  operatingSystem: "Web",
+  description:
+    "Le jeu de roue de la fortune qui transforme vos clients en avis Google 5★ et en abonnés Instagram, sans application.",
+  url: "https://kado-app.fr",
+  offers: {
+    "@type": "Offer",
+    price: "29",
+    priceCurrency: "EUR",
+    description: "Abonnement mensuel sans engagement · essai gratuit 14 jours",
+  },
+  publisher: { "@type": "Organization", name: "Kado" },
+};
+
 export default function Home() {
   return (
     <main className="vitrine">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}
+      />
       <header className="v-topbar">
         <Logo size={42} />
         <nav className="v-topnav">
@@ -136,6 +219,31 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="v-section v-preview">
+        <div className="pv-copy">
+          <h2>À quoi ça ressemble ?</h2>
+          <p className="pv-lede">
+            Vos clients scannent et découvrent votre roue, à vos couleurs, avec
+            vos cadeaux. Simple, joyeux, sur leur téléphone.
+          </p>
+          <ul className="pv-points">
+            <li><Ico name="check" /> Ouverture instantanée dans le navigateur</li>
+            <li><Ico name="check" /> Votre logo et vos lots personnalisés</li>
+            <li><Ico name="check" /> Code cadeau à valider en caisse</li>
+          </ul>
+          <a className="v-btn primary" href="/cafe-lumiere">🎡 Essayer la démo</a>
+        </div>
+        <div className="pv-phone" aria-hidden="true">
+          <div className="pv-notch" />
+          <div className="pv-screen">
+            <div className="pv-brand">☕ Café Lumière</div>
+            <div className="pv-wheel"><PreviewWheel /></div>
+            <div className="pv-cta">Tourner la roue 🎁</div>
+            <div className="pv-foot">Suivez-nous · Laissez un avis</div>
+          </div>
+        </div>
+      </section>
+
       <section className="v-section">
         <h2>Pour tous les commerces</h2>
         <div className="v-audience">
@@ -178,6 +286,18 @@ export default function Home() {
           <div className="pc-note" style={{ marginTop: 14 }}>
             🎁 14 jours d'essai gratuit — sans carte bancaire.
           </div>
+        </div>
+      </section>
+
+      <section className="v-section">
+        <h2>Questions fréquentes</h2>
+        <div className="v-faq">
+          {FAQ.map((f) => (
+            <details className="v-faq-item" key={f.q}>
+              <summary>{f.q}</summary>
+              <p>{f.a}</p>
+            </details>
+          ))}
         </div>
       </section>
 

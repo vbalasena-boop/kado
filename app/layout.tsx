@@ -2,9 +2,41 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Kado — Roue de récompense",
+  metadataBase: new URL("https://kado-app.fr"),
+  title: {
+    default: "Kado — Plus d'avis Google & d'abonnés Instagram pour votre commerce",
+    template: "%s — Kado",
+  },
   description:
-    "Scannez, jouez, gagnez : plus d'avis Google et d'abonnés Instagram pour votre commerce.",
+    "Kado est le jeu de roue de la fortune qui transforme vos clients en avis Google 5★ et en abonnés Instagram. Sans application, installé en 2 minutes. Essai gratuit 14 jours.",
+  keywords: [
+    "avis Google",
+    "abonnés Instagram",
+    "roue de la fortune",
+    "fidélisation commerce",
+    "QR code restaurant",
+    "marketing local",
+    "e-réputation",
+  ],
+  applicationName: "Kado",
+  authors: [{ name: "Kado" }],
+  alternates: { canonical: "/" },
+  openGraph: {
+    title: "Kado — Plus d'avis Google & d'abonnés Instagram",
+    description:
+      "Le jeu de roue qui transforme vos clients en avis 5★ et en abonnés — sans application, à chaque visite. Essai gratuit 14 jours.",
+    url: "https://kado-app.fr",
+    siteName: "Kado",
+    locale: "fr_FR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Kado — Plus d'avis Google & d'abonnés Instagram",
+    description:
+      "Le jeu de roue qui transforme vos clients en avis 5★ et en abonnés — sans application. Essai gratuit 14 jours.",
+  },
+  robots: { index: true, follow: true },
 };
 
 export const viewport: Viewport = {
