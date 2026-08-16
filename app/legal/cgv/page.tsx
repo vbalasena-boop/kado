@@ -22,18 +22,38 @@ export default function CGV() {
       <h2>2. Service & offre</h2>
       <p>
         Kado est un logiciel en ligne (SaaS) permettant à un commerce de
-        proposer un jeu de roue à ses clients. L'offre <b>Kado Pro</b> donne
-        accès à l'ensemble des fonctionnalités (roue personnalisable, avis
-        Google et suivi Instagram, cadeaux, validation en caisse, statistiques,
-        collecte d'e-mails).
+        proposer un jeu de roue et/ou une carte de fidélité à ses clients. Le
+        service est proposé selon trois formules&nbsp;:
+      </p>
+      <ul>
+        <li>
+          <b>Roue</b> — roue de la fortune personnalisable, avis Google et suivi
+          Instagram, cadeaux, validation en caisse, statistiques, collecte
+          d'e-mails.
+        </li>
+        <li>
+          <b>Fidélité</b> — carte de fidélité digitale (carte à tampons),
+          récompense personnalisable, validation en caisse, statistiques
+          d'inscription.
+        </li>
+        <li>
+          <b>Complet</b> — l'ensemble des fonctionnalités des formules Roue et
+          Fidélité.
+        </li>
+      </ul>
+      <p>
+        Le client choisit sa formule à la souscription et peut en changer à tout
+        moment depuis son espace.
       </p>
 
       <h2>3. Prix</h2>
       <p>
-        L'abonnement Kado Pro est facturé <b>29&nbsp;€ par mois</b>. La TVA
-        n'étant pas applicable (art. 293 B du CGI), ce montant est net. Les prix
-        peuvent évoluer&nbsp;; toute évolution est communiquée à l'avance et ne
-        s'applique qu'aux périodes suivantes.
+        Les abonnements sont facturés mensuellement&nbsp;: <b>Roue 29&nbsp;€/mois</b>,{" "}
+        <b>Fidélité 19&nbsp;€/mois</b>, <b>Complet 44&nbsp;€/mois</b>. La TVA
+        n'étant pas applicable (art. 293 B du CGI), ces montants sont nets. En
+        cas de changement de formule en cours de période, un prorata est appliqué
+        sur la facture suivante. Les prix peuvent évoluer&nbsp;; toute évolution
+        est communiquée à l'avance et ne s'applique qu'aux périodes suivantes.
       </p>
 
       <h2>4. Souscription & essai gratuit</h2>
@@ -122,7 +142,7 @@ export default function CGV() {
         de la consommation. Les tribunaux français sont compétents.
       </p>
 
-      <p className="legal-date">Dernière mise à jour : 15 août 2026.</p>
+      <p className="legal-date">Dernière mise à jour : 16 août 2026.</p>
     </article>
   );
 }
