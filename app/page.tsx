@@ -86,7 +86,7 @@ const BENEFITS = [
 const PLANS = [
   {
     id: "roue",
-    name: "Roue",
+    name: "Jeux",
     price: "29",
     desc: "Boostez vos avis & abonnés",
     features: [
@@ -100,10 +100,10 @@ const PLANS = [
     id: "complet",
     name: "Complet",
     price: "44",
-    desc: "Roue + fidélité, le meilleur tarif",
+    desc: "Jeux + fidélité, le meilleur tarif",
     popular: true,
     features: [
-      "Tout ce qui est dans Roue",
+      "Tout ce qui est dans Jeux",
       "+ Carte de fidélité digitale",
       "Toutes les fonctionnalités",
       "4 € d'économie / mois",
@@ -134,7 +134,7 @@ const FAQ = [
   },
   {
     q: "Combien ça coûte ?",
-    a: "Trois formules sans engagement : Roue à 29 €/mois, Fidélité à 19 €/mois, ou Complet (les deux) à 44 €/mois. Vous démarrez avec 14 jours d'essai gratuit, sans carte bancaire, avec toutes les fonctionnalités.",
+    a: "Trois formules sans engagement : Jeux à 29 €/mois, Fidélité à 19 €/mois, ou Complet (les deux) à 44 €/mois. Vous démarrez avec 14 jours d'essai gratuit, sans carte bancaire, avec toutes les fonctionnalités.",
   },
   {
     q: "Pour quels commerces ?",

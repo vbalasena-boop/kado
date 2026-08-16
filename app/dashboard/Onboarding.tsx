@@ -7,9 +7,9 @@ const PLANS = [
   {
     id: "roue",
     emoji: "🎡",
-    label: "Roue",
+    label: "Jeux",
     price: "29",
-    desc: "Roue de la fortune, avis Google & Instagram",
+    desc: "3 jeux au choix, avis Google & Instagram",
   },
   {
     id: "fidelite",
@@ -23,7 +23,7 @@ const PLANS = [
     emoji: "⭐",
     label: "Complet",
     price: "44",
-    desc: "Roue + fidélité — le meilleur tarif",
+    desc: "Jeux + fidélité — le meilleur tarif",
     recommended: true,
   },
 ];

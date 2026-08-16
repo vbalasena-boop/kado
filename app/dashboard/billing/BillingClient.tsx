@@ -6,7 +6,7 @@ const PLANS = [
   {
     id: "roue",
     emoji: "🎡",
-    label: "Roue",
+    label: "Jeux",
     price: "29",
     features: [
       "3 jeux : roue, grattage, machine à sous",
@@ -33,7 +33,7 @@ const PLANS = [
     label: "Complet",
     price: "44",
     features: [
-      "Roue + carte de fidélité",
+      "Jeux + carte de fidélité",
       "Toutes les fonctionnalités",
       "Le meilleur tarif combiné",
       "4 € d'économie / mois",
@@ -43,7 +43,7 @@ const PLANS = [
 ];
 
 const PLAN_LABEL: Record<string, string> = {
-  roue: "Roue (29 €/mois)",
+  roue: "Jeux (29 €/mois)",
   fidelite: "Fidélité (19 €/mois)",
   complet: "Complet (44 €/mois)",
 };
@@ -61,6 +61,7 @@ export default function BillingClient({
   hasPhone = false,
   slug = "",
   initialAddress = "",
+  initialPhone = "",
 }: {
   hasSubscription: boolean;
   statusLabel: string;
@@ -74,6 +75,7 @@ export default function BillingClient({
   hasPhone?: boolean;
   slug?: string;
   initialAddress?: string;
+  initialPhone?: string;
 }) {
   const [loading, setLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(currentPlan);
@@ -84,6 +86,32 @@ export default function BillingClient({
   const phoneNeeded = !hasPhone;
   const phoneOk = setupPhone.replace(/\D/g, "").length >= 9;
   const addressOk = setupAddress.trim().length >= 8;
+
+  // Coordonnées modifiables à tout moment
+  const [profAddress, setProfAddress] = useState(initialAddress);
+  const [profPhone, setProfPhone] = useState(initialPhone);
+  const [profBusy, setProfBusy] = useState(false);
+  const [profMsg, setProfMsg] = useState<string | null>(null);
+
+  async function saveProfile() {
+    setProfBusy(true);
+    setProfMsg(null);
+    try {
+      const res = await fetch("/api/dashboard/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          address: profAddress.trim(),
+          phone: profPhone.trim(),
+        }),
+      });
+      setProfMsg(res.ok ? "✅ Coordonnées enregistrées !" : "Échec de l'enregistrement.");
+    } catch {
+      setProfMsg("Connexion impossible.");
+    } finally {
+      setProfBusy(false);
+    }
+  }
   const [changingPlan, setChangingPlan] = useState(false);
   const [planMsg, setPlanMsg] = useState<string | null>(null);
   const [confirm, setConfirm] = useState("");
@@ -312,6 +340,47 @@ export default function BillingClient({
         {hasSubscription && (
           <p className="muted" style={{ marginTop: 12, fontSize: ".9rem" }}>
             Pour résilier ou changer de carte, utilisez « Gérer mon abonnement ».
+          </p>
+        )}
+      </div>
+
+      <div className="dash-card" style={{ maxWidth: 520 }}>
+        <h2>📍 Mes coordonnées</h2>
+        <p className="muted" style={{ marginBottom: 12 }}>
+          Utilisées pour vous accompagner — indispensables pour
+          l'installation <b>sur place</b>.
+        </p>
+        <label className="field">
+          <span>Adresse du commerce</span>
+          <input
+            type="text"
+            placeholder="12 rue des Fleurs, 75011 Paris"
+            value={profAddress}
+            onChange={(e) => setProfAddress(e.target.value)}
+            maxLength={200}
+          />
+        </label>
+        <label className="field">
+          <span>Téléphone</span>
+          <input
+            type="tel"
+            inputMode="tel"
+            placeholder="06 12 34 56 78"
+            value={profPhone}
+            onChange={(e) => setProfPhone(e.target.value)}
+            maxLength={20}
+          />
+        </label>
+        <button
+          className="btn"
+          onClick={saveProfile}
+          disabled={profBusy || (!profAddress.trim() && !profPhone.trim())}
+        >
+          {profBusy ? "…" : "Enregistrer mes coordonnées"}
+        </button>
+        {profMsg && (
+          <p className="save-msg" style={{ marginTop: 10 }}>
+            {profMsg}
           </p>
         )}
       </div>

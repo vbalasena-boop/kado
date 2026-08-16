@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Tarifs",
   description:
-    "Kado : 3 formules pour booster votre commerce. Roue 29 EUR/mois, Fidélité 19 EUR/mois, Complet 44 EUR/mois. Essai gratuit 14 jours, sans engagement.",
+    "Kado : 3 formules pour booster votre commerce. Jeux 29 €/mois, Fidélité 19 €/mois, Complet 44 €/mois. Essai gratuit 14 jours, sans engagement.",
   alternates: { canonical: "/tarifs" },
 };
 
@@ -30,10 +30,10 @@ const PLANS = [
     id: "complet",
     name: "Complet",
     price: "44",
-    desc: "Roue + fidélité — le meilleur rapport qualité/prix",
+    desc: "Jeux + fidélité — le meilleur rapport qualité/prix",
     popular: true,
     features: [
-      "Tout ce qui est dans Roue",
+      "Tout ce qui est dans Jeux",
       "Tout ce qui est dans Fidélité",
       "Le tarif combiné le plus avantageux",
       "4 EUR d'économie par mois",
@@ -41,7 +41,7 @@ const PLANS = [
   },
   {
     id: "roue",
-    name: "Roue",
+    name: "Jeux",
     price: "29",
     desc: "Boostez vos avis et vos abonnés",
     features: [

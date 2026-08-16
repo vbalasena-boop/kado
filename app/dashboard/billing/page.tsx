@@ -24,6 +24,7 @@ export default async function BillingPage({
   let setupPaid = false;
   let setupOption: string | null = null;
   let hasPhone = false;
+  let phone = "";
   let address = "";
   try {
     const { data } = await getAdminClient()
@@ -34,6 +35,7 @@ export default async function BillingPage({
     setupPaid = !!data?.setup_paid_at;
     setupOption = data?.setup_option ?? null;
     hasPhone = !!data?.phone;
+    phone = (data as any)?.phone ?? "";
     address = (data as any)?.address ?? "";
   } catch {
     /* colonnes absentes : valeurs par défaut */
@@ -53,6 +55,7 @@ export default async function BillingPage({
       hasPhone={hasPhone}
       slug={business.slug}
       initialAddress={address}
+      initialPhone={phone}
     />
   );
 }

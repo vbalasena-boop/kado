@@ -27,9 +27,9 @@ export default function CGV() {
       </p>
       <ul>
         <li>
-          <b>Roue</b> — roue de la fortune personnalisable, avis Google et suivi
-          Instagram, cadeaux, validation en caisse, statistiques, collecte
-          d'e-mails.
+          <b>Jeux</b> — jeu personnalisable au choix (roue de la fortune, carte à
+          gratter ou machine à sous), avis Google et suivi Instagram, cadeaux,
+          validation en caisse, statistiques, collecte d'e-mails.
         </li>
         <li>
           <b>Fidélité</b> — carte de fidélité digitale (carte à tampons),
@@ -37,7 +37,7 @@ export default function CGV() {
           d'inscription.
         </li>
         <li>
-          <b>Complet</b> — l'ensemble des fonctionnalités des formules Roue et
+          <b>Complet</b> — l'ensemble des fonctionnalités des formules Jeux et
           Fidélité.
         </li>
       </ul>
@@ -57,7 +57,7 @@ export default function CGV() {
 
       <h2>3. Prix</h2>
       <p>
-        Les abonnements sont facturés mensuellement&nbsp;: <b>Roue 29&nbsp;€/mois</b>,{" "}
+        Les abonnements sont facturés mensuellement&nbsp;: <b>Jeux 29&nbsp;€/mois</b>,{" "}
         <b>Fidélité 19&nbsp;€/mois</b>, <b>Complet 44&nbsp;€/mois</b>. Une option{" "}
         <b>«&nbsp;Campagnes e-mail&nbsp;» à 15&nbsp;€/mois</b>, sans engagement,
         peut être activée et désactivée à tout moment depuis l'espace client

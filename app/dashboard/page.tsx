@@ -106,7 +106,7 @@ export default async function DashboardHome() {
   const showChecklist = !(hasLinks && hasPlays);
 
   const PLAN_LABEL: Record<string, string> = {
-    roue: "Roue",
+    roue: "Jeux",
     fidelite: "Fidélité",
     complet: "Complet",
   };

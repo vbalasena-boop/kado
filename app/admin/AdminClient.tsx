@@ -23,7 +23,7 @@ export type AdminBusiness = {
 };
 
 const PLAN_LABEL: Record<string, string> = {
-  roue: "Roue 29 €",
+  roue: "Jeux 29 €",
   fidelite: "Fidélité 19 €",
   complet: "Complet 44 €",
 };
