@@ -65,6 +65,7 @@ export function buildCampaignPayloads(
       subject,
       fromName: `${business.name} via Kado`,
       replyTo,
+      marketing: true,
       html: emailLayout({
         preview: subject,
         heading: subject,

@@ -7,12 +7,19 @@ type SendArgs = {
   text?: string;
   replyTo?: string;
   fromName?: string;
+  /** E-mail marketing (campagnes, anniversaires) : utilise l'adresse
+   *  EMAIL_FROM_MARKETING si elle est définie (sous-domaine dédié),
+   *  sinon retombe sur EMAIL_FROM. Sépare les réputations d'envoi. */
+  marketing?: boolean;
 };
 
 type SendResult = { ok: boolean; skipped?: boolean; error?: string };
 
-function fromAddress(fromName?: string) {
-  const base = process.env.EMAIL_FROM || "Kado <bonjour@kado-app.fr>";
+function fromAddress(fromName?: string, marketing = false) {
+  const base =
+    (marketing && process.env.EMAIL_FROM_MARKETING) ||
+    process.env.EMAIL_FROM ||
+    "Kado <bonjour@kado-app.fr>";
   if (!fromName) return base;
   // remplace le nom d'affichage en conservant l'adresse
   const m = base.match(/<([^>]+)>/);
@@ -32,6 +39,7 @@ export async function sendEmail({
   text,
   replyTo,
   fromName,
+  marketing,
 }: SendArgs): Promise<SendResult> {
   const key = process.env.RESEND_API_KEY;
   if (!key) {
@@ -46,7 +54,7 @@ export async function sendEmail({
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: fromAddress(fromName),
+        from: fromAddress(fromName, marketing),
         to,
         subject,
         html,
@@ -76,7 +84,7 @@ export async function sendBatch(emails: SendArgs[]): Promise<number> {
   let sent = 0;
   for (let i = 0; i < emails.length; i += 100) {
     const chunk = emails.slice(i, i + 100).map((e) => ({
-      from: fromAddress(e.fromName),
+      from: fromAddress(e.fromName, e.marketing),
       to: e.to,
       subject: e.subject,
       html: e.html,

@@ -129,6 +129,7 @@ export async function GET(req: NextRequest) {
           to: c.email,
           subject: `Joyeux anniversaire de la part de ${biz.name} ! 🎂`,
           fromName: `${biz.name} via Kado`,
+          marketing: true,
           html: emailLayout({
             preview: "Une surprise vous attend.",
             heading: "Joyeux anniversaire ! 🎂",
