@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
-import { DEFAULT_PRIZES, slugify } from "@/lib/defaults";
+import { slugify } from "@/lib/defaults";
+import { prizesForCategory } from "@/lib/categories";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,7 @@ export async function POST(req: NextRequest) {
     .maybeSingle();
   if (existing) return Response.json({ ok: true, slug: existing.slug });
 
-  let body: { name?: string };
+  let body: { name?: string; category?: string };
   try {
     body = await req.json();
   } catch {
@@ -69,8 +70,9 @@ export async function POST(req: NextRequest) {
     primary_color: "#ffc24d",
     compliance_note: "Le cadeau n'est pas conditionné à la note laissée.",
   });
+  const prizes = prizesForCategory(body.category);
   await db.from("prizes").insert(
-    DEFAULT_PRIZES.map((p, i) => ({ ...p, business_id: biz.id, position: i }))
+    prizes.map((p, i) => ({ ...p, business_id: biz.id, position: i }))
   );
 
   return Response.json({ ok: true, slug });

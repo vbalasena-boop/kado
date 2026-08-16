@@ -2318,3 +2318,42 @@ canvas#confetti {
   color: var(--g-ink2);
   margin: 24px 0 10px;
 }
+
+/* ---- Sélecteur de catégorie (inscription) ---- */
+.cat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.cat-chip {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 13px;
+  border: 1px solid var(--g-line);
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--g-ink);
+  text-align: left;
+  transition: border-color 0.12s, background 0.12s, box-shadow 0.12s;
+}
+.cat-chip:hover {
+  border-color: var(--g-blue);
+}
+.cat-chip.on {
+  border-color: var(--g-blue);
+  background: rgba(26, 115, 232, 0.08);
+  box-shadow: inset 0 0 0 1px var(--g-blue);
+}
+.cat-emoji {
+  font-size: 20px;
+  flex: 0 0 auto;
+}
+.cat-label {
+  line-height: 1.15;
+}
