@@ -19,6 +19,8 @@ const PLANS = [
     features: [
       "Carte à tampons digitale",
       "Récompense personnalisable",
+      "Anniversaires automatiques & parrainage",
+      "Campagnes e-mail incluses",
       "QR code client + validation en caisse",
       "Statistiques d'inscription",
       "Anti-triche & conformité RGPD",
@@ -48,7 +50,7 @@ const PLANS = [
       "Personnalisation (logo, couleurs, fond)",
       "Affiche & QR code à imprimer",
       "Validation en caisse (scan)",
-      "Capture d'e-mails (base marketing)",
+      "Capture d'e-mails + campagnes incluses",
       "Statistiques et export CSV",
       "Anti-triche & conformité RGPD",
     ],
@@ -93,6 +95,10 @@ const FAQ = [
   {
     q: "Comment se passe le paiement ?",
     a: "Le paiement est 100 % sécurisé via Stripe (carte bancaire). Vous recevez une facture automatique chaque mois.",
+  },
+  {
+    q: "Existe-t-il un parrainage ?",
+    a: "Oui ! Recommandez Kado à un autre commerçant avec votre lien de parrainage (dans votre espace) : dès qu'il s'abonne et règle son premier paiement, votre prochain mois est offert. Sans limite.",
   },
   {
     q: "Puis-je supprimer mon compte ?",

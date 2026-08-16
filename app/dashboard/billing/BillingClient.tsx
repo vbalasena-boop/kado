@@ -427,8 +427,9 @@ export default function BillingClient({
         <h2>🤝 Parrainez un commerçant</h2>
         <p className="muted" style={{ marginBottom: 12 }}>
           Vous connaissez un commerçant à qui Kado ferait du bien ? Partagez
-          votre lien : dès qu'il s'abonne, <b>votre prochain mois est
-          offert</b>. Sans limite — chaque filleul abonné = 1 mois gratuit.
+          votre lien : dès qu'il <b>s'abonne et règle son premier
+          paiement</b>, <b>votre prochain mois est offert</b>. Sans limite —
+          chaque filleul abonné et payant = 1 mois gratuit.
         </p>
         <div className="ref-link-box">
           <code>kado-app.fr/login?signup=1&p={slug}</code>

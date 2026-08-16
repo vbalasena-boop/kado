@@ -170,11 +170,11 @@ export async function POST(req: NextRequest) {
                       emoji: "🤝",
                       bodyHtml: `Bonne nouvelle : <b>${
                         refBiz.name ?? "votre filleul"
-                      }</b> vient de s'abonner à Kado grâce à vous.<br><br>Pour vous remercier, <b>votre prochain mois est offert</b>${
+                      }</b> vient de s'abonner à Kado et de régler son premier paiement grâce à vous.<br><br>Pour vous remercier, <b>votre prochain mois est offert</b>${
                         sponsor.stripe_subscription_id
                           ? " (remise de 100 % appliquée automatiquement sur votre prochaine facture)"
                           : " (30 jours d'accès ajoutés à votre compte)"
-                      }.<br><br>Continuez à partager votre lien de parrainage : chaque nouveau commerçant abonné = un mois offert !`,
+                      }.<br><br>Continuez à partager votre lien de parrainage : chaque nouveau commerçant abonné et payant = un mois offert !`,
                     }),
                   });
                 }

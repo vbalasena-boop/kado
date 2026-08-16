@@ -50,6 +50,10 @@ function Ico({ name }: { name: string }) {
       return <svg {...c}><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z" /><path d="M9 12l2 2 4-4" /></svg>;
     case "coins":
       return <svg {...c}><ellipse cx="9" cy="7" rx="6" ry="3" /><path d="M3 7v5c0 1.7 2.7 3 6 3s6-1.3 6-3V7" /><path d="M15 12c2.5-.2 6-1.2 6-3" /><path d="M9 15v3c0 1.7 2.7 3 6 3s6-1.3 6-3v-5" /></svg>;
+    case "mail":
+      return <svg {...c}><rect x="3" y="5" width="18" height="14" rx="3" /><path d="M3 8l9 6 9-6" /></svg>;
+    case "gift":
+      return <svg {...c}><rect x="3" y="9" width="18" height="4" /><path d="M5 13v7h14v-7" /><path d="M12 9v11" /><path d="M12 9c-4 0-5.5-2-5-3.5C7.6 3.7 10 4.5 12 9zm0 0c4 0 5.5-2 5-3.5C16.4 3.7 14 4.5 12 9z" /></svg>;
     case "check":
       return <svg {...c} width={18} height={18}><path d="M4 12l5 5L20 6" /></svg>;
     default:
@@ -72,8 +76,10 @@ const BENEFITS = [
   { i: "star", t: "Plus d'avis Google", d: "Transformez chaque client satisfait en avis 5 étoiles." },
   { i: "insta", t: "Plus d'abonnés Insta", d: "Faites grandir votre communauté à chaque visite." },
   { i: "repeat", t: "Plus de visites", d: "Le cadeau donne une bonne raison de revenir vous voir." },
+  { i: "mail", t: "Campagnes e-mail", d: "Envoyez vos offres à la base clients que Kado construit pour vous." },
+  { i: "gift", t: "Anniversaires & parrainage", d: "E-mail automatique le jour J, et +1 tampon quand un ami parrainé passe en caisse." },
   { i: "palette", t: "À vos couleurs", d: "Logo, photo de fond et lots entièrement personnalisables." },
-  { i: "shield", t: "Anti-triche", d: "Tirage sécurisé côté serveur, 2 tours maximum par personne." },
+  { i: "shield", t: "Anti-triche", d: "Tirage sécurisé côté serveur, 2 chances maximum par personne." },
   { i: "coins", t: "Coûts maîtrisés", d: "Plafond de cadeaux par jour et validation du code en caisse." },
 ];
 
@@ -86,7 +92,7 @@ const PLANS = [
     features: [
       "3 jeux : roue, grattage, machine à sous",
       "Avis Google + Instagram",
-      "Personnalisation complète",
+      "Campagnes e-mail incluses",
       "QR code, stats, validation",
     ],
   },
@@ -110,8 +116,8 @@ const PLANS = [
     desc: "Fidélisez vos habitués",
     features: [
       "Carte à tampons digitale",
-      "Récompense personnalisable",
-      "QR code client + validation",
+      "Anniversaires & parrainage",
+      "Campagnes e-mail incluses",
       "Stats d'inscription",
     ],
   },
@@ -273,6 +279,7 @@ export default function Home({
             <li><Ico name="check" /> Identifiée par e-mail, jamais perdue</li>
             <li><Ico name="check" /> Récompense &amp; tampons personnalisables</li>
             <li><Ico name="check" /> Validation d'un tampon en un scan en caisse</li>
+            <li><Ico name="check" /> Anniversaires automatiques &amp; parrainage entre clients</li>
           </ul>
           <a className="v-btn primary" href="/login?signup=1">Créer mon compte gratuit →</a>
         </div>
