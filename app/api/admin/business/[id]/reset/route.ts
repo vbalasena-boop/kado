@@ -16,11 +16,11 @@ export async function POST(
   const admin = await getAdminUser();
   if (!admin) return Response.json({ error: "forbidden" }, { status: 403 });
 
-  const { error } = await getAdminClient()
+  const { error, count } = await getAdminClient()
     .from("plays")
-    .delete()
+    .delete({ count: "exact" })
     .eq("business_id", params.id);
   if (error) return Response.json({ error: "delete_failed" }, { status: 500 });
 
-  return Response.json({ ok: true });
+  return Response.json({ ok: true, deleted: count ?? 0 });
 }

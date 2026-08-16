@@ -155,8 +155,18 @@ export default function AdminClient({
       const res = await fetch(`/api/admin/business/${id}/reset`, {
         method: "POST",
       });
-      setMsg(res.ok ? `✅ Compteurs de « ${name} » remis à zéro.` : "❌ Échec de la remise à zéro.");
-      router.refresh();
+      const d = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setMsg(
+          `✅ Compteurs de « ${name} » remis à zéro (${d.deleted ?? 0} tour${
+            (d.deleted ?? 0) > 1 ? "s" : ""
+          } supprimé${(d.deleted ?? 0) > 1 ? "s" : ""}). Rechargement…`
+        );
+        // rechargement complet pour rafraîchir toutes les statistiques
+        setTimeout(() => window.location.reload(), 1000);
+      } else {
+        setMsg("❌ Échec de la remise à zéro.");
+      }
     } finally {
       setBusyId(null);
     }
