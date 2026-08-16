@@ -2,6 +2,36 @@ import { NextRequest } from "next/server";
 import Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { sendEmail, emailLayout, getOwnerContact } from "@/lib/email";
+
+/** Retrouve l'établissement lié à une facture (via metadata ou customer). */
+async function resolveBusinessId(
+  stripe: Stripe,
+  invoice: Stripe.Invoice
+): Promise<string | null> {
+  const subId = (invoice as any).subscription as string | null;
+  if (subId) {
+    try {
+      const sub = await stripe.subscriptions.retrieve(subId);
+      if (sub.metadata?.business_id) return sub.metadata.business_id;
+    } catch {
+      /* ignore */
+    }
+  }
+  const customerId =
+    typeof invoice.customer === "string"
+      ? invoice.customer
+      : invoice.customer?.id;
+  if (customerId) {
+    const { data } = await getAdminClient()
+      .from("businesses")
+      .select("id")
+      .eq("stripe_customer_id", customerId)
+      .maybeSingle();
+    return data?.id ?? null;
+  }
+  return null;
+}
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -70,6 +100,34 @@ export async function POST(req: NextRequest) {
       case "customer.subscription.updated":
       case "customer.subscription.deleted": {
         await applySubscription(event.data.object as Stripe.Subscription);
+        break;
+      }
+      case "invoice.payment_failed": {
+        const invoice = event.data.object as Stripe.Invoice;
+        const businessId = await resolveBusinessId(stripe, invoice);
+        if (businessId) {
+          const db = getAdminClient();
+          const { email, businessName } = await getOwnerContact(db, businessId);
+          if (email) {
+            const url =
+              (invoice as any).hosted_invoice_url ||
+              "https://kado-app.fr/dashboard/billing";
+            await sendEmail({
+              to: email,
+              subject: "Paiement échoué — action requise",
+              html: emailLayout({
+                preview: "Votre dernier paiement Kado a échoué.",
+                heading: "Votre paiement n'a pas abouti",
+                emoji: "⚠️",
+                bodyHtml: `Bonjour,<br><br>Le paiement de votre abonnement Kado${
+                  businessName ? ` pour <b>${businessName}</b>` : ""
+                } n'a pas pu être effectué. Pour éviter la coupure de votre jeu, merci de mettre à jour votre moyen de paiement.<br><br><a href="${url}" style="display:inline-block;background:linear-gradient(135deg,#ff6b4a,#ff4e87);color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:12px;">Régler mon abonnement</a>`,
+                footnote:
+                  "Stripe retentera automatiquement le paiement dans les prochains jours.",
+              }),
+            });
+          }
+        }
         break;
       }
       default:
