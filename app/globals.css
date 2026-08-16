@@ -3537,3 +3537,119 @@ canvas#confetti {
 .dash-nav a[target]:hover { background: rgba(26,115,232,.08); }
 .dash-signout svg,
 .dash-brand svg { vertical-align: middle; }
+
+/* ============================================================
+   POLISH UX / UI — vitrine (mobile + desktop)
+   ============================================================ */
+
+/* Défilement doux + sélection de texte à la marque */
+html { scroll-behavior: smooth; }
+::selection { background: rgba(255, 194, 77, 0.3); color: #fff; }
+
+/* Accessibilité clavier : anneaux de focus visibles */
+.vitrine a:focus-visible,
+.vitrine button:focus-visible,
+.auth-page a:focus-visible,
+.auth-page button:focus-visible,
+.auth-input:focus-visible,
+.v-faq-item summary:focus-visible {
+  outline: 3px solid rgba(255, 194, 77, 0.6);
+  outline-offset: 3px;
+  border-radius: 12px;
+}
+
+/* Boutons — micro-interactions */
+.v-btn {
+  transition: transform 0.14s ease, box-shadow 0.14s ease,
+    background 0.14s ease, border-color 0.14s ease;
+}
+.v-btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 38px -12px var(--gold-deep);
+}
+.v-btn.primary:active { transform: translateY(0); }
+.v-btn.ghost:hover {
+  border-color: rgba(255, 194, 77, 0.5);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.04);
+}
+.v-topnav-cta { transition: transform 0.14s ease, box-shadow 0.14s ease; }
+.v-topnav-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px -10px var(--gold-deep);
+}
+
+/* Cartes — élévation douce au survol */
+.v-step,
+.v-benefit,
+.v-plan,
+.v-faq-item,
+.v-chip {
+  transition: transform 0.18s ease, border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+.v-step:hover,
+.v-benefit:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 194, 77, 0.35);
+  box-shadow: 0 22px 44px -22px rgba(0, 0, 0, 0.85);
+}
+.v-chip:hover {
+  border-color: rgba(255, 194, 77, 0.5);
+  color: var(--cream);
+  transform: translateY(-1px);
+}
+.v-faq-item:hover { border-color: rgba(255, 194, 77, 0.3); }
+
+/* Zone héros : halo doux derrière la roue */
+.v-hero { position: relative; }
+.v-hero::before {
+  content: "";
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  width: 460px;
+  height: 460px;
+  max-width: 90vw;
+  transform: translateX(-50%);
+  background: radial-gradient(circle, rgba(255, 194, 77, 0.14), transparent 62%);
+  pointer-events: none;
+  z-index: 0;
+}
+.v-hero > * { position: relative; z-index: 1; }
+
+/* Tarifs : distinguer la carte populaire des autres */
+.v-plan:not(.popular) {
+  border-color: var(--stroke);
+}
+@media (min-width: 761px) {
+  .v-plan.popular {
+    transform: scale(1.05);
+    z-index: 2;
+    box-shadow: 0 30px 70px -24px rgba(240, 165, 46, 0.45);
+  }
+  .v-plan.popular:hover { transform: scale(1.05) translateY(-4px); }
+  .v-plan:not(.popular):hover { transform: translateY(-4px); }
+}
+@media (max-width: 760px) {
+  .v-plan:hover { transform: translateY(-4px); }
+}
+
+/* Cibles tactiles plus confortables sur petit écran */
+@media (max-width: 560px) {
+  .v-topnav { gap: 2px; }
+  .v-topnav a { padding: 10px 12px; }
+  .v-btn { padding: 15px 22px; }
+}
+
+/* Respect de « réduire les animations » */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .hw-wheel { transition: none !important; }
+  .v-btn:hover,
+  .v-step:hover,
+  .v-benefit:hover,
+  .v-plan:hover,
+  .v-chip:hover,
+  .v-topnav-cta:hover { transform: none; }
+}
