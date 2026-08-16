@@ -14,6 +14,17 @@ export type AdminBusiness = {
   plays: number;
   owner_email: string;
   created_at: string;
+  phone: string | null;
+  plan: string | null;
+  setup_option: string | null;
+  setup_paid_at: string | null;
+  setup_done_at: string | null;
+};
+
+const PLAN_LABEL: Record<string, string> = {
+  roue: "Roue 29 €",
+  fidelite: "Fidélité 19 €",
+  complet: "Complet 44 €",
 };
 
 export type AdminStats = {
@@ -95,6 +106,18 @@ export default function AdminClient({
       setMsg("❌ Connexion impossible.");
     } finally {
       setCreating(false);
+    }
+  }
+
+  async function markSetupDone(id: string, name: string) {
+    if (!confirm(`Marquer l'installation de « ${name} » comme réalisée ?`))
+      return;
+    setBusyId(id);
+    try {
+      await fetch(`/api/admin/business/${id}/setup-done`, { method: "POST" });
+      router.refresh();
+    } finally {
+      setBusyId(null);
     }
   }
 
@@ -332,6 +355,46 @@ export default function AdminClient({
         {msg && <p className="save-msg" style={{ marginTop: 12 }}>{msg}</p>}
       </div>
 
+      {businesses.some((b) => b.setup_paid_at && !b.setup_done_at) && (
+        <div className="dash-card setup-todo">
+          <h2>🛠️ Installations à réaliser</h2>
+          <ul className="setup-todo-list">
+            {businesses
+              .filter((b) => b.setup_paid_at && !b.setup_done_at)
+              .map((b) => (
+                <li key={b.id}>
+                  <div className="setup-todo-info">
+                    <b>{b.name}</b>
+                    <span>
+                      {b.setup_option === "onsite"
+                        ? "Sur place (129 €)"
+                        : "À distance (79 €)"}{" "}
+                      · payée le {fmtDate(b.setup_paid_at)}
+                    </span>
+                    <span>
+                      {b.phone ? (
+                        <a href={`tel:${b.phone.replace(/\s/g, "")}`}>
+                          📞 {b.phone}
+                        </a>
+                      ) : (
+                        "📞 non renseigné"
+                      )}{" "}
+                      · ✉️ {b.owner_email}
+                    </span>
+                  </div>
+                  <button
+                    className="btn-mini ok"
+                    disabled={busyId === b.id}
+                    onClick={() => markSetupDone(b.id, b.name)}
+                  >
+                    <Icon name="check" size={15} /> Faite
+                  </button>
+                </li>
+              ))}
+          </ul>
+        </div>
+      )}
+
       <div className="dash-card" style={{ padding: 0, overflow: "hidden" }}>
         <div className="admin-table-wrap">
           <table className="admin-table">
@@ -372,6 +435,17 @@ export default function AdminClient({
                       </td>
                       <td className="admin-email">
                         {b.owner_email || "(non lié)"}
+                        {b.phone && (
+                          <>
+                            <br />
+                            <a
+                              className="admin-phone"
+                              href={`tel:${b.phone.replace(/\s/g, "")}`}
+                            >
+                              📞 {b.phone}
+                            </a>
+                          </>
+                        )}
                         <br />
                         <button
                           className="admin-owner-btn"
@@ -383,7 +457,17 @@ export default function AdminClient({
                       </td>
                       <td>{b.plays}</td>
                       <td>
-                        <div>{b.subscription_status}</div>
+                        <div>
+                          {b.subscription_status}
+                          {b.plan && (
+                            <>
+                              <br />
+                              <small className="admin-plan">
+                                {PLAN_LABEL[b.plan] ?? b.plan}
+                              </small>
+                            </>
+                          )}
+                        </div>
                         <small
                           className={rem.expired ? "sub-expired" : "sub-ok"}
                         >

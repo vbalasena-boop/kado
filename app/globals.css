@@ -3785,3 +3785,48 @@ html { scroll-behavior: smooth; }
   line-height: 1.5;
   margin-bottom: 14px;
 }
+
+/* ───── Admin : installations à réaliser + infos enrichies ───── */
+.setup-todo {
+  border-left: 4px solid var(--g-blue);
+}
+.setup-todo-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.setup-todo-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--g-line);
+  border-radius: 12px;
+  background: rgba(26, 115, 232, 0.03);
+}
+.setup-todo-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13.5px;
+}
+.setup-todo-info b { color: var(--g-ink); font-size: 14.5px; }
+.setup-todo-info span { color: #5f6368; }
+.setup-todo-info a { color: var(--g-blue); text-decoration: none; font-weight: 600; }
+.admin-phone {
+  color: var(--g-blue);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 12.5px;
+}
+.admin-plan {
+  color: var(--g-blue);
+  font-weight: 600;
+}
+@media (max-width: 560px) {
+  .setup-todo-list li { flex-direction: column; align-items: flex-start; }
+}
