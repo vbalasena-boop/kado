@@ -1,9 +1,90 @@
 import { NextRequest } from "next/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { getMyBusiness } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { generateCode } from "@/lib/draw";
+import { sendEmail, emailLayout } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * Bonus de parrainage : au PREMIER achat du filleul (premier tampon validé
+ * en caisse), le parrain gagne +1 tampon — une seule fois par filleul.
+ * Si le parrain a une récompense en attente, le bonus est réessayé au
+ * prochain tampon du filleul. Tolérant si les colonnes manquent.
+ */
+async function grantReferralBonus(
+  db: SupabaseClient,
+  businessId: string,
+  businessName: string,
+  goal: number,
+  stampedCardId: string
+) {
+  try {
+    const { data: ref } = await db
+      .from("loyalty_cards")
+      .select("id, referred_by_card, referred_reward_granted_at")
+      .eq("id", stampedCardId)
+      .maybeSingle();
+    if (!ref?.referred_by_card || ref.referred_reward_granted_at) return;
+
+    const { data: opts } = await db
+      .from("wheel_configs")
+      .select("referral_enabled")
+      .eq("business_id", businessId)
+      .maybeSingle();
+    if (!(opts as any)?.referral_enabled) return;
+
+    const { data: sponsor } = await db
+      .from("loyalty_cards")
+      .select("id, email, stamps, rewards_earned, reward_ready")
+      .eq("id", ref.referred_by_card)
+      .maybeSingle();
+    // récompense en attente chez le parrain → on retentera plus tard
+    if (!sponsor || sponsor.reward_ready) return;
+
+    const nowIso = new Date().toISOString();
+    const ns = (sponsor.stamps || 0) + 1;
+    const completes = ns >= goal;
+    await db
+      .from("loyalty_cards")
+      .update(
+        completes
+          ? {
+              stamps: 0,
+              rewards_earned: (sponsor.rewards_earned || 0) + 1,
+              reward_ready: true,
+              reward_code: generateCode("RC"),
+              last_stamp_at: nowIso,
+            }
+          : { stamps: ns, last_stamp_at: nowIso }
+      )
+      .eq("id", sponsor.id);
+    await db
+      .from("loyalty_cards")
+      .update({ referred_reward_granted_at: nowIso })
+      .eq("id", stampedCardId);
+
+    await sendEmail({
+      to: sponsor.email,
+      subject: `+1 tampon chez ${businessName} — merci pour le parrainage !`,
+      fromName: `${businessName} via Kado`,
+      html: emailLayout({
+        preview: "Votre filleul a fait son premier achat.",
+        heading: "Votre filleul est passé en caisse — +1 tampon ! 🤝",
+        emoji: "🎟️",
+        bodyHtml: `Bonne nouvelle : la personne que vous avez invitée vient de faire son premier achat chez <b>${businessName}</b>. Votre carte gagne <b>+1 tampon</b>.${
+          completes
+            ? " Et ce tampon complète votre carte : votre récompense est débloquée ! 🎉"
+            : ""
+        }`,
+        footnote: "Ouvrez votre carte pour voir votre progression.",
+      }),
+    });
+  } catch {
+    /* le bonus ne doit jamais faire échouer le tampon */
+  }
+}
 
 /**
  * Ajoute un tampon à une carte de fidélité (ou marque une récompense comme
@@ -105,6 +186,7 @@ export async function POST(req: NextRequest) {
       })
       .eq("id", card.id);
     if (error) return Response.json({ error: "update_failed" }, { status: 500 });
+    await grantReferralBonus(db, business.id, business.name, goal, card.id);
     return Response.json({
       status: "completed",
       card: view({
@@ -121,6 +203,7 @@ export async function POST(req: NextRequest) {
     .update({ stamps: newStamps, last_stamp_at: new Date().toISOString() })
     .eq("id", card.id);
   if (error) return Response.json({ error: "update_failed" }, { status: 500 });
+  await grantReferralBonus(db, business.id, business.name, goal, card.id);
   return Response.json({
     status: "stamped",
     card: view({ ...card, stamps: newStamps }),

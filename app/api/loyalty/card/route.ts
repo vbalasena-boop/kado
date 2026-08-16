@@ -2,7 +2,6 @@ import { NextRequest } from "next/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { generateCode } from "@/lib/draw";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
-import { sendEmail, emailLayout } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -88,7 +87,6 @@ export async function POST(req: NextRequest) {
   }
 
   let card = await readCard();
-  let justCreated = false;
 
   if (!card) {
     // code de carte unique pour cet établissement
@@ -144,47 +142,10 @@ export async function POST(req: NextRequest) {
     }
     if (created) {
       card = created;
-      justCreated = true;
     }
-
-    // Bonus parrain : +1 tampon (une fois par filleul réellement inscrit)
-    if (justCreated && sponsor && !sponsor.reward_ready) {
-      const goal = cfg.loyalty_goal || 10;
-      const ns = (sponsor.stamps || 0) + 1;
-      const nowIso = new Date().toISOString();
-      if (ns >= goal) {
-        await db
-          .from("loyalty_cards")
-          .update({
-            stamps: 0,
-            rewards_earned: (sponsor.rewards_earned || 0) + 1,
-            reward_ready: true,
-            reward_code: generateCode("RC"),
-            last_stamp_at: nowIso,
-          })
-          .eq("id", sponsor.id);
-      } else {
-        await db
-          .from("loyalty_cards")
-          .update({ stamps: ns, last_stamp_at: nowIso })
-          .eq("id", sponsor.id);
-      }
-      await sendEmail({
-        to: sponsor.email,
-        subject: `+1 tampon chez ${biz.name} — merci pour le parrainage !`,
-        html: emailLayout({
-          preview: "Votre ami a rejoint la carte de fidélité.",
-          heading: "Votre ami a rejoint — +1 tampon ! 🤝",
-          emoji: "🎟️",
-          bodyHtml: `Bonne nouvelle : la personne que vous avez invitée vient de créer sa carte de fidélité chez <b>${biz.name}</b>. Votre carte gagne <b>+1 tampon</b>.${
-            ns >= goal
-              ? " Et ce tampon complète votre carte : votre récompense est débloquée ! 🎉"
-              : ""
-          }`,
-          footnote: "Ouvrez votre carte pour voir votre progression.",
-        }),
-      });
-    }
+    // Note : le bonus du parrain n'est PAS accordé ici. Il le sera au
+    // premier achat du filleul (premier tampon validé en caisse) — voir
+    // /api/dashboard/loyalty/stamp.
   }
 
   return Response.json({

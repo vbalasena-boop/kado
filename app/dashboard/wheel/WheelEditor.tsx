@@ -680,9 +680,10 @@ export default function WheelEditor({
                       }
                     />
                     <span>
-                      <b>🤝 Parrainage client</b> — quand un client invite un ami
-                      qui crée sa carte, le parrain gagne <b>+1 tampon</b>{" "}
-                      (1 fois par ami inscrit).
+                      <b>🤝 Parrainage client</b> — le parrain gagne{" "}
+                      <b>+1 tampon</b> quand son filleul fait son{" "}
+                      <b>premier achat</b> (premier tampon validé en caisse).
+                      Une seule fois par filleul.
                     </span>
                   </label>
                 </>

@@ -338,8 +338,8 @@ export default function LoyaltyCard({
               <div className="fid-extra">
                 <b>🤝 Invitez un ami, gagnez +1 tampon</b>
                 <p>
-                  Quand votre ami crée sa carte via votre lien, vous gagnez un
-                  tampon.
+                  Votre ami crée sa carte via votre lien, et dès son premier
+                  achat en caisse, vous gagnez un tampon.
                 </p>
                 <button className="btn" onClick={shareReferral}>
                   {copied ? "✅ Lien copié !" : "Partager mon lien"}
