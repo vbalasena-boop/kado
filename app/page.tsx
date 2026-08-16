@@ -1,4 +1,6 @@
 import { Logo } from "@/components/Logo";
+import HomeWheel from "@/components/HomeWheel";
+import HomeLoyalty from "@/components/HomeLoyalty";
 
 export const dynamic = "force-dynamic";
 
@@ -53,69 +55,6 @@ function Ico({ name }: { name: string }) {
     default:
       return null;
   }
-}
-
-function PreviewWheel() {
-  return (
-    <svg viewBox="0 0 100 100" className="pv-wheel-svg" aria-hidden="true">
-      <defs>
-        <linearGradient id="pv-gold" x1="30" y1="30" x2="70" y2="70" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#ffd36b" />
-          <stop offset="1" stopColor="#f0a52e" />
-        </linearGradient>
-      </defs>
-      <g stroke="#fff" strokeWidth="1.2" strokeLinejoin="round">
-        <path d="M50 50 L50 6 A44 44 0 0 1 88.1 28 Z" fill="#ff5d73" />
-        <path d="M50 50 L88.1 28 A44 44 0 0 1 88.1 72 Z" fill="#ffc24d" />
-        <path d="M50 50 L88.1 72 A44 44 0 0 1 50 94 Z" fill="#39d98a" />
-        <path d="M50 50 L50 94 A44 44 0 0 1 11.9 72 Z" fill="#4fc3f7" />
-        <path d="M50 50 L11.9 72 A44 44 0 0 1 11.9 28 Z" fill="#8b6cff" />
-        <path d="M50 50 L11.9 28 A44 44 0 0 1 50 6 Z" fill="#ff8a5c" />
-      </g>
-      <g fontSize="9" textAnchor="middle">
-        <text x="65" y="27">🎁</text>
-        <text x="80" y="53">☕</text>
-        <text x="65" y="79">🍰</text>
-        <text x="35" y="79">⭐</text>
-        <text x="20" y="53">🏷️</text>
-        <text x="35" y="27">🍹</text>
-      </g>
-      <ellipse cx="38" cy="32" rx="26" ry="17" fill="#fff" opacity="0.2" />
-      <circle cx="50" cy="50" r="44" fill="none" stroke="#f0a52e" strokeWidth="3" />
-      <circle cx="50" cy="50" r="12.5" fill="url(#pv-gold)" stroke="#1b1035" strokeWidth="3" />
-      <circle cx="46" cy="46" r="3.2" fill="#fff" opacity="0.55" />
-      <path d="M50 17 L44 4 L56 4 Z" fill="url(#pv-gold)" stroke="#1b1035" strokeWidth="1" />
-    </svg>
-  );
-}
-
-function LoyaltyCardMock() {
-  const goal = 10;
-  const filled = 6;
-  return (
-    <div className="lc-mock" aria-hidden="true">
-      <div className="lc-mock-head">
-        <div className="lc-mock-brand">💇 Salon Éléonore</div>
-        <div className="lc-mock-badge">
-          {filled} / {goal}
-        </div>
-      </div>
-      <div className="lc-mock-title">Carte de fidélité</div>
-      <div className="lc-mock-progress">
-        <span style={{ width: `${(filled / goal) * 100}%` }} />
-      </div>
-      <div className="lc-mock-grid">
-        {Array.from({ length: goal }, (_, i) => (
-          <span key={i} className={`lc-mock-stamp${i < filled ? " on" : ""}`}>
-            {i < filled ? "💅" : i + 1}
-          </span>
-        ))}
-      </div>
-      <div className="lc-mock-reward">
-        🎁 <b>{goal} visites</b> = un brushing offert
-      </div>
-    </div>
-  );
 }
 
 const STEPS = [
@@ -295,40 +234,40 @@ export default function Home({
 
       <section className="v-section v-preview">
         <div className="pv-copy">
-          <h2>À quoi ça ressemble ?</h2>
+          <h2>Faites tourner la roue 👇</h2>
           <p className="pv-lede">
-            Vos clients scannent et découvrent votre roue, à vos couleurs, avec
-            vos cadeaux. Simple, joyeux, sur leur téléphone.
+            Essayez vous-même — cliquez pour lancer la roue. Vos clients
+            découvrent la vôtre, à vos couleurs, avec vos cadeaux. Simple,
+            joyeux, sur leur téléphone.
           </p>
           <ul className="pv-points">
             <li><Ico name="check" /> Ouverture instantanée dans le navigateur</li>
             <li><Ico name="check" /> Votre logo et vos lots personnalisés</li>
             <li><Ico name="check" /> Code cadeau à valider en caisse</li>
           </ul>
-          <a className="v-btn primary" href="/cafe-lumiere">🎡 Essayer la démo</a>
+          <a className="v-btn primary" href="/cafe-lumiere">Voir la démo complète →</a>
         </div>
-        <div className="pv-phone" aria-hidden="true">
+        <div className="pv-phone" aria-label="Aperçu interactif de la roue">
           <div className="pv-notch" />
           <div className="pv-screen">
             <div className="pv-brand">☕ Café Lumière</div>
-            <div className="pv-wheel"><PreviewWheel /></div>
-            <div className="pv-cta">Tourner la roue 🎁</div>
+            <HomeWheel />
             <div className="pv-foot">Suivez-nous · Laissez un avis</div>
           </div>
         </div>
       </section>
 
       <section className="v-section v-preview alt">
-        <div className="lc-frame" aria-hidden="true">
-          <LoyaltyCardMock />
+        <div className="lc-frame">
+          <HomeLoyalty />
         </div>
         <div className="pv-copy">
           <div className="v-badge" style={{ marginBottom: 14 }}>🎟️ Fidélité digitale</div>
-          <h2>La carte à tampons, sans le carton</h2>
+          <h2>Tamponnez la carte 👇</h2>
           <p className="pv-lede">
-            Vos clients cumulent des tampons à chaque passage et gagnent une
-            récompense. Une carte digitale, retrouvée par e-mail — rien à
-            télécharger, rien à perdre.
+            Cliquez pour ajouter un tampon et débloquer la récompense. Vos
+            clients cumulent à chaque passage — une carte digitale retrouvée par
+            e-mail, rien à télécharger, rien à perdre.
           </p>
           <ul className="pv-points">
             <li><Ico name="check" /> Identifiée par e-mail, jamais perdue</li>

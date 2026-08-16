@@ -2501,6 +2501,116 @@ canvas#confetti {
   font-size: 0.78rem;
 }
 
+/* ===== Roue interactive (accueil) ===== */
+.hw {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+}
+.hw-wheel-wrap {
+  position: relative;
+  width: 172px;
+  height: 172px;
+}
+.hw-wheel {
+  width: 100%;
+  height: 100%;
+  display: block;
+  filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.4));
+}
+.hw-pointer {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-top: 15px solid var(--gold);
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.4));
+  z-index: 2;
+}
+.hw-btn {
+  background: linear-gradient(180deg, var(--gold), var(--gold-deep));
+  color: #1b1035;
+  font-weight: 800;
+  padding: 11px 22px;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(240, 165, 46, 0.35);
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+.hw-btn:hover:not(:disabled) { transform: translateY(-1px); }
+.hw-btn:disabled { opacity: 0.85; cursor: default; }
+.hw-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  animation: hw-pop 0.4s ease;
+}
+.hw-result > b {
+  color: var(--gold);
+  font-size: 0.98rem;
+  text-align: center;
+}
+.hw-again,
+.lc-mock-won .hw-again {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--cream);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  padding: 7px 16px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.hw-again:hover { background: rgba(255, 255, 255, 0.2); }
+@keyframes hw-pop {
+  0% { transform: scale(0.8); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* ===== Carte fidélité interactive (accueil) ===== */
+.lc-mock-btn {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  background: linear-gradient(180deg, var(--gold), var(--gold-deep));
+  color: #1b1035;
+  font-weight: 800;
+  padding: 11px 18px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(240, 165, 46, 0.3);
+  transition: transform 0.12s;
+}
+.lc-mock-btn:hover { transform: translateY(-1px); }
+.lc-mock-won {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed rgba(27, 16, 53, 0.14);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  animation: hw-pop 0.4s ease;
+}
+.lc-mock-won b { color: #1b1035; font-size: 0.95rem; }
+.lc-mock-won .hw-again {
+  background: #1b1035;
+  color: #fff;
+  border: none;
+}
+
 /* ===== Vitrine — FAQ ===== */
 .v-faq {
   max-width: 760px;
