@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getMyBusiness } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { Icon } from "@/components/icons";
@@ -10,10 +11,17 @@ export default async function DashboardHome() {
 
   const admin = getAdminClient();
   const since = new Date(Date.now() - 30 * 864e5).toISOString();
-  const { data: plays } = await admin
-    .from("plays")
-    .select("play_type, prize_label, created_at, redeemed_at")
-    .eq("business_id", business.id);
+  const [{ data: plays }, { data: cfg }] = await Promise.all([
+    admin
+      .from("plays")
+      .select("play_type, prize_label, created_at, redeemed_at")
+      .eq("business_id", business.id),
+    admin
+      .from("wheel_configs")
+      .select("instagram_url, review_url")
+      .eq("business_id", business.id)
+      .maybeSingle(),
+  ]);
 
   const rows = plays ?? [];
   const total = rows.length;
@@ -38,6 +46,44 @@ export default async function DashboardHome() {
   }
   const distribution = [...dist.entries()].sort((a, b) => b[1] - a[1]);
 
+  // --- Premiers pas (checklist d'installation) ---
+  const hasLinks = !!(cfg?.instagram_url || cfg?.review_url);
+  const hasPlays = total > 0;
+  const steps = [
+    {
+      done: true,
+      title: "Votre espace est créé",
+      desc: "Votre roue et vos cadeaux sont déjà pré-remplis.",
+      href: "/dashboard/wheel",
+      cta: "Personnaliser ma roue",
+    },
+    {
+      done: hasLinks,
+      title: "Ajoutez vos liens Instagram & Google",
+      desc: "Indispensable pour rediriger vos clients vers votre profil et vos avis.",
+      href: "/dashboard/wheel",
+      cta: hasLinks ? "Modifier mes liens" : "Ajouter mes liens",
+    },
+    {
+      done: false,
+      title: "Imprimez votre affiche avec le QR code",
+      desc: "À poser sur vos tables, votre comptoir ou votre vitrine.",
+      href: "/dashboard/qr",
+      cta: "Voir mon affiche",
+    },
+    {
+      done: hasPlays,
+      title: "Recevez votre premier tour de roue",
+      desc: hasPlays
+        ? "Bravo, vos clients jouent déjà !"
+        : "Testez votre roue puis lancez-vous en boutique.",
+      href: `/${business.slug}?preview=1`,
+      cta: "Tester ma roue",
+    },
+  ];
+  const doneCount = steps.filter((s) => s.done).length;
+  const showChecklist = !(hasLinks && hasPlays);
+
   return (
     <>
       <h1 className="dash-h1">Vue d'ensemble</h1>
@@ -47,6 +93,36 @@ export default async function DashboardHome() {
           {business.status === "active" ? "Actif" : "Suspendu"}
         </span>
       </p>
+
+      {showChecklist && (
+        <div className="dash-card setup">
+          <div className="setup-head">
+            <h2>🚀 Premiers pas</h2>
+            <span className="setup-progress">{doneCount}/{steps.length} fait</span>
+          </div>
+          <div className="setup-bar">
+            <span style={{ width: `${(doneCount / steps.length) * 100}%` }} />
+          </div>
+          <ol className="setup-steps">
+            {steps.map((s) => (
+              <li key={s.title} className={s.done ? "done" : ""}>
+                <span className="setup-check">{s.done ? "✓" : ""}</span>
+                <div className="setup-txt">
+                  <b>{s.title}</b>
+                  <small>{s.desc}</small>
+                </div>
+                <Link
+                  href={s.href}
+                  className="setup-cta"
+                  {...(s.href.includes("preview") ? { target: "_blank" } : {})}
+                >
+                  {s.cta} →
+                </Link>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
 
       <div className="stat-grid">
         <div className="stat">

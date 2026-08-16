@@ -87,6 +87,15 @@ function isNoWin(label: string) {
   return label.toLowerCase().includes("rien");
 }
 
+/** Vibration mobile (si supportée) — ignorée silencieusement sinon. */
+function haptic(pattern: number | number[]) {
+  try {
+    navigator.vibrate?.(pattern);
+  } catch {
+    /* non supporté */
+  }
+}
+
 function InstagramGlyph({ size = 26 }: { size?: number }) {
   return (
     <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true">
@@ -375,6 +384,7 @@ export default function Game({
     if (spinning || !current) return;
     setSpinning(true);
     setError(null);
+    haptic(20);
 
     // Mode test : tirage local, illimité, rien n'est enregistré.
     if (preview) {
@@ -465,7 +475,10 @@ export default function Game({
   function reveal(p: { label: string; emoji: string; code: string | null }) {
     setPrize(p);
     setScreen("prize");
-    if (!isNoWin(p.label)) burst();
+    if (!isNoWin(p.label)) {
+      burst();
+      haptic([0, 60, 40, 90]);
+    }
   }
 
   function afterPrize() {
