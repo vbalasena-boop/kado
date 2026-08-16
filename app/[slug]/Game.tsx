@@ -19,6 +19,8 @@ type Config = {
   instagram_url: string | null;
   review_url: string | null;
   compliance_note: string | null;
+  instagram_enabled?: boolean | null;
+  review_enabled?: boolean | null;
 };
 
 /** hex -> rgba(...) avec transparence. */
@@ -162,11 +164,19 @@ export default function Game({
   played: Played;
   preview?: boolean;
 }) {
-  const bothDone =
-    !preview &&
-    initialPlayed.instagram != null &&
-    initialPlayed.review != null;
-  const [screen, setScreen] = useState<Screen>(bothDone ? "done" : "rules");
+  // Canaux proposés par le commerçant (au moins un). Rétro-compatible :
+  // une valeur absente/vraie = canal actif.
+  const channels = (["instagram", "review"] as PlayType[]).filter((k) =>
+    k === "instagram"
+      ? config.instagram_enabled !== false
+      : config.review_enabled !== false
+  );
+  const enabledChannels = channels.length > 0 ? channels : (["instagram", "review"] as PlayType[]);
+  const totalTurns = enabledChannels.length;
+
+  const allDone =
+    !preview && enabledChannels.every((k) => initialPlayed[k] != null);
+  const [screen, setScreen] = useState<Screen>(allDone ? "done" : "rules");
   const [played, setPlayed] = useState<Played>(initialPlayed);
   const [current, setCurrent] = useState<PlayType | null>(null);
   const [prize, setPrize] = useState<{
@@ -227,9 +237,7 @@ export default function Game({
   const confettiRef = useRef<HTMLCanvasElement | null>(null);
   const rotRef = useRef(0);
 
-  const usedCount = (["instagram", "review"] as PlayType[]).filter(
-    (k) => played[k]
-  ).length;
+  const usedCount = enabledChannels.filter((k) => played[k]).length;
 
   // ---------- Wheel drawing ----------
   const draw = useCallback(
@@ -488,7 +496,7 @@ export default function Game({
       setScreen("hub");
       return;
     }
-    setScreen(usedCount >= 2 ? "done" : "hub");
+    setScreen(usedCount >= totalTurns ? "done" : "hub");
   }
 
   const logo = logoUrl ? (
@@ -532,15 +540,35 @@ export default function Game({
                 <span className="accent">régalez-vous&nbsp;!</span>
               </h1>
               <p className="sub">
-                Vous avez droit à <b>2 tours de roue</b> : un pour un suivi
-                Instagram, un pour un avis Google. À chaque tour, un cadeau à
-                gagner.
+                {totalTurns === 2 ? (
+                  <>
+                    Vous avez droit à <b>2 tours de roue</b> : un pour un suivi
+                    Instagram, un pour un avis Google. À chaque tour, un cadeau à
+                    gagner.
+                  </>
+                ) : (
+                  <>
+                    Vous avez droit à <b>1 tour de roue</b>{" "}
+                    {enabledChannels[0] === "instagram"
+                      ? "pour un suivi Instagram"
+                      : "pour un avis Google"}
+                    . Un cadeau à gagner&nbsp;!
+                  </>
+                )}
               </p>
               <div className="rules">
                 <div className="rule">
                   <div className="num">1</div>
                   <div className="txt">
-                    <b>Suivez-nous</b> <span>ou laissez un avis</span>
+                    {totalTurns === 2 ? (
+                      <>
+                        <b>Suivez-nous</b> <span>ou laissez un avis</span>
+                      </>
+                    ) : enabledChannels[0] === "instagram" ? (
+                      <b>Suivez-nous sur Instagram</b>
+                    ) : (
+                      <b>Laissez un avis Google</b>
+                    )}
                   </div>
                 </div>
                 <div className="rule">
@@ -571,48 +599,62 @@ export default function Game({
           {screen === "hub" && (
             <section className="screen active">
               <h1>
-                Vos <span className="accent">2 tours</span>
+                {totalTurns === 2 ? (
+                  <>
+                    Vos <span className="accent">2 tours</span>
+                  </>
+                ) : (
+                  <>
+                    Votre <span className="accent">tour</span>
+                  </>
+                )}
               </h1>
               <p className="sub">
-                Débloquez chaque tour en réalisant l'action. Chacun ne peut être
-                joué qu'une fois.
+                {totalTurns === 2
+                  ? "Débloquez chaque tour en réalisant l'action. Chacun ne peut être joué qu'une fois."
+                  : "Réalisez l'action pour débloquer votre tour de roue."}
               </p>
               <div className="counter">
-                Tours restants : <b>{2 - usedCount}</b>&nbsp;/&nbsp;2
+                Tours restants : <b>{totalTurns - usedCount}</b>
+                &nbsp;/&nbsp;{totalTurns}
               </div>
               <div className="chances">
-                <button
-                  className={`chance insta${played.instagram ? " used" : ""}`}
-                  onClick={() => startPlay("instagram")}
-                  disabled={!!played.instagram}
-                >
-                  <div className="ic">
-                    <InstagramGlyph />
-                  </div>
-                  <div className="body">
-                    <div className="t">Suivre sur Instagram</div>
-                    <div className="d">1 tour de roue offert</div>
-                  </div>
-                  <div className={`state ${played.instagram ? "done" : "todo"}`}>
-                    {played.instagram ? "✓ Fait" : "Jouer"}
-                  </div>
-                </button>
-                <button
-                  className={`chance review${played.review ? " used" : ""}`}
-                  onClick={() => startPlay("review")}
-                  disabled={!!played.review}
-                >
-                  <div className="ic google">
-                    <GoogleGlyph />
-                  </div>
-                  <div className="body">
-                    <div className="t">Laisser un avis Google</div>
-                    <div className="d">1 tour de roue offert</div>
-                  </div>
-                  <div className={`state ${played.review ? "done" : "todo"}`}>
-                    {played.review ? "✓ Fait" : "Jouer"}
-                  </div>
-                </button>
+                {enabledChannels.includes("instagram") && (
+                  <button
+                    className={`chance insta${played.instagram ? " used" : ""}`}
+                    onClick={() => startPlay("instagram")}
+                    disabled={!!played.instagram}
+                  >
+                    <div className="ic">
+                      <InstagramGlyph />
+                    </div>
+                    <div className="body">
+                      <div className="t">Suivre sur Instagram</div>
+                      <div className="d">1 tour de roue offert</div>
+                    </div>
+                    <div className={`state ${played.instagram ? "done" : "todo"}`}>
+                      {played.instagram ? "✓ Fait" : "Jouer"}
+                    </div>
+                  </button>
+                )}
+                {enabledChannels.includes("review") && (
+                  <button
+                    className={`chance review${played.review ? " used" : ""}`}
+                    onClick={() => startPlay("review")}
+                    disabled={!!played.review}
+                  >
+                    <div className="ic google">
+                      <GoogleGlyph />
+                    </div>
+                    <div className="body">
+                      <div className="t">Laisser un avis Google</div>
+                      <div className="d">1 tour de roue offert</div>
+                    </div>
+                    <div className={`state ${played.review ? "done" : "todo"}`}>
+                      {played.review ? "✓ Fait" : "Jouer"}
+                    </div>
+                  </button>
+                )}
               </div>
             </section>
           )}
@@ -735,7 +777,12 @@ export default function Game({
               <div className="done-screen">
                 <div className="big">🎉</div>
                 <h2>Vous avez tout joué&nbsp;!</h2>
-                <p>Vos 2 tours ont été utilisés. Merci de votre soutien&nbsp;❤️</p>
+                <p>
+                  {totalTurns === 2
+                    ? "Vos 2 tours ont été utilisés."
+                    : "Votre tour a été utilisé."}{" "}
+                  Merci de votre soutien&nbsp;❤️
+                </p>
                 <div className="recap">
                   {(
                     [

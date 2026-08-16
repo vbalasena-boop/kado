@@ -70,7 +70,7 @@ export default async function Page({
     supa
       .from("wheel_configs")
       .select(
-        "primary_color, accent_color, bg_color, bg_image_url, collect_email, instagram_url, review_url, compliance_note"
+        "primary_color, accent_color, bg_color, bg_image_url, collect_email, instagram_url, review_url, compliance_note, instagram_enabled, review_enabled"
       )
       .eq("business_id", biz.id)
       .maybeSingle(),
@@ -110,6 +110,8 @@ export default async function Page({
           review_url: null,
           compliance_note:
             "Le cadeau n'est pas conditionné à la note laissée.",
+          instagram_enabled: true,
+          review_enabled: true,
         }
       }
       played={played}

@@ -19,6 +19,8 @@ export async function POST(req: NextRequest) {
       compliance_note?: string;
       daily_prize_limit?: number | null;
       collect_email?: boolean;
+      instagram_enabled?: boolean;
+      review_enabled?: boolean;
     };
     prizes?: {
       label: string;
@@ -36,6 +38,14 @@ export async function POST(req: NextRequest) {
   const admin = getAdminClient();
   const cfg = body.config ?? {};
 
+  // Canaux activés (au moins un doit rester actif)
+  let igEnabled = cfg.instagram_enabled !== false;
+  let rvEnabled = cfg.review_enabled !== false;
+  if (!igEnabled && !rvEnabled) {
+    igEnabled = true;
+    rvEnabled = true;
+  }
+
   // upsert config (1-1 avec business)
   const { error: cfgErr } = await admin.from("wheel_configs").upsert(
     {
@@ -50,6 +60,8 @@ export async function POST(req: NextRequest) {
           ? Math.round(cfg.daily_prize_limit)
           : null,
       collect_email: !!cfg.collect_email,
+      instagram_enabled: igEnabled,
+      review_enabled: rvEnabled,
     },
     { onConflict: "business_id" }
   );

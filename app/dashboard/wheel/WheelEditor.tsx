@@ -15,6 +15,8 @@ type Config = {
   compliance_note: string | null;
   daily_prize_limit?: number | null;
   collect_email?: boolean | null;
+  instagram_enabled?: boolean | null;
+  review_enabled?: boolean | null;
 };
 
 const FONT =
@@ -206,6 +208,9 @@ export default function WheelEditor({
   }
 
   const totalWeight = prizes.reduce((s, p) => s + Math.max(0, Number(p.weight) || 0), 0);
+  const igEnabled = config.instagram_enabled !== false;
+  const rvEnabled = config.review_enabled !== false;
+  const noChannel = !igEnabled && !rvEnabled;
 
   return (
     <>
@@ -283,29 +288,83 @@ export default function WheelEditor({
           </div>
 
           <div className="dash-card">
-            <h2>Liens</h2>
-            <label className="field">
-              <span>Lien Instagram</span>
+            <h2>Canaux &amp; liens</h2>
+            <p className="muted" style={{ marginBottom: 14 }}>
+              Choisissez ce que vous proposez à vos clients : Instagram, les avis
+              Google, ou les deux. Chaque canal activé donne <b>un tour de roue</b>.
+            </p>
+
+            {igEnabled && !rvEnabled && (
+              <p className="muted" style={{ marginBottom: 14 }}>
+                🎯 Vos clients auront <b>1 tour</b> (Instagram uniquement).
+              </p>
+            )}
+            {rvEnabled && !igEnabled && (
+              <p className="muted" style={{ marginBottom: 14 }}>
+                🎯 Vos clients auront <b>1 tour</b> (avis Google uniquement).
+              </p>
+            )}
+
+            <label className="toggle-field">
               <input
-                type="url"
-                placeholder="https://instagram.com/mon-compte"
-                value={config.instagram_url ?? ""}
+                type="checkbox"
+                checked={igEnabled}
                 onChange={(e) =>
-                  setConfig({ ...config, instagram_url: e.target.value })
+                  setConfig({ ...config, instagram_enabled: e.target.checked })
                 }
               />
+              <span>
+                <b>Proposer le tour Instagram</b> — un suivi de votre compte contre
+                un tour de roue.
+              </span>
             </label>
-            <label className="field">
-              <span>Lien d'avis Google</span>
+            {igEnabled && (
+              <label className="field">
+                <span>Lien Instagram</span>
+                <input
+                  type="url"
+                  placeholder="https://instagram.com/mon-compte"
+                  value={config.instagram_url ?? ""}
+                  onChange={(e) =>
+                    setConfig({ ...config, instagram_url: e.target.value })
+                  }
+                />
+              </label>
+            )}
+
+            <label className="toggle-field" style={{ marginTop: 6 }}>
               <input
-                type="url"
-                placeholder="https://g.page/r/..."
-                value={config.review_url ?? ""}
+                type="checkbox"
+                checked={rvEnabled}
                 onChange={(e) =>
-                  setConfig({ ...config, review_url: e.target.value })
+                  setConfig({ ...config, review_enabled: e.target.checked })
                 }
               />
+              <span>
+                <b>Proposer le tour Avis Google</b> — un avis contre un tour de
+                roue.
+              </span>
             </label>
+            {rvEnabled && (
+              <label className="field">
+                <span>Lien d'avis Google</span>
+                <input
+                  type="url"
+                  placeholder="https://g.page/r/..."
+                  value={config.review_url ?? ""}
+                  onChange={(e) =>
+                    setConfig({ ...config, review_url: e.target.value })
+                  }
+                />
+              </label>
+            )}
+
+            {!igEnabled && !rvEnabled && (
+              <p className="onboarding-err" style={{ marginTop: 4 }}>
+                ⚠️ Activez au moins un canal, sinon vos clients n'auront aucun tour.
+              </p>
+            )}
+
             <label className="field">
               <span>Mention légale (conformité)</span>
               <input
@@ -406,7 +465,7 @@ export default function WheelEditor({
           </div>
 
           <div className="save-bar">
-            <button className="btn" onClick={save} disabled={saving}>
+            <button className="btn" onClick={save} disabled={saving || noChannel}>
               {saving ? "Enregistrement…" : "Enregistrer"}
             </button>
             {msg && <span className="save-msg">{msg}</span>}

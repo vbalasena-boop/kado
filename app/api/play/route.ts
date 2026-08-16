@@ -49,13 +49,22 @@ export async function POST(req: NextRequest) {
       .order("position", { ascending: true }),
     supa
       .from("wheel_configs")
-      .select("daily_prize_limit")
+      .select("daily_prize_limit, instagram_enabled, review_enabled")
       .eq("business_id", biz.id)
       .maybeSingle(),
   ]);
 
   if (!prizes || prizes.length === 0) {
     return Response.json({ error: "no_prizes" }, { status: 409 });
+  }
+
+  // Canal désactivé par le commerçant → tour non autorisé
+  const channelEnabled =
+    playType === "instagram"
+      ? cfg?.instagram_enabled !== false
+      : cfg?.review_enabled !== false;
+  if (!channelEnabled) {
+    return Response.json({ error: "channel_disabled" }, { status: 403 });
   }
 
   const isWin = (label: string) => !label.toLowerCase().includes("rien");
