@@ -109,13 +109,44 @@ const BENEFITS = [
   { i: "coins", t: "Coûts maîtrisés", d: "Plafond de cadeaux par jour et validation du code en caisse." },
 ];
 
-const PLAN_FEATURES = [
-  "Roue personnalisable à vos couleurs",
-  "Avis Google + suivi Instagram",
-  "Cadeaux & plafond journalier",
-  "Validation des cadeaux en caisse",
-  "Statistiques et export clients",
-  "Anti-triche & conformité RGPD",
+const PLANS = [
+  {
+    id: "roue",
+    name: "Roue",
+    price: "29",
+    desc: "Boostez vos avis & abonnés",
+    features: [
+      "Roue de la fortune illimitée",
+      "Avis Google + Instagram",
+      "Personnalisation complète",
+      "QR code, stats, validation",
+    ],
+  },
+  {
+    id: "complet",
+    name: "Complet",
+    price: "44",
+    desc: "Roue + fidélité, le meilleur tarif",
+    popular: true,
+    features: [
+      "Tout ce qui est dans Roue",
+      "+ Carte de fidélité digitale",
+      "Toutes les fonctionnalités",
+      "4 € d'économie / mois",
+    ],
+  },
+  {
+    id: "fidelite",
+    name: "Fidélité",
+    price: "19",
+    desc: "Fidélisez vos habitués",
+    features: [
+      "Carte à tampons digitale",
+      "Récompense personnalisable",
+      "QR code client + validation",
+      "Stats d'inscription",
+    ],
+  },
 ];
 
 const FAQ = [
@@ -129,7 +160,7 @@ const FAQ = [
   },
   {
     q: "Combien ça coûte ?",
-    a: "29 € par mois, sans engagement, résiliable à tout moment. Vous démarrez avec 14 jours d'essai gratuit, sans carte bancaire.",
+    a: "Trois formules sans engagement : Roue à 29 €/mois, Fidélité à 19 €/mois, ou Complet (les deux) à 44 €/mois. Vous démarrez avec 14 jours d'essai gratuit, sans carte bancaire, avec toutes les fonctionnalités.",
   },
   {
     q: "Pour quels commerces ?",
@@ -183,7 +214,8 @@ export default function Home({
         <Logo size={42} />
         <nav className="v-topnav">
           <a href="/tarifs">Tarifs</a>
-          <a href="/login" className="v-topnav-cta">Espace commerçant</a>
+          <a href="/login">Connexion</a>
+          <a href="/login?signup=1" className="v-topnav-cta">Créer mon compte</a>
         </nav>
       </header>
 
@@ -205,8 +237,8 @@ export default function Home({
           <span className="v-brand insta"><InstagramGlyph /> Plus d'abonnés</span>
         </div>
         <div className="v-cta">
-          <a className="v-btn primary" href="/cafe-lumiere">🎡 Essayer la démo</a>
-          <a className="v-btn ghost" href="/tarifs">Voir les tarifs</a>
+          <a className="v-btn primary" href="/login?signup=1">Créer mon compte gratuit →</a>
+          <a className="v-btn ghost" href="/cafe-lumiere">🎡 Essayer la démo</a>
         </div>
         <div className="v-trust">
           <span><b>✓</b> Sans application</span>
@@ -281,21 +313,37 @@ export default function Home({
       </section>
 
       <section className="v-section">
-        <h2>Un tarif simple</h2>
-        <div className="v-pricecard">
-          <div className="pc-name">KADO PRO</div>
-          <div className="pc-price">29€<small> / mois</small></div>
-          <div className="pc-note">Sans engagement, résiliable à tout moment.</div>
-          <ul>
-            {PLAN_FEATURES.map((f) => (
-              <li key={f}><Ico name="check" /> {f}</li>
-            ))}
-          </ul>
-          <a className="v-btn primary" href="/tarifs">Voir les tarifs</a>
-          <div className="pc-note" style={{ marginTop: 14 }}>
-            🎁 14 jours d'essai gratuit — sans carte bancaire.
-          </div>
+        <h2>Des tarifs simples</h2>
+        <p className="v-audience-note" style={{ marginTop: -6, marginBottom: 22 }}>
+          Choisissez votre formule — sans engagement, résiliable à tout moment.
+        </p>
+        <div className="v-plans-row">
+          {PLANS.map((p) => (
+            <div className={`v-plan${p.popular ? " popular" : ""}`} key={p.id}>
+              {p.popular && <div className="v-plan-pop">Le plus populaire</div>}
+              <div className="v-plan-name">{p.name}</div>
+              <div className="v-plan-price">
+                {p.price}&nbsp;€<span>/mois</span>
+              </div>
+              <div className="v-plan-sub">{p.desc}</div>
+              <ul className="v-plan-feats">
+                {p.features.map((f) => (
+                  <li key={f}>✓ {f}</li>
+                ))}
+              </ul>
+              <a
+                className="v-btn primary"
+                href="/login?signup=1"
+                style={{ display: "block" }}
+              >
+                Commencer gratuitement →
+              </a>
+            </div>
+          ))}
         </div>
+        <p className="v-audience-note" style={{ marginTop: 18 }}>
+          🎁 14 jours d'essai gratuit — sans carte bancaire — toutes fonctionnalités incluses.
+        </p>
       </section>
 
       <section className="v-section">
@@ -312,9 +360,10 @@ export default function Home({
 
       <section className="v-final">
         <h2>Prêt à faire tourner la roue ?</h2>
-        <p>Testez la démo, puis lancez votre première roue en quelques minutes.</p>
+        <p>Créez votre compte gratuit et lancez votre première roue en quelques minutes.</p>
         <div className="v-cta">
-          <a className="v-btn primary" href="/cafe-lumiere">🎡 Essayer la démo</a>
+          <a className="v-btn primary" href="/login?signup=1">Créer mon compte gratuit →</a>
+          <a className="v-btn ghost" href="/cafe-lumiere">🎡 Essayer la démo</a>
         </div>
       </section>
 
@@ -325,7 +374,8 @@ export default function Home({
         <a href="/legal/confidentialite">Confidentialité</a>
         <a href="/legal/cgu">CGU</a>
         <a href="/legal/cgv">CGV</a>
-        <a href="/login">Espace commerçant</a>
+        <a href="/login">Connexion</a>
+        <a href="/login?signup=1">Créer mon compte</a>
       </footer>
     </main>
   );

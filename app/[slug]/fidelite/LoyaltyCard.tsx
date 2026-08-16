@@ -173,6 +173,26 @@ export default function LoyaltyCard({
             <h2 className="fid-count">
               {card.stamps} <span>/ {card.goal} tampons</span>
             </h2>
+            <div className="fid-progress">
+              <span
+                className="fid-progress-fill"
+                style={{
+                  width: `${Math.min(100, (card.stamps / card.goal) * 100)}%`,
+                }}
+              />
+            </div>
+            {!card.rewardReady && card.goal - card.stamps > 0 && (
+              <p className="fid-remaining">
+                {card.goal - card.stamps === 1 ? (
+                  <>Plus qu'<b>1 tampon</b> avant votre récompense&nbsp;! 🎉</>
+                ) : (
+                  <>
+                    Plus que <b>{card.goal - card.stamps} tampons</b> avant votre
+                    récompense.
+                  </>
+                )}
+              </p>
+            )}
             <div className="fid-stamps">
               {Array.from({ length: card.goal }).map((_, i) => (
                 <span

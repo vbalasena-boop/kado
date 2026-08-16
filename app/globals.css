@@ -682,6 +682,30 @@ canvas#confetti {
   border-radius: 6px;
 }
 /* ---- Auth ---- */
+.auth-signup-perks {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 14px;
+  margin: 4px 0 16px;
+}
+.auth-signup-perks span {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mint);
+}
+.auth-switch {
+  text-align: center;
+  font-size: 14px;
+  color: var(--cream-dim);
+  margin-top: 4px;
+}
+.auth-switch a {
+  color: var(--gold);
+  font-weight: 700;
+  text-decoration: none;
+}
+.auth-switch a:hover { text-decoration: underline; }
 .auth-form {
   display: flex;
   flex-direction: column;
@@ -2786,6 +2810,28 @@ canvas#confetti {
   opacity: 0.7;
   font-weight: 500;
 }
+.fid-progress {
+  height: 10px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  margin: 4px 0 10px;
+}
+.fid-progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--gold), var(--gold-deep));
+  transition: width 0.5s ease;
+}
+.fid-remaining {
+  text-align: center;
+  font-size: 0.92rem;
+  color: var(--cream);
+  opacity: 0.85;
+  margin: 0 0 8px;
+}
+.fid-remaining b { color: var(--gold); }
 .fid-stamps {
   display: grid;
   grid-template-columns: repeat(5, 1fr);

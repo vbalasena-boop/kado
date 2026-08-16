@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-export default function LoginPage() {
+function LoginInner() {
   const router = useRouter();
+  const params = useSearchParams();
+  const isSignup = params.get("signup") === "1";
+
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [step, setStep] = useState<"email" | "code">("email");
@@ -58,14 +61,34 @@ export default function LoginPage() {
   return (
     <main className="auth-page">
       <div className="auth-card">
-        <div className="auth-logo">🎡</div>
-        <h1 style={{ textAlign: "center" }}>Espace commerçant</h1>
+        <div className="auth-logo">{isSignup ? "🎁" : "🎡"}</div>
+        <h1 style={{ textAlign: "center" }}>
+          {isSignup ? "Créer mon compte" : "Espace commerçant"}
+        </h1>
+
+        {isSignup && step === "email" && (
+          <div className="auth-signup-perks">
+            <span>✓ 14 jours d'essai gratuit</span>
+            <span>✓ Sans carte bancaire</span>
+            <span>✓ Sans engagement</span>
+          </div>
+        )}
 
         {step === "email" ? (
           <form onSubmit={sendCode} className="auth-form">
             <p>
-              Entrez votre e-mail : vous recevrez un <b>code à 6 chiffres</b> pour
-              vous connecter (sans mot de passe).
+              {isSignup ? (
+                <>
+                  Entrez votre e-mail pour créer votre compte : vous recevrez un{" "}
+                  <b>code à 6 chiffres</b> (sans mot de passe). Votre espace est
+                  créé en 2 minutes.
+                </>
+              ) : (
+                <>
+                  Entrez votre e-mail : vous recevrez un <b>code à 6 chiffres</b>{" "}
+                  pour vous connecter (sans mot de passe).
+                </>
+              )}
             </p>
             <input
               type="email"
@@ -77,8 +100,25 @@ export default function LoginPage() {
             />
             {error && <p className="err">{error}</p>}
             <button className="btn" disabled={loading}>
-              {loading ? "Envoi…" : "Recevoir mon code"}
+              {loading
+                ? "Envoi…"
+                : isSignup
+                ? "Créer mon compte gratuit"
+                : "Recevoir mon code"}
             </button>
+            <p className="auth-switch">
+              {isSignup ? (
+                <>
+                  Vous avez déjà un compte ?{" "}
+                  <a href="/login">Se connecter</a>
+                </>
+              ) : (
+                <>
+                  Pas encore de compte ?{" "}
+                  <a href="/login?signup=1">Créer mon compte gratuit</a>
+                </>
+              )}
+            </p>
           </form>
         ) : (
           <form onSubmit={verify} className="auth-form">
@@ -99,7 +139,7 @@ export default function LoginPage() {
             />
             {error && <p className="err">{error}</p>}
             <button className="btn" disabled={loading}>
-              {loading ? "Vérification…" : "Se connecter"}
+              {loading ? "Vérification…" : isSignup ? "Créer mon compte" : "Se connecter"}
             </button>
             <button
               type="button"
@@ -116,5 +156,13 @@ export default function LoginPage() {
         )}
       </div>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<main className="auth-page" />}>
+      <LoginInner />
+    </Suspense>
   );
 }
