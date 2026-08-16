@@ -53,19 +53,26 @@ export default function BillingClient({
   statusLabel,
   endsAt,
   success,
+  setupOk = false,
   currentPlan,
   isTrial,
+  setupPaid = false,
+  setupOption = null,
 }: {
   hasSubscription: boolean;
   statusLabel: string;
   endsAt: string | null;
   success: boolean;
+  setupOk?: boolean;
   currentPlan: string;
   isTrial: boolean;
+  setupPaid?: boolean;
+  setupOption?: string | null;
 }) {
   const [loading, setLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(currentPlan);
   const [setupOpt, setSetupOpt] = useState<"none" | "remote" | "onsite">("none");
+  const [postOpt, setPostOpt] = useState<"remote" | "onsite">("remote");
   const [changingPlan, setChangingPlan] = useState(false);
   const [planMsg, setPlanMsg] = useState<string | null>(null);
   const [confirm, setConfirm] = useState("");
@@ -161,6 +168,11 @@ export default function BillingClient({
           <b>Merci ! Votre abonnement est actif.</b>
         </div>
       )}
+      {setupOk && (
+        <div className="redeem-result ok" style={{ marginBottom: 16 }}>
+          <b>🛠️ Installation réservée ! Nous vous contactons sous 24 h ouvrées.</b>
+        </div>
+      )}
 
       <div className="dash-card" style={{ maxWidth: 520 }}>
         <h2>Votre formule</h2>
@@ -253,6 +265,64 @@ export default function BillingClient({
           </p>
         )}
       </div>
+
+      {hasSubscription && (
+        <div className="dash-card" style={{ maxWidth: 520 }}>
+          <h2>🛠️ Installation clé en main</h2>
+          {setupPaid ? (
+            <div className="redeem-result ok">
+              <b>
+                Installation{" "}
+                {setupOption === "onsite" ? "sur place" : "à distance"} réservée ✓
+              </b>
+              <div className="muted" style={{ marginTop: 6 }}>
+                Nous vous contactons sous 24 h ouvrées pour tout configurer.
+                Une question ? Écrivez-nous en répondant à l'e-mail de
+                confirmation.
+              </div>
+            </div>
+          ) : (
+            <>
+              <p className="muted" style={{ marginBottom: 12 }}>
+                Pas le temps de configurer votre roue, vos cadeaux ou votre
+                carte de fidélité ? On s'occupe de tout, en une seule fois.
+              </p>
+              <div className="setup-addon-opts" style={{ gridTemplateColumns: "1fr 1fr" }}>
+                <button
+                  type="button"
+                  className={`addon-chip${postOpt === "remote" ? " on" : ""}`}
+                  onClick={() => setPostOpt("remote")}
+                >
+                  <b>À distance · 79 €</b>
+                  <span>config complète + affiche PDF</span>
+                </button>
+                <button
+                  type="button"
+                  className={`addon-chip${postOpt === "onsite" ? " on" : ""}`}
+                  onClick={() => setPostOpt("onsite")}
+                >
+                  <b>Sur place · 129 €</b>
+                  <span>+ pose de l'affiche &amp; formation</span>
+                </button>
+              </div>
+              <button
+                className="btn"
+                style={{ marginTop: 14 }}
+                onClick={() => go("/api/billing/setup", { setup: postOpt })}
+                disabled={loading}
+              >
+                {loading
+                  ? "…"
+                  : `Réserver l'installation (${postOpt === "remote" ? "79" : "129"} €)`}
+              </button>
+              <p className="muted" style={{ marginTop: 10, fontSize: ".85rem" }}>
+                Paiement unique et sécurisé via Stripe. Réalisée sous 72 h
+                ouvrées après prise de contact.
+              </p>
+            </>
+          )}
+        </div>
+      )}
 
       <div className="dash-card" style={{ maxWidth: 700 }}>
         <h2>{hasSubscription ? "Changer de formule" : "Choisir ma formule"}</h2>
