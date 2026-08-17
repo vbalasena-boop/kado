@@ -46,7 +46,7 @@ export default async function OrdersPage() {
   try {
     const { data: p } = await db
       .from("products")
-      .select("id, name, price_cents, active")
+      .select("id, name, price_cents, active, image_url, description")
       .eq("business_id", business.id)
       .order("created_at", { ascending: true });
     products = (p as Product[]) ?? [];

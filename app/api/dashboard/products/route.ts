@@ -6,8 +6,9 @@ export const dynamic = "force-dynamic";
 
 /**
  * Catalogue Click & collect du commerçant connecté.
- * action = 'create' { name, price } (prix en euros, ex. "4,50")
+ * action = 'create' { name, price, description? } (prix en euros, ex. "4,50")
  *        | 'toggle' { id }  (masque/affiche le produit)
+ *        | 'remove_image' { id }
  *        | 'delete' { id }
  */
 export async function POST(req: NextRequest) {
@@ -21,6 +22,7 @@ export async function POST(req: NextRequest) {
     id?: string;
     name?: string;
     price?: string | number;
+    description?: string;
   };
   try {
     body = await req.json();
@@ -44,11 +46,15 @@ export async function POST(req: NextRequest) {
     if ((count ?? 0) >= 100) {
       return Response.json({ error: "too_many_products" }, { status: 400 });
     }
-    const { error } = await db.from("products").insert({
+    const description =
+      String(body.description ?? "").trim().slice(0, 200) || null;
+    const insert: Record<string, unknown> = {
       business_id: business.id,
       name,
       price_cents: Math.round(price * 100),
-    });
+    };
+    if (description) insert.description = description;
+    const { error } = await db.from("products").insert(insert);
     if (error) {
       return Response.json(
         { error: "save_failed", detail: error.message },
@@ -70,6 +76,15 @@ export async function POST(req: NextRequest) {
       .from("products")
       .update({ active: !p.active })
       .eq("id", p.id)
+      .eq("business_id", business.id);
+    return Response.json({ ok: true });
+  }
+
+  if (body.action === "remove_image" && body.id) {
+    await db
+      .from("products")
+      .update({ image_url: null })
+      .eq("id", body.id)
       .eq("business_id", business.id);
     return Response.json({ ok: true });
   }

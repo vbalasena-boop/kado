@@ -54,17 +54,34 @@ export default async function CommanderPage({
     );
   }
 
-  let products: { id: string; name: string; price_cents: number }[] = [];
+  let products: {
+    id: string;
+    name: string;
+    price_cents: number;
+    image_url?: string | null;
+    description?: string | null;
+  }[] = [];
   try {
     const { data } = await db
       .from("products")
-      .select("id, name, price_cents")
+      .select("id, name, price_cents, image_url, description")
       .eq("business_id", biz.id)
       .eq("active", true)
       .order("created_at", { ascending: true });
     products = data ?? [];
   } catch {
-    products = [];
+    // colonnes photo absentes (migration 0020 pas encore passée)
+    try {
+      const { data } = await db
+        .from("products")
+        .select("id, name, price_cents")
+        .eq("business_id", biz.id)
+        .eq("active", true)
+        .order("created_at", { ascending: true });
+      products = data ?? [];
+    } catch {
+      products = [];
+    }
   }
 
   if (products.length === 0) {

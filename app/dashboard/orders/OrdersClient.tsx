@@ -9,6 +9,8 @@ export type Product = {
   name: string;
   price_cents: number;
   active: boolean;
+  image_url?: string | null;
+  description?: string | null;
 };
 
 export type Order = {
@@ -54,6 +56,7 @@ export default function OrdersClient({
   const [msg, setMsg] = useState<string | null>(null);
   const [pName, setPName] = useState("");
   const [pPrice, setPPrice] = useState("");
+  const [pDesc, setPDesc] = useState("");
 
   // Rafraîchit la liste toutes les 60 s pour voir arriver les commandes
   useEffect(() => {
@@ -81,9 +84,44 @@ export default function OrdersClient({
   async function addProduct(e: React.FormEvent) {
     e.preventDefault();
     if (!pName.trim() || !pPrice.trim()) return;
-    await productAction({ action: "create", name: pName, price: pPrice });
+    await productAction({
+      action: "create",
+      name: pName,
+      price: pPrice,
+      description: pDesc,
+    });
     setPName("");
     setPPrice("");
+    setPDesc("");
+  }
+
+  /** Upload de la photo d'un produit (déclenché par l'input fichier caché). */
+  async function uploadImage(id: string, file: File) {
+    setBusy(true);
+    setMsg(null);
+    try {
+      const form = new FormData();
+      form.append("id", id);
+      form.append("file", file);
+      const res = await fetch("/api/dashboard/products/image", {
+        method: "POST",
+        body: form,
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setMsg(
+          "❌ " +
+            (d.error === "too_large"
+              ? "Image trop lourde (4 Mo max)."
+              : d.error === "not_an_image"
+              ? "Le fichier doit être une image."
+              : "Échec de l'envoi de la photo.")
+        );
+      }
+      router.refresh();
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function setStatus(id: string, status: string) {
@@ -242,35 +280,84 @@ export default function OrdersClient({
           Les produits affichés sur votre page de commande. Masquez un produit
           en rupture plutôt que de le supprimer.
         </p>
-        <form onSubmit={addProduct} className="admin-create" style={{ marginTop: 12 }}>
-          <input
-            type="text"
-            required
-            placeholder="Nom du produit (ex. Formule sandwich + boisson)"
-            value={pName}
-            onChange={(e) => setPName(e.target.value)}
-          />
-          <input
-            type="text"
-            required
-            inputMode="decimal"
-            placeholder="Prix en € (ex. 8,50)"
-            style={{ maxWidth: 140 }}
-            value={pPrice}
-            onChange={(e) => setPPrice(e.target.value)}
-          />
-          <button className="btn" disabled={busy}>
-            <Icon name="add" size={18} /> Ajouter
-          </button>
+        <form onSubmit={addProduct} className="product-form">
+          <div className="product-form-row">
+            <input
+              type="text"
+              required
+              placeholder="Nom du produit (ex. Formule sandwich + boisson)"
+              value={pName}
+              onChange={(e) => setPName(e.target.value)}
+            />
+            <input
+              type="text"
+              required
+              inputMode="decimal"
+              placeholder="Prix en € (ex. 8,50)"
+              style={{ maxWidth: 140 }}
+              value={pPrice}
+              onChange={(e) => setPPrice(e.target.value)}
+            />
+          </div>
+          <div className="product-form-row">
+            <input
+              type="text"
+              placeholder="Description courte (facultatif — ex. Pain frais, jambon, crudités)"
+              maxLength={200}
+              value={pDesc}
+              onChange={(e) => setPDesc(e.target.value)}
+            />
+            <button className="btn" disabled={busy}>
+              <Icon name="add" size={18} /> Ajouter
+            </button>
+          </div>
+          <p className="muted" style={{ fontSize: 12.5 }}>
+            💡 Ajoutez ensuite une photo à chaque produit : les produits en
+            photo se vendent beaucoup mieux.
+          </p>
         </form>
 
         {products.length > 0 && (
           <ul className="product-list">
             {products.map((p) => (
               <li key={p.id} className={p.active ? "" : "is-off"}>
-                <b>{p.name}</b>
+                {p.image_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={p.image_url} alt="" className="product-thumb" />
+                ) : (
+                  <span className="product-thumb product-thumb-empty">🍽️</span>
+                )}
+                <div className="product-info">
+                  <b>{p.name}</b>
+                  {p.description && <small>{p.description}</small>}
+                </div>
                 <span className="product-price">{euros(p.price_cents)} €</span>
                 <div className="product-actions">
+                  <label className={`btn-mini soft product-photo-btn${busy ? " is-disabled" : ""}`}>
+                    📷 {p.image_url ? "Changer" : "Photo"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      hidden
+                      disabled={busy}
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) uploadImage(p.id, f);
+                        e.target.value = "";
+                      }}
+                    />
+                  </label>
+                  {p.image_url && (
+                    <button
+                      className="btn-mini soft"
+                      disabled={busy}
+                      onClick={() =>
+                        productAction({ action: "remove_image", id: p.id })
+                      }
+                    >
+                      Sans photo
+                    </button>
+                  )}
                   <button
                     className="btn-mini soft"
                     disabled={busy}
