@@ -4804,3 +4804,109 @@ html { scroll-behavior: smooth; }
   margin: 16px 0;
 }
 .uber-done-total { font-size: 16px; }
+
+/* ───── Click & collect : scanner de bons + meilleures ventes ───── */
+.scan-open { width: auto; padding: 13px 22px; margin-bottom: 16px; }
+.scan-wrap {
+  position: fixed;
+  inset: 0;
+  background: rgba(23, 9, 46, 0.6);
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.scan-box {
+  width: min(100%, 440px);
+  background: #fff;
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: 0 12px 40px rgba(23, 9, 46, 0.35);
+}
+.scan-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.scan-video-wrap {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #17092e;
+  aspect-ratio: 1 / 1;
+}
+.scan-video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.scan-target {
+  position: absolute;
+  inset: 14%;
+  border: 3px solid rgba(255, 255, 255, 0.85);
+  border-radius: 18px;
+  box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+}
+.scan-result {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f1f3f4;
+  font-size: 14.5px;
+  font-weight: 600;
+}
+.scan-manual { display: flex; gap: 8px; margin-top: 12px; }
+.scan-manual input {
+  flex: 1;
+  border: 1px solid var(--g-line, #dadce0);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-family: ui-monospace, monospace;
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.top-sales-h { margin: 18px 0 8px; font-size: 15.5px; }
+.top-sales {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.top-sales li { display: flex; align-items: center; gap: 12px; font-size: 14px; }
+.top-rank {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #fef3d9;
+  color: #8a5a00;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+}
+.top-info { flex: 1; min-width: 0; }
+.top-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: #f1eef7;
+  margin-top: 4px;
+  overflow: hidden;
+}
+.top-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--sunset, linear-gradient(135deg, #ff6b4a, #f5b841 55%, #ff4e87));
+}
+.top-qty { flex: 0 0 auto; color: #5f6368; font-size: 13px; white-space: nowrap; }
+.uber-done-qr {
+  display: block;
+  width: 190px;
+  height: 190px;
+  margin: 0 auto 12px;
+  border-radius: 12px;
+}

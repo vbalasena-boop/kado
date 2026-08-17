@@ -1,8 +1,129 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/icons";
+
+/** Scanner de QR de retrait (caméra + jsQR), rendu dans un volet plein écran. */
+function QrScanner({
+  onCode,
+  onClose,
+  result,
+  busy,
+}: {
+  onCode: (code: string) => void;
+  onClose: () => void;
+  result: string | null;
+  busy: boolean;
+}) {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [camErr, setCamErr] = useState(false);
+  const [manual, setManual] = useState("");
+  const lastRef = useRef<{ code: string; at: number }>({ code: "", at: 0 });
+
+  useEffect(() => {
+    let stream: MediaStream | null = null;
+    let raf = 0;
+    let stopped = false;
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+
+    (async () => {
+      try {
+        const jsQR = (await import("jsqr")).default;
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment" },
+          audio: false,
+        });
+        const video = videoRef.current;
+        if (!video || stopped) return;
+        video.srcObject = stream;
+        await video.play();
+
+        const tick = () => {
+          if (stopped) return;
+          if (video.readyState === video.HAVE_ENOUGH_DATA && ctx) {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0);
+            const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const found = jsQR(img.data, img.width, img.height, {
+              inversionAttempts: "dontInvert",
+            });
+            const text = found?.data?.trim().toUpperCase();
+            if (text && /^[A-Z0-9-]{4,12}$/.test(text)) {
+              // anti-rebond : le même code au max toutes les 3 s
+              const now = Date.now();
+              if (
+                text !== lastRef.current.code ||
+                now - lastRef.current.at > 3000
+              ) {
+                lastRef.current = { code: text, at: now };
+                if (navigator.vibrate) navigator.vibrate(80);
+                onCode(text);
+              }
+            }
+          }
+          raf = requestAnimationFrame(tick);
+        };
+        raf = requestAnimationFrame(tick);
+      } catch {
+        setCamErr(true);
+      }
+    })();
+
+    return () => {
+      stopped = true;
+      cancelAnimationFrame(raf);
+      stream?.getTracks().forEach((t) => t.stop());
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <div className="scan-wrap" onClick={onClose}>
+      <div className="scan-box" onClick={(e) => e.stopPropagation()}>
+        <div className="scan-head">
+          <b>📷 Scanner un bon de retrait</b>
+          <button className="btn-mini soft" onClick={onClose}>
+            Fermer
+          </button>
+        </div>
+        {camErr ? (
+          <p className="muted" style={{ padding: "8px 0" }}>
+            Caméra indisponible (autorisez l'accès dans votre navigateur).
+            Saisissez le code à la main ci-dessous.
+          </p>
+        ) : (
+          <div className="scan-video-wrap">
+            <video ref={videoRef} playsInline muted className="scan-video" />
+            <div className="scan-target" />
+          </div>
+        )}
+        {result && <p className="scan-result">{result}</p>}
+        <form
+          className="scan-manual"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (manual.trim()) onCode(manual.trim().toUpperCase());
+            setManual("");
+          }}
+        >
+          <input
+            type="text"
+            placeholder="Ou tapez le code (ex. K7XM3)"
+            value={manual}
+            maxLength={12}
+            onChange={(e) => setManual(e.target.value.toUpperCase())}
+          />
+          <button className="btn-mini ok" disabled={busy || !manual.trim()}>
+            Valider
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 export type Product = {
   id: string;
@@ -11,6 +132,17 @@ export type Product = {
   active: boolean;
   image_url?: string | null;
   description?: string | null;
+};
+
+export type OrderStats = {
+  today: number;
+  todayCents: number;
+  month: number;
+  monthCents: number;
+  total: number;
+  totalCents: number;
+  avgCents: number;
+  top: { name: string; qty: number; cents: number }[];
 };
 
 export type Order = {
@@ -46,10 +178,12 @@ export default function OrdersClient({
   slug,
   products,
   orders,
+  stats,
 }: {
   slug: string;
   products: Product[];
   orders: Order[];
+  stats: OrderStats;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -57,6 +191,8 @@ export default function OrdersClient({
   const [pName, setPName] = useState("");
   const [pPrice, setPPrice] = useState("");
   const [pDesc, setPDesc] = useState("");
+  const [scanning, setScanning] = useState(false);
+  const [scanResult, setScanResult] = useState<string | null>(null);
 
   // Rafraîchit la liste toutes les 60 s pour voir arriver les commandes
   useEffect(() => {
@@ -133,6 +269,42 @@ export default function OrdersClient({
         body: JSON.stringify({ id, status }),
       });
       router.refresh();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /** Validation d'un bon scanné (ou saisi) : passe la commande en retirée. */
+  async function validateCode(code: string) {
+    setBusy(true);
+    setScanResult(null);
+    try {
+      const res = await fetch("/api/dashboard/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, status: "done" }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (res.ok && d.order) {
+        setScanResult(
+          `✅ ${d.order.code} — ${d.order.customer_name} · ${euros(
+            d.order.total_cents
+          )} € encaissés. Bonne journée !`
+        );
+        router.refresh();
+      } else if (d.error === "already_done") {
+        setScanResult(
+          `⚠️ ${d.order?.code ?? code} : déjà retirée — ne la remettez pas !`
+        );
+      } else if (d.error === "already_cancelled") {
+        setScanResult(`⚠️ ${d.order?.code ?? code} : commande annulée.`);
+      } else if (d.error === "not_found") {
+        setScanResult(`❌ Code « ${code} » introuvable pour votre commerce.`);
+      } else {
+        setScanResult("❌ Validation impossible. Réessayez.");
+      }
+    } catch {
+      setScanResult("❌ Connexion impossible.");
     } finally {
       setBusy(false);
     }
@@ -220,6 +392,25 @@ export default function OrdersClient({
 
       {msg && <p className="save-msg is-err">{msg}</p>}
 
+      <button
+        className="btn scan-open"
+        onClick={() => {
+          setScanResult(null);
+          setScanning(true);
+        }}
+      >
+        📷 Scanner un bon de retrait
+      </button>
+
+      {scanning && (
+        <QrScanner
+          onCode={validateCode}
+          onClose={() => setScanning(false)}
+          result={scanResult}
+          busy={busy}
+        />
+      )}
+
       {/* ---- Commandes en cours ---- */}
       <div className="dash-card">
         <h2>
@@ -272,6 +463,77 @@ export default function OrdersClient({
           </details>
         )}
       </div>
+
+      {/* ---- Statistiques ---- */}
+      {stats.total > 0 && (
+        <div className="dash-card">
+          <h2>📊 Mes ventes Click &amp; collect</h2>
+          <div className="stat-grid" style={{ marginTop: 12 }}>
+            <div className="stat">
+              <div className="stat-icon"><Icon name="event" size={22} /></div>
+              <div>
+                <div className="stat-n">{euros(stats.todayCents)} €</div>
+                <div className="stat-l">
+                  Aujourd'hui · {stats.today} commande{stats.today > 1 ? "s" : ""}
+                </div>
+              </div>
+            </div>
+            <div className="stat">
+              <div className="stat-icon"><Icon name="trending" size={22} /></div>
+              <div>
+                <div className="stat-n">{euros(stats.monthCents)} €</div>
+                <div className="stat-l">
+                  Ce mois-ci · {stats.month} commande{stats.month > 1 ? "s" : ""}
+                </div>
+              </div>
+            </div>
+            <div className="stat">
+              <div className="stat-icon"><Icon name="chart" size={22} /></div>
+              <div>
+                <div className="stat-n">{euros(stats.totalCents)} €</div>
+                <div className="stat-l">
+                  Total · {stats.total} commande{stats.total > 1 ? "s" : ""}
+                </div>
+              </div>
+            </div>
+            <div className="stat">
+              <div className="stat-icon"><Icon name="cart" size={22} /></div>
+              <div>
+                <div className="stat-n">{euros(stats.avgCents)} €</div>
+                <div className="stat-l">Panier moyen</div>
+              </div>
+            </div>
+          </div>
+
+          {stats.top.length > 0 && (
+            <>
+              <h3 className="top-sales-h">🏆 Meilleures ventes</h3>
+              <ol className="top-sales">
+                {stats.top.map((t, i) => {
+                  const max = stats.top[0]?.qty || 1;
+                  return (
+                    <li key={t.name}>
+                      <span className="top-rank">{i + 1}</span>
+                      <div className="top-info">
+                        <b>{t.name}</b>
+                        <div className="top-bar">
+                          <div
+                            className="top-bar-fill"
+                            style={{ width: `${Math.max(8, (t.qty / max) * 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                      <span className="top-qty">
+                        {t.qty} vendus · {euros(t.cents)} €
+                      </span>
+                    </li>
+                  );
+                })}
+              </ol>
+            </>
+          )}
+        </div>
+      )}
 
       {/* ---- Catalogue ---- */}
       <div className="dash-card">

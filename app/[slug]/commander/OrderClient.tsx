@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type Product = {
   id: string;
@@ -40,6 +40,8 @@ export default function OrderClient({
   const [checkout, setCheckout] = useState(false);
   const [cName, setCName] = useState("");
   const [cPhone, setCPhone] = useState("");
+  const [cEmail, setCEmail] = useState("");
+  const [qrUrl, setQrUrl] = useState<string | null>(null);
   const [pickup, setPickup] = useState(PICKUP_CHOICES[0]);
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
@@ -58,6 +60,24 @@ export default function OrderClient({
     [qty]
   );
   const cartLines = products.filter((p) => (qty[p.id] ?? 0) > 0);
+
+  // Génère le QR du code de retrait (scannable par le commerçant)
+  useEffect(() => {
+    let alive = true;
+    if (done) {
+      import("qrcode")
+        .then(({ default: QRCode }) =>
+          QRCode.toDataURL(done.code, { width: 240, margin: 1 })
+        )
+        .then((url) => {
+          if (alive) setQrUrl(url);
+        })
+        .catch(() => {});
+    }
+    return () => {
+      alive = false;
+    };
+  }, [done]);
 
   function bump(id: string, delta: number) {
     setQty((q) => {
@@ -81,6 +101,7 @@ export default function OrderClient({
           phone: cPhone,
           pickup,
           note,
+          email: cEmail,
           items: Object.entries(qty)
             .filter(([, n]) => n > 0)
             .map(([id, n]) => ({ id, qty: n })),
@@ -116,12 +137,18 @@ export default function OrderClient({
             <b>{name}</b> prépare votre commande. Présentez ce code au retrait :
           </p>
           <div className="uber-done-code">{done.code}</div>
+          {qrUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={qrUrl} alt="QR de retrait" className="uber-done-qr" />
+          )}
           <p className="uber-done-total">
             Total à régler sur place : <b>{euros(done.total)} €</b>
           </p>
           <p className="uber-fine">
-            💡 Notez ce code ou faites une capture d'écran — il vous sera
-            demandé au comptoir.
+            💡 Le commerçant scanne ce QR (ou tape le code) au retrait.
+            {cEmail.trim()
+              ? " Votre bon de commande vient de vous être envoyé par e-mail."
+              : " Faites une capture d'écran pour le garder sous la main."}
           </p>
         </div>
       </main>
@@ -256,6 +283,12 @@ export default function OrderClient({
                 placeholder="Votre téléphone (ex. 06 12 34 56 78)"
                 value={cPhone}
                 onChange={(e) => setCPhone(e.target.value)}
+              />
+              <input
+                type="email"
+                placeholder="E-mail (facultatif — pour recevoir votre bon de commande)"
+                value={cEmail}
+                onChange={(e) => setCEmail(e.target.value)}
               />
               <select value={pickup} onChange={(e) => setPickup(e.target.value)}>
                 {PICKUP_CHOICES.map((c) => (

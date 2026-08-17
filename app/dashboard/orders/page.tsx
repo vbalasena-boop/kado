@@ -1,6 +1,10 @@
 import { getMyBusiness } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
-import OrdersClient, { type Product, type Order } from "./OrdersClient";
+import OrdersClient, {
+  type Product,
+  type Order,
+  type OrderStats,
+} from "./OrdersClient";
 
 export const dynamic = "force-dynamic";
 
@@ -43,6 +47,12 @@ export default async function OrdersPage() {
 
   let products: Product[] = [];
   let orders: Order[] = [];
+  let allForStats: {
+    items: { name: string; qty: number; price_cents: number }[];
+    total_cents: number;
+    status: string;
+    created_at: string;
+  }[] = [];
   try {
     const { data: p } = await db
       .from("products")
@@ -59,15 +69,71 @@ export default async function OrdersPage() {
       .order("created_at", { ascending: false })
       .limit(150);
     orders = (o as Order[]) ?? [];
+
+    // Toutes les commandes servies, pour les statistiques (2000 max)
+    const { data: s } = await db
+      .from("orders")
+      .select("items, total_cents, status, created_at")
+      .eq("business_id", business.id)
+      .neq("status", "cancelled")
+      .order("created_at", { ascending: false })
+      .limit(2000);
+    allForStats = (s as typeof allForStats) ?? [];
   } catch {
     /* tables absentes : listes vides */
   }
+
+  // ---- Statistiques ----
+  const startDay = new Date();
+  startDay.setHours(0, 0, 0, 0);
+  const startMonth = new Date();
+  startMonth.setDate(1);
+  startMonth.setHours(0, 0, 0, 0);
+
+  const dayOrders = allForStats.filter(
+    (o) => new Date(o.created_at) >= startDay
+  );
+  const monthOrders = allForStats.filter(
+    (o) => new Date(o.created_at) >= startMonth
+  );
+  const sum = (list: typeof allForStats) =>
+    list.reduce((a, o) => a + (o.total_cents ?? 0), 0);
+
+  // Meilleures ventes (toutes commandes non annulées)
+  const byProduct = new Map<string, { qty: number; cents: number }>();
+  for (const o of allForStats) {
+    for (const it of o.items ?? []) {
+      const cur = byProduct.get(it.name) ?? { qty: 0, cents: 0 };
+      cur.qty += it.qty ?? 0;
+      cur.cents += (it.price_cents ?? 0) * (it.qty ?? 0);
+      byProduct.set(it.name, cur);
+    }
+  }
+  const top = [...byProduct.entries()]
+    .map(([name, v]) => ({ name, qty: v.qty, cents: v.cents }))
+    .sort((a, b) => b.qty - a.qty)
+    .slice(0, 5);
+
+  const stats: OrderStats = {
+    today: dayOrders.length,
+    todayCents: sum(dayOrders),
+    month: monthOrders.length,
+    monthCents: sum(monthOrders),
+    total: allForStats.length,
+    totalCents: sum(allForStats),
+    avgCents:
+      allForStats.length > 0
+        ? Math.round(sum(allForStats) / allForStats.length)
+        : 0,
+    top,
+  };
 
   return (
     <OrdersClient
       slug={business.slug}
       products={products}
       orders={orders}
+      stats={stats}
     />
   );
 }

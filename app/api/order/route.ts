@@ -39,6 +39,7 @@ export async function POST(req: NextRequest) {
     slug?: string;
     name?: string;
     phone?: string;
+    email?: string;
     pickup?: string;
     note?: string;
     items?: { id?: string; qty?: number }[];
@@ -51,8 +52,12 @@ export async function POST(req: NextRequest) {
 
   const name = String(body.name ?? "").trim().slice(0, 80);
   const phone = String(body.phone ?? "").trim().slice(0, 25);
+  const email = String(body.email ?? "").trim().slice(0, 120);
   const pickup = String(body.pickup ?? "").trim().slice(0, 60);
   const note = String(body.note ?? "").trim().slice(0, 300);
+  if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    return Response.json({ error: "bad_email" }, { status: 400 });
+  }
   const items = (body.items ?? []).filter(
     (i) => i?.id && Number.isInteger(i.qty) && (i.qty as number) > 0
   );
@@ -98,7 +103,7 @@ export async function POST(req: NextRequest) {
   }
 
   const code = pickupCode();
-  const { error } = await db.from("orders").insert({
+  const baseInsert: Record<string, unknown> = {
     business_id: biz.id,
     code,
     customer_name: name,
@@ -108,12 +113,62 @@ export async function POST(req: NextRequest) {
     items: lines,
     total_cents: total,
     status: "new",
-  });
+  };
+  // Insertion tolérante : la colonne customer_email peut ne pas encore exister
+  let { error } = await db
+    .from("orders")
+    .insert(email ? { ...baseInsert, customer_email: email } : baseInsert);
+  if (error && email) {
+    ({ error } = await db.from("orders").insert(baseInsert));
+  }
   if (error) {
     return Response.json(
       { error: "save_failed", detail: error.message },
       { status: 500 }
     );
+  }
+
+  // Bon de commande e-mail au client (best effort)
+  if (email) {
+    try {
+      const rows = lines
+        .map(
+          (l) =>
+            `<tr><td>${l.qty} × ${escapeHtml(l.name)}</td><td align="right">${euros(
+              l.price_cents * l.qty
+            )}&nbsp;€</td></tr>`
+        )
+        .join("");
+      await sendEmail({
+        to: email,
+        subject: `Votre commande ${code} chez ${biz.name}`,
+        fromName: `${biz.name} via Kado`,
+        html: emailLayout({
+          preview: `Bon de commande — à régler sur place au retrait.`,
+          emoji: "🛒",
+          heading: `Merci ${escapeHtml(name)} !`,
+          bodyHtml: `
+            <p style="margin:0 0 14px;">Votre commande chez <b>${escapeHtml(
+              biz.name
+            )}</b> est bien enregistrée. Présentez ce code au retrait :</p>
+            <p style="margin:0 0 16px;text-align:center;"><span style="display:inline-block;font-family:monospace;font-size:30px;font-weight:800;letter-spacing:0.15em;background:#f7f5fb;border:2px dashed #cfc5e5;border-radius:14px;padding:12px 22px;">${code}</span></p>
+            <p style="margin:0 0 12px;">🕒 Retrait : <b>${
+              pickup ? escapeHtml(pickup) : "dès que possible"
+            }</b></p>
+            <table role="presentation" cellpadding="4" cellspacing="0" style="width:100%;font-size:15px;border-collapse:collapse;">${rows}
+            <tr><td style="border-top:1px solid #eee;padding-top:8px;"><b>Total à régler sur place</b></td><td align="right" style="border-top:1px solid #eee;padding-top:8px;"><b>${euros(
+              total
+            )}&nbsp;€</b></td></tr></table>`,
+          footnote:
+            "Aucun paiement en ligne : vous réglez au comptoir lors du retrait.",
+        }),
+        text: `Votre commande ${code} chez ${biz.name} est enregistrée. Retrait : ${
+          pickup || "dès que possible"
+        }. Total à régler sur place : ${euros(total)} €.`,
+      });
+    } catch {
+      /* le bon de commande ne doit pas bloquer la commande */
+    }
   }
 
   // Alerte e-mail au commerçant (best effort)
