@@ -27,6 +27,8 @@ const REQUIRED_ENV = [
   "EMAIL_FROM",
   "CRON_SECRET",
   "ADMIN_EMAILS",
+  "VAPID_PUBLIC_KEY",
+  "VAPID_PRIVATE_KEY",
 ];
 
 /** Tables dont l'application a besoin pour tourner. */
@@ -41,6 +43,7 @@ const REQUIRED_TABLES = [
   "rate_limits",
   "products",
   "orders",
+  "push_subscriptions",
 ];
 
 /** Tarifs Stripe attendus : [variable, type attendu, libellé]. */

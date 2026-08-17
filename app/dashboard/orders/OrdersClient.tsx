@@ -268,6 +268,38 @@ export default function OrdersClient({
     }
   }
 
+  /** Convertit la clé VAPID publique au format attendu par le navigateur. */
+  function vapidKey(base64: string) {
+    const padding = "=".repeat((4 - (base64.length % 4)) % 4);
+    const raw = atob((base64 + padding).replace(/-/g, "+").replace(/_/g, "/"));
+    return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
+  }
+
+  /** Abonne cet appareil aux notifications push (téléphone verrouillé). */
+  async function subscribePush(reg: ServiceWorkerRegistration) {
+    try {
+      if (!("PushManager" in window)) return;
+      if (Notification.permission !== "granted") return;
+      const res = await fetch("/api/dashboard/push");
+      const { key } = await res.json();
+      if (!key) return; // clés VAPID pas encore configurées
+      const sub =
+        (await reg.pushManager.getSubscription()) ??
+        (await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: vapidKey(key),
+        }));
+      const json = sub.toJSON();
+      await fetch("/api/dashboard/push", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys }),
+      });
+    } catch {
+      /* push indisponible (iPhone non installé en app, etc.) */
+    }
+  }
+
   /** Active son + notifications (nécessite le clic = déblocage audio). */
   async function enableAlerts() {
     chime(); // débloque l'audio et fait entendre le son au commerçant
@@ -276,7 +308,9 @@ export default function OrdersClient({
         await Notification.requestPermission();
       }
       if ("serviceWorker" in navigator) {
-        await navigator.serviceWorker.register("/sw.js");
+        const reg = await navigator.serviceWorker.register("/sw.js");
+        await navigator.serviceWorker.ready;
+        await subscribePush(reg);
       }
     } catch {
       /* notifications indisponibles : le son reste actif */
@@ -284,6 +318,23 @@ export default function OrdersClient({
     localStorage.setItem("kado-order-alerts", "1");
     setAlertsOn(true);
   }
+
+  // Ré-abonne discrètement l'appareil à chaque visite (clés ajoutées après
+  // coup, abonnement expiré…) — sans demander de permission.
+  useEffect(() => {
+    if (!alertsOn) return;
+    if (!("serviceWorker" in navigator)) return;
+    (async () => {
+      try {
+        const reg = await navigator.serviceWorker.register("/sw.js");
+        await navigator.serviceWorker.ready;
+        await subscribePush(reg);
+      } catch {
+        /* ignore */
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [alertsOn]);
 
   // Sondage léger toutes les 15 s : son + notification à chaque nouvelle commande
   useEffect(() => {

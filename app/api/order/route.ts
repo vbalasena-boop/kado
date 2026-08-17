@@ -5,6 +5,7 @@ import { hasAccess } from "@/lib/auth";
 import { sendEmail, emailLayout, getOwnerContact } from "@/lib/email";
 import { escapeHtml } from "@/lib/campaigns";
 import { isOpenNow, nextOpeningLabel, type OrderHours } from "@/lib/hours";
+import { sendPushToBusiness } from "@/lib/push";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -145,6 +146,19 @@ export async function POST(req: NextRequest) {
       { error: "save_failed", detail: error.message },
       { status: 500 }
     );
+  }
+
+  // Notification push au commerçant, même téléphone verrouillé (best effort)
+  try {
+    await sendPushToBusiness(db, biz.id, {
+      title: `🛒 Nouvelle commande ${code}`,
+      body: `${name} · ${euros(total)} € · retrait ${
+        pickup || "dès que possible"
+      }`,
+      url: "/dashboard/orders",
+    });
+  } catch {
+    /* le push ne doit pas bloquer la commande */
   }
 
   // Bon de commande e-mail au client (best effort)

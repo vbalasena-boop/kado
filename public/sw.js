@@ -10,8 +10,30 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(self.clients.claim());
 });
 
+/* Notification push reçue (fonctionne même téléphone verrouillé) */
+self.addEventListener("push", (event) => {
+  let data = { title: "🛒 Nouvelle commande !", body: "", url: "/dashboard/orders" };
+  try {
+    data = { ...data, ...event.data.json() };
+  } catch {
+    /* payload non JSON */
+  }
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
+      tag: "kado-order",
+      renotify: true,
+      vibrate: [120, 60, 120],
+      data: { url: data.url },
+    })
+  );
+});
+
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || "/dashboard/orders";
   event.waitUntil(
     self.clients
       .matchAll({ type: "window", includeUncontrolled: true })
@@ -21,7 +43,7 @@ self.addEventListener("notificationclick", (event) => {
             return client.focus();
           }
         }
-        return self.clients.openWindow("/dashboard/orders");
+        return self.clients.openWindow(url);
       })
   );
 });
