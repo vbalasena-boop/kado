@@ -12,6 +12,42 @@ const ALLOWED: Record<string, string[]> = {
 };
 
 /**
+ * Sondage léger pour les alertes : nombre de commandes à préparer et
+ * identifiant de la plus récente (pour détecter une nouvelle arrivée).
+ */
+export async function GET() {
+  const { business } = await getMyBusiness();
+  if (!business) {
+    return Response.json({ error: "not_authenticated" }, { status: 401 });
+  }
+  const db = getAdminClient();
+  try {
+    const { count } = await db
+      .from("orders")
+      .select("*", { count: "exact", head: true })
+      .eq("business_id", business.id)
+      .eq("status", "new");
+    const { data: latest } = await db
+      .from("orders")
+      .select("id, code, customer_name, total_cents")
+      .eq("business_id", business.id)
+      .eq("status", "new")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    return Response.json({
+      pending: count ?? 0,
+      latestId: latest?.id ?? null,
+      latestCode: latest?.code ?? null,
+      latestName: latest?.customer_name ?? null,
+      latestTotal: latest?.total_cents ?? 0,
+    });
+  } catch {
+    return Response.json({ pending: 0, latestId: null });
+  }
+}
+
+/**
  * Fait avancer (ou annule) une commande du commerçant connecté.
  * Ciblage par id (boutons de la liste) ou par code (scan du QR de retrait).
  */

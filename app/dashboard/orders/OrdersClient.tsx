@@ -193,12 +193,124 @@ export default function OrdersClient({
   const [pDesc, setPDesc] = useState("");
   const [scanning, setScanning] = useState(false);
   const [scanResult, setScanResult] = useState<string | null>(null);
+  const [alertsOn, setAlertsOn] = useState(false);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const lastIdRef = useRef<string | null>(null);
+  const pollInitRef = useRef(false);
 
   // Rafraîchit la liste toutes les 60 s pour voir arriver les commandes
   useEffect(() => {
     const t = setInterval(() => router.refresh(), 60000);
     return () => clearInterval(t);
   }, [router]);
+
+  // Alertes déjà activées lors d'une visite précédente ?
+  useEffect(() => {
+    if (localStorage.getItem("kado-order-alerts") === "1") setAlertsOn(true);
+  }, []);
+
+  /** « Ding » de caisse généré par le navigateur (aucun fichier audio). */
+  function chime() {
+    try {
+      const ctx =
+        audioCtxRef.current ??
+        new (window.AudioContext ||
+          (window as any).webkitAudioContext)();
+      audioCtxRef.current = ctx;
+      if (ctx.state === "suspended") ctx.resume();
+      const play = (freq: number, at: number) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.0001, ctx.currentTime + at);
+        gain.gain.exponentialRampToValueAtTime(0.4, ctx.currentTime + at + 0.02);
+        gain.gain.exponentialRampToValueAtTime(
+          0.0001,
+          ctx.currentTime + at + 0.6
+        );
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(ctx.currentTime + at);
+        osc.stop(ctx.currentTime + at + 0.65);
+      };
+      play(880, 0); // la
+      play(1318.5, 0.18); // mi aigu — carillon « nouvelle commande »
+    } catch {
+      /* audio indisponible */
+    }
+  }
+
+  /** Active son + notifications (nécessite le clic = déblocage audio). */
+  async function enableAlerts() {
+    chime(); // débloque l'audio et fait entendre le son au commerçant
+    try {
+      if ("Notification" in window && Notification.permission === "default") {
+        await Notification.requestPermission();
+      }
+      if ("serviceWorker" in navigator) {
+        await navigator.serviceWorker.register("/sw.js");
+      }
+    } catch {
+      /* notifications indisponibles : le son reste actif */
+    }
+    localStorage.setItem("kado-order-alerts", "1");
+    setAlertsOn(true);
+  }
+
+  // Sondage léger toutes les 15 s : son + notification à chaque nouvelle commande
+  useEffect(() => {
+    let stop = false;
+    async function poll() {
+      try {
+        const res = await fetch("/api/dashboard/orders", { cache: "no-store" });
+        if (!res.ok) return;
+        const d = await res.json();
+        if (stop) return;
+        // Titre d'onglet : nombre de commandes à préparer
+        const base = "Commandes — Kado";
+        document.title = d.pending > 0 ? `(${d.pending}) 🛒 ${base}` : base;
+        if (!pollInitRef.current) {
+          pollInitRef.current = true;
+          lastIdRef.current = d.latestId;
+          return;
+        }
+        if (d.latestId && d.latestId !== lastIdRef.current) {
+          lastIdRef.current = d.latestId;
+          if (alertsOn) {
+            chime();
+            if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
+            try {
+              if (
+                "Notification" in window &&
+                Notification.permission === "granted" &&
+                "serviceWorker" in navigator
+              ) {
+                const reg = await navigator.serviceWorker.ready;
+                reg.showNotification("🛒 Nouvelle commande !", {
+                  body: `${d.latestCode} — ${d.latestName ?? "client"} · ${euros(
+                    d.latestTotal ?? 0
+                  )} €`,
+                  tag: "kado-order",
+                  icon: "/logo.svg",
+                });
+              }
+            } catch {
+              /* notification indisponible : le son a suffi */
+            }
+          }
+          router.refresh();
+        }
+      } catch {
+        /* réseau : on retentera au prochain tour */
+      }
+    }
+    poll();
+    const t = setInterval(poll, 15000);
+    return () => {
+      stop = true;
+      clearInterval(t);
+    };
+  }, [alertsOn, router]);
 
   async function productAction(payload: Record<string, unknown>) {
     setBusy(true);
@@ -392,15 +504,27 @@ export default function OrdersClient({
 
       {msg && <p className="save-msg is-err">{msg}</p>}
 
-      <button
-        className="btn scan-open"
-        onClick={() => {
-          setScanResult(null);
-          setScanning(true);
-        }}
-      >
-        📷 Scanner un bon de retrait
-      </button>
+      <div className="orders-toolbar">
+        <button
+          className="btn scan-open"
+          onClick={() => {
+            setScanResult(null);
+            setScanning(true);
+          }}
+        >
+          📷 Scanner un bon de retrait
+        </button>
+        {alertsOn ? (
+          <span className="alerts-on">
+            🔔 Alertes sonores activées — laissez cette page ouverte pendant le
+            service.
+          </span>
+        ) : (
+          <button className="btn-mini ok alerts-btn" onClick={enableAlerts}>
+            🔔 Activer les alertes sonores
+          </button>
+        )}
+      </div>
 
       {scanning && (
         <QrScanner
