@@ -24,16 +24,26 @@ export default async function WheelPage() {
       .order("position", { ascending: true }),
   ]);
 
+  // Validité des cadeaux (lecture tolérante si la migration 0025 manque)
+  const { data: v, error: vErr } = await admin
+    .from("wheel_configs")
+    .select("prize_validity_days")
+    .eq("business_id", business.id)
+    .maybeSingle();
+  const prizeValidity: number | null =
+    vErr || !v ? 30 : ((v as any).prize_validity_days ?? null);
+
   return (
     <WheelEditor
-      initialConfig={
-        config ?? {
+      initialConfig={{
+        ...(config ?? {
           primary_color: "#ffc24d",
           instagram_url: "",
           review_url: "",
           compliance_note: "Le cadeau n'est pas conditionné à la note laissée.",
-        }
-      }
+        }),
+        prize_validity_days: prizeValidity,
+      }}
       initialPrizes={prizes ?? []}
       initialLogoUrl={business.logo_url}
       initialBgUrl={config?.bg_image_url ?? null}

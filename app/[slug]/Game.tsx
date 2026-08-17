@@ -329,6 +329,7 @@ export default function Game({
   played: initialPlayed,
   preview = false,
   orderEnabled = false,
+  prizeValidityDays = 30,
 }: {
   slug: string;
   name: string;
@@ -338,6 +339,7 @@ export default function Game({
   played: Played;
   preview?: boolean;
   orderEnabled?: boolean;
+  prizeValidityDays?: number | null;
 }) {
   // Canaux proposés par le commerçant (au moins un). Rétro-compatible :
   // une valeur absente/vraie = canal actif.
@@ -1001,7 +1003,22 @@ export default function Game({
                   <>
                     <div className="win">Bravo, vous avez gagné</div>
                     <h2>{prize.label}</h2>
-                    <p>À présenter à l'équipe lors de votre prochaine visite.</p>
+                    <p>
+                      À présenter à l'équipe lors de votre prochaine visite.
+                      {prizeValidityDays != null && (
+                        <>
+                          {" "}
+                          Valable <b>{prizeValidityDays} jours</b> — jusqu'au{" "}
+                          {new Date(
+                            Date.now() + prizeValidityDays * 864e5
+                          ).toLocaleDateString("fr-FR", {
+                            day: "2-digit",
+                            month: "long",
+                          })}
+                          .
+                        </>
+                      )}
+                    </p>
                     <div className="code">
                       <small>CODE</small>
                       <span>{prize.code}</span>

@@ -15,6 +15,7 @@ type Config = {
   review_url: string | null;
   compliance_note: string | null;
   daily_prize_limit?: number | null;
+  prize_validity_days?: number | null;
   collect_email?: boolean | null;
   instagram_enabled?: boolean | null;
   review_enabled?: boolean | null;
@@ -717,6 +718,30 @@ export default function WheelEditor({
               <p className="muted" style={{ marginBottom: 12 }}>
                 Une fois ce nombre de cadeaux atteint dans la journée, la roue ne
                 donne plus que « Rien » (nécessite un lot « Rien… » dans la liste).
+              </p>
+              <label className="field">
+                <span>Durée de validité des cadeaux gagnés</span>
+                <select
+                  value={config.prize_validity_days ?? ""}
+                  onChange={(e) =>
+                    setConfig({
+                      ...config,
+                      prize_validity_days:
+                        e.target.value === "" ? null : Number(e.target.value),
+                    })
+                  }
+                >
+                  <option value={7}>7 jours</option>
+                  <option value={14}>14 jours</option>
+                  <option value={30}>30 jours</option>
+                  <option value={60}>60 jours</option>
+                  <option value={90}>90 jours</option>
+                  <option value="">Illimitée</option>
+                </select>
+              </label>
+              <p className="muted" style={{ marginBottom: 12 }}>
+                Passé ce délai, le code cadeau est refusé en caisse. La validité
+                est affichée au client quand il gagne.
               </p>
               <div className="prize-list">
                 {prizes.map((p, i) => (

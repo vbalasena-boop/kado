@@ -4,7 +4,7 @@ import { getAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
-const EXPIRY_DAYS = 30;
+const DEFAULT_EXPIRY_DAYS = 30;
 
 /**
  * Vérifie / valide un code cadeau présenté en caisse.
@@ -47,10 +47,23 @@ export async function POST(req: NextRequest) {
       redeemed_at: play.redeemed_at,
     });
   }
+  // Durée de validité choisie par le commerçant (null = illimitée).
+  // Colonne absente (migration 0025 pas passée) : ancien comportement 30 j.
+  let validityDays: number | null = DEFAULT_EXPIRY_DAYS;
+  const { data: cfg, error: cfgErr } = await db
+    .from("wheel_configs")
+    .select("prize_validity_days")
+    .eq("business_id", business.id)
+    .maybeSingle();
+  validityDays =
+    cfgErr || !cfg
+      ? DEFAULT_EXPIRY_DAYS
+      : ((cfg as any).prize_validity_days ?? null);
   const expired =
-    new Date(play.created_at).getTime() + EXPIRY_DAYS * 864e5 < Date.now();
+    validityDays != null &&
+    new Date(play.created_at).getTime() + validityDays * 864e5 < Date.now();
   if (expired) {
-    return Response.json({ status: "expired", prize: label });
+    return Response.json({ status: "expired", prize: label, days: validityDays });
   }
 
   if (body.action === "redeem") {

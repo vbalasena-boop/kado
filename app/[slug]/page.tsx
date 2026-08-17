@@ -100,6 +100,15 @@ export default async function Page({
     orderEnabled = false;
   }
 
+  // Validité des cadeaux (lecture tolérante, 30 j par défaut)
+  const { data: pv, error: pvErr } = await supa
+    .from("wheel_configs")
+    .select("prize_validity_days")
+    .eq("business_id", biz.id)
+    .maybeSingle();
+  const prizeValidity: number | null =
+    pvErr || !pv ? 30 : ((pv as any).prize_validity_days ?? null);
+
   // Tours déjà joués par ce navigateur (verrou côté serveur)
   const played: Record<string, { label: string; code: string }> = {};
   const playerId = readPlayerId();
@@ -120,6 +129,7 @@ export default async function Page({
       name={biz.name}
       logoUrl={biz.logo_url}
       orderEnabled={orderEnabled}
+      prizeValidityDays={prizeValidity}
       prizes={prizes ?? []}
       config={
         config ?? {

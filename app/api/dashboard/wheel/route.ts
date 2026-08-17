@@ -18,6 +18,7 @@ export async function POST(req: NextRequest) {
       review_url?: string;
       compliance_note?: string;
       daily_prize_limit?: number | null;
+      prize_validity_days?: number | null;
       collect_email?: boolean;
       instagram_enabled?: boolean;
       review_enabled?: boolean;
@@ -89,6 +90,11 @@ export async function POST(req: NextRequest) {
         (cfg.birthday_reward || "").trim().slice(0, 80) ||
         "Une surprise offerte",
       referral_enabled: !!cfg.referral_enabled,
+      // validité des cadeaux : 1 à 365 jours, ou null = illimité
+      prize_validity_days:
+        cfg.prize_validity_days && cfg.prize_validity_days > 0
+          ? Math.min(365, Math.max(1, Math.round(cfg.prize_validity_days)))
+          : null,
     },
     { onConflict: "business_id" }
   );
