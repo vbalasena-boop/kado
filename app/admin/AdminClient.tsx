@@ -143,12 +143,14 @@ export default function AdminClient({
   }
 
   async function resetCounters(id: string, name: string) {
-    if (
-      !confirm(
-        `Remettre les compteurs de « ${name} » à zéro ?\n\nSupprime tous les tours joués et leurs codes cadeaux (utile après vos tests d'installation). Les cartes de fidélité et e-mails capturés sont conservés.`
-      )
-    )
+    const typed = window.prompt(
+      `⚠️ Remise à zéro des compteurs de « ${name} »\n\nSupprime DÉFINITIVEMENT tous les tours joués et leurs codes cadeaux. Les cartes de fidélité et les e-mails capturés sont conservés.\n\nPour confirmer, tapez : RAZ`
+    );
+    if (typed === null) return;
+    if (typed.trim().toUpperCase() !== "RAZ") {
+      setMsg("❌ Remise à zéro annulée (confirmation incorrecte).");
       return;
+    }
     setBusyId(id);
     setMsg(null);
     try {
