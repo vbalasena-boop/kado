@@ -1,5 +1,6 @@
 import { getAdminClient } from "@/lib/supabase/admin";
 import { hasAccess } from "@/lib/auth";
+import { isOpenNow, nextOpeningLabel, type OrderHours } from "@/lib/hours";
 import OrderClient from "./OrderClient";
 
 export const dynamic = "force-dynamic";
@@ -90,12 +91,30 @@ export default async function CommanderPage({
     );
   }
 
+  // Horaires de commande (lecture tolérante)
+  let open = true;
+  let nextOpen: string | null = null;
+  try {
+    const { data: h } = await db
+      .from("businesses")
+      .select("order_hours")
+      .eq("id", biz.id)
+      .maybeSingle();
+    const hours = (h as any)?.order_hours as OrderHours | null;
+    open = isOpenNow(hours);
+    nextOpen = open ? null : nextOpeningLabel(hours);
+  } catch {
+    open = true;
+  }
+
   return (
     <OrderClient
       slug={biz.slug}
       name={biz.name}
       logoUrl={biz.logo_url}
       products={products}
+      open={open}
+      nextOpen={nextOpen}
     />
   );
 }

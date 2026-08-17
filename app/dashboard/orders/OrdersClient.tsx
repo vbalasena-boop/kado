@@ -174,16 +174,31 @@ function fmtTime(s: string) {
   });
 }
 
+type Hours = Record<string, [string, string] | null> | null;
+
+// lundi → dimanche (clés = jour JavaScript, 0 = dimanche)
+const HOURS_DAYS: { key: string; label: string }[] = [
+  { key: "1", label: "Lundi" },
+  { key: "2", label: "Mardi" },
+  { key: "3", label: "Mercredi" },
+  { key: "4", label: "Jeudi" },
+  { key: "5", label: "Vendredi" },
+  { key: "6", label: "Samedi" },
+  { key: "0", label: "Dimanche" },
+];
+
 export default function OrdersClient({
   slug,
   products,
   orders,
   stats,
+  hours,
 }: {
   slug: string;
   products: Product[];
   orders: Order[];
   stats: OrderStats;
+  hours: Hours;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -194,6 +209,19 @@ export default function OrdersClient({
   const [scanning, setScanning] = useState(false);
   const [scanResult, setScanResult] = useState<string | null>(null);
   const [alertsOn, setAlertsOn] = useState(false);
+  const [hoursDraft, setHoursDraft] = useState<
+    Record<string, { open: boolean; from: string; to: string }>
+  >(() => {
+    const out: Record<string, { open: boolean; from: string; to: string }> = {};
+    for (const { key } of HOURS_DAYS) {
+      const v = hours?.[key];
+      out[key] = Array.isArray(v)
+        ? { open: true, from: v[0], to: v[1] }
+        : { open: false, from: "09:00", to: "18:00" };
+    }
+    return out;
+  });
+  const [hoursMsg, setHoursMsg] = useState<string | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const lastIdRef = useRef<string | null>(null);
   const pollInitRef = useRef(false);
@@ -381,6 +409,35 @@ export default function OrdersClient({
         body: JSON.stringify({ id, status }),
       });
       router.refresh();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /** Enregistre les horaires de commande. */
+  async function saveHours() {
+    setBusy(true);
+    setHoursMsg(null);
+    const payload: Record<string, [string, string] | null> = {};
+    for (const { key } of HOURS_DAYS) {
+      const d = hoursDraft[key];
+      payload[key] = d.open && d.from < d.to ? [d.from, d.to] : null;
+    }
+    try {
+      const res = await fetch("/api/dashboard/order-hours", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ hours: payload }),
+      });
+      const d = await res.json().catch(() => ({}));
+      setHoursMsg(
+        res.ok
+          ? "✅ Horaires enregistrés."
+          : "❌ " + (d.detail || "Échec — la migration 0022 est-elle passée ?")
+      );
+      router.refresh();
+    } catch {
+      setHoursMsg("❌ Connexion impossible.");
     } finally {
       setBusy(false);
     }
@@ -586,6 +643,71 @@ export default function OrdersClient({
             </ul>
           </details>
         )}
+      </div>
+
+      {/* ---- Horaires de commande ---- */}
+      <div className="dash-card">
+        <h2>🕒 Horaires de commande</h2>
+        <p className="muted">
+          En dehors de ces créneaux, votre page de commande affiche «&nbsp;Fermé&nbsp;»
+          et indique la prochaine ouverture. Aucun jour coché = commandes
+          acceptées en permanence.
+        </p>
+        <div className="hours-grid">
+          {HOURS_DAYS.map(({ key, label }) => {
+            const d = hoursDraft[key];
+            return (
+              <div key={key} className={`hours-row${d.open ? "" : " is-closed"}`}>
+                <label className="hours-day">
+                  <input
+                    type="checkbox"
+                    checked={d.open}
+                    onChange={(e) =>
+                      setHoursDraft((h) => ({
+                        ...h,
+                        [key]: { ...h[key], open: e.target.checked },
+                      }))
+                    }
+                  />
+                  {label}
+                </label>
+                {d.open ? (
+                  <span className="hours-times">
+                    <input
+                      type="time"
+                      value={d.from}
+                      onChange={(e) =>
+                        setHoursDraft((h) => ({
+                          ...h,
+                          [key]: { ...h[key], from: e.target.value },
+                        }))
+                      }
+                    />
+                    →
+                    <input
+                      type="time"
+                      value={d.to}
+                      onChange={(e) =>
+                        setHoursDraft((h) => ({
+                          ...h,
+                          [key]: { ...h[key], to: e.target.value },
+                        }))
+                      }
+                    />
+                  </span>
+                ) : (
+                  <span className="hours-closed-label">Fermé</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        <div style={{ display: "flex", gap: 12, alignItems: "center", marginTop: 14 }}>
+          <button className="btn" style={{ width: "auto", padding: "12px 22px" }} disabled={busy} onClick={saveHours}>
+            Enregistrer les horaires
+          </button>
+          {hoursMsg && <span className="save-msg">{hoursMsg}</span>}
+        </div>
       </div>
 
       {/* ---- Statistiques ---- */}

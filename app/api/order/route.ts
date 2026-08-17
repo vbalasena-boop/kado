@@ -4,6 +4,7 @@ import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { hasAccess } from "@/lib/auth";
 import { sendEmail, emailLayout, getOwnerContact } from "@/lib/email";
 import { escapeHtml } from "@/lib/campaigns";
+import { isOpenNow, nextOpeningLabel, type OrderHours } from "@/lib/hours";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -79,6 +80,24 @@ export async function POST(req: NextRequest) {
   }
   if (!hasAccess(biz)) {
     return Response.json({ error: "unavailable" }, { status: 403 });
+  }
+
+  // Horaires de commande (lecture tolérante si la colonne manque)
+  try {
+    const { data: h } = await db
+      .from("businesses")
+      .select("order_hours")
+      .eq("id", biz.id)
+      .maybeSingle();
+    const hours = (h as any)?.order_hours as OrderHours | null;
+    if (!isOpenNow(hours)) {
+      return Response.json(
+        { error: "closed", next: nextOpeningLabel(hours) },
+        { status: 403 }
+      );
+    }
+  } catch {
+    /* colonne absente : pas d'horaires configurés */
   }
 
   // Recalcule le panier depuis le catalogue (les prix du client sont ignorés)

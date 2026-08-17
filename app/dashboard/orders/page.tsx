@@ -16,15 +16,27 @@ export default async function OrdersPage() {
 
   // Module activé ? (lecture tolérante si la migration n'est pas passée)
   let enabled = false;
+  let orderHours: Record<string, [string, string] | null> | null = null;
   try {
     const { data } = await db
       .from("businesses")
-      .select("click_collect")
+      .select("click_collect, order_hours")
       .eq("id", business.id)
       .maybeSingle();
     enabled = !!(data as any)?.click_collect;
+    orderHours = (data as any)?.order_hours ?? null;
   } catch {
-    enabled = false;
+    // colonne order_hours absente : retente sans elle
+    try {
+      const { data } = await db
+        .from("businesses")
+        .select("click_collect")
+        .eq("id", business.id)
+        .maybeSingle();
+      enabled = !!(data as any)?.click_collect;
+    } catch {
+      enabled = false;
+    }
   }
 
   if (!enabled) {
@@ -134,6 +146,7 @@ export default async function OrdersPage() {
       products={products}
       orders={orders}
       stats={stats}
+      hours={orderHours}
     />
   );
 }

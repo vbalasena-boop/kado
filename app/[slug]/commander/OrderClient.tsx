@@ -30,11 +30,15 @@ export default function OrderClient({
   name,
   logoUrl,
   products,
+  open = true,
+  nextOpen = null,
 }: {
   slug: string;
   name: string;
   logoUrl: string | null;
   products: Product[];
+  open?: boolean;
+  nextOpen?: string | null;
 }) {
   const [qty, setQty] = useState<Record<string, number>>({});
   const [checkout, setCheckout] = useState(false);
@@ -113,6 +117,12 @@ export default function OrderClient({
         setCheckout(false);
       } else if (res.status === 429) {
         setErr("Trop de tentatives — patientez une minute puis réessayez.");
+      } else if (d.error === "closed") {
+        setErr(
+          `Le commerce n'accepte pas de commande en ce moment${
+            d.next ? ` — réouverture ${d.next}` : ""
+          }.`
+        );
       } else if (d.error === "product_unavailable") {
         setErr(
           "Un article de votre panier n'est plus disponible. Actualisez la page."
@@ -174,6 +184,15 @@ export default function OrderClient({
         </div>
       </header>
 
+      {/* ---- Bannière fermé ---- */}
+      {!open && (
+        <div className="uber-closed">
+          😴 <b>Fermé pour le moment</b>
+          {nextOpen ? ` — les commandes rouvrent ${nextOpen}.` : "."}
+          {" "}Vous pouvez consulter le menu en attendant.
+        </div>
+      )}
+
       {/* ---- Catalogue ---- */}
       <section className="uber-menu">
         {products.map((p) => {
@@ -231,7 +250,7 @@ export default function OrderClient({
       </p>
 
       {/* ---- Barre panier collante ---- */}
-      {count > 0 && !checkout && (
+      {count > 0 && !checkout && open && (
         <button className="uber-cartbar" onClick={() => setCheckout(true)}>
           <span className="uber-cartbar-count">{count}</span>
           Voir le panier
