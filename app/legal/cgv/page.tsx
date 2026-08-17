@@ -46,6 +46,14 @@ export default function CGV() {
         moment depuis son espace.
       </p>
       <p>
+        Un module de <b>commande en ligne («&nbsp;Click &amp; collect&nbsp;»)</b>,
+        en phase de lancement, peut être activé gratuitement par le vendeur sur
+        demande du client&nbsp;: les clients du commerce commandent en ligne et
+        <b> paient sur place au retrait, directement auprès du commerçant</b>.
+        Kado n'encaisse aucun paiement des clients finaux et n'est pas partie au
+        contrat de vente conclu entre le commerce et ses clients.
+      </p>
+      <p>
         Une prestation optionnelle d'<b>installation clé en main</b> est
         proposée au moment de la souscription&nbsp;: configuration complète de
         l'espace par le vendeur, à distance (<b>79&nbsp;€</b>) ou sur place
@@ -59,7 +67,9 @@ export default function CGV() {
       <p>
         Les abonnements sont facturés mensuellement&nbsp;: <b>Jeux 29&nbsp;€/mois</b>,{" "}
         <b>Fidélité 19&nbsp;€/mois</b>, <b>Complet 44&nbsp;€/mois</b>. Une option{" "}
-        <b>«&nbsp;Campagnes e-mail&nbsp;» à 15&nbsp;€/mois</b>, sans engagement,
+        <b>«&nbsp;Campagnes&nbsp;» à 15&nbsp;€/mois</b> (envoi d'offres par
+        e-mail et par notification aux clients ayant donné leur accord), sans
+        engagement,
         peut être activée et désactivée à tout moment depuis l'espace client
         (prorata appliqué). La TVA
         n'étant pas applicable (art. 293 B du CGI), ces montants sont nets. En
@@ -126,8 +136,9 @@ export default function CGV() {
       <h2>9. Responsabilité</h2>
       <p>
         Le vendeur fournit un outil technique. Il n'est pas responsable des lots
-        offerts par le commerçant, des litiges avec les clients finaux, ni des
-        décisions des plateformes tierces (Google, Instagram…). La
+        offerts par le commerçant, des produits vendus via le module de commande
+        en ligne, des litiges avec les clients finaux, ni des décisions des
+        plateformes tierces (Google, Instagram…). La
         responsabilité du vendeur est, en tout état de cause, limitée au montant
         de l'abonnement payé sur les 12 derniers mois.
       </p>
@@ -154,7 +165,7 @@ export default function CGV() {
         de la consommation. Les tribunaux français sont compétents.
       </p>
 
-      <p className="legal-date">Dernière mise à jour : 16 août 2026.</p>
+      <p className="legal-date">Dernière mise à jour : 17 août 2026.</p>
     </article>
   );
 }

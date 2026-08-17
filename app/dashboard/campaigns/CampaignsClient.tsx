@@ -214,16 +214,17 @@ export default function CampaignsClient({
   if (!hasAccess) {
     return (
       <>
-        <h1 className="dash-h1">Campagnes e-mail</h1>
+        <h1 className="dash-h1">Campagnes</h1>
         <p className="dash-sub">
           Envoyez vos offres à la base clients que Kado construit pour vous.
         </p>
         <div className="dash-card" style={{ maxWidth: 560 }}>
           <div className="fid-lock-banner">
             <div>
-              <b>💌 Option Campagnes — 15 €/mois</b>
+              <b>💌 + 🔔 Option Campagnes — 15 €/mois</b>
               <span>
-                Envoyez vos promos, nouveautés et événements aux{" "}
+                Envoyez vos promos, nouveautés et événements par e-mail et par{" "}
+                <b>notification push illimitée</b> aux{" "}
                 {audience > 0 ? `${audience} client${audience > 1 ? "s" : ""}` : "clients"}{" "}
                 qui ont accepté vos offres. Envoi immédiat ou programmé,
                 réponses dans votre boîte mail, désinscription gérée

@@ -20,7 +20,7 @@ const PLANS = [
       "Carte à tampons digitale",
       "Récompense personnalisable",
       "Anniversaires automatiques & parrainage",
-      "Option campagnes e-mail (+15 €/mois)",
+      "Option campagnes e-mail + notifs push (+15 €/mois)",
       "QR code client + validation en caisse",
       "Statistiques d'inscription",
       "Anti-triche & conformité RGPD",

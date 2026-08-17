@@ -76,7 +76,7 @@ const BENEFITS = [
   { i: "star", t: "Plus d'avis Google", d: "Transformez chaque client satisfait en avis 5 étoiles." },
   { i: "insta", t: "Plus d'abonnés Insta", d: "Faites grandir votre communauté à chaque visite." },
   { i: "repeat", t: "Plus de visites", d: "Le cadeau donne une bonne raison de revenir vous voir." },
-  { i: "mail", t: "Campagnes e-mail (option)", d: "Envoyez vos offres à la base clients que Kado construit pour vous — +15 €/mois." },
+  { i: "mail", t: "Campagnes e-mail & notifs (option)", d: "Envoyez vos offres par e-mail et notification sur le téléphone de vos clients — +15 €/mois." },
   { i: "gift", t: "Anniversaires & parrainage", d: "E-mail automatique le jour J, et +1 tampon quand un ami parrainé passe en caisse." },
   { i: "palette", t: "À vos couleurs", d: "Logo, photo de fond et lots entièrement personnalisables." },
   { i: "shield", t: "Anti-triche", d: "Tirage sécurisé côté serveur, 2 chances maximum par personne." },
@@ -92,7 +92,7 @@ const PLANS = [
     features: [
       "3 jeux : roue, grattage, machine à sous",
       "Avis Google + Instagram",
-      "Option campagnes e-mail (+15 €)",
+      "Option campagnes e-mail + notifs (+15 €)",
       "QR code, stats, validation",
     ],
   },
@@ -117,7 +117,7 @@ const PLANS = [
     features: [
       "Carte à tampons digitale",
       "Anniversaires & parrainage",
-      "Option campagnes e-mail (+15 €)",
+      "Option campagnes e-mail + notifs (+15 €)",
       "Stats d'inscription",
     ],
   },

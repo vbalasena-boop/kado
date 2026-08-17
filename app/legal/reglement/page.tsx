@@ -35,7 +35,7 @@ export default function Reglement() {
       <h2>Article 4 — Remise des lots</h2>
       <p>
         Le gagnant présente son <b>code cadeau</b> à l'établissement. Chaque code
-        est valable une seule fois et pour une durée limitée (ex. 30 jours).
+        est valable une seule fois et pour une durée limitée, indiquée au moment du gain (30 jours par défaut, selon le commerce).
       </p>
 
       <h2>Article 5 — Données personnelles</h2>

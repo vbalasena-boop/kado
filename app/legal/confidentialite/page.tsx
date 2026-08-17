@@ -28,6 +28,22 @@ export default function Confidentialite() {
           explicitement : son <b>e-mail</b>, pour recevoir les offres du
           commerce.
         </li>
+        <li>
+          <b>Carte de fidélité</b> (si utilisée) : e-mail, et, de façon
+          facultative et avec consentement, jour et mois d'anniversaire (pour
+          une attention du commerce) et accord de recevoir les offres.
+        </li>
+        <li>
+          <b>Commande en ligne</b> (si utilisée) : nom, téléphone et,
+          facultativement, e-mail — uniquement pour permettre au commerce de
+          préparer la commande et de contacter le client à son sujet.
+        </li>
+        <li>
+          <b>Notifications</b> (si activées par le client) : un identifiant
+          technique d'abonnement fourni par le navigateur, après autorisation
+          explicite. Désactivables à tout moment dans les réglages du
+          navigateur.
+        </li>
       </ul>
       <h3>Commerçants</h3>
       <ul>
@@ -47,21 +63,33 @@ export default function Confidentialite() {
         </li>
         <li>Gestion des comptes et abonnements : <b>exécution du contrat</b>.</li>
         <li>Collecte d'e-mail des joueurs : <b>consentement</b>.</li>
+        <li>
+          Commande en ligne : <b>exécution de la commande</b> demandée par le
+          client.
+        </li>
+        <li>
+          Offres par e-mail et notifications : <b>consentement</b>, retirable à
+          tout moment (lien de désinscription dans chaque e-mail, réglages du
+          navigateur pour les notifications).
+        </li>
         <li>Statistiques agrégées : <b>intérêt légitime</b>.</li>
       </ul>
 
       <h2>Durée de conservation</h2>
       <p>
-        Cookie joueur : 12 mois. Données de jeu : 13 mois. E-mails collectés :
-        jusqu'au retrait du consentement ou 3 ans sans interaction. Comptes
-        commerçants : durée de la relation contractuelle + obligations légales.
+        Cookie joueur : 12 mois. Données de jeu et commandes : 13 mois. E-mails
+        collectés et cartes de fidélité : jusqu'au retrait du consentement ou 3
+        ans sans interaction. Abonnements aux notifications : jusqu'à
+        désactivation. Comptes commerçants : durée de la relation contractuelle
+        + obligations légales.
       </p>
 
       <h2>Sous-traitants</h2>
       <p>
         Hébergement et base de données : Vercel, Supabase (Europe). Envoi
-        d'e-mails : Resend. Paiement : Stripe. Ces prestataires agissent
-        conformément au RGPD.
+        d'e-mails : Resend. Paiement : Stripe. Remise des notifications :
+        services de notification des navigateurs (Apple, Google, Mozilla). Ces
+        prestataires agissent conformément au RGPD.
       </p>
 
       <h2>Vos droits</h2>
@@ -79,7 +107,7 @@ export default function Confidentialite() {
         publicitaire ni de suivi tiers n'est déposé.
       </p>
 
-      <p className="legal-date">Dernière mise à jour : 15 août 2026.</p>
+      <p className="legal-date">Dernière mise à jour : 17 août 2026.</p>
     </article>
   );
 }
