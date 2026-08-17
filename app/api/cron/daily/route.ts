@@ -163,13 +163,27 @@ export async function GET(req: NextRequest) {
   // On les transforme en file d'envoi étalé (traitée juste après).
   try {
     const todayStr = new Date().toISOString().slice(0, 10);
-    const { data: due, error } = await db
-      .from("campaigns")
-      .select("id, business_id, subject, body")
-      .is("sent_at", null)
-      .not("scheduled_for", "is", null)
-      .lte("scheduled_for", todayStr);
-    if (error) throw new Error(error.message);
+    // Sélection tolérante : la colonne channel peut manquer (migration 0026)
+    let due: any[] | null = null;
+    {
+      const r1 = await db
+        .from("campaigns")
+        .select("id, business_id, subject, body, channel")
+        .is("sent_at", null)
+        .not("scheduled_for", "is", null)
+        .lte("scheduled_for", todayStr);
+      if (!r1.error) due = r1.data;
+      else {
+        const r2 = await db
+          .from("campaigns")
+          .select("id, business_id, subject, body")
+          .is("sent_at", null)
+          .not("scheduled_for", "is", null)
+          .lte("scheduled_for", todayStr);
+        if (r2.error) throw new Error(r2.error.message);
+        due = r2.data;
+      }
+    }
 
     for (const c of due ?? []) {
       const { data: biz } = await db
@@ -189,17 +203,26 @@ export async function GET(req: NextRequest) {
           .eq("id", c.id);
         continue;
       }
+      const channel = ["email", "push", "both"].includes(c.channel)
+        ? c.channel
+        : "both";
       // Push aux clients abonnés aux offres, au démarrage de la campagne
-      try {
-        await sendPushToClients(db, c.business_id, {
-          title: `${biz.name} : ${c.subject}`.slice(0, 80),
-          body: String(c.body ?? "").slice(0, 140),
-          url: `/${biz.slug}`,
-        });
-      } catch {
-        /* jamais bloquant */
+      let pushed = 0;
+      if (channel !== "email") {
+        try {
+          pushed = await sendPushToClients(db, c.business_id, {
+            title: `${biz.name} : ${c.subject}`.slice(0, 80),
+            body: String(c.body ?? "").slice(0, 140),
+            url: `/${biz.slug}`,
+          });
+        } catch {
+          /* jamais bloquant */
+        }
       }
-      const audience = await buildCampaignAudience(db, c.business_id);
+      const audience =
+        channel !== "push"
+          ? await buildCampaignAudience(db, c.business_id)
+          : [];
       await db
         .from("campaigns")
         .update({
@@ -209,6 +232,17 @@ export async function GET(req: NextRequest) {
             : { sent_at: new Date().toISOString() }),
         })
         .eq("id", c.id);
+      // compteur push (tolérant si la colonne manque)
+      if (pushed > 0) {
+        try {
+          await db
+            .from("campaigns")
+            .update({ pushed_count: pushed })
+            .eq("id", c.id);
+        } catch {
+          /* ignore */
+        }
+      }
     }
   } catch (e: any) {
     out.errors.push(`scheduled: ${e?.message ?? "error"}`);

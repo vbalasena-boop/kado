@@ -48,7 +48,19 @@ export default async function CampaignsPage() {
     /* colonnes absentes */
   }
 
-  // Historique + quota
+  // Appareils abonnés aux notifications push (lecture tolérante)
+  let pushAudience = 0;
+  try {
+    const { count } = await db
+      .from("client_push_subscriptions")
+      .select("*", { count: "exact", head: true })
+      .eq("business_id", business.id);
+    pushAudience = count ?? 0;
+  } catch {
+    /* table absente */
+  }
+
+  // Historique + quota (sélection tolérante : channel/pushed_count récents)
   let history: {
     id: string;
     subject: string;
@@ -57,17 +69,32 @@ export default async function CampaignsPage() {
     scheduled_for: string | null;
     sent_at: string | null;
     remaining: number;
+    channel: string;
+    pushed: number;
   }[] = [];
   let lastCreatedAt: string | null = null;
   try {
-    const { data: rows } = await db
+    let rows: any[] | null = null;
+    const r1 = await db
       .from("campaigns")
       .select(
-        "id, subject, sent_count, created_at, scheduled_for, sent_at, pending_recipients"
+        "id, subject, sent_count, created_at, scheduled_for, sent_at, pending_recipients, channel, pushed_count"
       )
       .eq("business_id", business.id)
       .order("created_at", { ascending: false })
-      .limit(10);
+      .limit(20);
+    if (!r1.error) rows = r1.data;
+    else {
+      const r2 = await db
+        .from("campaigns")
+        .select(
+          "id, subject, sent_count, created_at, scheduled_for, sent_at, pending_recipients"
+        )
+        .eq("business_id", business.id)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      rows = r2.data;
+    }
     history = ((rows as any) ?? []).map((r: any) => ({
       id: r.id,
       subject: r.subject,
@@ -78,6 +105,8 @@ export default async function CampaignsPage() {
       remaining: Array.isArray(r.pending_recipients)
         ? r.pending_recipients.length
         : 0,
+      channel: r.channel ?? "email",
+      pushed: r.pushed_count ?? 0,
     }));
     lastCreatedAt = history[0]?.created_at ?? null;
   } catch {
@@ -91,6 +120,7 @@ export default async function CampaignsPage() {
       addonOn={addonOn}
       hasSubscription={!!business.stripe_subscription_id}
       audience={emails.size}
+      pushAudience={pushAudience}
       businessName={business.name}
       history={history}
       lastAt={lastCreatedAt}

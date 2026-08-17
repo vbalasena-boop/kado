@@ -10,6 +10,14 @@ type HistoryRow = {
   scheduled_for: string | null;
   sent_at: string | null;
   remaining: number;
+  channel: string;
+  pushed: number;
+};
+
+const CHANNEL_ICON: Record<string, string> = {
+  email: "💌",
+  push: "🔔",
+  both: "💌🔔",
 };
 
 function fmtDate(s: string) {
@@ -26,6 +34,7 @@ export default function CampaignsClient({
   addonOn,
   hasSubscription,
   audience,
+  pushAudience,
   businessName,
   history,
   lastAt,
@@ -35,6 +44,7 @@ export default function CampaignsClient({
   addonOn: boolean;
   hasSubscription: boolean;
   audience: number;
+  pushAudience: number;
   businessName: string;
   history: HistoryRow[];
   lastAt: string | null;
@@ -42,6 +52,7 @@ export default function CampaignsClient({
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [mode, setMode] = useState<"now" | "later">("now");
+  const [channel, setChannel] = useState<"both" | "email" | "push">("both");
   const [date, setDate] = useState("");
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<string | null>(null);
@@ -54,10 +65,17 @@ export default function CampaignsClient({
 
   const quotaBlocked =
     !!lastAt && Date.now() - new Date(lastAt).getTime() < 24 * 3600e3;
+  // audience disponible selon le canal choisi
+  const channelAudience =
+    channel === "email"
+      ? audience
+      : channel === "push"
+      ? pushAudience
+      : audience + pushAudience;
   const canSend =
     !busy &&
     !quotaBlocked &&
-    audience > 0 &&
+    channelAudience > 0 &&
     subject.trim() &&
     message.trim().length >= 10 &&
     (mode === "now" || !!date);
@@ -101,10 +119,18 @@ export default function CampaignsClient({
 
   async function send() {
     if (!canSend) return;
+    const reach = [
+      channel !== "push" ? `${effective} e-mail${effective > 1 ? "s" : ""}` : null,
+      channel !== "email"
+        ? `${pushAudience} notification${pushAudience > 1 ? "s" : ""} push`
+        : null,
+    ]
+      .filter(Boolean)
+      .join(" + ");
     const confirmMsg =
       mode === "later"
-        ? `Programmer cette campagne pour le ${fmtDate(date)} (envoyée le matin) à ~${effective} client${effective > 1 ? "s" : ""} ?`
-        : `Envoyer cette campagne maintenant à ${effective} client${effective > 1 ? "s" : ""} ?`;
+        ? `Programmer cette campagne pour le ${fmtDate(date)} (envoyée le matin) — ${reach} ?`
+        : `Envoyer cette campagne maintenant — ${reach} ?`;
     if (!window.confirm(confirmMsg)) return;
     setBusy(true);
     setResult(null);
@@ -116,19 +142,24 @@ export default function CampaignsClient({
         body: JSON.stringify({
           subject: subject.trim(),
           message: message.trim(),
+          channel,
           ...(mode === "later" ? { scheduledFor: date } : {}),
         }),
       });
       const d = await res.json().catch(() => ({}));
       if (res.ok) {
+        const pushInfo =
+          d.pushed > 0
+            ? ` + ${d.pushed} notification${d.pushed > 1 ? "s" : ""} push 🔔`
+            : "";
         setResult(
           d.scheduled
             ? `🕒 Campagne programmée pour le ${fmtDate(d.scheduledFor)} !`
             : d.remaining > 0
-            ? `✅ ${d.sent} e-mails envoyés aujourd'hui — les ${d.remaining} restants partiront automatiquement les prochains jours (envoi étalé).`
+            ? `✅ ${d.sent} e-mails envoyés aujourd'hui${pushInfo} — les ${d.remaining} restants partiront automatiquement les prochains jours (envoi étalé).`
             : d.trialCapped
-            ? `✅ Envoyée à ${d.sent} clients (limite d'essai : 10 destinataires — l'option envoie à toute votre base).`
-            : `✅ Campagne envoyée à ${d.sent} client${d.sent > 1 ? "s" : ""} !`
+            ? `✅ Envoyée à ${d.sent} clients${pushInfo} (limite d'essai : 10 destinataires e-mail — l'option envoie à toute votre base).`
+            : `✅ Campagne envoyée : ${d.sent} e-mail${d.sent > 1 ? "s" : ""}${pushInfo} !`
         );
         setSubject("");
         setMessage("");
@@ -142,6 +173,8 @@ export default function CampaignsClient({
             ? "Une campagne est déjà en cours d'envoi ou programmée — attendez sa fin (ou annulez-la dans l'historique)."
             : d.error === "no_audience"
             ? "Aucun client n'a encore accepté de recevoir vos offres."
+            : d.error === "no_push_audience"
+            ? "Aucun appareil n'est abonné à vos notifications — vos clients les activent depuis leur carte de fidélité."
             : d.error === "addon_required"
             ? "L'option Campagnes n'est pas active sur votre compte."
             : d.error === "bad_date"
@@ -221,10 +254,10 @@ export default function CampaignsClient({
 
   return (
     <>
-      <h1 className="dash-h1">Campagnes e-mail</h1>
+      <h1 className="dash-h1">Campagnes</h1>
       <p className="dash-sub">
         Envoyez une offre ou une actualité aux clients qui ont accepté de
-        recevoir vos e-mails (roue + carte de fidélité).
+        recevoir vos e-mails ou vos notifications (roue + carte de fidélité).
         {isTrial && !addonOn && (
           <>
             {" "}
@@ -248,6 +281,13 @@ export default function CampaignsClient({
           <div>
             <div className="stat-n">{audience}</div>
             <div className="stat-l">Clients joignables (opt-in)</div>
+          </div>
+        </div>
+        <div className="stat">
+          <div className="stat-icon">🔔</div>
+          <div>
+            <div className="stat-n">{pushAudience}</div>
+            <div className="stat-l">Appareils abonnés aux notifs</div>
           </div>
         </div>
         <div className="stat">
@@ -290,6 +330,47 @@ export default function CampaignsClient({
           />
         </label>
 
+        <div className="field" style={{ marginBottom: 4 }}>
+          <span
+            style={{ display: "block", marginBottom: 8, fontWeight: 600 }}
+          >
+            Canal d'envoi
+          </span>
+        </div>
+        <div className="camp-when" style={{ marginBottom: 12 }}>
+          <button
+            type="button"
+            className={`addon-chip${channel === "both" ? " on" : ""}`}
+            onClick={() => setChannel("both")}
+          >
+            <b>💌 + 🔔 Les deux</b>
+            <span>
+              {audience} e-mail{audience > 1 ? "s" : ""} + {pushAudience} notif
+              {pushAudience > 1 ? "s" : ""}
+            </span>
+          </button>
+          <button
+            type="button"
+            className={`addon-chip${channel === "email" ? " on" : ""}`}
+            onClick={() => setChannel("email")}
+          >
+            <b>💌 E-mail seul</b>
+            <span>
+              {audience} client{audience > 1 ? "s" : ""} opt-in
+            </span>
+          </button>
+          <button
+            type="button"
+            className={`addon-chip${channel === "push" ? " on" : ""}`}
+            onClick={() => setChannel("push")}
+          >
+            <b>🔔 Notif push seule</b>
+            <span>
+              {pushAudience} appareil{pushAudience > 1 ? "s" : ""} · gratuit
+            </span>
+          </button>
+        </div>
+
         <div className="camp-when">
           <button
             type="button"
@@ -331,7 +412,15 @@ export default function CampaignsClient({
             ? "…"
             : mode === "later"
             ? "Programmer la campagne"
-            : `Envoyer à ${effective} client${effective > 1 ? "s" : ""}`}
+            : channel === "push"
+            ? `Envoyer la notif à ${pushAudience} appareil${
+                pushAudience > 1 ? "s" : ""
+              }`
+            : channel === "email"
+            ? `Envoyer à ${effective} client${effective > 1 ? "s" : ""}`
+            : `Envoyer — ${effective} e-mail${
+                effective > 1 ? "s" : ""
+              } + ${pushAudience} notif${pushAudience > 1 ? "s" : ""}`}
         </button>
         {result && (
           <p
@@ -351,11 +440,22 @@ export default function CampaignsClient({
           <ul className="camp-history">
             {history.map((h) => (
               <li key={h.id}>
-                <b>{h.subject}</b>
+                <b>
+                  {CHANNEL_ICON[h.channel] ?? "💌"} {h.subject}
+                </b>
                 {h.sent_at ? (
                   <span>
-                    Envoyée le {fmtDate(h.sent_at)} · {h.sent_count}{" "}
-                    destinataire{h.sent_count > 1 ? "s" : ""}
+                    Envoyée le {fmtDate(h.sent_at)} ·{" "}
+                    {[
+                      h.sent_count > 0
+                        ? `${h.sent_count} e-mail${h.sent_count > 1 ? "s" : ""}`
+                        : null,
+                      h.pushed > 0
+                        ? `${h.pushed} notif${h.pushed > 1 ? "s" : ""} push`
+                        : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" + ") || "0 destinataire"}
                   </span>
                 ) : h.remaining > 0 ? (
                   <span className="camp-pending">

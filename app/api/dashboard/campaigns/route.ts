@@ -44,7 +44,12 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "addon_required" }, { status: 403 });
   }
 
-  let body: { subject?: string; message?: string; scheduledFor?: string };
+  let body: {
+    subject?: string;
+    message?: string;
+    scheduledFor?: string;
+    channel?: string;
+  };
   try {
     body = await req.json();
   } catch {
@@ -55,6 +60,12 @@ export async function POST(req: NextRequest) {
   if (!subject || message.length < 10) {
     return Response.json({ error: "missing_content" }, { status: 400 });
   }
+  // Canal choisi par le commerçant : e-mail, push, ou les deux
+  const channel = ["email", "push", "both"].includes(body.channel ?? "")
+    ? (body.channel as "email" | "push" | "both")
+    : "both";
+  const wantEmail = channel !== "push";
+  const wantPush = channel !== "email";
 
   // Programmation éventuelle (date au format YYYY-MM-DD, demain → +60 j)
   let scheduledFor: string | null = null;
@@ -99,54 +110,82 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "migration_missing" }, { status: 500 });
   }
 
+  // Insertion tolérante : les colonnes channel/pushed_count peuvent manquer
+  async function insertCampaign(
+    row: Record<string, unknown>,
+    pushedCount: number
+  ) {
+    let { error } = await db
+      .from("campaigns")
+      .insert({ ...row, channel, pushed_count: pushedCount });
+    if (error) {
+      ({ error } = await db.from("campaigns").insert(row));
+    }
+    return error;
+  }
+
   // Campagne programmée : enregistrée, le cron la démarrera le jour J
   if (scheduledFor) {
-    const { error } = await db.from("campaigns").insert({
-      business_id: business.id,
-      subject,
-      body: message,
-      sent_count: 0,
-      scheduled_for: scheduledFor,
-    });
+    const error = await insertCampaign(
+      {
+        business_id: business.id,
+        subject,
+        body: message,
+        sent_count: 0,
+        scheduled_for: scheduledFor,
+      },
+      0
+    );
     if (error) {
       return Response.json({ error: "save_failed" }, { status: 500 });
     }
-    return Response.json({ ok: true, scheduled: true, scheduledFor });
+    return Response.json({ ok: true, scheduled: true, scheduledFor, channel });
   }
 
   // Envoi immédiat
-  const audience = await buildCampaignAudience(db, business.id);
+  const audience = wantEmail
+    ? await buildCampaignAudience(db, business.id)
+    : [];
 
   // Notification push aux clients abonnés aux offres (gratuit, illimité,
-  // best effort — en plus des e-mails, jamais bloquant)
+  // best effort — jamais bloquant)
   let pushed = 0;
-  try {
-    pushed = await sendPushToClients(db, business.id, {
-      title: `${business.name} : ${subject}`.slice(0, 80),
-      body: message.slice(0, 140),
-      url: `/${business.slug}`,
-    });
-  } catch {
-    /* ignore */
+  if (wantPush) {
+    try {
+      pushed = await sendPushToClients(db, business.id, {
+        title: `${business.name} : ${subject}`.slice(0, 80),
+        body: message.slice(0, 140),
+        url: `/${business.slug}`,
+      });
+    } catch {
+      /* ignore */
+    }
   }
 
   if (audience.length === 0 && pushed === 0) {
-    return Response.json({ error: "no_audience" }, { status: 400 });
+    return Response.json(
+      { error: channel === "push" ? "no_push_audience" : "no_audience" },
+      { status: 400 }
+    );
   }
 
   const user = await getSessionUser();
   const bizInfo = { id: business.id, name: business.name, slug: business.slug };
 
   if (audience.length === 0) {
-    // uniquement des abonnés push : la campagne est quand même partie
-    await db.from("campaigns").insert({
-      business_id: business.id,
-      subject,
-      body: message,
-      sent_count: 0,
-      sent_at: new Date().toISOString(),
-    });
-    return Response.json({ ok: true, sent: 0, pushed });
+    // pas d'e-mails à envoyer (canal push, ou aucune adresse) : la
+    // campagne est quand même partie en notifications
+    await insertCampaign(
+      {
+        business_id: business.id,
+        subject,
+        body: message,
+        sent_count: 0,
+        sent_at: new Date().toISOString(),
+      },
+      pushed
+    );
+    return Response.json({ ok: true, sent: 0, pushed, channel });
   }
 
   if (isTrial && !addonOn) {
@@ -155,17 +194,21 @@ export async function POST(req: NextRequest) {
     const sent = await sendBatch(
       buildCampaignPayloads(bizInfo, user?.email ?? undefined, subject, message, recipients)
     );
-    await db.from("campaigns").insert({
-      business_id: business.id,
-      subject,
-      body: message,
-      sent_count: sent,
-      sent_at: new Date().toISOString(),
-    });
+    await insertCampaign(
+      {
+        business_id: business.id,
+        subject,
+        body: message,
+        sent_count: sent,
+        sent_at: new Date().toISOString(),
+      },
+      pushed
+    );
     return Response.json({
       ok: true,
       sent,
       pushed,
+      channel,
       trialCapped: audience.length > TRIAL_MAX_RECIPIENTS,
     });
   }
@@ -176,17 +219,20 @@ export async function POST(req: NextRequest) {
   const sent = await sendBatch(
     buildCampaignPayloads(bizInfo, user?.email ?? undefined, subject, message, chunk)
   );
-  await db.from("campaigns").insert({
-    business_id: business.id,
-    subject,
-    body: message,
-    sent_count: sent,
-    ...(rest.length > 0
-      ? { pending_recipients: rest }
-      : { sent_at: new Date().toISOString() }),
-  });
+  await insertCampaign(
+    {
+      business_id: business.id,
+      subject,
+      body: message,
+      sent_count: sent,
+      ...(rest.length > 0
+        ? { pending_recipients: rest }
+        : { sent_at: new Date().toISOString() }),
+    },
+    pushed
+  );
 
-  return Response.json({ ok: true, sent, pushed, remaining: rest.length });
+  return Response.json({ ok: true, sent, pushed, channel, remaining: rest.length });
 }
 
 /** Annule une campagne programmée, ou stoppe l'envoi étalé restant. */
