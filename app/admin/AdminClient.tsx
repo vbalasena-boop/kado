@@ -161,7 +161,7 @@ export default function AdminClient({
 
   async function resetCounters(id: string, name: string) {
     const typed = window.prompt(
-      `⚠️ Remise à zéro des compteurs de « ${name} »\n\nSupprime DÉFINITIVEMENT tous les tours joués et leurs codes cadeaux. Les cartes de fidélité et les e-mails capturés sont conservés.\n\nPour confirmer, tapez : RAZ`
+      `⚠️ Remise à zéro des compteurs de « ${name} »\n\nSupprime DÉFINITIVEMENT :\n• tous les tours joués et leurs codes cadeaux\n• toutes les commandes Click & collect (stats de vente)\n\nConservés : cartes de fidélité, e-mails capturés, catalogue produits.\n\nPour confirmer, tapez : RAZ`
     );
     if (typed === null) return;
     if (typed.trim().toUpperCase() !== "RAZ") {
@@ -176,10 +176,14 @@ export default function AdminClient({
       });
       const d = await res.json().catch(() => ({}));
       if (res.ok) {
+        const t = d.deleted ?? 0;
+        const o = d.orders ?? 0;
         setMsg(
-          `✅ Compteurs de « ${name} » remis à zéro (${d.deleted ?? 0} tour${
-            (d.deleted ?? 0) > 1 ? "s" : ""
-          } supprimé${(d.deleted ?? 0) > 1 ? "s" : ""}). Rechargement…`
+          `✅ Compteurs de « ${name} » remis à zéro (${t} tour${
+            t > 1 ? "s" : ""
+          } + ${o} commande${o > 1 ? "s" : ""} supprimé${
+            t + o > 1 ? "s" : ""
+          }). Rechargement…`
         );
         // rechargement complet pour rafraîchir toutes les statistiques
         setTimeout(() => window.location.reload(), 1000);
