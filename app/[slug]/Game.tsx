@@ -328,6 +328,7 @@ export default function Game({
   config,
   played: initialPlayed,
   preview = false,
+  orderEnabled = false,
 }: {
   slug: string;
   name: string;
@@ -336,6 +337,7 @@ export default function Game({
   config: Config;
   played: Played;
   preview?: boolean;
+  orderEnabled?: boolean;
 }) {
   // Canaux proposés par le commerçant (au moins un). Rétro-compatible :
   // une valeur absente/vraie = canal actif.
@@ -1102,6 +1104,11 @@ export default function Game({
         {config.loyalty_enabled && (
           <a className="fid-link" href={`/${slug}/fidelite`}>
             🎟️ Ma carte de fidélité
+          </a>
+        )}
+        {orderEnabled && (
+          <a className="fid-link" href={`/${slug}/commander`}>
+            🛒 Commander (retrait sur place)
           </a>
         )}
         <footer className="game-footer">

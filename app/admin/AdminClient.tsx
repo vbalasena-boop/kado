@@ -23,6 +23,7 @@ export type AdminBusiness = {
   setup_done_at: string | null;
   admin_note: string | null;
   campaigns_addon?: boolean;
+  click_collect?: boolean;
 };
 
 const PLAN_LABEL: Record<string, string> = {
@@ -327,6 +328,36 @@ export default function AdminClient({
         setBusyId(null);
       }
     })();
+  }
+
+  /** Active/désactive le module Click & collect (bêta, admin uniquement). */
+  async function toggleClickCollect(id: string, name: string, current: boolean) {
+    if (
+      !confirm(
+        current
+          ? `Désactiver le Click & collect pour « ${name} » ?\n\nSa page de commande deviendra inaccessible.`
+          : `Activer le Click & collect pour « ${name} » ?\n\nLe commerçant verra l'onglet « Commandes » et sa page kado-app.fr/<lien>/commander sera ouverte (paiement sur place).`
+      )
+    )
+      return;
+    setBusyId(id);
+    setMsg(null);
+    try {
+      const res = await fetch(`/api/admin/business/${id}/click-collect`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enable: !current }),
+      });
+      const d = await res.json().catch(() => ({}));
+      setMsg(
+        res.ok
+          ? `✅ Click & collect ${!current ? "activé pour" : "désactivé pour"} « ${name} ».`
+          : "❌ " + (d.detail || d.error || "Échec — la migration 0019 est-elle passée ?")
+      );
+      router.refresh();
+    } finally {
+      setBusyId(null);
+    }
   }
 
   /** Offre (ou retire) l'option Campagnes sans facturation Stripe. */
@@ -744,6 +775,7 @@ export default function AdminClient({
                               <small className="admin-plan">
                                 {PLAN_LABEL[b.plan] ?? b.plan}
                                 {b.campaigns_addon ? " · 💌 campagnes" : ""}
+                                {b.click_collect ? " · 🛒 commandes" : ""}
                               </small>
                             </>
                           )}
@@ -840,6 +872,20 @@ export default function AdminClient({
                               }
                             >
                               💌 Campagnes {b.campaigns_addon ? "on" : "off"}
+                            </button>
+                            <button
+                              className="btn-mini soft"
+                              disabled={busy}
+                              onClick={() =>
+                                toggleClickCollect(
+                                  b.id,
+                                  b.name,
+                                  !!b.click_collect
+                                )
+                              }
+                            >
+                              🛒 Click &amp; collect{" "}
+                              {b.click_collect ? "on" : "off"}
                             </button>
                             <button
                               className="btn-mini soft"

@@ -39,6 +39,8 @@ const REQUIRED_TABLES = [
   "leads",
   "campaigns",
   "rate_limits",
+  "products",
+  "orders",
 ];
 
 /** Tarifs Stripe attendus : [variable, type attendu, libellé]. */

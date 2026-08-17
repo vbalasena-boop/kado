@@ -60,12 +60,13 @@ export default async function AdminPage() {
     setup_done_at: string | null;
     admin_note: string | null;
     campaigns_addon: boolean | null;
+    click_collect: boolean | null;
   };
   const extraById = new Map<string, Extra>();
   try {
     const { data: extras } = await admin
       .from("businesses")
-      .select("id, phone, address, plan, setup_option, setup_paid_at, setup_done_at, admin_note, campaigns_addon");
+      .select("id, phone, address, plan, setup_option, setup_paid_at, setup_done_at, admin_note, campaigns_addon, click_collect");
     for (const e of (extras ?? []) as Extra[]) extraById.set(e.id, e);
   } catch {
     /* colonnes absentes : valeurs par défaut */
@@ -93,6 +94,7 @@ export default async function AdminPage() {
       setup_done_at: x?.setup_done_at ?? null,
       admin_note: x?.admin_note ?? null,
       campaigns_addon: !!x?.campaigns_addon,
+      click_collect: !!x?.click_collect,
     };
   });
 

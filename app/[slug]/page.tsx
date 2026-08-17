@@ -87,6 +87,19 @@ export default async function Page({
       .order("position", { ascending: true }),
   ]);
 
+  // Click & collect actif ? (lecture tolérante si migration absente)
+  let orderEnabled = false;
+  try {
+    const { data: cc } = await supa
+      .from("businesses")
+      .select("click_collect")
+      .eq("id", biz.id)
+      .maybeSingle();
+    orderEnabled = !!(cc as any)?.click_collect;
+  } catch {
+    orderEnabled = false;
+  }
+
   // Tours déjà joués par ce navigateur (verrou côté serveur)
   const played: Record<string, { label: string; code: string }> = {};
   const playerId = readPlayerId();
@@ -106,6 +119,7 @@ export default async function Page({
       slug={biz.slug}
       name={biz.name}
       logoUrl={biz.logo_url}
+      orderEnabled={orderEnabled}
       prizes={prizes ?? []}
       config={
         config ?? {

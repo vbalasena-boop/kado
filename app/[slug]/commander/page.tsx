@@ -1,0 +1,84 @@
+import { getAdminClient } from "@/lib/supabase/admin";
+import { hasAccess } from "@/lib/auth";
+import OrderClient from "./OrderClient";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+function Unavailable({ message }: { message: string }) {
+  return (
+    <main className="landing">
+      <div className="landing-card">
+        <div className="landing-logo">🛒</div>
+        <h1>Commande indisponible</h1>
+        <p>{message}</p>
+      </div>
+    </main>
+  );
+}
+
+export default async function CommanderPage({
+  params,
+}: {
+  params: { slug: string };
+}) {
+  let db;
+  try {
+    db = getAdminClient();
+  } catch {
+    return <Unavailable message="Le service n'est pas configuré." />;
+  }
+
+  let biz: any = null;
+  try {
+    const { data } = await db
+      .from("businesses")
+      .select(
+        "id, slug, name, logo_url, status, subscription_ends_at, click_collect"
+      )
+      .eq("slug", params.slug)
+      .maybeSingle();
+    biz = data;
+  } catch {
+    biz = null;
+  }
+
+  if (!biz || !biz.click_collect) {
+    return (
+      <Unavailable message="Ce commerce ne propose pas la commande en ligne." />
+    );
+  }
+  if (!hasAccess(biz)) {
+    return (
+      <Unavailable message="La commande en ligne est momentanément suspendue." />
+    );
+  }
+
+  let products: { id: string; name: string; price_cents: number }[] = [];
+  try {
+    const { data } = await db
+      .from("products")
+      .select("id, name, price_cents")
+      .eq("business_id", biz.id)
+      .eq("active", true)
+      .order("created_at", { ascending: true });
+    products = data ?? [];
+  } catch {
+    products = [];
+  }
+
+  if (products.length === 0) {
+    return (
+      <Unavailable message="Le catalogue n'est pas encore disponible. Repassez bientôt !" />
+    );
+  }
+
+  return (
+    <OrderClient
+      slug={biz.slug}
+      name={biz.name}
+      logoUrl={biz.logo_url}
+      products={products}
+    />
+  );
+}

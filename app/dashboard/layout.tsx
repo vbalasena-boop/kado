@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getMyBusiness, hasModule } from "@/lib/auth";
+import { getAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail } from "@/lib/admin-guard";
 import { Icon } from "@/components/icons";
 import { KadoMark } from "@/components/Logo";
@@ -16,6 +17,21 @@ export default async function DashboardLayout({
   const { user, business } = await getMyBusiness();
   if (!user) redirect("/login");
   const admin = isAdminEmail(user.email);
+
+  // Click & collect activé par l'admin ? (lecture tolérante)
+  let clickCollect = false;
+  if (business) {
+    try {
+      const { data } = await getAdminClient()
+        .from("businesses")
+        .select("click_collect")
+        .eq("id", business.id)
+        .maybeSingle();
+      clickCollect = !!(data as any)?.click_collect;
+    } catch {
+      clickCollect = false;
+    }
+  }
 
   return (
     <div className="dash">
@@ -97,6 +113,11 @@ export default async function DashboardLayout({
             <Link href="/dashboard/campaigns">
               <Icon name="share" /> Campagnes
             </Link>
+            {clickCollect && (
+              <Link href="/dashboard/orders">
+                <Icon name="cart" /> Commandes
+              </Link>
+            )}
             <Link href="/dashboard/billing">
               <Icon name="card" /> Abonnement
             </Link>
