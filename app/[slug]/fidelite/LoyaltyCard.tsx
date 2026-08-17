@@ -54,6 +54,26 @@ export default function LoyaltyCard({
   const [pushState, setPushState] = useState<
     "unsupported" | "off" | "busy" | "on"
   >("unsupported");
+  const [installHint, setInstallHint] = useState<"ios" | "android" | null>(
+    null
+  );
+
+  // Proposer d'ajouter la carte à l'écran d'accueil (sauf déjà installée
+  // ou déjà refusée sur cet appareil)
+  useEffect(() => {
+    if (window.matchMedia("(display-mode: standalone)").matches) return;
+    if ((navigator as any).standalone) return; // iOS installé
+    if (localStorage.getItem(`kado-a2hs-${slug}`) === "1") return;
+    const ua = navigator.userAgent;
+    if (/iPhone|iPad|iPod/i.test(ua)) setInstallHint("ios");
+    else if (/Android/i.test(ua)) setInstallHint("android");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function dismissInstall() {
+    localStorage.setItem(`kado-a2hs-${slug}`, "1");
+    setInstallHint(null);
+  }
 
   // Notifications d'offres : cet appareil est-il déjà abonné ?
   useEffect(() => {
@@ -387,6 +407,28 @@ export default function LoyaltyCard({
               )}
               <div className="fid-code">{card.code}</div>
             </div>
+
+            {installHint && (
+              <div className="fid-extra fid-install">
+                <b>📲 Gardez votre carte à portée de main</b>
+                {installHint === "android" ? (
+                  <p>
+                    Ajoutez-la à votre écran d'accueil : menu <b>⋮</b> de votre
+                    navigateur → <b>« Ajouter à l'écran d'accueil »</b>. Votre
+                    carte s'ouvrira comme une appli, en un tap.
+                  </p>
+                ) : (
+                  <p>
+                    Ajoutez-la à votre écran d'accueil : bouton <b>Partager</b>{" "}
+                    (carré avec une flèche ↑) → <b>« Sur l'écran d'accueil »</b>.
+                    Votre carte s'ouvrira comme une appli, en un tap.
+                  </p>
+                )}
+                <button className="fid-install-later" onClick={dismissInstall}>
+                  C'est fait / plus tard
+                </button>
+              </div>
+            )}
 
             {pushState !== "unsupported" && (
               <div className="fid-extra">

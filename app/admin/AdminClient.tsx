@@ -473,13 +473,27 @@ export default function AdminClient({
   async function remove(id: string, name: string) {
     if (
       !confirm(
-        `Supprimer définitivement « ${name} » ?\nCette action est irréversible (roue, cadeaux et tours joués seront effacés).`
+        `Supprimer DÉFINITIVEMENT le compte « ${name} » ?\n\nCette action :\n• résilie son abonnement Stripe (plus aucun prélèvement)\n• efface toutes ses données (jeu, cadeaux, fidélité, commandes…)\n• supprime son compte de connexion\n\nIrréversible.`
       )
     )
       return;
     setBusyId(id);
+    setMsg(null);
     try {
-      await fetch(`/api/admin/business/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/business/${id}`, {
+        method: "DELETE",
+      });
+      const d = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setMsg(
+          `✅ Compte « ${name} » supprimé` +
+            (d.stripeCancelled ? " · abonnement Stripe résilié" : "") +
+            (d.userDeleted ? " · compte de connexion supprimé" : "") +
+            "."
+        );
+      } else {
+        setMsg("❌ Échec de la suppression.");
+      }
       router.refresh();
     } finally {
       setBusyId(null);
