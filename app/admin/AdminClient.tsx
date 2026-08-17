@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/icons";
+import type { HealthCheck } from "@/lib/health";
 
 export type AdminBusiness = {
   id: string;
@@ -69,9 +70,11 @@ function fmtDate(s: string | null) {
 export default function AdminClient({
   businesses,
   stats,
+  health,
 }: {
   businesses: AdminBusiness[];
   stats: AdminStats;
+  health: HealthCheck[];
 }) {
   const redemptionRate =
     stats.won > 0 ? Math.round((stats.redeemed / stats.won) * 100) : 0;
@@ -455,6 +458,42 @@ export default function AdminClient({
         Créez des établissements, gérez leur abonnement et leurs accès. L'accès à
         la roue se coupe automatiquement quand l'abonnement expire.
       </p>
+
+      {/* ---- État du système (auto-surveillance) ---- */}
+      {health.length > 0 && (
+        <div
+          className={`dash-card health-card ${
+            health.every((h) => h.ok) ? "is-ok" : "is-bad"
+          }`}
+        >
+          <h2>
+            🩺 État du système —{" "}
+            {health.every((h) => h.ok)
+              ? "tout fonctionne ✅"
+              : `${health.filter((h) => !h.ok).length} problème${
+                  health.filter((h) => !h.ok).length > 1 ? "s" : ""
+                } détecté${health.filter((h) => !h.ok).length > 1 ? "s" : ""} ⚠️`}
+          </h2>
+          <div className="health-grid">
+            {health.map((h) => (
+              <div
+                key={h.name}
+                className={`health-item ${h.ok ? "ok" : "bad"}`}
+              >
+                <span className="health-dot">{h.ok ? "✅" : "❌"}</span>
+                <div>
+                  <b>{h.name}</b>
+                  {h.detail && <div className="health-detail">{h.detail}</div>}
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="muted" style={{ marginTop: 10, fontSize: 12.5 }}>
+            Vérifié à chaque ouverture de cette page, et automatiquement chaque
+            matin — vous recevez un e-mail d'alerte si un contrôle échoue.
+          </p>
+        </div>
+      )}
 
       {/* ---- Statistiques plateforme ---- */}
       <div className="stat-h">Établissements</div>

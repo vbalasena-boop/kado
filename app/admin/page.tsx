@@ -1,5 +1,6 @@
 import { getAdminUser } from "@/lib/admin-guard";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { runHealthChecks, type HealthCheck } from "@/lib/health";
 import AdminClient, { AdminBusiness, AdminStats } from "./AdminClient";
 
 export const dynamic = "force-dynamic";
@@ -10,6 +11,11 @@ const isWin = (l: string | null) =>
 export default async function AdminPage() {
   const user = await getAdminUser();
   if (!user) return null; // le layout gère l'accès refusé
+
+  // Vérifications de santé lancées en parallèle des autres requêtes
+  const healthPromise: Promise<HealthCheck[]> = runHealthChecks().catch(
+    () => []
+  );
 
   const admin = getAdminClient();
   const { data: businesses } = await admin
@@ -122,5 +128,7 @@ export default async function AdminPage() {
     leads: leadsCount ?? 0,
   };
 
-  return <AdminClient businesses={rows} stats={stats} />;
+  const health = await healthPromise;
+
+  return <AdminClient businesses={rows} stats={stats} health={health} />;
 }

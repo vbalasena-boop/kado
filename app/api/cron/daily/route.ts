@@ -12,6 +12,7 @@ import {
   DAILY_CHUNK,
 } from "@/lib/campaigns";
 import { unsubToken } from "@/lib/unsub";
+import { setSystemState } from "@/lib/health";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -334,6 +335,9 @@ export async function GET(req: NextRequest) {
   } catch (e: any) {
     out.errors.push(`recaps: ${e?.message ?? "error"}`);
   }
+
+  // Heartbeat : prouve au contrôle de santé que le cron a bien tourné
+  await setSystemState("cron_daily_last_run", new Date().toISOString());
 
   return Response.json({ ok: true, ...out });
 }
