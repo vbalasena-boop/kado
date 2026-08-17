@@ -64,6 +64,12 @@ export async function POST(
           proration_behavior: "create_prorations",
         });
         stripeAdjusted = true;
+      } else {
+        // article de formule introuvable (anciens prix ?) : on synchronise au
+        // moins les métadonnées pour que le webhook ne réécrive pas la base
+        await stripe.subscriptions.update(biz.stripe_subscription_id, {
+          metadata: { ...sub.metadata, plan },
+        });
       }
     } catch (e: any) {
       return Response.json(

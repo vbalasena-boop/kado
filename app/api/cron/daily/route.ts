@@ -11,6 +11,7 @@ import {
   buildCampaignPayloads,
   DAILY_CHUNK,
 } from "@/lib/campaigns";
+import { unsubToken } from "@/lib/unsub";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -72,7 +73,7 @@ export async function GET(req: NextRequest) {
           emoji: "⏳",
           bodyHtml: `Bonjour,<br><br>Votre essai gratuit de Kado${
             businessName ? ` pour <b>${businessName}</b>` : ""
-          } se termine bientôt. Après cette date, votre page de jeu et votre carte de fidélité seront désactivées.<br><br>Pour continuer sans interruption, choisissez votre formule&nbsp;: <b>Roue 29&nbsp;€</b>, <b>Fidélité 19&nbsp;€</b> ou <b>Complet 44&nbsp;€</b> par mois, sans engagement.<br><br><a href="${SITE}/dashboard/billing" style="display:inline-block;background:linear-gradient(135deg,#ff6b4a,#ff4e87);color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:12px;">Choisir ma formule</a>`,
+          } se termine bientôt. Après cette date, votre page de jeu et votre carte de fidélité seront désactivées.<br><br>Pour continuer sans interruption, choisissez votre formule&nbsp;: <b>Jeux 29&nbsp;€</b>, <b>Fidélité 19&nbsp;€</b> ou <b>Complet 44&nbsp;€</b> par mois, sans engagement.<br><br><a href="${SITE}/dashboard/billing" style="display:inline-block;background:linear-gradient(135deg,#ff6b4a,#ff4e87);color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:12px;">Choisir ma formule</a>`,
           footnote:
             "Résiliable à tout moment en un clic. Une question ? Répondez à cet e-mail.",
         }),
@@ -125,6 +126,9 @@ export async function GET(req: NextRequest) {
         )
           continue;
 
+        const unsub = `${SITE}/api/unsubscribe?b=${c.business_id}&e=${encodeURIComponent(
+          Buffer.from(c.email).toString("base64url")
+        )}&t=${unsubToken(c.business_id, c.email)}`;
         const res = await sendEmail({
           to: c.email,
           subject: `Joyeux anniversaire de la part de ${biz.name} ! 🎂`,
@@ -137,8 +141,7 @@ export async function GET(req: NextRequest) {
             bodyHtml: `Toute l'équipe de <b>${biz.name}</b> vous souhaite un très joyeux anniversaire !<br><br>Pour l'occasion&nbsp;: <b>${
               cfg.birthday_reward || "une surprise offerte"
             }</b>.<br><br>Montrez simplement cet e-mail en caisse lors de votre prochaine visite. À très vite !`,
-            footnote:
-              "Offre liée à votre carte de fidélité, valable une fois.",
+            footnote: `Offre liée à votre carte de fidélité, valable une fois. <a href="${unsub}" style="color:#9a94b4;">Ne plus recevoir ces e-mails</a>`,
           }),
         });
         if (res.ok) {

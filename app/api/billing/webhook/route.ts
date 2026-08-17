@@ -58,6 +58,12 @@ async function applySubscription(sub: Stripe.Subscription) {
   if (plan && ["roue", "fidelite", "complet"].includes(plan)) {
     patch.plan = plan;
   }
+  // Abonnement résilié : l'option Campagnes (article payant) disparaît avec
+  // lui — on la coupe aussi en base pour éviter un accès gratuit après
+  // un futur réabonnement.
+  if (sub.status === "canceled") {
+    patch.campaigns_addon = false;
+  }
 
   const query = db.from("businesses").update(patch);
   if (businessId) await query.eq("id", businessId);

@@ -51,7 +51,14 @@ export async function POST(req: NextRequest) {
   const sub = await stripe.subscriptions.retrieve(
     business.stripe_subscription_id
   );
-  const itemId = sub.items.data[0]?.id;
+  // L'article à remplacer est celui de la FORMULE (pas l'option Campagnes,
+  // qui est un article séparé du même abonnement).
+  const planPrices = Object.values(PRICE_MAP).filter(Boolean);
+  const planItem = sub.items.data.find((it) => {
+    const pid = typeof it.price === "string" ? it.price : it.price?.id;
+    return pid && planPrices.includes(pid);
+  });
+  const itemId = planItem?.id ?? sub.items.data[0]?.id;
   if (!itemId) {
     return Response.json({ error: "no_sub_item" }, { status: 500 });
   }
