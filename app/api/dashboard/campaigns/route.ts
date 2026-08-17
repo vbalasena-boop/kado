@@ -85,29 +85,46 @@ export async function POST(req: NextRequest) {
     scheduledFor = body.scheduledFor;
   }
 
-  // Quota : 1 campagne créée / 24 h, et jamais deux campagnes en cours
-  try {
-    const dayAgo = new Date(Date.now() - 24 * 3600e3).toISOString();
-    const [{ count: recent }, { count: inFlight }] = await Promise.all([
-      db
+  // Quota : 1 campagne E-MAIL créée / 24 h (protège la réputation
+  // d'expéditeur), et jamais deux envois e-mail en cours. Les campagnes
+  // 100 % push sont ILLIMITÉES : gratuites et sans enjeu de réputation.
+  if (channel !== "push") {
+    try {
+      const dayAgo = new Date(Date.now() - 24 * 3600e3).toISOString();
+      // ne compte que les campagnes qui incluent l'e-mail (tolérant si
+      // la colonne channel n'existe pas encore)
+      let recent = 0;
+      const r1 = await db
         .from("campaigns")
         .select("*", { count: "exact", head: true })
         .eq("business_id", business.id)
-        .gte("created_at", dayAgo),
-      db
+        .neq("channel", "push")
+        .gte("created_at", dayAgo);
+      if (!r1.error) recent = r1.count ?? 0;
+      else {
+        const r2 = await db
+          .from("campaigns")
+          .select("*", { count: "exact", head: true })
+          .eq("business_id", business.id)
+          .gte("created_at", dayAgo);
+        if (r2.error) throw new Error(r2.error.message);
+        recent = r2.count ?? 0;
+      }
+      const { count: inFlight, error: ifErr } = await db
         .from("campaigns")
         .select("*", { count: "exact", head: true })
         .eq("business_id", business.id)
-        .is("sent_at", null),
-    ]);
-    if ((recent ?? 0) > 0) {
-      return Response.json({ error: "quota" }, { status: 429 });
+        .is("sent_at", null);
+      if (ifErr) throw new Error(ifErr.message);
+      if (recent > 0) {
+        return Response.json({ error: "quota" }, { status: 429 });
+      }
+      if ((inFlight ?? 0) > 0) {
+        return Response.json({ error: "in_progress" }, { status: 429 });
+      }
+    } catch {
+      return Response.json({ error: "migration_missing" }, { status: 500 });
     }
-    if ((inFlight ?? 0) > 0) {
-      return Response.json({ error: "in_progress" }, { status: 429 });
-    }
-  } catch {
-    return Response.json({ error: "migration_missing" }, { status: 500 });
   }
 
   // Insertion tolérante : les colonnes channel/pushed_count peuvent manquer

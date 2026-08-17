@@ -108,7 +108,9 @@ export default async function CampaignsPage() {
       channel: r.channel ?? "email",
       pushed: r.pushed_count ?? 0,
     }));
-    lastCreatedAt = history[0]?.created_at ?? null;
+    // le quota 24 h ne concerne que les campagnes incluant l'e-mail
+    lastCreatedAt =
+      history.find((h) => h.channel !== "push")?.created_at ?? null;
   } catch {
     /* table / colonnes absentes */
   }

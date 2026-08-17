@@ -63,8 +63,12 @@ export default function CampaignsClient({
   const tomorrow = new Date(Date.now() + 864e5).toISOString().slice(0, 10);
   const maxDate = new Date(Date.now() + 60 * 864e5).toISOString().slice(0, 10);
 
+  // Quota 24 h : uniquement pour les canaux incluant l'e-mail.
+  // Les notifications push sont ILLIMITÉES.
   const quotaBlocked =
-    !!lastAt && Date.now() - new Date(lastAt).getTime() < 24 * 3600e3;
+    channel !== "push" &&
+    !!lastAt &&
+    Date.now() - new Date(lastAt).getTime() < 24 * 3600e3;
   // audience disponible selon le canal choisi
   const channelAudience =
     channel === "email"
@@ -303,9 +307,10 @@ export default function CampaignsClient({
         <h2>Nouvelle campagne</h2>
         {quotaBlocked && (
           <p className="camp-quota">
-            ⏳ Une campagne a déjà été créée ces dernières 24 h. Vous pourrez en
-            créer une nouvelle demain — ça protège votre réputation
-            d'expéditeur.
+            ⏳ Une campagne e-mail a déjà été créée ces dernières 24 h — ça
+            protège votre réputation d'expéditeur. 💡 Les{" "}
+            <b>notifications push restent illimitées</b> : choisissez le canal
+            « 🔔 Notif push seule » pour envoyer quand même.
           </p>
         )}
         <label className="field">
@@ -366,7 +371,7 @@ export default function CampaignsClient({
           >
             <b>🔔 Notif push seule</b>
             <span>
-              {pushAudience} appareil{pushAudience > 1 ? "s" : ""} · gratuit
+              {pushAudience} appareil{pushAudience > 1 ? "s" : ""} · illimité
             </span>
           </button>
         </div>
