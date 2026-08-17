@@ -158,7 +158,16 @@ export async function runHealthChecks(): Promise<HealthCheck[]> {
       headers: { Authorization: `Bearer ${key}` },
       cache: "no-store",
     });
-    if (!res.ok) {
+    if (res.status === 401) {
+      // Clé « envoi uniquement » : elle envoie très bien les e-mails mais
+      // n'a pas le droit de lister les domaines — pas une panne.
+      checks.push({
+        name: "E-mails (Resend)",
+        ok: true,
+        detail:
+          "Clé à accès restreint (envoi uniquement) : le domaine ne peut pas être vérifié automatiquement. Pour un contrôle complet, créez une clé « Full access » dans Resend.",
+      });
+    } else if (!res.ok) {
       checks.push({
         name: "E-mails (Resend)",
         ok: false,
@@ -168,7 +177,8 @@ export async function runHealthChecks(): Promise<HealthCheck[]> {
       const body = (await res.json()) as {
         data?: { name?: string; status?: string }[];
       };
-      const from = process.env.EMAIL_FROM || "";
+      // même adresse de secours que lib/email.ts
+      const from = process.env.EMAIL_FROM || "Kado <bonjour@kado-app.fr>";
       const domain = (from.match(/<([^>]+)>/)?.[1] ?? from)
         .split("@")[1]
         ?.trim()
