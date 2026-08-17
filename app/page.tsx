@@ -224,6 +224,7 @@ export default function Home({
       <header className="v-topbar">
         <Logo size={42} />
         <nav className="v-topnav">
+          <a href="/blog">Blog</a>
           <a href="/tarifs">Tarifs</a>
           <a href="/login">Connexion</a>
           <a href="/login?signup=1" className="v-topnav-cta">Créer mon compte</a>
@@ -412,6 +413,7 @@ export default function Home({
 
       <footer className="v-footer">
         <span>© Kado</span>
+        <a href="/blog">Blog</a>
         <a href="/tarifs">Tarifs</a>
         <a href="/legal/mentions">Mentions légales</a>
         <a href="/legal/confidentialite">Confidentialité</a>

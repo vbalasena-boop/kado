@@ -1,0 +1,289 @@
+/** Articles de blog Kado — contenu optimisé pour le référencement.
+ *  Chaque article cible une recherche Google réelle des commerçants. */
+
+export type Block =
+  | { h: string }
+  | { p: string }
+  | { ul: string[] }
+  | { quote: string };
+
+export type Article = {
+  slug: string;
+  title: string; // titre affiché (H1)
+  metaTitle: string; // balise <title> (SEO)
+  description: string; // meta description
+  keywords: string[];
+  date: string; // ISO
+  readMinutes: number;
+  category: string;
+  emoji: string;
+  excerpt: string;
+  blocks: Block[];
+};
+
+export const ARTICLES: Article[] = [
+  {
+    slug: "comment-avoir-plus-avis-google-commerce",
+    title: "Comment avoir plus d'avis Google pour son commerce en 2026",
+    metaTitle: "Plus d'avis Google pour son commerce : le guide 2026",
+    description:
+      "Vous voulez plus d'avis Google 5★ pour votre restaurant, salon ou boutique ? Voici 7 méthodes concrètes qui marchent vraiment, sans harceler vos clients.",
+    keywords: [
+      "plus d'avis google",
+      "avoir des avis google",
+      "avis google commerce",
+      "avis google restaurant",
+      "e-réputation commerce",
+    ],
+    date: "2026-08-18",
+    readMinutes: 6,
+    category: "E-réputation",
+    emoji: "⭐",
+    excerpt:
+      "Les avis Google sont devenus le premier réflexe des clients avant de pousser votre porte. Voici comment en obtenir plus, légalement et sans effort.",
+    blocks: [
+      {
+        p: "Aujourd'hui, 9 clients sur 10 consultent les avis Google avant de choisir un commerce. Une fiche avec 150 avis à 4,7★ attire mécaniquement plus de monde qu'une fiche à 12 avis — même si le service est identique. Le problème : vos clients satisfaits repartent presque tous sans laisser d'avis. Voici comment inverser la tendance.",
+      },
+      { h: "1. Demandez au bon moment" },
+      {
+        p: "Le meilleur moment pour demander un avis, c'est juste après une expérience positive : à la fin du repas, après la coupe, au moment de payer. Le client est encore dans l'émotion. Passé la porte, il oublie. C'est pour ça qu'un rappel en caisse convertit tellement mieux qu'un e-mail envoyé le lendemain.",
+      },
+      { h: "2. Rendez-le ultra-simple" },
+      {
+        p: "Chaque étape supplémentaire perd la moitié des gens. Un QR code qui ouvre directement votre page d'avis Google en un scan supprime toute friction. Pas d'application à installer, pas de recherche à faire : le client scanne, écrit, c'est fini.",
+      },
+      { h: "3. Donnez une raison de le faire" },
+      {
+        p: "Soyons honnêtes : laisser un avis, c'est un petit effort dont le client ne retire rien. Sauf si vous le récompensez. Un jeu — une roue de la fortune, une carte à gratter — transforme l'avis en moment ludique : le client joue, gagne un petit cadeau, et repart avec le sourire. C'est exactement le principe de Kado.",
+      },
+      {
+        quote:
+          "Important : le cadeau doit récompenser la participation au jeu, jamais la note laissée. Le client reste libre d'écrire ce qu'il veut. C'est la règle de Google et du droit français — et c'est ainsi que Kado fonctionne.",
+      },
+      { h: "4. Répondez à tous les avis" },
+      {
+        p: "Répondre aux avis — positifs comme négatifs — envoie deux signaux : à Google, que votre fiche est active (ce qui améliore votre classement local) ; aux futurs clients, que vous êtes attentif. Un avis négatif bien géré rassure souvent plus qu'un 5★ de plus.",
+      },
+      { h: "5. Formez votre équipe" },
+      {
+        p: "Vos serveurs, vos coiffeurs, vos vendeurs sont en première ligne. Une phrase simple au bon moment — « Si vous avez aimé, scannez ce QR, ça nous aide énormément » — multiplie les avis. Encore faut-il leur donner l'outil et le réflexe.",
+      },
+      { h: "6. Affichez le QR code partout" },
+      {
+        p: "Sur les tables, le comptoir, le ticket de caisse, la vitrine, le sac. Plus il est visible, plus il est scanné. Une affiche bien placée près de la caisse peut générer des dizaines d'avis par semaine.",
+      },
+      { h: "7. Mesurez et ajustez" },
+      {
+        p: "Combien de clients scannent ? Combien laissent un avis ? Sans chiffres, vous avancez à l'aveugle. Un tableau de bord qui suit vos avis et vos participations vous montre ce qui marche — et vous motive en voyant la courbe monter.",
+      },
+      { h: "En résumé" },
+      {
+        p: "Plus d'avis Google, ce n'est pas une question de chance : c'est une question de méthode. Demander au bon moment, simplifier au maximum, récompenser la participation. C'est précisément ce que Kado automatise pour vous — un QR code en caisse, un jeu, et vos clients deviennent vos meilleurs ambassadeurs.",
+      },
+    ],
+  },
+  {
+    slug: "idees-fidelisation-client-commerce",
+    title: "12 idées de fidélisation client qui marchent vraiment",
+    metaTitle: "12 idées de fidélisation client pour votre commerce",
+    description:
+      "Fidéliser coûte 5 fois moins cher que conquérir. Voici 12 idées de fidélisation concrètes pour restaurants, salons et boutiques — dont certaines gratuites.",
+    keywords: [
+      "fidélisation client",
+      "idées fidélisation",
+      "programme de fidélité commerce",
+      "fidéliser ses clients",
+      "carte de fidélité digitale",
+    ],
+    date: "2026-08-18",
+    readMinutes: 7,
+    category: "Fidélisation",
+    emoji: "🎟️",
+    excerpt:
+      "Un client fidèle dépense plus, revient plus souvent et vous recommande. Voici 12 leviers concrets pour transformer un client de passage en habitué.",
+    blocks: [
+      {
+        p: "Acquérir un nouveau client coûte 5 à 7 fois plus cher que d'en fidéliser un existant. Pourtant, la plupart des commerces concentrent tous leurs efforts sur l'acquisition. Voici 12 idées pour faire revenir vos clients — de la plus simple à la plus puissante.",
+      },
+      { h: "1. La carte de fidélité digitale" },
+      {
+        p: "Oubliez la carte à tampons en carton, perdue au fond du portefeuille. Une carte digitale vit dans le téléphone du client : jamais oubliée, jamais perdue. Et elle vous donne son e-mail pour le recontacter.",
+      },
+      { h: "2. Le cadeau d'anniversaire automatique" },
+      {
+        p: "Un e-mail « Joyeux anniversaire, une surprise vous attend » le jour J crée un lien émotionnel fort et fait revenir le client. Automatisé, ça ne vous demande aucun effort.",
+      },
+      { h: "3. Le parrainage" },
+      {
+        p: "Vos meilleurs clients connaissent d'autres bons clients. Récompensez-les quand ils vous en amènent un : « Parrainez un ami, gagnez un tampon ». Le bouche-à-oreille devient un moteur de croissance.",
+      },
+      { h: "4. La surprise inattendue" },
+      {
+        p: "Un café offert sans raison, un petit extra glissé dans le sac. L'effet de surprise marque les esprits bien plus qu'une réduction attendue.",
+      },
+      { h: "5. Le jeu en caisse" },
+      {
+        p: "Une roue de la fortune ou une carte à gratter transforme le passage en caisse en moment ludique. Le client gagne un cadeau à venir chercher — donc il revient. Et au passage, il laisse un avis ou vous suit sur Instagram.",
+      },
+      { h: "6. Les offres réservées aux fidèles" },
+      {
+        p: "« -20 % ce week-end, réservé à nos clients fidèles ». Le sentiment d'appartenance à un club privé est un puissant moteur de retour.",
+      },
+      { h: "7. Les campagnes e-mail et notifications" },
+      {
+        p: "Une base de clients qui ont accepté vos offres, c'est un canal direct et gratuit. Un e-mail ou une notification bien placés — nouveauté, promo flash, événement — ramènent du monde sans dépenser en publicité.",
+      },
+      { h: "8. Le programme à paliers" },
+      {
+        p: "10 visites = une récompense. Plus le client progresse, moins il a envie d'aller ailleurs. La barre de progression visible entretient la motivation.",
+      },
+      { h: "9. La reconnaissance personnelle" },
+      {
+        p: "Retenir un prénom, une habitude (« votre café serré comme d'habitude ? ») vaut tous les programmes du monde. La technologie aide, mais l'humain reste au centre.",
+      },
+      { h: "10. La commande en ligne avec retrait" },
+      {
+        p: "Permettre de commander à l'avance et de venir chercher (click & collect) fait gagner du temps au client fidèle et augmente la fréquence d'achat.",
+      },
+      { h: "11. Le suivi après-visite" },
+      {
+        p: "Un simple « Merci de votre visite, à bientôt » renforce le lien. Discret, mais efficace.",
+      },
+      { h: "12. Mesurer pour progresser" },
+      {
+        p: "Combien de clients reviennent ? À quelle fréquence ? Sans données, la fidélisation reste une intuition. Un outil qui suit vos habitués vous montre ce qui fonctionne.",
+      },
+      { h: "En résumé" },
+      {
+        p: "La fidélisation moderne combine l'humain (reconnaissance, surprise) et l'outil (carte digitale, anniversaires, parrainage, campagnes). Kado réunit tous ces leviers dans un seul abonnement, pensé pour les commerces de proximité — sans compétence technique.",
+      },
+    ],
+  },
+  {
+    slug: "roue-de-la-fortune-magasin-legal",
+    title: "Roue de la fortune en magasin : est-ce légal ?",
+    metaTitle: "Roue de la fortune en magasin : est-ce légal ? (2026)",
+    description:
+      "Peut-on installer une roue de la fortune en commerce et offrir un cadeau contre un avis ? Ce que dit vraiment la loi française et les règles de Google.",
+    keywords: [
+      "roue de la fortune magasin légal",
+      "jeu concours commerce légal",
+      "cadeau contre avis google légal",
+      "loterie commerciale loi",
+    ],
+    date: "2026-08-18",
+    readMinutes: 5,
+    category: "Réglementation",
+    emoji: "⚖️",
+    excerpt:
+      "Offrir un cadeau contre un avis, faire tourner une roue en boutique : où est la limite légale ? Le point clair, sans jargon.",
+    blocks: [
+      {
+        p: "Installer une roue de la fortune en magasin est une excellente idée marketing — à condition de respecter quelques règles simples. Bonne nouvelle : c'est parfaitement légal en France si vous suivez les bons principes. Voici lesquels.",
+      },
+      { h: "Un jeu promotionnel, pas une loterie interdite" },
+      {
+        p: "La loi française autorise les jeux promotionnels organisés par un commerce. Ce qui est encadré, ce sont les loteries payantes (où il faut payer pour participer). Tant que la participation est gratuite et sans obligation d'achat clairement affichée, vous êtes dans les clous.",
+      },
+      { h: "La règle d'or : le cadeau récompense la participation, jamais l'avis" },
+      {
+        p: "C'est le point le plus important. Vous pouvez offrir un cadeau à quelqu'un qui joue à votre roue. Vous ne pouvez PAS conditionner ce cadeau à la note d'un avis (« 5 étoiles = un cadeau »). Le client doit rester totalement libre d'écrire l'avis qu'il souhaite — ou aucun — et gagner quand même sa chance de jouer.",
+      },
+      {
+        quote:
+          "Conditionner une récompense à un avis positif est interdit par les règles de Google et considéré comme une pratique commerciale trompeuse en droit français. Le jeu doit être indépendant du contenu de l'avis.",
+      },
+      { h: "Les mentions à afficher" },
+      {
+        ul: [
+          "La gratuité de la participation.",
+          "Le fait que le cadeau n'est pas conditionné à la note laissée.",
+          "Les conditions du jeu (un règlement simple, la validité des lots).",
+          "L'identité de l'organisateur (votre commerce).",
+        ],
+      },
+      { h: "Faut-il un huissier ou un dépôt de règlement ?" },
+      {
+        p: "Pour un petit jeu promotionnel de commerce (roue avec des lots de faible valeur à récupérer sur place), aucun dépôt d'huissier n'est obligatoire. Un règlement clair et affiché suffit. Le dépôt devient pertinent pour les grands jeux nationaux à gros lots — ce qui n'est pas votre cas.",
+      },
+      { h: "Et les avis Google, quelles règles ?" },
+      {
+        p: "Google interdit d'acheter des avis ou d'offrir une contrepartie contre un avis positif. En revanche, encourager vos clients à laisser un avis honnête est autorisé et même recommandé. La nuance est simple : vous encouragez le geste, pas le contenu.",
+      },
+      { h: "Comment Kado respecte la loi" },
+      {
+        p: "Kado est conçu autour de ces principes : le tirage est indépendant de l'avis, la mention de non-conditionnement est affichée automatiquement, et le client garde toujours sa chance de jouer, quel que soit son avis. Vous profitez du levier marketing en restant totalement en règle.",
+      },
+      { h: "En résumé" },
+      {
+        p: "Oui, une roue de la fortune en magasin est légale. La seule ligne rouge : ne jamais conditionner le cadeau à une note positive. Respectez ce principe, affichez les mentions de base, et vous avez un outil marketing puissant et parfaitement conforme.",
+      },
+    ],
+  },
+  {
+    slug: "gagner-abonnes-instagram-commerce-local",
+    title: "Comment gagner des abonnés Instagram pour son commerce local",
+    metaTitle: "Gagner des abonnés Instagram pour son commerce local",
+    description:
+      "Votre commerce reçoit des dizaines de clients par jour, mais votre Instagram stagne ? Voici comment transformer vos clients réels en abonnés fidèles.",
+    keywords: [
+      "gagner abonnés instagram",
+      "instagram commerce local",
+      "plus d'abonnés instagram",
+      "instagram restaurant",
+      "marketing instagram commerce",
+    ],
+    date: "2026-08-18",
+    readMinutes: 6,
+    category: "Réseaux sociaux",
+    emoji: "📸",
+    excerpt:
+      "Vos meilleurs futurs abonnés sont déjà dans votre boutique. Voici comment convertir vos clients de passage en communauté Instagram engagée.",
+    blocks: [
+      {
+        p: "Vous voyez passer des dizaines de clients par jour, mais votre compte Instagram plafonne à quelques centaines d'abonnés ? Le paradoxe est classique : vos clients les plus fidèles ne pensent tout simplement pas à vous suivre. Voici comment y remédier.",
+      },
+      { h: "1. Convertissez les clients présents en boutique" },
+      {
+        p: "C'est le levier le plus sous-exploité. Un client qui vient de vivre une bonne expérience est le plus susceptible de vous suivre — s'il y pense et si c'est facile. Un QR code en caisse qui ouvre directement votre profil, ou mieux, un jeu qui offre un tour de roue contre un abonnement, transforme ce moment en abonné.",
+      },
+      { h: "2. Publiez régulièrement, même simplement" },
+      {
+        p: "L'algorithme récompense la régularité. Mieux vaut 3 publications simples par semaine qu'une belle production par mois. Photos de vos produits, coulisses, nouveautés du jour : l'authentique marche mieux que le parfait.",
+      },
+      { h: "3. Misez sur les Reels" },
+      {
+        p: "Les vidéos courtes (Reels) sont massivement poussées par Instagram et touchent des gens qui ne vous suivent pas encore. Une démo produit, un avant/après, un moment de vie du commerce : c'est le format qui fait grossir un compte local aujourd'hui.",
+      },
+      { h: "4. Utilisez les hashtags locaux" },
+      {
+        p: "#restaurant[VotreVille], #coiffeur[VotreVille] : ces hashtags vous rendent visible auprès des gens de votre zone — exactement votre clientèle. Plus pertinents que les hashtags génériques ultra-concurrentiels.",
+      },
+      { h: "5. Racontez une histoire" },
+      {
+        p: "Les gens suivent des personnes, pas des logos. Montrez votre visage, votre équipe, votre passion. Un commerce qui a une âme donne envie d'être suivi et soutenu.",
+      },
+      { h: "6. Créez une raison de vous suivre" },
+      {
+        p: "Offres réservées aux abonnés, jeux, coulisses exclusives : donnez un bénéfice concret à vous suivre. « Suivez-nous pour tenter de gagner » convertit bien mieux qu'un simple « Suivez-nous ».",
+      },
+      { h: "7. Répondez et engagez" },
+      {
+        p: "Répondez aux commentaires et aux messages rapidement. L'engagement nourrit l'algorithme et fidélise la communauté. Un compte vivant attire ; un compte silencieux repousse.",
+      },
+      { h: "Le raccourci : transformer chaque visite en abonné" },
+      {
+        p: "Toutes ces méthodes prennent du temps. Le raccourci le plus efficace pour un commerce, c'est de capter l'abonnement au moment où le client est physiquement là et content. C'est exactement ce que fait Kado : le client scanne un QR en caisse, suit votre Instagram, et tourne une roue pour gagner un cadeau. Vous gagnez un abonné réel, local et déjà client — le plus précieux qui soit.",
+      },
+      { h: "En résumé" },
+      {
+        p: "Vos meilleurs abonnés Instagram ne sont pas sur Instagram : ils sont dans votre boutique. Publiez régulièrement, misez sur les Reels et les hashtags locaux, mais surtout, convertissez vos clients présents. C'est là que se trouve votre croissance.",
+      },
+    ],
+  },
+];
+
+export function getArticle(slug: string): Article | undefined {
+  return ARTICLES.find((a) => a.slug === slug);
+}
