@@ -4132,3 +4132,72 @@ html { scroll-behavior: smooth; }
 @media (max-width: 560px) {
   .setup-todo-actions { flex-direction: row; align-items: center; }
 }
+
+/* ───── Admin : bouton « Marquer comme faite » + historique installations ───── */
+.setup-done-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #188038;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 18px;
+  font-size: 14.5px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px -4px rgba(24, 128, 56, 0.5);
+  transition: background 0.12s, transform 0.1s;
+}
+.setup-done-btn:hover { background: #136c2e; transform: translateY(-1px); }
+.setup-done-btn:disabled { opacity: 0.6; cursor: default; }
+.setup-history { margin-top: 16px; }
+.setup-history summary {
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #188038;
+  padding: 8px 0;
+  user-select: none;
+}
+.setup-history-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.setup-history-list li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--g-line);
+  border-radius: 10px;
+  background: rgba(24, 128, 56, 0.04);
+  font-size: 13px;
+}
+.setup-history-list b { color: var(--g-ink); font-size: 14px; }
+.setup-history-list span { color: #5f6368; }
+
+/* ───── Admin : installations à faire en ROUGE, historique en vert ───── */
+.setup-todo { border-left: 4px solid var(--g-red); }
+.setup-todo-list li {
+  border-color: rgba(217, 48, 37, 0.35);
+  background: rgba(217, 48, 37, 0.04);
+}
+.setup-badge-todo {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 4px;
+  background: var(--g-red);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 3px 10px;
+  border-radius: 99px;
+}

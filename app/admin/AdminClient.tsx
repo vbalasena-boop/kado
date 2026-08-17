@@ -425,58 +425,99 @@ export default function AdminClient({
         {msg && <p className="save-msg" style={{ marginTop: 12 }}>{msg}</p>}
       </div>
 
-      {businesses.some((b) => b.setup_paid_at && !b.setup_done_at) && (
+      {businesses.some((b) => b.setup_paid_at) && (
         <div className="dash-card setup-todo">
-          <h2>🛠️ Installations à réaliser</h2>
-          <ul className="setup-todo-list">
-            {businesses
-              .filter((b) => b.setup_paid_at && !b.setup_done_at)
-              .map((b) => (
-                <li key={b.id}>
-                  <div className="setup-todo-info">
-                    <b>{b.name}</b>
-                    <span>
-                      {b.setup_option === "onsite"
-                        ? "Sur place (129 €)"
-                        : "À distance (79 €)"}{" "}
-                      · payée le {fmtDate(b.setup_paid_at)}
-                    </span>
-                    <span>
-                      {b.phone ? (
-                        <a href={`tel:${b.phone.replace(/\s/g, "")}`}>
-                          📞 {b.phone}
-                        </a>
-                      ) : (
-                        "📞 non renseigné"
-                      )}{" "}
-                      · ✉️ {b.owner_email}
-                    </span>
-                    {b.setup_option === "onsite" && (
-                      <span>📍 {b.address ?? "adresse non renseignée"}</span>
-                    )}
-                    {b.admin_note && (
-                      <span className="admin-note">📝 {b.admin_note}</span>
-                    )}
-                  </div>
-                  <div className="setup-todo-actions">
-                    <button
-                      className="btn-mini soft"
-                      disabled={busyId === b.id}
-                      onClick={() => saveNote(b.id, b.admin_note)}
-                    >
-                      📝 Note
-                    </button>
-                    <button
-                      className="btn-mini ok"
-                      disabled={busyId === b.id}
-                      onClick={() => markSetupDone(b.id, b.name)}
-                    >
-                      <Icon name="check" size={15} /> Marquer comme faite
-                    </button>
-                  </div>
-                </li>
-              ))}
-          </ul>
+          <h2>🛠️ Installations clé en main</h2>
+          {businesses.filter((b) => b.setup_paid_at && !b.setup_done_at)
+            .length === 0 ? (
+            <p className="muted">Aucune installation en attente 🎉</p>
+          ) : (
+            <ul className="setup-todo-list">
+              {businesses
+                .filter((b) => b.setup_paid_at && !b.setup_done_at)
+                .map((b) => (
+                  <li key={b.id}>
+                    <div className="setup-todo-info">
+                      <b>
+                        {b.name}{" "}
+                        <span className="setup-badge-todo">À faire</span>
+                      </b>
+                      <span>
+                        {b.setup_option === "onsite"
+                          ? "Sur place (129 €)"
+                          : "À distance (79 €)"}{" "}
+                        · payée le {fmtDate(b.setup_paid_at)}
+                      </span>
+                      <span>
+                        {b.phone ? (
+                          <a href={`tel:${b.phone.replace(/\s/g, "")}`}>
+                            📞 {b.phone}
+                          </a>
+                        ) : (
+                          "📞 non renseigné"
+                        )}{" "}
+                        · ✉️ {b.owner_email}
+                      </span>
+                      {b.setup_option === "onsite" && (
+                        <span>📍 {b.address ?? "adresse non renseignée"}</span>
+                      )}
+                      {b.admin_note && (
+                        <span className="admin-note">📝 {b.admin_note}</span>
+                      )}
+                    </div>
+                    <div className="setup-todo-actions">
+                      <button
+                        className="btn-mini soft"
+                        disabled={busyId === b.id}
+                        onClick={() => saveNote(b.id, b.admin_note)}
+                      >
+                        📝 Note
+                      </button>
+                      <button
+                        className="setup-done-btn"
+                        disabled={busyId === b.id}
+                        onClick={() => markSetupDone(b.id, b.name)}
+                      >
+                        <Icon name="check" size={18} /> Marquer comme faite
+                      </button>
+                    </div>
+                  </li>
+                ))}
+            </ul>
+          )}
+
+          {businesses.some((b) => b.setup_paid_at && b.setup_done_at) && (
+            <details className="setup-history">
+              <summary>
+                ✅ Historique —{" "}
+                {
+                  businesses.filter((b) => b.setup_paid_at && b.setup_done_at)
+                    .length
+                }{" "}
+                installation
+                {businesses.filter((b) => b.setup_paid_at && b.setup_done_at)
+                  .length > 1
+                  ? "s réalisées"
+                  : " réalisée"}
+              </summary>
+              <ul className="setup-history-list">
+                {businesses
+                  .filter((b) => b.setup_paid_at && b.setup_done_at)
+                  .map((b) => (
+                    <li key={b.id}>
+                      <b>{b.name}</b>
+                      <span>
+                        {b.setup_option === "onsite"
+                          ? "Sur place (129 €)"
+                          : "À distance (79 €)"}{" "}
+                        · payée le {fmtDate(b.setup_paid_at)} · ✅ réalisée le{" "}
+                        {fmtDate(b.setup_done_at)}
+                      </span>
+                    </li>
+                  ))}
+              </ul>
+            </details>
+          )}
         </div>
       )}
 
