@@ -13,6 +13,7 @@ import {
 } from "@/lib/campaigns";
 import { unsubToken } from "@/lib/unsub";
 import { setSystemState } from "@/lib/health";
+import { sendPushToClients } from "@/lib/push";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -164,7 +165,7 @@ export async function GET(req: NextRequest) {
     const todayStr = new Date().toISOString().slice(0, 10);
     const { data: due, error } = await db
       .from("campaigns")
-      .select("id, business_id")
+      .select("id, business_id, subject, body")
       .is("sent_at", null)
       .not("scheduled_for", "is", null)
       .lte("scheduled_for", todayStr);
@@ -173,7 +174,7 @@ export async function GET(req: NextRequest) {
     for (const c of due ?? []) {
       const { data: biz } = await db
         .from("businesses")
-        .select("id, status, subscription_status, campaigns_addon")
+        .select("id, name, slug, status, subscription_status, campaigns_addon")
         .eq("id", c.business_id)
         .maybeSingle();
       const entitled =
@@ -187,6 +188,16 @@ export async function GET(req: NextRequest) {
           .update({ sent_at: new Date().toISOString() })
           .eq("id", c.id);
         continue;
+      }
+      // Push aux clients abonnés aux offres, au démarrage de la campagne
+      try {
+        await sendPushToClients(db, c.business_id, {
+          title: `${biz.name} : ${c.subject}`.slice(0, 80),
+          body: String(c.body ?? "").slice(0, 140),
+          url: `/${biz.slug}`,
+        });
+      } catch {
+        /* jamais bloquant */
       }
       const audience = await buildCampaignAudience(db, c.business_id);
       await db

@@ -44,6 +44,7 @@ const REQUIRED_TABLES = [
   "products",
   "orders",
   "push_subscriptions",
+  "client_push_subscriptions",
 ];
 
 /** Tarifs Stripe attendus : [variable, type attendu, libellé]. */

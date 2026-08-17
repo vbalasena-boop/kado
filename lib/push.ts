@@ -1,13 +1,17 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+type PushPayload = { title: string; body: string; url?: string };
+
 /**
- * Envoi de notifications Web Push aux appareils abonnés d'un commerce.
- * Nécessite VAPID_PUBLIC_KEY et VAPID_PRIVATE_KEY (sinon : ignoré sans bruit).
+ * Envoie une notification Web Push à une liste d'abonnements et nettoie
+ * ceux qui ont expiré. Nécessite VAPID_PUBLIC_KEY et VAPID_PRIVATE_KEY
+ * (sinon : ignoré sans bruit).
  */
-export async function sendPushToBusiness(
+async function sendToTable(
   db: SupabaseClient,
+  table: "push_subscriptions" | "client_push_subscriptions",
   businessId: string,
-  payload: { title: string; body: string; url?: string }
+  payload: PushPayload
 ): Promise<number> {
   const pub = process.env.VAPID_PUBLIC_KEY;
   const priv = process.env.VAPID_PRIVATE_KEY;
@@ -16,7 +20,7 @@ export async function sendPushToBusiness(
   let subs: { id: string; endpoint: string; p256dh: string; auth: string }[];
   try {
     const { data } = await db
-      .from("push_subscriptions")
+      .from(table)
       .select("id, endpoint, p256dh, auth")
       .eq("business_id", businessId);
     subs = data ?? [];
@@ -43,7 +47,7 @@ export async function sendPushToBusiness(
             keys: { p256dh: s.p256dh, auth: s.auth },
           },
           JSON.stringify(payload),
-          { TTL: 3600 }
+          { TTL: 24 * 3600 }
         );
         sent++;
       } catch (e: any) {
@@ -56,10 +60,28 @@ export async function sendPushToBusiness(
   );
   if (gone.length > 0) {
     try {
-      await db.from("push_subscriptions").delete().in("id", gone);
+      await db.from(table).delete().in("id", gone);
     } catch {
       /* ignore */
     }
   }
   return sent;
+}
+
+/** Push vers les appareils du COMMERÇANT (alertes de commandes). */
+export function sendPushToBusiness(
+  db: SupabaseClient,
+  businessId: string,
+  payload: PushPayload
+) {
+  return sendToTable(db, "push_subscriptions", businessId, payload);
+}
+
+/** Push vers les CLIENTS abonnés aux offres du commerce (campagnes). */
+export function sendPushToClients(
+  db: SupabaseClient,
+  businessId: string,
+  payload: PushPayload
+) {
+  return sendToTable(db, "client_push_subscriptions", businessId, payload);
 }

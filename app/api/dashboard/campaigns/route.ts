@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { getMyBusiness, getSessionUser } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { sendBatch } from "@/lib/email";
+import { sendPushToClients } from "@/lib/push";
 import {
   buildCampaignAudience,
   buildCampaignPayloads,
@@ -115,12 +116,38 @@ export async function POST(req: NextRequest) {
 
   // Envoi immédiat
   const audience = await buildCampaignAudience(db, business.id);
-  if (audience.length === 0) {
+
+  // Notification push aux clients abonnés aux offres (gratuit, illimité,
+  // best effort — en plus des e-mails, jamais bloquant)
+  let pushed = 0;
+  try {
+    pushed = await sendPushToClients(db, business.id, {
+      title: `${business.name} : ${subject}`.slice(0, 80),
+      body: message.slice(0, 140),
+      url: `/${business.slug}`,
+    });
+  } catch {
+    /* ignore */
+  }
+
+  if (audience.length === 0 && pushed === 0) {
     return Response.json({ error: "no_audience" }, { status: 400 });
   }
 
   const user = await getSessionUser();
   const bizInfo = { id: business.id, name: business.name, slug: business.slug };
+
+  if (audience.length === 0) {
+    // uniquement des abonnés push : la campagne est quand même partie
+    await db.from("campaigns").insert({
+      business_id: business.id,
+      subject,
+      body: message,
+      sent_count: 0,
+      sent_at: new Date().toISOString(),
+    });
+    return Response.json({ ok: true, sent: 0, pushed });
+  }
 
   if (isTrial && !addonOn) {
     // Essai : une seule fournée, plafonnée à 10 destinataires
@@ -138,6 +165,7 @@ export async function POST(req: NextRequest) {
     return Response.json({
       ok: true,
       sent,
+      pushed,
       trialCapped: audience.length > TRIAL_MAX_RECIPIENTS,
     });
   }
@@ -158,7 +186,7 @@ export async function POST(req: NextRequest) {
       : { sent_at: new Date().toISOString() }),
   });
 
-  return Response.json({ ok: true, sent, remaining: rest.length });
+  return Response.json({ ok: true, sent, pushed, remaining: rest.length });
 }
 
 /** Annule une campagne programmée, ou stoppe l'envoi étalé restant. */

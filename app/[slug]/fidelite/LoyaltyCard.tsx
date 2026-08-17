@@ -51,6 +51,60 @@ export default function LoyaltyCard({
   const [bMonth, setBMonth] = useState("");
   const [bBusy, setBBusy] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [pushState, setPushState] = useState<
+    "unsupported" | "off" | "busy" | "on"
+  >("unsupported");
+
+  // Notifications d'offres : cet appareil est-il déjà abonné ?
+  useEffect(() => {
+    if (!("PushManager" in window) || !("serviceWorker" in navigator)) return;
+    if (localStorage.getItem(`kado-push-${slug}`) === "1") setPushState("on");
+    else setPushState("off");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /** Abonne l'appareil aux offres de ce commerce (opt-in navigateur). */
+  async function enableOffersPush() {
+    setPushState("busy");
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm !== "granted") {
+        setPushState("off");
+        return;
+      }
+      const reg = await navigator.serviceWorker.register("/sw.js");
+      await navigator.serviceWorker.ready;
+      const res = await fetch("/api/push");
+      const { key } = await res.json();
+      if (!key) {
+        setPushState("off");
+        return;
+      }
+      const padding = "=".repeat((4 - (key.length % 4)) % 4);
+      const raw = atob((key + padding).replace(/-/g, "+").replace(/_/g, "/"));
+      const appKey = Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
+      const sub =
+        (await reg.pushManager.getSubscription()) ??
+        (await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: appKey,
+        }));
+      const json = sub.toJSON();
+      const ok = await fetch("/api/push", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug, endpoint: json.endpoint, keys: json.keys }),
+      });
+      if (ok.ok) {
+        localStorage.setItem(`kado-push-${slug}`, "1");
+        setPushState("on");
+      } else {
+        setPushState("off");
+      }
+    } catch {
+      setPushState("off");
+    }
+  }
 
   async function saveExtra(patch: {
     birthday_day?: number;
@@ -333,6 +387,35 @@ export default function LoyaltyCard({
               )}
               <div className="fid-code">{card.code}</div>
             </div>
+
+            {pushState !== "unsupported" && (
+              <div className="fid-extra">
+                <b>🔔 Les bons plans de {name}</b>
+                {pushState === "on" ? (
+                  <p>
+                    ✅ Notifications activées — vous recevrez les offres et
+                    promos directement sur cet appareil.
+                  </p>
+                ) : (
+                  <>
+                    <p>
+                      Recevez les offres et promos en notification sur votre
+                      téléphone (désactivable à tout moment dans les réglages
+                      du navigateur).
+                    </p>
+                    <button
+                      className="btn"
+                      onClick={enableOffersPush}
+                      disabled={pushState === "busy"}
+                    >
+                      {pushState === "busy"
+                        ? "Activation…"
+                        : "Activer les notifications"}
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
 
             {card.referralEnabled && (
               <div className="fid-extra">
