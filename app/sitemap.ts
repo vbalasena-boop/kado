@@ -12,6 +12,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: "/legal/confidentialite", priority: 0.3 },
     { path: "/legal/cgu", priority: 0.3 },
     { path: "/legal/cgv", priority: 0.3 },
+    { path: "/legal/reglement", priority: 0.3 },
   ];
   return routes.map((r) => ({
     url: `${BASE}${r.path}`,

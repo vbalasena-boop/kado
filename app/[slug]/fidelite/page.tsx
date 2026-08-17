@@ -3,6 +3,7 @@ import { hasAccess, hasModule } from "@/lib/auth";
 import LoyaltyCard from "./LoyaltyCard";
 
 export const dynamic = "force-dynamic";
+export const metadata = { robots: { index: false, follow: false } };
 export const revalidate = 0;
 export const fetchCache = "force-no-store";
 

@@ -64,7 +64,17 @@ export const metadata: Metadata = {
     description:
       "Le jeu de roue qui transforme vos clients en avis 5★ et en abonnés — sans application. Essai gratuit 14 jours.",
   },
-  robots: { index: true, follow: true },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
 };
 
 export const viewport: Viewport = {

@@ -150,22 +150,59 @@ const FAQ = [
   },
 ];
 
+// Données structurées (schema.org) : améliorent l'affichage dans Google
+// (résultats enrichis FAQ, fiche logiciel, organisation).
 const JSON_LD = {
   "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  name: "Kado",
-  applicationCategory: "BusinessApplication",
-  operatingSystem: "Web",
-  description:
-    "Le jeu de roue de la fortune qui transforme vos clients en avis Google 5★ et en abonnés Instagram, sans application.",
-  url: "https://kado-app.fr",
-  offers: {
-    "@type": "Offer",
-    price: "29",
-    priceCurrency: "EUR",
-    description: "Abonnement mensuel sans engagement · essai gratuit 14 jours",
-  },
-  publisher: { "@type": "Organization", name: "Kado" },
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://kado-app.fr/#organization",
+      name: "Kado",
+      url: "https://kado-app.fr",
+      logo: "https://kado-app.fr/icon-512.png",
+      description:
+        "Kado est la solution tout-en-un de fidélisation pour les commerces de proximité : jeux, avis Google, carte de fidélité digitale, campagnes et commande en ligne.",
+      areaServed: "FR",
+      email: "vbalasena@instant-events.fr",
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://kado-app.fr/#website",
+      url: "https://kado-app.fr",
+      name: "Kado",
+      inLanguage: "fr-FR",
+      publisher: { "@id": "https://kado-app.fr/#organization" },
+    },
+    {
+      "@type": "SoftwareApplication",
+      name: "Kado",
+      applicationCategory: "BusinessApplication",
+      operatingSystem: "Web",
+      inLanguage: "fr-FR",
+      description:
+        "Le jeu à scanner en caisse qui transforme vos clients en avis Google 5★ et en abonnés Instagram — avec carte de fidélité digitale, campagnes e-mail et commande en ligne. Sans application.",
+      url: "https://kado-app.fr",
+      publisher: { "@id": "https://kado-app.fr/#organization" },
+      offers: {
+        "@type": "AggregateOffer",
+        priceCurrency: "EUR",
+        lowPrice: "19",
+        highPrice: "44",
+        offerCount: "3",
+        description:
+          "Abonnement mensuel sans engagement · essai gratuit 14 jours, sans carte bancaire",
+      },
+    },
+    {
+      "@type": "FAQPage",
+      mainEntity: FAQ.map((f) => ({
+        "@type": "Question",
+        name: f.q,
+        acceptedAnswer: { "@type": "Answer", text: f.a },
+      })),
+    },
+  ],
 };
 
 export default function Home({

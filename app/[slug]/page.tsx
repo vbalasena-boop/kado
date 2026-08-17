@@ -8,6 +8,9 @@ import Game from "./Game";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export const fetchCache = "force-no-store";
+// Page « application » propre à chaque commerce : non indexée pour ne pas
+// diluer le référencement du site (Google se concentre sur les pages marketing).
+export const metadata = { robots: { index: false, follow: false } };
 
 function Unavailable({ message }: { message: string }) {
   return (
