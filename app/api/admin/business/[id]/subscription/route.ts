@@ -28,7 +28,7 @@ export async function POST(
   const admin = await getAdminUser();
   if (!admin) return Response.json({ error: "forbidden" }, { status: 403 });
 
-  let body: { action?: string; months?: number };
+  let body: { action?: string; months?: number; date?: string };
   try {
     body = await req.json();
   } catch {
@@ -72,6 +72,17 @@ export async function POST(
     ends = addMonths(base, n);
     subStatus = "active";
     monthsGiven = n;
+  } else if (body.action === "set_end") {
+    // date de fin exacte, définie manuellement par l'admin
+    const dstr = String(body.date ?? "");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dstr)) {
+      return Response.json({ error: "invalid_date" }, { status: 400 });
+    }
+    ends = new Date(`${dstr}T23:59:59Z`);
+    if (!Number.isFinite(ends.getTime())) {
+      return Response.json({ error: "invalid_date" }, { status: 400 });
+    }
+    subStatus = ends > now ? "active" : "suspended";
   } else {
     return Response.json({ error: "invalid_action" }, { status: 400 });
   }
@@ -99,7 +110,8 @@ export async function POST(
 
   let emailSent = false;
   const { email, businessName } = await getOwnerContact(db, params.id);
-  if (email) {
+  // pas d'e-mail « cadeau » pour un simple ajustement manuel de date
+  if (email && body.action !== "set_end") {
     const html = emailLayout({
       preview: `Bonne nouvelle : ${giftLabel} sur votre abonnement Kado`,
       emoji: "🎁",

@@ -21,6 +21,7 @@ export type AdminBusiness = {
   setup_paid_at: string | null;
   setup_done_at: string | null;
   admin_note: string | null;
+  campaigns_addon?: boolean;
 };
 
 const PLAN_LABEL: Record<string, string> = {
@@ -80,6 +81,18 @@ export default function AdminClient({
   const [creating, setCreating] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+
+  // Recherche : nom, lien, e-mail, téléphone ou adresse
+  const q = query.trim().toLowerCase();
+  const filtered = q
+    ? businesses.filter((b) =>
+        [b.name, b.slug, b.owner_email, b.phone ?? "", b.address ?? ""]
+          .join(" ")
+          .toLowerCase()
+          .includes(q)
+      )
+    : businesses;
 
   async function createBusiness(e: React.FormEvent) {
     e.preventDefault();
@@ -235,6 +248,111 @@ export default function AdminClient({
       return;
     }
     subscribe(id, "months", n);
+  }
+
+  /** Change la formule manuellement (Stripe ajusté si abonnement réel). */
+  function changePlanAdmin(id: string, name: string, current: string | null) {
+    const def =
+      current === "fidelite" ? "2" : current === "complet" ? "3" : "1";
+    const raw = window.prompt(
+      `Changer la formule de « ${name} ».\n\n1 = Jeux (29 €)\n2 = Fidélité (19 €)\n3 = Complet (44 €)\n\nSi un abonnement Stripe est actif, la facturation est ajustée (prorata).\n\nVotre choix :`,
+      def
+    );
+    if (raw === null) return;
+    const map: Record<string, string> = { "1": "roue", "2": "fidelite", "3": "complet" };
+    const plan = map[raw.trim()];
+    if (!plan) {
+      setMsg("❌ Choix invalide (1, 2 ou 3).");
+      return;
+    }
+    (async () => {
+      setBusyId(id);
+      setMsg(null);
+      try {
+        const res = await fetch(`/api/admin/business/${id}/plan`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ plan }),
+        });
+        const d = await res.json().catch(() => ({}));
+        if (res.ok) {
+          setMsg(
+            `✅ Formule de « ${name} » changée.` +
+              (d.stripe
+                ? " Abonnement Stripe ajusté (prorata sur la prochaine facture)."
+                : " (Compte sans abonnement Stripe : base mise à jour.)")
+          );
+        } else {
+          setMsg("❌ " + (d.detail || d.error || "Échec du changement."));
+        }
+        router.refresh();
+      } finally {
+        setBusyId(null);
+      }
+    })();
+  }
+
+  /** Définit une date de fin d'accès exacte (comptes gérés à la main). */
+  function setEndDate(id: string, name: string, current: string | null) {
+    const raw = window.prompt(
+      `Définir la date de fin d'accès de « ${name} » (format AAAA-MM-JJ).\n\n⚠️ Si un abonnement Stripe est actif, cette date sera réécrite au prochain prélèvement — utilisez plutôt Stripe pour ces comptes.`,
+      current ? current.slice(0, 10) : ""
+    );
+    if (raw === null) return;
+    const dstr = raw.trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dstr)) {
+      setMsg("❌ Date invalide (format attendu : AAAA-MM-JJ).");
+      return;
+    }
+    (async () => {
+      setBusyId(id);
+      setMsg(null);
+      try {
+        const res = await fetch(`/api/admin/business/${id}/subscription`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "set_end", date: dstr }),
+        });
+        const d = await res.json().catch(() => ({}));
+        setMsg(
+          res.ok
+            ? `✅ Fin d'accès de « ${name} » fixée au ${dstr}.`
+            : "❌ " + (d.error || "Échec de la mise à jour.")
+        );
+        router.refresh();
+      } finally {
+        setBusyId(null);
+      }
+    })();
+  }
+
+  /** Offre (ou retire) l'option Campagnes sans facturation Stripe. */
+  async function toggleCampaigns(id: string, name: string, current: boolean) {
+    if (
+      !confirm(
+        current
+          ? `Retirer l'option Campagnes à « ${name} » ?`
+          : `Offrir l'option Campagnes à « ${name} » ?\n\nAccès offert : aucune facturation Stripe ne sera créée.`
+      )
+    )
+      return;
+    setBusyId(id);
+    setMsg(null);
+    try {
+      const res = await fetch(`/api/admin/business/${id}/addon`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enable: !current }),
+      });
+      setMsg(
+        res.ok
+          ? `✅ Option Campagnes ${!current ? "offerte à" : "retirée de"} « ${name} ».`
+          : "❌ Échec de la mise à jour."
+      );
+      router.refresh();
+    } finally {
+      setBusyId(null);
+    }
   }
 
   async function refund(id: string, name: string) {
@@ -427,14 +545,12 @@ export default function AdminClient({
         {msg && <p className="save-msg" style={{ marginTop: 12 }}>{msg}</p>}
       </div>
 
-      {businesses.some((b) => b.setup_paid_at) && (
+      {/* Visible uniquement s'il reste des installations à faire ; une fois
+          réalisées, elles s'affichent sur la ligne du commerçant. */}
+      {businesses.some((b) => b.setup_paid_at && !b.setup_done_at) && (
         <div className="dash-card setup-todo">
           <h2>🛠️ Installations clé en main</h2>
-          {businesses.filter((b) => b.setup_paid_at && !b.setup_done_at)
-            .length === 0 ? (
-            <p className="muted">Aucune installation en attente 🎉</p>
-          ) : (
-            <ul className="setup-todo-list">
+          <ul className="setup-todo-list">
               {businesses
                 .filter((b) => b.setup_paid_at && !b.setup_done_at)
                 .map((b) => (
@@ -485,45 +601,24 @@ export default function AdminClient({
                     </div>
                   </li>
                 ))}
-            </ul>
-          )}
-
-          {businesses.some((b) => b.setup_paid_at && b.setup_done_at) && (
-            <details className="setup-history">
-              <summary>
-                ✅ Historique —{" "}
-                {
-                  businesses.filter((b) => b.setup_paid_at && b.setup_done_at)
-                    .length
-                }{" "}
-                installation
-                {businesses.filter((b) => b.setup_paid_at && b.setup_done_at)
-                  .length > 1
-                  ? "s réalisées"
-                  : " réalisée"}
-              </summary>
-              <ul className="setup-history-list">
-                {businesses
-                  .filter((b) => b.setup_paid_at && b.setup_done_at)
-                  .map((b) => (
-                    <li key={b.id}>
-                      <b>{b.name}</b>
-                      <span>
-                        {b.setup_option === "onsite"
-                          ? "Sur place (129 €)"
-                          : "À distance (79 €)"}{" "}
-                        · payée le {fmtDate(b.setup_paid_at)} · ✅ réalisée le{" "}
-                        {fmtDate(b.setup_done_at)}
-                      </span>
-                    </li>
-                  ))}
-              </ul>
-            </details>
-          )}
+          </ul>
         </div>
       )}
 
       <div className="dash-card" style={{ padding: 0, overflow: "hidden" }}>
+        <div className="admin-toolbar">
+          <input
+            type="search"
+            className="admin-search"
+            placeholder="🔍 Rechercher un commerçant (nom, e-mail, téléphone…)"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          <span className="admin-count">
+            {filtered.length} / {businesses.length} établissement
+            {businesses.length > 1 ? "s" : ""}
+          </span>
+        </div>
         <div className="admin-table-wrap">
           <table className="admin-table">
             <thead>
@@ -533,19 +628,20 @@ export default function AdminClient({
                 <th>Tours</th>
                 <th>Abonnement</th>
                 <th>Statut</th>
-                <th>Gérer l'abonnement</th>
-                <th>Accès</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {businesses.length === 0 ? (
+              {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="muted" style={{ padding: 22 }}>
-                    Aucun établissement pour l'instant.
+                  <td colSpan={6} className="muted" style={{ padding: 22 }}>
+                    {q
+                      ? `Aucun résultat pour « ${query.trim()} ».`
+                      : "Aucun établissement pour l'instant."}
                   </td>
                 </tr>
               ) : (
-                businesses.map((b) => {
+                filtered.map((b) => {
                   const rem = remaining(b.subscription_ends_at);
                   const busy = busyId === b.id;
                   return (
@@ -563,6 +659,19 @@ export default function AdminClient({
                         {b.admin_note && (
                           <div className="admin-note">📝 {b.admin_note}</div>
                         )}
+                        {b.setup_paid_at &&
+                          (b.setup_done_at ? (
+                            <div className="setup-chip done">
+                              🛠️ Installée par vous le {fmtDate(b.setup_done_at)}{" "}
+                              ({b.setup_option === "onsite"
+                                ? "sur place"
+                                : "à distance"})
+                            </div>
+                          ) : (
+                            <div className="setup-chip todo">
+                              🛠️ Installation à faire
+                            </div>
+                          ))}
                       </td>
                       <td className="admin-email">
                         {b.owner_email || "(non lié)"}
@@ -595,6 +704,7 @@ export default function AdminClient({
                               <br />
                               <small className="admin-plan">
                                 {PLAN_LABEL[b.plan] ?? b.plan}
+                                {b.campaigns_addon ? " · 💌 campagnes" : ""}
                               </small>
                             </>
                           )}
@@ -623,6 +733,7 @@ export default function AdminClient({
                         </span>
                       </td>
                       <td>
+                        {/* Actions principales, toujours visibles */}
                         <div className="sub-actions">
                           <button
                             className="btn-mini soft"
@@ -638,10 +749,6 @@ export default function AdminClient({
                           >
                             <Icon name="add" size={15} /> Offrir des mois…
                           </button>
-                        </div>
-                      </td>
-                      <td>
-                        <div className="sub-actions">
                           {b.status === "active" ? (
                             <button
                               className="btn-mini danger"
@@ -659,35 +766,72 @@ export default function AdminClient({
                               <Icon name="check" size={15} /> Réactiver
                             </button>
                           )}
-                          <button
-                            className="btn-mini soft"
-                            disabled={busy}
-                            onClick={() => refund(b.id, b.name)}
-                          >
-                            <Icon name="redeem" size={15} /> Rembourser
-                          </button>
-                          <button
-                            className="btn-mini soft"
-                            disabled={busy}
-                            onClick={() => saveNote(b.id, b.admin_note)}
-                          >
-                            📝 Note
-                          </button>
-                          <button
-                            className="btn-mini soft"
-                            disabled={busy}
-                            onClick={() => resetCounters(b.id, b.name)}
-                          >
-                            🔄 RAZ compteurs
-                          </button>
-                          <button
-                            className="btn-mini danger"
-                            disabled={busy}
-                            onClick={() => remove(b.id, b.name)}
-                          >
-                            <Icon name="delete" size={15} /> Supprimer
-                          </button>
                         </div>
+                        {/* Le reste, rangé dans un menu repliable */}
+                        <details className="act-more">
+                          <summary>⋯ Plus d'actions</summary>
+                          <div className="sub-actions">
+                            <button
+                              className="btn-mini soft"
+                              disabled={busy}
+                              onClick={() =>
+                                changePlanAdmin(b.id, b.name, b.plan)
+                              }
+                            >
+                              ⚙️ Formule…
+                            </button>
+                            <button
+                              className="btn-mini soft"
+                              disabled={busy}
+                              onClick={() =>
+                                setEndDate(b.id, b.name, b.subscription_ends_at)
+                              }
+                            >
+                              📅 Date de fin…
+                            </button>
+                            <button
+                              className="btn-mini soft"
+                              disabled={busy}
+                              onClick={() =>
+                                toggleCampaigns(
+                                  b.id,
+                                  b.name,
+                                  !!b.campaigns_addon
+                                )
+                              }
+                            >
+                              💌 Campagnes {b.campaigns_addon ? "on" : "off"}
+                            </button>
+                            <button
+                              className="btn-mini soft"
+                              disabled={busy}
+                              onClick={() => refund(b.id, b.name)}
+                            >
+                              <Icon name="redeem" size={15} /> Rembourser
+                            </button>
+                            <button
+                              className="btn-mini soft"
+                              disabled={busy}
+                              onClick={() => saveNote(b.id, b.admin_note)}
+                            >
+                              📝 Note
+                            </button>
+                            <button
+                              className="btn-mini soft"
+                              disabled={busy}
+                              onClick={() => resetCounters(b.id, b.name)}
+                            >
+                              🔄 RAZ compteurs
+                            </button>
+                            <button
+                              className="btn-mini danger"
+                              disabled={busy}
+                              onClick={() => remove(b.id, b.name)}
+                            >
+                              <Icon name="delete" size={15} /> Supprimer
+                            </button>
+                          </div>
+                        </details>
                       </td>
                     </tr>
                   );
