@@ -3,6 +3,7 @@ import { getAdminClient } from "@/lib/supabase/admin";
 import { getOrCreatePlayerId } from "@/lib/player";
 import { weightedIndex, generateCode } from "@/lib/draw";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
+import { sendPushToBusiness } from "@/lib/push";
 
 export const dynamic = "force-dynamic";
 
@@ -126,6 +127,27 @@ export async function POST(req: NextRequest) {
       );
     }
     return Response.json({ error: "db_error" }, { status: 500 });
+  }
+
+  // Alerte temps réel au commerçant à chaque cadeau gagné (si activée).
+  // Lecture tolérante : colonne 0029 peut manquer ; on n'échoue jamais le tour.
+  if (isWin(prize.label)) {
+    try {
+      const { data: alertCfg, error: alertErr } = await supa
+        .from("wheel_configs")
+        .select("play_alerts")
+        .eq("business_id", biz.id)
+        .maybeSingle();
+      if (!alertErr && (alertCfg as any)?.play_alerts) {
+        await sendPushToBusiness(supa, biz.id, {
+          title: "🎉 Cadeau gagné !",
+          body: `${prize.emoji || "🎁"} ${prize.label} — un client vient de gagner.`,
+          url: "/dashboard",
+        });
+      }
+    } catch {
+      /* la notif ne doit jamais bloquer le tour */
+    }
   }
 
   return Response.json({

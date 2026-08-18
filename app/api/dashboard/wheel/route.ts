@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
       birthday_enabled?: boolean;
       birthday_reward?: string;
       referral_enabled?: boolean;
+      play_alerts?: boolean;
     };
     prizes?: {
       label: string;
@@ -138,6 +139,17 @@ export async function POST(req: NextRequest) {
       { error: "config_error", detail: cfgErr.message },
       { status: 500 }
     );
+
+  // Alerte « cadeau gagné » : colonne récente (0029), mise à jour isolée et
+  // tolérante (si la colonne manque, on ignore sans casser l'enregistrement).
+  try {
+    await admin
+      .from("wheel_configs")
+      .update({ play_alerts: !!cfg.play_alerts })
+      .eq("business_id", business.id);
+  } catch {
+    /* colonne absente : ignoré */
+  }
 
   // remplace la liste des cadeaux
   const prizes = (body.prizes ?? [])

@@ -49,6 +49,14 @@ export default async function WheelPage() {
     .maybeSingle();
   const themeLocked: boolean = tlErr ? false : !!(tl as any)?.theme_locked;
 
+  // Alerte cadeau gagné (lecture tolérante si migration 0029 absente)
+  const { data: pa, error: paErr } = await admin
+    .from("wheel_configs")
+    .select("play_alerts")
+    .eq("business_id", business.id)
+    .maybeSingle();
+  const playAlerts: boolean = paErr ? false : !!(pa as any)?.play_alerts;
+
   return (
     <WheelEditor
       initialConfig={{
@@ -61,6 +69,7 @@ export default async function WheelPage() {
         prize_validity_days: prizeValidity,
         decor_emojis: decorEmojis,
         theme_locked: themeLocked,
+        play_alerts: playAlerts,
       }}
       initialPrizes={prizes ?? []}
       initialLogoUrl={business.logo_url}

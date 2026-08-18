@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/icons";
 import { GAME_THEMES, matchTheme } from "@/lib/themes";
+import { EnableNotifications } from "@/components/EnableNotifications";
 
 type Prize = {
   label: string;
@@ -33,6 +34,7 @@ type Config = {
   birthday_enabled?: boolean | null;
   birthday_reward?: string | null;
   referral_enabled?: boolean | null;
+  play_alerts?: boolean | null;
 };
 
 // Luminance d'une couleur hex (0 = noir, 1 = blanc) pour choisir un texte lisible.
@@ -859,6 +861,22 @@ export default function WheelEditor({
                 Passé ce délai, le code cadeau est refusé en caisse. La validité
                 est affichée au client quand il gagne.
               </p>
+              <hr className="fid-sep" />
+              <label className="toggle-field">
+                <input
+                  type="checkbox"
+                  checked={!!config.play_alerts}
+                  onChange={(e) =>
+                    setConfig({ ...config, play_alerts: e.target.checked })
+                  }
+                />
+                <span>
+                  <b>🔔 M'alerter à chaque cadeau gagné</b> — recevez une
+                  notification en temps réel dès qu'un client remporte un lot.
+                </span>
+              </label>
+              {config.play_alerts && <EnableNotifications />}
+              <hr className="fid-sep" />
               <div className="prize-list">
                 {prizes.map((p, i) => (
                   <div className="prize-row" key={i}>
