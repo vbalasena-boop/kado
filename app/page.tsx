@@ -343,6 +343,39 @@ export default function Home({
       </section>
 
       <section className="v-section">
+        <div className="v-concours">
+          <span className="v-concours-badge">🎲 Nouveau</span>
+          <h2 style={{ marginBottom: 10 }}>
+            Lancez un <span className="v-hl">concours</span> qui fait revenir
+            vos clients
+          </h2>
+          <p className="v-concours-lede">
+            En plus des cadeaux instantanés, organisez un <b>tirage au sort</b>{" "}
+            automatique — chaque semaine ou chaque mois, à la date de votre
+            choix. Un gagnant est désigné au hasard parmi vos clients&nbsp;: ils
+            reviennent pour savoir s'ils ont gagné.
+          </p>
+          <div className="v-concours-grid">
+            <div className="v-concours-item">
+              <span>🗓️</span>
+              <b>Fréquence au choix</b>
+              <small>Hebdomadaire, mensuel… vous programmez la date.</small>
+            </div>
+            <div className="v-concours-item">
+              <span>🤖</span>
+              <b>100 % automatique</b>
+              <small>Le gagnant est tiré et prévenu par e-mail, sans effort.</small>
+            </div>
+            <div className="v-concours-item">
+              <span>🔁</span>
+              <b>Ils reviennent</b>
+              <small>Un vrai levier de fidélité, sans obligation d'achat.</small>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="v-section">
         <h2>Pourquoi Kado</h2>
         <div className="v-benefits">
           {BENEFITS.map((b) => (

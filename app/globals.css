@@ -5740,3 +5740,51 @@ summary:focus-visible,
   color: var(--cream);
   text-align: center;
 }
+
+/* ===== Section « concours » (accueil) ===== */
+.v-concours {
+  max-width: 860px;
+  margin: 0 auto;
+  border: 1px solid var(--gold);
+  border-radius: 24px;
+  background: linear-gradient(180deg, var(--surface), var(--surface-2));
+  padding: 30px 28px;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+.v-concours-badge {
+  display: inline-block;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #1b1035;
+  background: var(--gold);
+  border-radius: 999px;
+  padding: 5px 12px;
+  margin-bottom: 12px;
+}
+.v-concours-lede {
+  color: var(--cream-dim);
+  font-size: 15px;
+  line-height: 1.55;
+  max-width: 58ch;
+  margin: 0 auto 22px;
+}
+.v-concours-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+@media (max-width: 640px) {
+  .v-concours-grid { grid-template-columns: 1fr; }
+}
+.v-concours-item {
+  border: 1px solid var(--stroke);
+  border-radius: 16px;
+  padding: 18px 14px;
+  text-align: center;
+}
+.v-concours-item > span { font-size: 30px; display: block; margin-bottom: 6px; }
+.v-concours-item b { display: block; font-size: 15px; margin-bottom: 4px; }
+.v-concours-item small { color: var(--cream-dim); font-size: 12.8px; line-height: 1.45; }
+
+.v-hl { color: var(--gold); }
