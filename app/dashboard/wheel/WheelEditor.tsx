@@ -111,6 +111,18 @@ export default function WheelEditor({
 }) {
   // La section fidélité est verrouillée si la formule ne l'inclut pas.
   const fideliteLocked = !showFidelite;
+  // Onglets de l'éditeur (uniquement pour la roue/jeux, pour éviter un long
+  // défilement et rendre la configuration plus claire).
+  type EditorTab = "look" | "game" | "links" | "fid" | "draw";
+  const [tab, setTab] = useState<EditorTab>("look");
+  const ALL_TABS: { id: EditorTab; label: string; show: boolean }[] = [
+    { id: "look", label: "🎨 Apparence", show: showRoue },
+    { id: "game", label: "🎮 Le jeu", show: showRoue },
+    { id: "links", label: "🔗 Liens", show: showRoue },
+    { id: "fid", label: "🎟️ Fidélité", show: showFidelite || showRoue },
+    { id: "draw", label: "🎲 Tirage", show: showRoue },
+  ];
+  const TABS = ALL_TABS.filter((t) => t.show);
   // Page personnalisée par l'admin (formule Installation) : le commerçant
   // ne peut plus changer l'apparence lui-même.
   const themeLocked = !!initialConfig.theme_locked;
@@ -311,7 +323,23 @@ export default function WheelEditor({
 
       <div className="editor">
         <div className="editor-form">
-          {showRoue && (
+          {TABS.length > 1 && (
+            <div className="editor-tabs" role="tablist">
+              {TABS.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={tab === t.id}
+                  className={`editor-tab${tab === t.id ? " on" : ""}`}
+                  onClick={() => setTab(t.id)}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          )}
+          {showRoue && tab === "look" && (
             <>
               <div className="dash-card">
                 <h2>Logo</h2>
@@ -454,7 +482,10 @@ export default function WheelEditor({
                   </>
                 )}
               </div>
-
+            </>
+          )}
+          {showRoue && tab === "game" && (
+            <>
               <div className="dash-card">
                 <h2>Type de jeu</h2>
                 <p className="muted" style={{ marginBottom: 14 }}>
@@ -478,7 +509,10 @@ export default function WheelEditor({
                   ))}
                 </div>
               </div>
-
+            </>
+          )}
+          {showRoue && tab === "links" && (
+            <>
               <div className="dash-card">
                 <h2>Canaux &amp; liens</h2>
                 <p className="muted" style={{ marginBottom: 14 }}>
@@ -584,7 +618,7 @@ export default function WheelEditor({
             </>
           )}
 
-          {(showFidelite || showRoue) && (
+          {(showFidelite || showRoue) && (!showRoue || tab === "fid") && (
             <div className={`dash-card fid-card${fideliteLocked ? " locked" : ""}`}>
               <div className="fid-card-head">
                 <h2>
@@ -814,7 +848,7 @@ export default function WheelEditor({
             </div>
           )}
 
-          {showRoue && (
+          {showRoue && tab === "game" && (
             <div className="dash-card">
               <h2>Cadeaux</h2>
               <p className="muted">
@@ -930,7 +964,7 @@ export default function WheelEditor({
             </div>
           )}
 
-          {showRoue && (
+          {showRoue && tab === "draw" && (
             <div className="dash-card">
               <h2>🎲 Tirage au sort</h2>
               <p className="muted" style={{ marginBottom: 14 }}>
