@@ -245,7 +245,7 @@ export async function POST(req: NextRequest) {
                           cb.name ?? cb.id
                         }</b> (formule <b>${plan}</b>), amené par <b>${
                           aff.name
-                        }</b>, vient de régler son premier abonnement.<br><br>Commission due : <b>${euros}&nbsp;€</b>.<br><br>Retrouvez le récapitulatif dans <a href="https://kado-app.fr/admin/vendeurs">Admin → Vendeurs</a> — demandez sa facture au vendeur puis marquez la commission comme payée.`,
+                        }</b>, vient de régler son premier abonnement.<br><br>Commission acquise : <b>${euros}&nbsp;€</b> — à virer après le <b>2ᵉ prélèvement</b> du client (elle apparaîtra « à virer » dans l'admin à ce moment-là).<br><br>Récapitulatif dans <a href="https://kado-app.fr/admin/vendeurs">Admin → Vendeurs</a> — demandez sa facture au vendeur puis marquez la commission comme payée.`,
                       }),
                     });
                   }
@@ -259,7 +259,7 @@ export async function POST(req: NextRequest) {
                         emoji: "💶",
                         bodyHtml: `Bonne nouvelle : le commerce <b>${
                           cb.name ?? "que vous avez amené"
-                        }</b> vient de régler son premier abonnement Kado.<br><br>Votre commission de <b>${euros}&nbsp;€</b> est validée. Envoyez votre facture à Kado pour recevoir le virement.`,
+                        }</b> vient de régler son premier abonnement Kado.<br><br>Votre commission de <b>${euros}&nbsp;€</b> est acquise. Elle vous sera versée après le <b>2ᵉ prélèvement</b> de votre client (environ un mois) — envoyez alors votre facture à Kado pour recevoir le virement.`,
                       }),
                     });
                   }

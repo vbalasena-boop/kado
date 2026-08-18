@@ -15,7 +15,9 @@ export type AffiliateRow = {
   totalClients: number;
   trialClients: number;
   paidClients: number;
-  dueCents: number;
+  exigibleCents: number; // client actif + 2e prélèvement passé → à virer
+  pendingCents: number; // en attente du 2e prélèvement du client
+  lapsedCents: number; // client parti avant le 2e mois → caduque
   paidCents: number;
 };
 
@@ -64,7 +66,10 @@ export default function VendeursClient({
     setCreating(false);
   }
 
-  async function patch(id: string, action: "mark_paid" | "toggle_active") {
+  async function patch(
+    id: string,
+    action: "mark_paid" | "toggle_active" | "cancel_lapsed"
+  ) {
     try {
       const res = await fetch("/api/admin/affiliates", {
         method: "PATCH",
@@ -76,9 +81,13 @@ export default function VendeursClient({
         setRows((rs) =>
           rs.map((r) =>
             r.id === id
-              ? { ...r, paidCents: r.paidCents + r.dueCents, dueCents: 0 }
+              ? { ...r, paidCents: r.paidCents + r.exigibleCents, exigibleCents: 0 }
               : r
           )
+        );
+      } else if (action === "cancel_lapsed") {
+        setRows((rs) =>
+          rs.map((r) => (r.id === id ? { ...r, lapsedCents: 0 } : r))
         );
       } else {
         setRows((rs) =>
@@ -147,8 +156,9 @@ export default function VendeursClient({
         </form>
         {msg && <p className="save-msg">{msg}</p>}
         <p className="muted">
-          Commissions par défaut : Fidélité <b>40 €</b> · Jeux <b>60 €</b> ·
-          Complet <b>90 €</b> par client signé (payant).
+          Commissions par défaut : Fidélité <b>20 €</b> · Jeux <b>30 €</b> ·
+          Complet <b>45 €</b> par client signé — versées après le{" "}
+          <b>2ᵉ prélèvement</b> du client (caduques s'il part avant).
         </p>
       </div>
 
@@ -188,17 +198,33 @@ export default function VendeursClient({
               {r.paidClients > 1 ? "s" : ""}
             </p>
             <p>
-              💶 À verser : <b>{eur(r.dueCents)}</b> · déjà versé :{" "}
+              💶 À virer maintenant : <b>{eur(r.exigibleCents)}</b> · ⏳ en
+              attente du 2ᵉ mois : {eur(r.pendingCents)} · déjà versé :{" "}
               {eur(r.paidCents)}
+              {r.lapsedCents > 0 && (
+                <>
+                  {" "}
+                  · 🍂 caduques (client parti) : {eur(r.lapsedCents)}
+                </>
+              )}
             </p>
             <p>
-              {r.dueCents > 0 && (
+              {r.exigibleCents > 0 && (
                 <button
                   type="button"
                   className="btn-mini ok"
                   onClick={() => patch(r.id, "mark_paid")}
                 >
-                  ✔ Marquer {eur(r.dueCents)} comme payé
+                  ✔ Marquer {eur(r.exigibleCents)} comme payé
+                </button>
+              )}{" "}
+              {r.lapsedCents > 0 && (
+                <button
+                  type="button"
+                  className="btn-mini danger"
+                  onClick={() => patch(r.id, "cancel_lapsed")}
+                >
+                  Annuler les caduques
                 </button>
               )}{" "}
               <button

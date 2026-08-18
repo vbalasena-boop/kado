@@ -38,6 +38,7 @@ export default async function VendeursPage() {
     business_id: string;
     amount_cents: number;
     status: string;
+    created_at: string;
   }[] = [];
   if (!tableMissing) {
     try {
@@ -52,12 +53,18 @@ export default async function VendeursPage() {
     try {
       const { data } = await db
         .from("affiliate_commissions")
-        .select("affiliate_id, business_id, amount_cents, status");
+        .select("affiliate_id, business_id, amount_cents, status, created_at");
       commissions = (data as any[]) ?? [];
     } catch {
       commissions = [];
     }
   }
+
+  // Exigible = client toujours actif ET ~2e prélèvement passé (30 jours).
+  const THIRTY_DAYS = 30 * 864e5;
+  const bizStatus = new Map(referred.map((b) => [b.id, b.subscription_status]));
+  const isActiveBiz = (id: string) =>
+    ["active", "trial"].includes(bizStatus.get(id) ?? "");
 
   const rows: AffiliateRow[] = affiliates.map((a) => {
     const mine = referred.filter((b) => b.affiliate_id === a.id);
@@ -73,9 +80,25 @@ export default async function VendeursPage() {
       commissionComplet: a.commission_complet_cents / 100,
       totalClients: mine.length,
       trialClients: mine.filter((b) => b.subscription_status === "trial").length,
-      paidClients: myComms.length,
-      dueCents: myComms
-        .filter((c) => c.status === "due")
+      paidClients: myComms.filter((c) => c.status !== "canceled").length,
+      exigibleCents: myComms
+        .filter(
+          (c) =>
+            c.status === "due" &&
+            isActiveBiz(c.business_id) &&
+            Date.now() - new Date(c.created_at).getTime() >= THIRTY_DAYS
+        )
+        .reduce((s, c) => s + c.amount_cents, 0),
+      pendingCents: myComms
+        .filter(
+          (c) =>
+            c.status === "due" &&
+            isActiveBiz(c.business_id) &&
+            Date.now() - new Date(c.created_at).getTime() < THIRTY_DAYS
+        )
+        .reduce((s, c) => s + c.amount_cents, 0),
+      lapsedCents: myComms
+        .filter((c) => c.status === "due" && !isActiveBiz(c.business_id))
         .reduce((s, c) => s + c.amount_cents, 0),
       paidCents: myComms
         .filter((c) => c.status === "paid")
