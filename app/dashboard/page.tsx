@@ -125,6 +125,26 @@ export default async function DashboardHome() {
         </span>
       </p>
 
+      {showRoue && total > 0 && (
+        <div className="dash-card hero-recap">
+          <h2>🚀 Ce que Kado vous a apporté</h2>
+          <div className="hero-recap-grid">
+            <div className="hero-recap-item">
+              <b>{review}</b>
+              <span>clients envoyés vers vos avis Google</span>
+            </div>
+            <div className="hero-recap-item">
+              <b>{insta}</b>
+              <span>clients envoyés vers votre Instagram</span>
+            </div>
+            <div className="hero-recap-item">
+              <b>{leadsCount ?? 0}</b>
+              <span>e-mails clients collectés</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showChecklist && showRoue && (
         <div className="dash-card setup">
           <div className="setup-head">

@@ -5843,3 +5843,38 @@ summary:focus-visible,
 .admin-table tbody tr { transition: background 0.12s; }
 .admin-table tbody tr:hover { background: rgba(109, 40, 217, 0.04); }
 .admin-table td { vertical-align: top; }
+
+/* ===== Dashboard : résumé « ce que Kado vous a apporté » ===== */
+.hero-recap {
+  background: linear-gradient(135deg, #6d28d9 0%, #9333ea 55%, #c026d3 100%);
+  border: none;
+  color: #fff;
+  box-shadow: 0 16px 40px -18px rgba(147, 51, 234, 0.6);
+}
+.hero-recap h2 { color: #fff; margin-bottom: 14px; }
+.hero-recap-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+@media (max-width: 620px) {
+  .hero-recap-grid { grid-template-columns: 1fr; }
+}
+.hero-recap-item {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 16px 14px;
+  text-align: center;
+}
+.hero-recap-item b {
+  display: block;
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.hero-recap-item span {
+  font-size: 13px;
+  line-height: 1.35;
+  opacity: 0.92;
+}
