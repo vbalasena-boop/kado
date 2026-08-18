@@ -1,5 +1,5 @@
 import { Logo } from "@/components/Logo";
-import HomeWheel from "@/components/HomeWheel";
+import HomeGames from "@/components/HomeGames";
 import HomeLoyalty from "@/components/HomeLoyalty";
 
 export const dynamic = "force-dynamic";
@@ -278,24 +278,25 @@ export default function Home({
 
       <section className="v-section v-preview">
         <div className="pv-copy">
-          <h2>Faites tourner la roue 👇</h2>
+          <h2>3 jeux au choix — essayez-les 👇</h2>
           <p className="pv-lede">
-            Essayez vous-même — cliquez pour lancer la roue. Vos clients
-            découvrent la vôtre, à vos couleurs, avec vos cadeaux. Simple,
-            joyeux, sur leur téléphone.
+            Roue de la fortune, carte à gratter ou machine à sous : vous
+            choisissez le jeu qui colle à votre commerce. Testez les trois
+            ici même — vos clients découvrent le vôtre, à vos couleurs, avec
+            vos cadeaux.
           </p>
           <ul className="pv-points">
+            <li><Ico name="check" /> 3 jeux, changez quand vous voulez</li>
             <li><Ico name="check" /> Ouverture instantanée dans le navigateur</li>
-            <li><Ico name="check" /> Votre logo et vos lots personnalisés</li>
             <li><Ico name="check" /> Code cadeau à valider en caisse</li>
           </ul>
           <a className="v-btn primary" href="/cafe-lumiere">Voir la démo complète →</a>
         </div>
-        <div className="pv-phone" aria-label="Aperçu interactif de la roue">
+        <div className="pv-phone" aria-label="Aperçu interactif des jeux">
           <div className="pv-notch" />
           <div className="pv-screen">
             <div className="pv-brand">☕ Café Lumière</div>
-            <HomeWheel />
+            <HomeGames />
             <div className="pv-foot">Suivez-nous · Laissez un avis</div>
           </div>
         </div>
