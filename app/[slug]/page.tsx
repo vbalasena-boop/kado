@@ -120,6 +120,17 @@ export default async function Page({
     .maybeSingle();
   const decorEmojis: string = decErr ? "" : ((dec as any)?.decor_emojis ?? "");
 
+  // Tirage au sort actif ? (lecture tolérante si migrations 0030/0031 absentes)
+  const { data: dr, error: drErr } = await supa
+    .from("wheel_configs")
+    .select("monthly_draw, monthly_draw_prize")
+    .eq("business_id", biz.id)
+    .maybeSingle();
+  const drawPrize: string =
+    !drErr && (dr as any)?.monthly_draw
+      ? ((dr as any)?.monthly_draw_prize || "").trim()
+      : "";
+
   // Tours déjà joués par ce navigateur (verrou côté serveur)
   const played: Record<string, { label: string; code: string }> = {};
   const playerId = readPlayerId();
@@ -142,6 +153,7 @@ export default async function Page({
       orderEnabled={orderEnabled}
       prizeValidityDays={prizeValidity}
       decorEmojis={decorEmojis}
+      drawPrize={drawPrize}
       prizes={prizes ?? []}
       config={
         config ?? {

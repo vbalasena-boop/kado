@@ -37,6 +37,8 @@ type Config = {
   play_alerts?: boolean | null;
   monthly_draw?: boolean | null;
   monthly_draw_prize?: string | null;
+  draw_period_days?: number | null;
+  draw_next_at?: string | null;
 };
 
 // Luminance d'une couleur hex (0 = noir, 1 = blanc) pour choisir un texte lisible.
@@ -930,11 +932,11 @@ export default function WheelEditor({
 
           {showRoue && (
             <div className="dash-card">
-              <h2>🎲 Tirage au sort mensuel</h2>
+              <h2>🎲 Tirage au sort</h2>
               <p className="muted" style={{ marginBottom: 14 }}>
-                Un gagnant tiré au hasard chaque 1er du mois parmi les clients
-                ayant laissé leur e-mail le mois précédent. Idéal pour faire
-                revenir vos clients — ils veulent savoir s'ils ont gagné&nbsp;!
+                Un gagnant tiré au hasard, à la fréquence de votre choix, parmi
+                les clients ayant laissé leur e-mail. Idéal pour faire revenir
+                vos clients — ils veulent savoir s'ils ont gagné&nbsp;!
               </p>
               <label className="toggle-field">
                 <input
@@ -945,33 +947,65 @@ export default function WheelEditor({
                   }
                 />
                 <span>
-                  <b>Activer le tirage au sort mensuel</b> — nécessite de
-                  collecter les e-mails des joueurs (option « Canaux &amp; liens »).
+                  <b>Activer le tirage au sort</b> — nécessite de collecter les
+                  e-mails des joueurs (option « Canaux &amp; liens »).
                 </span>
               </label>
               {config.monthly_draw && (
-                <label className="field">
-                  <span>Lot du mois</span>
-                  <input
-                    type="text"
-                    maxLength={80}
-                    placeholder="Ex. Un menu pour deux offert"
-                    value={config.monthly_draw_prize ?? ""}
-                    onChange={(e) =>
-                      setConfig({
-                        ...config,
-                        monthly_draw_prize: e.target.value,
-                      })
-                    }
-                  />
-                </label>
-              )}
-              {config.monthly_draw && (
-                <p className="muted" style={{ fontSize: 12.5, marginTop: 4 }}>
-                  ⚖️ Jeu gratuit sans obligation d'achat. Le gagnant reçoit un
-                  code par e-mail, vous êtes prévenu(e) aussi. Pensez à
-                  mentionner le règlement à vos clients.
-                </p>
+                <>
+                  <label className="field">
+                    <span>Lot à gagner</span>
+                    <input
+                      type="text"
+                      maxLength={80}
+                      placeholder="Ex. Un menu pour deux offert"
+                      value={config.monthly_draw_prize ?? ""}
+                      onChange={(e) =>
+                        setConfig({
+                          ...config,
+                          monthly_draw_prize: e.target.value,
+                        })
+                      }
+                    />
+                  </label>
+                  <label className="field">
+                    <span>Fréquence du tirage</span>
+                    <select
+                      value={config.draw_period_days ?? 30}
+                      onChange={(e) =>
+                        setConfig({
+                          ...config,
+                          draw_period_days: Number(e.target.value),
+                        })
+                      }
+                    >
+                      <option value={7}>Chaque semaine</option>
+                      <option value={14}>Toutes les 2 semaines</option>
+                      <option value={30}>Chaque mois</option>
+                      <option value={90}>Chaque trimestre</option>
+                    </select>
+                  </label>
+                  <label className="field">
+                    <span>Date du prochain tirage</span>
+                    <input
+                      type="date"
+                      value={(config.draw_next_at ?? "").slice(0, 10)}
+                      min={new Date().toISOString().slice(0, 10)}
+                      onChange={(e) =>
+                        setConfig({
+                          ...config,
+                          draw_next_at: e.target.value || null,
+                        })
+                      }
+                    />
+                  </label>
+                  <p className="muted" style={{ fontSize: 12.5, marginTop: 4 }}>
+                    Le tirage a lieu à cette date, puis se répète
+                    automatiquement selon la fréquence choisie. ⚖️ Jeu gratuit
+                    sans obligation d'achat — le gagnant reçoit un code par
+                    e-mail, vous êtes prévenu(e) aussi.
+                  </p>
+                </>
               )}
             </div>
           )}

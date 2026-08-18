@@ -447,6 +447,7 @@ export default function Game({
   orderEnabled = false,
   prizeValidityDays = 30,
   decorEmojis = "",
+  drawPrize = "",
 }: {
   slug: string;
   name: string;
@@ -458,6 +459,7 @@ export default function Game({
   orderEnabled?: boolean;
   prizeValidityDays?: number | null;
   decorEmojis?: string;
+  drawPrize?: string;
 }) {
   // Canaux proposés par le commerçant (au moins un). Rétro-compatible :
   // une valeur absente/vraie = canal actif.
@@ -970,6 +972,12 @@ export default function Game({
                   </div>
                 </div>
               </div>
+              {drawPrize && (
+                <div className="draw-note">
+                  🎲 Bonus : tentez aussi de gagner <b>{drawPrize}</b> au tirage
+                  au sort en laissant votre e-mail&nbsp;!
+                </div>
+              )}
               <button className="btn" onClick={() => setScreen("hub")}>
                 C'est parti&nbsp;→
               </button>
@@ -1176,7 +1184,9 @@ export default function Game({
                   ) : (
                     <form className="lead-form" onSubmit={submitLead}>
                       <label className="lead-label">
-                        📧 Recevez nos offres par e-mail (facultatif)
+                        {drawPrize
+                          ? `🎲 Laissez votre e-mail et participez au tirage : ${drawPrize} à gagner !`
+                          : "📧 Recevez nos offres par e-mail (facultatif)"}
                       </label>
                       <div className="lead-row">
                         <input

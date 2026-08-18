@@ -37,6 +37,8 @@ export async function POST(req: NextRequest) {
       play_alerts?: boolean;
       monthly_draw?: boolean;
       monthly_draw_prize?: string;
+      draw_period_days?: number;
+      draw_next_at?: string | null;
     };
     prizes?: {
       label: string;
@@ -153,7 +155,7 @@ export async function POST(req: NextRequest) {
     /* colonne absente : ignoré */
   }
 
-  // Tirage au sort mensuel : colonnes récentes (0030), mise à jour isolée.
+  // Tirage au sort : colonnes récentes (0030/0031), mise à jour isolée.
   try {
     await admin
       .from("wheel_configs")
@@ -162,6 +164,22 @@ export async function POST(req: NextRequest) {
         monthly_draw_prize:
           (cfg.monthly_draw_prize || "").trim().slice(0, 80) || null,
       })
+      .eq("business_id", business.id);
+  } catch {
+    /* colonnes absentes : ignoré */
+  }
+  try {
+    const period = [7, 14, 30, 90].includes(Number(cfg.draw_period_days))
+      ? Number(cfg.draw_period_days)
+      : 30;
+    // Date valide (AAAA-MM-JJ) → minuit ce jour-là ; sinon on laisse le cron programmer.
+    const nextDate =
+      cfg.draw_next_at && /^\d{4}-\d{2}-\d{2}$/.test(cfg.draw_next_at)
+        ? new Date(cfg.draw_next_at + "T00:00:00Z").toISOString()
+        : null;
+    await admin
+      .from("wheel_configs")
+      .update({ draw_period_days: period, draw_next_at: nextDate })
       .eq("business_id", business.id);
   } catch {
     /* colonnes absentes : ignoré */
