@@ -327,24 +327,34 @@ export async function GET(req: NextRequest) {
         // anti-doublon si le cron se déclenche deux fois
         if (biz.recap_sent_at && biz.recap_sent_at > fiveDaysAgo) continue;
 
-        const [{ data: plays }, { count: leads }, { count: fidNew }] =
-          await Promise.all([
-            db
-              .from("plays")
-              .select("prize_label")
-              .eq("business_id", biz.id)
-              .gte("created_at", weekAgo),
-            db
-              .from("leads")
-              .select("*", { count: "exact", head: true })
-              .eq("business_id", biz.id)
-              .gte("created_at", weekAgo),
-            db
-              .from("loyalty_cards")
-              .select("*", { count: "exact", head: true })
-              .eq("business_id", biz.id)
-              .gte("created_at", weekAgo),
-          ]);
+        const [
+          { data: plays },
+          { count: leads },
+          { count: fidNew },
+          { count: redeemed },
+        ] = await Promise.all([
+          db
+            .from("plays")
+            .select("prize_label")
+            .eq("business_id", biz.id)
+            .gte("created_at", weekAgo),
+          db
+            .from("leads")
+            .select("*", { count: "exact", head: true })
+            .eq("business_id", biz.id)
+            .gte("created_at", weekAgo),
+          db
+            .from("loyalty_cards")
+            .select("*", { count: "exact", head: true })
+            .eq("business_id", biz.id)
+            .gte("created_at", weekAgo),
+          db
+            .from("plays")
+            .select("*", { count: "exact", head: true })
+            .eq("business_id", biz.id)
+            .not("redeemed_at", "is", null)
+            .gte("redeemed_at", weekAgo),
+        ]);
 
         const tours = plays?.length ?? 0;
         const gagnes = (plays ?? []).filter(
@@ -352,6 +362,7 @@ export async function GET(req: NextRequest) {
         ).length;
         const emails = leads ?? 0;
         const fid = fidNew ?? 0;
+        const echanges = redeemed ?? 0;
         if (tours + emails + fid === 0) continue; // rien à raconter
 
         const { email } = await getOwnerContact(db, biz.id);
@@ -364,7 +375,7 @@ export async function GET(req: NextRequest) {
             preview: "Le résumé d'activité de votre commerce.",
             heading: "Votre semaine en un coup d'œil",
             emoji: "📊",
-            bodyHtml: `Bonjour,<br><br>Voici l'activité de <b>${biz.name}</b> ces 7 derniers jours&nbsp;:<br><br><table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;font-size:15px;line-height:2;"><tr><td>🎡 Parties jouées</td><td align="right"><b>${tours}</b></td></tr><tr><td>🎁 Cadeaux gagnés</td><td align="right"><b>${gagnes}</b></td></tr><tr><td>📧 E-mails clients capturés</td><td align="right"><b>${emails}</b></td></tr><tr><td>🎟️ Nouvelles cartes de fidélité</td><td align="right"><b>${fid}</b></td></tr></table><br><a href="${SITE}/dashboard" style="display:inline-block;background:linear-gradient(135deg,#ff6b4a,#ff4e87);color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:12px;">Voir mon tableau de bord</a>`,
+            bodyHtml: `Bonjour,<br><br>Voici l'activité de <b>${biz.name}</b> ces 7 derniers jours&nbsp;:<br><br><table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;font-size:15px;line-height:2;"><tr><td>🎡 Parties jouées</td><td align="right"><b>${tours}</b></td></tr><tr><td>🎁 Cadeaux gagnés</td><td align="right"><b>${gagnes}</b></td></tr><tr><td>🛍️ Cadeaux échangés en caisse</td><td align="right"><b>${echanges}</b></td></tr><tr><td>📧 E-mails clients capturés</td><td align="right"><b>${emails}</b></td></tr><tr><td>🎟️ Nouvelles cartes de fidélité</td><td align="right"><b>${fid}</b></td></tr></table><br><a href="${SITE}/dashboard" style="display:inline-block;background:linear-gradient(135deg,#ff6b4a,#ff4e87);color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:12px;">Voir mon tableau de bord</a>`,
             footnote:
               "Astuce : plus votre affiche QR est visible, plus vos clients jouent.",
           }),
