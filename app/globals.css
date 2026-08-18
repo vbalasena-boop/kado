@@ -5501,29 +5501,82 @@ html { scroll-behavior: smooth; }
   box-shadow: 0 8px 20px rgba(138, 90, 52, 0.4);
 }
 
-/* ===== Sélecteur multi-établissements (en-tête espace commerçant) ===== */
-.biz-switcher {
+/* ===== Sélecteur + ajout multi-établissements (en-tête espace commerçant) ===== */
+.biz-switcher { position: relative; }
+.biz-switch-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   background: var(--surface-2);
   border: 1px solid var(--stroke);
   border-radius: 999px;
-  padding: 4px 10px 4px 12px;
-  font-size: 13px;
-}
-.biz-switcher select {
-  border: none;
-  background: transparent;
+  padding: 6px 12px;
   color: var(--cream);
   font-family: inherit;
-  font-weight: 700;
   font-size: 13px;
   cursor: pointer;
-  max-width: 160px;
-  padding-right: 2px;
+  transition: background 0.15s;
 }
-.biz-switcher select:focus { outline: none; }
+.biz-switch-btn:hover { background: var(--surface); }
+.biz-switch-btn b { font-weight: 700; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.biz-caret { opacity: 0.6; font-size: 11px; }
+.biz-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 230px;
+  background: var(--surface);
+  border: 1px solid var(--stroke);
+  border-radius: 14px;
+  box-shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.55);
+  padding: 6px;
+  z-index: 50;
+}
+.biz-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: var(--cream);
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 9px 10px;
+  border-radius: 9px;
+  cursor: pointer;
+}
+.biz-menu-item:hover { background: var(--surface-2); }
+.biz-menu-item.on { color: var(--gold); }
+.biz-check { width: 14px; display: inline-block; color: var(--gold); }
+.biz-menu-sep { height: 1px; background: var(--stroke); margin: 6px 4px; }
+.biz-add { color: var(--gold); font-weight: 700; }
+.biz-add-form { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px; }
+.biz-add-form input {
+  flex: 1 1 130px;
+  min-width: 0;
+  background: var(--surface-2);
+  border: 1px solid var(--stroke);
+  border-radius: 9px;
+  color: var(--cream);
+  font-family: inherit;
+  font-size: 13px;
+  padding: 8px 10px;
+}
+.biz-add-go {
+  background: linear-gradient(180deg, var(--gold), var(--gold-deep));
+  color: #1b1035;
+  border: none;
+  border-radius: 9px;
+  font-weight: 800;
+  font-size: 13px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+.biz-add-go:disabled { opacity: 0.5; cursor: default; }
+.biz-add-err { flex: 1 0 100%; margin: 2px 4px 0; font-size: 12px; color: #ff9b9b; }
 
 /* ===== Offre multi-boutiques (Tarifs) ===== */
 .v-multi {
