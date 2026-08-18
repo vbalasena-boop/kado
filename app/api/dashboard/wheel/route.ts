@@ -35,6 +35,8 @@ export async function POST(req: NextRequest) {
       birthday_reward?: string;
       referral_enabled?: boolean;
       play_alerts?: boolean;
+      monthly_draw?: boolean;
+      monthly_draw_prize?: string;
     };
     prizes?: {
       label: string;
@@ -149,6 +151,20 @@ export async function POST(req: NextRequest) {
       .eq("business_id", business.id);
   } catch {
     /* colonne absente : ignoré */
+  }
+
+  // Tirage au sort mensuel : colonnes récentes (0030), mise à jour isolée.
+  try {
+    await admin
+      .from("wheel_configs")
+      .update({
+        monthly_draw: !!cfg.monthly_draw,
+        monthly_draw_prize:
+          (cfg.monthly_draw_prize || "").trim().slice(0, 80) || null,
+      })
+      .eq("business_id", business.id);
+  } catch {
+    /* colonnes absentes : ignoré */
   }
 
   // remplace la liste des cadeaux

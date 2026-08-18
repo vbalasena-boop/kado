@@ -35,6 +35,8 @@ type Config = {
   birthday_reward?: string | null;
   referral_enabled?: boolean | null;
   play_alerts?: boolean | null;
+  monthly_draw?: boolean | null;
+  monthly_draw_prize?: string | null;
 };
 
 // Luminance d'une couleur hex (0 = noir, 1 = blanc) pour choisir un texte lisible.
@@ -923,6 +925,54 @@ export default function WheelEditor({
               <button className="btn-secondary" onClick={addPrize}>
                 + Ajouter un cadeau
               </button>
+            </div>
+          )}
+
+          {showRoue && (
+            <div className="dash-card">
+              <h2>🎲 Tirage au sort mensuel</h2>
+              <p className="muted" style={{ marginBottom: 14 }}>
+                Un gagnant tiré au hasard chaque 1er du mois parmi les clients
+                ayant laissé leur e-mail le mois précédent. Idéal pour faire
+                revenir vos clients — ils veulent savoir s'ils ont gagné&nbsp;!
+              </p>
+              <label className="toggle-field">
+                <input
+                  type="checkbox"
+                  checked={!!config.monthly_draw}
+                  onChange={(e) =>
+                    setConfig({ ...config, monthly_draw: e.target.checked })
+                  }
+                />
+                <span>
+                  <b>Activer le tirage au sort mensuel</b> — nécessite de
+                  collecter les e-mails des joueurs (option « Canaux &amp; liens »).
+                </span>
+              </label>
+              {config.monthly_draw && (
+                <label className="field">
+                  <span>Lot du mois</span>
+                  <input
+                    type="text"
+                    maxLength={80}
+                    placeholder="Ex. Un menu pour deux offert"
+                    value={config.monthly_draw_prize ?? ""}
+                    onChange={(e) =>
+                      setConfig({
+                        ...config,
+                        monthly_draw_prize: e.target.value,
+                      })
+                    }
+                  />
+                </label>
+              )}
+              {config.monthly_draw && (
+                <p className="muted" style={{ fontSize: 12.5, marginTop: 4 }}>
+                  ⚖️ Jeu gratuit sans obligation d'achat. Le gagnant reçoit un
+                  code par e-mail, vous êtes prévenu(e) aussi. Pensez à
+                  mentionner le règlement à vos clients.
+                </p>
+              )}
             </div>
           )}
 

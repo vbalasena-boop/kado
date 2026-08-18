@@ -57,6 +57,17 @@ export default async function WheelPage() {
     .maybeSingle();
   const playAlerts: boolean = paErr ? false : !!(pa as any)?.play_alerts;
 
+  // Tirage au sort mensuel (lecture tolérante si migration 0030 absente)
+  const { data: md, error: mdErr } = await admin
+    .from("wheel_configs")
+    .select("monthly_draw, monthly_draw_prize")
+    .eq("business_id", business.id)
+    .maybeSingle();
+  const monthlyDraw: boolean = mdErr ? false : !!(md as any)?.monthly_draw;
+  const monthlyDrawPrize: string = mdErr
+    ? ""
+    : ((md as any)?.monthly_draw_prize ?? "");
+
   return (
     <WheelEditor
       initialConfig={{
@@ -70,6 +81,8 @@ export default async function WheelPage() {
         decor_emojis: decorEmojis,
         theme_locked: themeLocked,
         play_alerts: playAlerts,
+        monthly_draw: monthlyDraw,
+        monthly_draw_prize: monthlyDrawPrize,
       }}
       initialPrizes={prizes ?? []}
       initialLogoUrl={business.logo_url}

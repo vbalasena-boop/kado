@@ -15,6 +15,7 @@ import {
 import { unsubToken } from "@/lib/unsub";
 import { setSystemState } from "@/lib/health";
 import { sendPushToClients } from "@/lib/push";
+import { generateCode } from "@/lib/draw";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -41,6 +42,7 @@ export async function GET(req: NextRequest) {
     birthdays: 0,
     campaigns: 0,
     recaps: 0,
+    draws: 0,
     errors: [] as string[],
   };
 
@@ -391,6 +393,99 @@ export async function GET(req: NextRequest) {
     }
   } catch (e: any) {
     out.errors.push(`recaps: ${e?.message ?? "error"}`);
+  }
+
+  // ── 5. Tirage au sort mensuel (le 1er du mois) ──────────────────
+  try {
+    const now = new Date();
+    const isFirst = now.getUTCDate() === 1;
+    if (isFirst) {
+      const monthStart = new Date(
+        Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)
+      ).toISOString();
+      const windowStart = new Date(Date.now() - 31 * 864e5).toISOString();
+      const { data: actives } = await db
+        .from("businesses")
+        .select("id, name")
+        .eq("status", "active");
+
+      for (const biz of actives ?? []) {
+        // Config du tirage (lecture tolérante si migration 0030 absente)
+        const { data: dc, error: dcErr } = await db
+          .from("wheel_configs")
+          .select("monthly_draw, monthly_draw_prize, monthly_draw_at")
+          .eq("business_id", biz.id)
+          .maybeSingle();
+        if (dcErr) break; // colonnes absentes → on arrête ce bloc
+        const cfg2 = dc as any;
+        if (!cfg2?.monthly_draw) continue;
+        // Anti-doublon : déjà tiré ce mois-ci ?
+        if (cfg2.monthly_draw_at && cfg2.monthly_draw_at >= monthStart) continue;
+
+        // Participants : e-mails uniques laissés sur les 31 derniers jours
+        const { data: entries } = await db
+          .from("leads")
+          .select("email")
+          .eq("business_id", biz.id)
+          .gte("created_at", windowStart)
+          .not("email", "is", null);
+        const emails = Array.from(
+          new Set(
+            (entries ?? [])
+              .map((e) => (e.email || "").trim().toLowerCase())
+              .filter(Boolean)
+          )
+        );
+
+        // Toujours marquer le tirage comme fait ce mois-ci (évite de reboucler)
+        const stamp = { monthly_draw_at: new Date().toISOString() };
+
+        if (emails.length === 0) {
+          await db.from("wheel_configs").update(stamp).eq("business_id", biz.id);
+          continue;
+        }
+
+        const winner = emails[Math.floor(Math.random() * emails.length)];
+        const prize =
+          (cfg2.monthly_draw_prize || "").trim() || "un cadeau spécial";
+        const code = generateCode();
+
+        // E-mail au gagnant
+        await sendEmail({
+          to: winner,
+          subject: `🎉 Vous avez gagné le tirage du mois chez ${biz.name} !`,
+          html: emailLayout({
+            preview: "Bonne nouvelle : vous êtes le gagnant du mois !",
+            heading: "🎉 Vous avez gagné !",
+            emoji: "🎲",
+            bodyHtml: `Bonjour,<br><br>Bravo&nbsp;! Vous avez été tiré(e) au sort parmi les participants du mois chez <b>${biz.name}</b>.<br><br>Votre lot&nbsp;: <b>${prize}</b><br><br>Présentez ce code en boutique pour le récupérer&nbsp;:<br><br><div style="font-size:26px;font-weight:800;letter-spacing:3px;background:#f6f1ff;color:#1b1035;padding:14px;border-radius:12px;text-align:center;">${code}</div><br>À très vite&nbsp;!`,
+            footnote:
+              "Jeu gratuit sans obligation d'achat. Un seul gagnant par mois.",
+          }),
+        });
+
+        // E-mail au commerçant (avec l'identité du gagnant)
+        const { email: owner } = await getOwnerContact(db, biz.id);
+        if (owner) {
+          await sendEmail({
+            to: owner,
+            subject: `Tirage du mois — votre gagnant (${biz.name})`,
+            html: emailLayout({
+              preview: "Le gagnant du tirage mensuel a été désigné.",
+              heading: "Votre tirage du mois",
+              emoji: "🎲",
+              bodyHtml: `Le tirage au sort mensuel de <b>${biz.name}</b> a désigné un gagnant&nbsp;:<br><br>👤 <b>${winner}</b><br>🎁 Lot&nbsp;: <b>${prize}</b><br>🔑 Code&nbsp;: <b>${code}</b><br><br>Le gagnant a reçu ce code par e-mail. Remettez-lui son lot lorsqu'il le présente en caisse.`,
+              footnote: `${emails.length} participant${emails.length > 1 ? "s" : ""} ce mois-ci.`,
+            }),
+          });
+        }
+
+        await db.from("wheel_configs").update(stamp).eq("business_id", biz.id);
+        out.draws++;
+      }
+    }
+  } catch (e: any) {
+    out.errors.push(`draws: ${e?.message ?? "error"}`);
   }
 
   // Heartbeat : prouve au contrôle de santé que le cron a bien tourné

@@ -38,6 +38,16 @@ export default function Reglement() {
         est valable une seule fois et pour une durée limitée, indiquée au moment du gain (30 jours par défaut, selon le commerce).
       </p>
 
+      <h2>Article 4 bis — Tirage au sort mensuel (le cas échéant)</h2>
+      <p>
+        Certains établissements peuvent proposer un <b>tirage au sort mensuel</b>{" "}
+        gratuit et sans obligation d'achat. Le cas échéant&nbsp;: un gagnant est
+        désigné de façon aléatoire, le 1<sup>er</sup> de chaque mois, parmi les
+        participants ayant communiqué leur adresse e-mail au cours du mois
+        précédent. Le gagnant est informé par e-mail et récupère son lot sur
+        présentation du code reçu. La participation reste entièrement gratuite.
+      </p>
+
       <h2>Article 5 — Données personnelles</h2>
       <p>
         Le jeu ne collecte aucune donnée personnelle du joueur (voir la{" "}
