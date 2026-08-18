@@ -215,6 +215,46 @@ export default function Tarifs() {
       </section>
 
       <section className="v-section">
+        <div className="v-multi">
+          <span className="v-multi-badge">🏪 Chaînes &amp; franchises</span>
+          <h3>Plusieurs boutiques ? Un seul compte, un tarif dégressif.</h3>
+          <p className="v-multi-lede">
+            Gérez tous vos établissements depuis le même espace : basculez de
+            l'un à l'autre en un clic, chacun avec son jeu, sa fidélité, ses
+            statistiques et son QR. Une seule connexion, une seule facture.
+          </p>
+          <div className="v-multi-grid">
+            <div className="v-multi-opt">
+              <b>1ʳᵉ boutique</b>
+              <small>Au tarif normal de la formule choisie (Jeux, Fidélité ou Complet).</small>
+            </div>
+            <div className="v-multi-opt is-hl">
+              <span className="v-multi-tag">Le plus choisi</span>
+              <b>Suivantes&nbsp;: −25&nbsp;%</b>
+              <small>Chaque établissement supplémentaire à −25 % sur la même formule.</small>
+            </div>
+            <div className="v-multi-opt">
+              <b>5 boutiques et +</b>
+              <small>Tarif sur mesure — on construit l'offre avec vous.</small>
+            </div>
+          </div>
+          <ul className="v-multi-feats">
+            <li>✓ Sélecteur d'établissement intégré à votre espace</li>
+            <li>✓ Jeux, fidélité, stats &amp; QR indépendants par boutique</li>
+            <li>✓ Facturation groupée, une seule connexion</li>
+            <li>✓ Pensé pour chaînes, franchises et multi-enseignes</li>
+          </ul>
+          <a className="v-btn primary" href="/login?signup=1">
+            Ouvrir mon compte →
+          </a>
+          <p className="v-setup-note">
+            Ajout de boutiques accompagné — écrivez-nous à{" "}
+            <b>bonjour@kado-app.fr</b>.
+          </p>
+        </div>
+      </section>
+
+      <section className="v-section">
         <h2>Ce que ça vous rapporte</h2>
         <div className="v-benefits">
           {VALUE.map((v) => (
