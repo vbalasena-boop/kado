@@ -1,5 +1,6 @@
 import { getAdminClient } from "@/lib/supabase/admin";
 import { hasAccess, hasModule } from "@/lib/auth";
+import { buildTheme } from "@/lib/theme";
 import LoyaltyCard from "./LoyaltyCard";
 
 export const dynamic = "force-dynamic";
@@ -45,7 +46,9 @@ export default async function FidelitePage({
 
   const { data: cfg } = await db
     .from("wheel_configs")
-    .select("loyalty_enabled, loyalty_goal, loyalty_reward, loyalty_reward_emoji, loyalty_stamp_emoji")
+    .select(
+      "loyalty_enabled, loyalty_goal, loyalty_reward, loyalty_reward_emoji, loyalty_stamp_emoji, primary_color, accent_color, bg_color, bg_image_url"
+    )
     .eq("business_id", biz.id)
     .maybeSingle();
 
@@ -55,16 +58,27 @@ export default async function FidelitePage({
     );
   }
 
+  // Même thème que la page de jeu → expérience cohérente pour le client.
+  const themeCss = buildTheme(
+    (cfg as any).primary_color || "#ffc24d",
+    (cfg as any).accent_color || "#ff5d73",
+    (cfg as any).bg_color || "#150c29",
+    (cfg as any).bg_image_url || null
+  );
+
   return (
-    <LoyaltyCard
-      slug={params.slug}
-      name={biz.name}
-      logoUrl={biz.logo_url}
-      goal={cfg.loyalty_goal}
-      reward={cfg.loyalty_reward}
-      rewardEmoji={cfg.loyalty_reward_emoji}
-      stampEmoji={cfg.loyalty_stamp_emoji || "⭐"}
-      parrain={searchParams?.parrain?.trim() || null}
-    />
+    <>
+      <style dangerouslySetInnerHTML={{ __html: themeCss }} />
+      <LoyaltyCard
+        slug={params.slug}
+        name={biz.name}
+        logoUrl={biz.logo_url}
+        goal={cfg.loyalty_goal}
+        reward={cfg.loyalty_reward}
+        rewardEmoji={cfg.loyalty_reward_emoji}
+        stampEmoji={cfg.loyalty_stamp_emoji || "⭐"}
+        parrain={searchParams?.parrain?.trim() || null}
+      />
+    </>
   );
 }

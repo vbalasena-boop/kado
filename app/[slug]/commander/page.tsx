@@ -1,6 +1,7 @@
 import { getAdminClient } from "@/lib/supabase/admin";
 import { hasAccess } from "@/lib/auth";
 import { isOpenNow, nextOpeningLabel, type OrderHours } from "@/lib/hours";
+import { buildTheme } from "@/lib/theme";
 import OrderClient from "./OrderClient";
 
 export const dynamic = "force-dynamic";
@@ -108,14 +109,35 @@ export default async function CommanderPage({
     open = true;
   }
 
+  // Thème du commerce → cohérence avec la page de jeu (lecture tolérante).
+  let themeCss = "";
+  try {
+    const { data: c } = await db
+      .from("wheel_configs")
+      .select("primary_color, accent_color, bg_color, bg_image_url")
+      .eq("business_id", biz.id)
+      .maybeSingle();
+    themeCss = buildTheme(
+      (c as any)?.primary_color || "#ffc24d",
+      (c as any)?.accent_color || "#ff5d73",
+      (c as any)?.bg_color || "#150c29",
+      (c as any)?.bg_image_url || null
+    );
+  } catch {
+    themeCss = "";
+  }
+
   return (
-    <OrderClient
-      slug={biz.slug}
-      name={biz.name}
-      logoUrl={biz.logo_url}
-      products={products}
-      open={open}
-      nextOpen={nextOpen}
-    />
+    <>
+      {themeCss && <style dangerouslySetInnerHTML={{ __html: themeCss }} />}
+      <OrderClient
+        slug={biz.slug}
+        name={biz.name}
+        logoUrl={biz.logo_url}
+        products={products}
+        open={open}
+        nextOpen={nextOpen}
+      />
+    </>
   );
 }
