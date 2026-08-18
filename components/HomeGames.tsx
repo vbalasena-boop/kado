@@ -175,6 +175,7 @@ export default function HomeGames() {
         <button
           role="tab"
           aria-selected={game === "wheel"}
+          aria-label="Roue"
           className={`hg-tab${game === "wheel" ? " on" : ""}`}
           onClick={() => setGame("wheel")}
         >
@@ -183,6 +184,7 @@ export default function HomeGames() {
         <button
           role="tab"
           aria-selected={game === "scratch"}
+          aria-label="Grattage"
           className={`hg-tab${game === "scratch" ? " on" : ""}`}
           onClick={() => setGame("scratch")}
         >
@@ -191,6 +193,7 @@ export default function HomeGames() {
         <button
           role="tab"
           aria-selected={game === "slot"}
+          aria-label="Machine à sous"
           className={`hg-tab${game === "slot" ? " on" : ""}`}
           onClick={() => setGame("slot")}
         >

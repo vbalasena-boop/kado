@@ -5654,3 +5654,18 @@ html { scroll-behavior: smooth; }
   .v-multi-feats { grid-template-columns: 1fr; }
 }
 .v-multi-feats li { color: var(--cream); font-size: 13.5px; font-weight: 600; }
+
+/* ===== Accessibilité : anneau de focus clavier visible et cohérent ===== */
+/* Ne s'affiche qu'à la navigation au clavier (focus-visible), jamais à la souris. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible,
+[role="menuitem"]:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid var(--gold, #ffc24d);
+  outline-offset: 2px;
+  border-radius: 6px;
+}

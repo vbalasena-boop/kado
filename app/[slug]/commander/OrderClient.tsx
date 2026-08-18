@@ -268,11 +268,19 @@ export default function OrderClient({
               {cartLines.map((p) => (
                 <li key={p.id}>
                   <div className="uber-stepper small">
-                    <button type="button" onClick={() => bump(p.id, -1)}>
+                    <button
+                      type="button"
+                      aria-label={`Retirer un ${p.name}`}
+                      onClick={() => bump(p.id, -1)}
+                    >
                       −
                     </button>
                     <span>{qty[p.id]}</span>
-                    <button type="button" onClick={() => bump(p.id, 1)}>
+                    <button
+                      type="button"
+                      aria-label={`Ajouter un ${p.name}`}
+                      onClick={() => bump(p.id, 1)}
+                    >
                       +
                     </button>
                   </div>
