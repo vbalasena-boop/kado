@@ -1,10 +1,39 @@
 import { headers } from "next/headers";
 import QRCode from "qrcode";
 import { getMyBusiness } from "@/lib/auth";
+import { getAdminClient } from "@/lib/supabase/admin";
 import { KadoMark } from "@/components/Logo";
 import { PrintButton } from "@/components/PrintButton";
 
 export const dynamic = "force-dynamic";
+
+// ---- Couleurs : helpers pour thématiser l'affiche ----
+function toRgb(hex: string): [number, number, number] {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex || "");
+  if (!m) return [21, 12, 41];
+  const n = parseInt(m[1], 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+function lum(hex: string): number {
+  const [r, g, b] = toRgb(hex);
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+}
+function mix(hex: string, target: string, amt: number): string {
+  const a = toRgb(hex);
+  const b = toRgb(target);
+  const c = a.map((v, i) => Math.round(v + (b[i] - v) * amt));
+  return "#" + c.map((v) => v.toString(16).padStart(2, "0")).join("");
+}
+function splitEmojis(s: string): string[] {
+  const clean = (s || "").replace(/[\s,;·]+/g, "");
+  if (!clean) return [];
+  try {
+    const seg = new (Intl as any).Segmenter("fr", { granularity: "grapheme" });
+    return [...seg.segment(clean)].map((x: any) => x.segment).slice(0, 10);
+  } catch {
+    return Array.from(clean).slice(0, 10);
+  }
+}
 
 function IgGlyph({ size = 20 }: { size?: number }) {
   return (
@@ -26,50 +55,63 @@ function GGlyph({ size = 18 }: { size?: number }) {
   );
 }
 
-function PosterWheel() {
+function PosterWheel({
+  segs,
+  hub,
+  rim,
+  emojis,
+}: {
+  segs: string[];
+  hub: string;
+  rim: string;
+  emojis: string[];
+}) {
+  const slots = [
+    { x: 65, y: 27 },
+    { x: 80, y: 53 },
+    { x: 65, y: 79 },
+    { x: 35, y: 79 },
+    { x: 20, y: 53 },
+    { x: 35, y: 27 },
+  ];
+  const fb = ["🎁", "☕", "🍰", "⭐", "🏷️", "🍹"];
+  const glyphs = emojis.length ? emojis : fb;
   return (
     <svg viewBox="0 0 100 100" className="pp-wheel-svg" aria-hidden="true">
       <defs>
-        <linearGradient id="pp-gold" x1="30" y1="30" x2="70" y2="70" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#ffd36b" />
-          <stop offset="1" stopColor="#f0a52e" />
+        <linearGradient id="pp-hub" x1="30" y1="30" x2="70" y2="70" gradientUnits="userSpaceOnUse">
+          <stop stopColor={mix(hub, "#ffffff", 0.35)} />
+          <stop offset="1" stopColor={hub} />
         </linearGradient>
       </defs>
       <g stroke="#fff" strokeWidth="1.2" strokeLinejoin="round">
-        <path d="M50 50 L50 6 A44 44 0 0 1 88.1 28 Z" fill="#ff5d73" />
-        <path d="M50 50 L88.1 28 A44 44 0 0 1 88.1 72 Z" fill="#ffc24d" />
-        <path d="M50 50 L88.1 72 A44 44 0 0 1 50 94 Z" fill="#39d98a" />
-        <path d="M50 50 L50 94 A44 44 0 0 1 11.9 72 Z" fill="#4fc3f7" />
-        <path d="M50 50 L11.9 72 A44 44 0 0 1 11.9 28 Z" fill="#8b6cff" />
-        <path d="M50 50 L11.9 28 A44 44 0 0 1 50 6 Z" fill="#ff8a5c" />
+        <path d="M50 50 L50 6 A44 44 0 0 1 88.1 28 Z" fill={segs[0]} />
+        <path d="M50 50 L88.1 28 A44 44 0 0 1 88.1 72 Z" fill={segs[1]} />
+        <path d="M50 50 L88.1 72 A44 44 0 0 1 50 94 Z" fill={segs[2]} />
+        <path d="M50 50 L50 94 A44 44 0 0 1 11.9 72 Z" fill={segs[3]} />
+        <path d="M50 50 L11.9 72 A44 44 0 0 1 11.9 28 Z" fill={segs[4]} />
+        <path d="M50 50 L11.9 28 A44 44 0 0 1 50 6 Z" fill={segs[5]} />
       </g>
       <g fontSize="9" textAnchor="middle">
-        <text x="65" y="27">🎁</text>
-        <text x="80" y="53">☕</text>
-        <text x="65" y="79">🍰</text>
-        <text x="35" y="79">⭐</text>
-        <text x="20" y="53">🏷️</text>
-        <text x="35" y="27">🍹</text>
+        {slots.map((s, i) => (
+          <text key={i} x={s.x} y={s.y}>
+            {glyphs[i % glyphs.length]}
+          </text>
+        ))}
       </g>
       <ellipse cx="38" cy="32" rx="26" ry="17" fill="#fff" opacity="0.2" />
       <g fill="#fff">
-        <circle cx="94" cy="50" r="1.4" />
-        <circle cx="88.1" cy="72" r="1.4" />
-        <circle cx="72" cy="88.1" r="1.4" />
-        <circle cx="50" cy="94" r="1.4" />
-        <circle cx="28" cy="88.1" r="1.4" />
-        <circle cx="11.9" cy="72" r="1.4" />
-        <circle cx="6" cy="50" r="1.4" />
-        <circle cx="11.9" cy="28" r="1.4" />
-        <circle cx="28" cy="11.9" r="1.4" />
-        <circle cx="50" cy="6" r="1.4" />
-        <circle cx="72" cy="11.9" r="1.4" />
-        <circle cx="88.1" cy="28" r="1.4" />
+        {[
+          [94, 50], [88.1, 72], [72, 88.1], [50, 94], [28, 88.1], [11.9, 72],
+          [6, 50], [11.9, 28], [28, 11.9], [50, 6], [72, 11.9], [88.1, 28],
+        ].map(([cx, cy], i) => (
+          <circle key={i} cx={cx} cy={cy} r="1.4" />
+        ))}
       </g>
-      <circle cx="50" cy="50" r="44" fill="none" stroke="#f0a52e" strokeWidth="3" />
-      <circle cx="50" cy="50" r="12.5" fill="url(#pp-gold)" stroke="#1b1035" strokeWidth="3" />
+      <circle cx="50" cy="50" r="44" fill="none" stroke={rim} strokeWidth="3" />
+      <circle cx="50" cy="50" r="12.5" fill="url(#pp-hub)" stroke="#1b1035" strokeWidth="3" />
       <circle cx="46" cy="46" r="3.2" fill="#fff" opacity="0.55" />
-      <path d="M50 17 L44 4 L56 4 Z" fill="url(#pp-gold)" stroke="#1b1035" strokeWidth="1" />
+      <path d="M50 17 L44 4 L56 4 Z" fill="url(#pp-hub)" stroke="#1b1035" strokeWidth="1" />
     </svg>
   );
 }
@@ -84,11 +126,58 @@ export default async function QrPage() {
     `${h.get("x-forwarded-proto") ?? "https"}://${h.get("host") ?? "localhost:3000"}`;
   const url = `${base.replace(/\/$/, "")}/${business.slug}`;
 
+  // ---- Couleurs & décor du commerçant (affiche sur-mesure) ----
+  let primary = "#ffc24d";
+  let accent = "#ff5d73";
+  let bgColor = "#150c29";
+  let decor = "";
+  try {
+    const admin = getAdminClient();
+    const { data: cfg } = await admin
+      .from("wheel_configs")
+      .select("primary_color, accent_color, bg_color")
+      .eq("business_id", business.id)
+      .maybeSingle();
+    if (cfg) {
+      primary = (cfg as any).primary_color || primary;
+      accent = (cfg as any).accent_color || accent;
+      bgColor = (cfg as any).bg_color || bgColor;
+    }
+    const { data: d } = await admin
+      .from("wheel_configs")
+      .select("decor_emojis")
+      .eq("business_id", business.id)
+      .maybeSingle();
+    decor = (d as any)?.decor_emojis || "";
+  } catch {
+    /* colonnes absentes : valeurs par défaut */
+  }
+
+  const bgLight = lum(bgColor) > 0.55;
+  // Fond d'affiche : clair et imprimable dans tous les cas, teinté à la marque
+  const posterBg = bgLight ? mix(bgColor, "#ffffff", 0.35) : "#fffdf8";
+  const ink = "#1b1035";
+  const rim = mix(primary, "#000000", 0.12);
+  const gold = "#f0a52e";
+  // 6 quartiers alternant les 2 couleurs de marque + une touche dorée
+  const segs = [primary, accent, gold, mix(primary, "#ffffff", 0.18), accent, gold];
+  // QR aux couleurs de marque si la couleur reste bien lisible, sinon encre
+  const qrDark = lum(primary) < 0.45 ? primary : ink;
+  const decorEmojis = splitEmojis(decor);
+
   const dataUrl = await QRCode.toDataURL(url, {
     width: 900,
     margin: 1,
-    color: { dark: "#1b1035", light: "#ffffff" },
+    color: { dark: qrDark, light: "#ffffff" },
   });
+
+  const posterStyle = {
+    "--pp-bg": posterBg,
+    "--pp-ink": ink,
+    "--pp-primary": primary,
+    "--pp-accent": accent,
+    "--pp-rim": rim,
+  } as React.CSSProperties;
 
   return (
     <>
@@ -113,7 +202,26 @@ export default async function QrPage() {
       </div>
 
       {/* Aperçu + version imprimable de l'affiche */}
-      <div className="print-poster">
+      <div className="print-poster" style={posterStyle}>
+        {decorEmojis.length > 0 && (
+          <div className="pp-decor" aria-hidden="true">
+            {[
+              { t: "6%", l: "7%", r: -14 },
+              { t: "9%", l: "84%", r: 12 },
+              { t: "46%", l: "3%", r: -8 },
+              { t: "50%", l: "90%", r: 10 },
+              { t: "88%", l: "9%", r: 8 },
+              { t: "90%", l: "82%", r: -12 },
+            ].map((p, i) => (
+              <span
+                key={i}
+                style={{ top: p.t, left: p.l, transform: `rotate(${p.r}deg)` }}
+              >
+                {decorEmojis[i % decorEmojis.length]}
+              </span>
+            ))}
+          </div>
+        )}
         <div className="pp-head">
           {business.logo_url ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -127,7 +235,7 @@ export default async function QrPage() {
         </div>
 
         <div className="pp-wheel">
-          <PosterWheel />
+          <PosterWheel segs={segs} hub={primary} rim={rim} emojis={decorEmojis} />
         </div>
 
         <div className="pp-title">Tentez votre chance&nbsp;! 🎁</div>

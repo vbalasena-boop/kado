@@ -1719,17 +1719,34 @@ canvas#confetti {
   flex-wrap: wrap;
 }
 .print-poster {
-  background: #fffdf8;
-  color: #1b1035;
+  position: relative;
+  overflow: hidden;
+  background: var(--pp-bg, #fffdf8);
+  color: var(--pp-ink, #1b1035);
   max-width: 420px;
   margin: 0 auto;
-  border: 1px solid #ece6d8;
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 22px;
   padding: 30px 28px 22px;
   text-align: center;
   box-shadow: 0 18px 50px -24px rgba(0, 0, 0, 0.35);
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
+}
+.pp-decor {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.pp-decor span {
+  position: absolute;
+  font-size: 30px;
+  opacity: 0.16;
+}
+.print-poster > *:not(.pp-decor) {
+  position: relative;
+  z-index: 1;
 }
 .pp-head {
   display: flex;
@@ -1743,7 +1760,7 @@ canvas#confetti {
   height: 50px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid #e8a13c;
+  border: 2px solid var(--pp-primary, #e8a13c);
 }
 .pp-wheel {
   margin: 2px 0 10px;
@@ -1758,8 +1775,8 @@ canvas#confetti {
 .pp-logo-ph {
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, #ffd36b, #f0a52e);
-  color: #1b1035;
+  background: var(--pp-primary, #f0a52e);
+  color: #fff;
   font-weight: 800;
   font-size: 22px;
 }
@@ -1786,7 +1803,7 @@ canvas#confetti {
   height: 200px;
   display: block;
   margin: 0 auto 10px;
-  border: 5px solid #1b1035;
+  border: 5px solid var(--pp-primary, #1b1035);
   border-radius: 16px;
   padding: 8px;
   background: #fff;
