@@ -177,22 +177,35 @@ function splitEmojis(s: string): string[] {
  *  commerçant. Positions tirées au montage (client uniquement). */
 function FloatingDecor({ emojis }: { emojis: string[] }) {
   const [items, setItems] = useState<
-    { e: string; x: number; y: number; s: number; d: number; delay: number }[]
+    {
+      e: string;
+      x: number;
+      y: number;
+      s: number;
+      d: number;
+      delay: number;
+      dx: number;
+      rot: number;
+      variant: number;
+    }[]
   >([]);
   const [popped, setPopped] = useState<number | null>(null);
 
   useEffect(() => {
     if (emojis.length === 0) return;
     const list = [];
-    const count = Math.min(10, Math.max(6, emojis.length * 2));
+    const count = Math.min(12, Math.max(7, emojis.length * 2));
     for (let i = 0; i < count; i++) {
       list.push({
         e: emojis[i % emojis.length],
         x: 4 + Math.random() * 88, // % de la largeur
         y: 6 + Math.random() * 84, // % de la hauteur
-        s: 22 + Math.random() * 26, // taille px
-        d: 5 + Math.random() * 5, // durée d'animation s
-        delay: Math.random() * 4,
+        s: 22 + Math.random() * 28, // taille px
+        d: 6 + Math.random() * 6, // durée d'animation s
+        delay: Math.random() * 5,
+        dx: (Math.random() * 2 - 1) * 34, // dérive horizontale px
+        rot: (Math.random() * 2 - 1) * 16, // rotation deg
+        variant: i % 3, // 3 trajectoires différentes
       });
     }
     setItems(list);
@@ -205,18 +218,22 @@ function FloatingDecor({ emojis }: { emojis: string[] }) {
       {items.map((it, i) => (
         <span
           key={i}
-          className={`decor-e${popped === i ? " burst" : ""}`}
-          style={{
-            left: `${it.x}%`,
-            top: `${it.y}%`,
-            fontSize: it.s,
-            animationDuration: `${it.d}s`,
-            animationDelay: `${it.delay}s`,
-          }}
+          className={`decor-e decor-v${it.variant}${popped === i ? " burst" : ""}`}
+          style={
+            {
+              left: `${it.x}%`,
+              top: `${it.y}%`,
+              fontSize: it.s,
+              animationDuration: `${it.d}s`,
+              animationDelay: `${it.delay}s`,
+              "--dx": `${it.dx}px`,
+              "--rot": `${it.rot}deg`,
+            } as React.CSSProperties
+          }
           onClick={() => {
             haptic(30);
             setPopped(i);
-            window.setTimeout(() => setPopped(null), 500);
+            window.setTimeout(() => setPopped(null), 600);
           }}
         >
           {it.e}

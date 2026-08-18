@@ -5147,20 +5147,39 @@ html { scroll-behavior: smooth; }
   position: absolute;
   pointer-events: auto;
   cursor: pointer;
-  opacity: 0.5;
-  filter: saturate(1.05);
-  animation: decor-float 6s ease-in-out infinite alternate;
+  opacity: 0.55;
+  filter: saturate(1.08) drop-shadow(0 3px 6px rgba(0, 0, 0, 0.12));
   user-select: none;
   transition: opacity 0.2s;
+  --dx: 20px;
+  --rot: 10deg;
+  will-change: transform;
 }
-.decor-e:hover { opacity: 0.85; }
-@keyframes decor-float {
-  0% { transform: translateY(0) rotate(-7deg); }
-  100% { transform: translateY(-26px) rotate(9deg); }
+.decor-e:hover { opacity: 0.9; }
+/* Trois trajectoires : chacune dérive, tangue et tourne différemment. */
+.decor-v0 { animation: decor-drift 6s ease-in-out infinite alternate; }
+.decor-v1 { animation: decor-sway 7s ease-in-out infinite alternate; }
+.decor-v2 { animation: decor-loop 8s ease-in-out infinite; }
+@keyframes decor-drift {
+  0% { transform: translate(0, 0) rotate(calc(var(--rot) * -1)); }
+  50% { transform: translate(calc(var(--dx) * 0.5), -16px) rotate(0deg); }
+  100% { transform: translate(var(--dx), -30px) rotate(var(--rot)); }
 }
-.decor-e.burst { animation: decor-burst 0.5s ease forwards; }
+@keyframes decor-sway {
+  0% { transform: translate(0, 0) rotate(calc(var(--rot) * -1)); }
+  100% { transform: translate(calc(var(--dx) * -1), -22px) rotate(var(--rot)); }
+}
+@keyframes decor-loop {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(var(--dx), -14px) rotate(var(--rot)); }
+  50% { transform: translate(0, -26px) rotate(0deg); }
+  75% { transform: translate(calc(var(--dx) * -1), -14px) rotate(calc(var(--rot) * -1)); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+.decor-e.burst { animation: decor-burst 0.6s ease forwards; }
 @keyframes decor-burst {
-  30% { transform: scale(1.6) rotate(14deg); opacity: 1; }
+  25% { transform: scale(1.7) rotate(16deg); opacity: 1; }
+  55% { transform: scale(1.2) rotate(-10deg); opacity: 0.9; }
   100% { transform: scale(0.2) rotate(-30deg); opacity: 0; }
 }
 .app { z-index: 2; }
@@ -5188,7 +5207,9 @@ html { scroll-behavior: smooth; }
 .app .btn:active, .app button:active { transform: scale(0.97); }
 
 @media (prefers-reduced-motion: reduce) {
-  .decor-e, .logo-anim, .screen.active { animation: none; }
+  .decor-e, .decor-v0, .decor-v1, .decor-v2, .logo-anim, .screen.active {
+    animation: none;
+  }
 }
 
 /* ───── Éditeur : préréglages de thème + champs couleur ───── */

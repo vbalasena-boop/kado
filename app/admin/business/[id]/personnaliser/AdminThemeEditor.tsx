@@ -4,6 +4,21 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { GAME_THEMES } from "@/lib/themes";
 
+// Ambiances « métier » réservées à l'admin (personnalisation sur-mesure).
+const ADMIN_PRESETS = [
+  {
+    n: "🍝 Trattoria QUSTOS",
+    p: "#1f7a44",
+    a: "#c23b2e",
+    b: "#f2ede1",
+    d: "🍅🍆🍄🥕🌿🍝",
+  },
+  { n: "☕ Coffee shop", p: "#8a5a34", a: "#c98a4b", b: "#faf5ee", d: "☕🥐🍪" },
+  { n: "💇 Beauté", p: "#c98ab0", a: "#8a5ac9", b: "#fdf7fb", d: "✨💅🌸" },
+  { n: "🍕 Pizzeria", p: "#c0392b", a: "#2e7d4f", b: "#fbf6ee", d: "🍕🍅🌿🧀" },
+  { n: "🍔 Burger / snack", p: "#e0872f", a: "#c0392b", b: "#fff8ef", d: "🍔🍟🥤" },
+];
+
 type Initial = {
   primary: string;
   accent: string;
@@ -137,6 +152,9 @@ export default function AdminThemeEditor({
         <div className="editor-form">
           <div className="dash-card">
             <h2>Couleurs</h2>
+            <p className="muted" style={{ margin: "0 0 8px", fontSize: 12.5 }}>
+              Thèmes neutres (comme côté commerçant)
+            </p>
             <div className="theme-presets">
               {GAME_THEMES.map((t) => (
                 <button
@@ -152,6 +170,27 @@ export default function AdminThemeEditor({
                   }}
                 >
                   {t.name}
+                </button>
+              ))}
+            </div>
+            <p className="muted" style={{ margin: "12px 0 8px", fontSize: 12.5 }}>
+              Ambiances métier (sur-mesure, avec décor animé)
+            </p>
+            <div className="theme-presets">
+              {ADMIN_PRESETS.map((t) => (
+                <button
+                  key={t.n}
+                  type="button"
+                  className="theme-preset"
+                  style={{ background: t.b, color: t.p, borderColor: t.p }}
+                  onClick={() => {
+                    setPrimary(t.p);
+                    setAccent(t.a);
+                    setBg(t.b);
+                    setDecor(t.d);
+                  }}
+                >
+                  {t.n}
                 </button>
               ))}
             </div>
