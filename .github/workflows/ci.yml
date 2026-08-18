@@ -1,0 +1,29 @@
+# Vérification automatique à chaque push : compilation + tests.
+# Si quelque chose casse, GitHub envoie un e-mail au propriétaire du dépôt.
+name: Vérification (build + tests)
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verifier:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Compiler le site
+        run: npm run build
+
+      - name: Lancer les tests
+        run: npm test
