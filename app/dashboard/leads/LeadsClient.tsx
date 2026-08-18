@@ -38,37 +38,39 @@ export default function LeadsClient({ leads }: { leads: Lead[] }) {
         collecte dans <b>Mon jeu</b> si ce n'est pas déjà fait.
       </p>
 
-      <div className="dash-card" style={{ padding: 0, overflow: "hidden" }}>
-        <div className="leads-head">
-          <div>
-            <b>{leads.length}</b> contact{leads.length > 1 ? "s" : ""}
-          </div>
-          <button
-            className="btn-secondary"
-            onClick={exportCsv}
-            disabled={leads.length === 0}
-          >
-            <Icon name="download" size={16} /> Exporter en CSV
-          </button>
+      {leads.length === 0 ? (
+        <div className="dash-card empty-state">
+          <div className="empty-emoji">📭</div>
+          <h2>Aucun client collecté pour l'instant</h2>
+          <p>
+            Dès qu'un joueur laissera son e-mail après avoir gagné, il
+            apparaîtra ici — prêt à recevoir vos offres et campagnes.
+          </p>
+          <a href="/dashboard/wheel" className="btn">
+            Activer la collecte dans Mon jeu →
+          </a>
         </div>
-        <div className="admin-table-wrap">
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>E-mail</th>
-                <th>Téléphone</th>
-                <th>Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {leads.length === 0 ? (
+      ) : (
+        <div className="dash-card" style={{ padding: 0, overflow: "hidden" }}>
+          <div className="leads-head">
+            <div>
+              <b>{leads.length}</b> contact{leads.length > 1 ? "s" : ""}
+            </div>
+            <button className="btn-secondary" onClick={exportCsv}>
+              <Icon name="download" size={16} /> Exporter en CSV
+            </button>
+          </div>
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead>
                 <tr>
-                  <td colSpan={3} className="muted" style={{ padding: 22 }}>
-                    Aucun contact collecté pour l'instant.
-                  </td>
+                  <th>E-mail</th>
+                  <th>Téléphone</th>
+                  <th>Date</th>
                 </tr>
-              ) : (
-                leads.map((l, i) => (
+              </thead>
+              <tbody>
+                {leads.map((l, i) => (
                   <tr key={i}>
                     <td>{l.email || "—"}</td>
                     <td>{l.phone || "—"}</td>
@@ -76,12 +78,12 @@ export default function LeadsClient({ leads }: { leads: Lead[] }) {
                       {new Date(l.created_at).toLocaleDateString("fr-FR")}
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
     </>
   );
 }

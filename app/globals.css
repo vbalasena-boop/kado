@@ -5878,3 +5878,15 @@ summary:focus-visible,
   line-height: 1.35;
   opacity: 0.92;
 }
+
+/* ===== État vide réutilisable (dashboard) ===== */
+.empty-state { text-align: center; padding: 44px 24px; }
+.empty-state .empty-emoji { font-size: 46px; line-height: 1; margin-bottom: 10px; }
+.empty-state h2 { margin-bottom: 8px; }
+.empty-state p {
+  color: var(--cream-dim, #5f6368);
+  max-width: 44ch;
+  margin: 0 auto 20px;
+  line-height: 1.55;
+}
+.empty-state .btn { display: inline-block; }
