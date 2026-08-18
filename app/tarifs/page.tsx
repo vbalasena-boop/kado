@@ -225,17 +225,17 @@ export default function Tarifs() {
           </p>
           <div className="v-multi-grid">
             <div className="v-multi-opt">
-              <b>1ʳᵉ boutique</b>
-              <small>Au tarif normal de la formule choisie (Jeux, Fidélité ou Complet).</small>
+              <b>🗂️ Un seul espace</b>
+              <small>Toutes vos boutiques, une seule connexion, une seule facture.</small>
             </div>
             <div className="v-multi-opt is-hl">
-              <span className="v-multi-tag">Le plus choisi</span>
-              <b>Suivantes&nbsp;: −25&nbsp;%</b>
-              <small>Chaque établissement supplémentaire à −25 % sur la même formule.</small>
+              <span className="v-multi-tag">Sur devis</span>
+              <b>💶 Tarif dégressif</b>
+              <small>Plus vous ajoutez de boutiques, meilleur est le tarif. Nous consulter.</small>
             </div>
             <div className="v-multi-opt">
-              <b>5 boutiques et +</b>
-              <small>Tarif sur mesure — on construit l'offre avec vous.</small>
+              <b>🤝 Accompagnement</b>
+              <small>On paramètre chaque établissement avec vous, clé en main.</small>
             </div>
           </div>
           <ul className="v-multi-feats">
@@ -244,12 +244,14 @@ export default function Tarifs() {
             <li>✓ Facturation groupée, une seule connexion</li>
             <li>✓ Pensé pour chaînes, franchises et multi-enseignes</li>
           </ul>
-          <a className="v-btn primary" href="/login?signup=1">
-            Ouvrir mon compte →
+          <a
+            className="v-btn primary"
+            href="mailto:bonjour@kado-app.fr?subject=Offre%20multi-boutiques%20Kado"
+          >
+            Nous consulter →
           </a>
           <p className="v-setup-note">
-            Ajout de boutiques accompagné — écrivez-nous à{" "}
-            <b>bonjour@kado-app.fr</b>.
+            Réponse sous 24 h — <b>bonjour@kado-app.fr</b>.
           </p>
         </div>
       </section>
