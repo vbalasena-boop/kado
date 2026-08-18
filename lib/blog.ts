@@ -284,6 +284,259 @@ export const ARTICLES: Article[] = [
   },
 ];
 
+ARTICLES.push(
+  {
+    slug: "combien-coute-programme-fidelite-commerce",
+    title: "Combien coûte un programme de fidélité pour un commerce ?",
+    metaTitle: "Combien coûte un programme de fidélité ? (prix 2026)",
+    description:
+      "Cartes papier, applications, solutions digitales : combien coûte vraiment un programme de fidélité pour un commerce en 2026 ? Comparatif des prix et du retour sur investissement.",
+    keywords: [
+      "prix programme de fidélité",
+      "combien coûte carte de fidélité",
+      "coût fidélisation commerce",
+      "logiciel fidélité prix",
+    ],
+    date: "2026-08-18",
+    readMinutes: 6,
+    category: "Fidélisation",
+    emoji: "💶",
+    excerpt:
+      "De la carte à tampons à la solution digitale : le vrai coût d'un programme de fidélité, et comment savoir s'il est rentable pour votre commerce.",
+    blocks: [
+      {
+        p: "Avant de lancer un programme de fidélité, une question revient toujours : combien ça coûte, et est-ce rentable ? La réponse dépend de la solution choisie. Passons en revue les options, leurs prix réels et leur retour sur investissement.",
+      },
+      { h: "La carte à tampons papier : « gratuite » en apparence" },
+      {
+        p: "Une carte cartonnée coûte quelques centimes à imprimer. Mais le vrai coût est caché : cartes perdues, oubliées, tampons à gérer, aucune donnée client récupérée, aucune relance possible. Vous fidélisez un peu, mais vous ne savez rien de vos clients et ne pouvez pas les recontacter. Économique à l'achat, coûteux en opportunités manquées.",
+      },
+      { h: "Les applications de fidélité dédiées : 30 à 150 € par mois" },
+      {
+        p: "Les solutions digitales spécialisées vont d'une trentaine d'euros à plus de 150 € par mois selon les fonctionnalités. Les plus chères imposent souvent que vos clients installent une application — un frein majeur : la plupart ne le feront jamais.",
+      },
+      { h: "Les caisses avec module fidélité : variable et lié à la caisse" },
+      {
+        p: "Certains logiciels de caisse intègrent la fidélité, mais le module est souvent en supplément, et vous êtes verrouillé à leur écosystème. Changer de caisse = tout perdre.",
+      },
+      { h: "Les solutions sans application : le meilleur rapport valeur/prix" },
+      {
+        p: "Une nouvelle génération d'outils fonctionne sans installation : le client scanne un QR code, sa carte vit dans son navigateur. Le prix se situe généralement entre 19 et 45 € par mois, tout compris — souvent avec des fonctions bien au-delà de la simple carte (anniversaires, parrainage, campagnes, avis Google).",
+      },
+      { h: "Le vrai calcul : le retour sur investissement" },
+      {
+        p: "Le prix ne veut rien dire seul. Ce qui compte, c'est le retour. Prenons un exemple : un programme à 30 €/mois qui fait revenir ne serait-ce que 3 clients supplémentaires par mois, dépensant chacun 20 €, génère 60 € — il est déjà rentable. Et un client fidélisé revient bien plus de 3 fois par an.",
+      },
+      {
+        quote:
+          "La bonne question n'est pas « combien ça coûte ? » mais « combien ça rapporte ? ». Un programme de fidélité qui augmente la fréquence de visite se rembourse presque toujours dès le premier mois.",
+      },
+      { h: "Ce qu'il faut vérifier avant de payer" },
+      {
+        ul: [
+          "Sans engagement : pouvez-vous arrêter quand vous voulez ?",
+          "Sans application à installer pour vos clients (sinon l'adoption s'effondre).",
+          "Essai gratuit : pouvez-vous tester avant de payer ?",
+          "Données récupérées : collectez-vous les e-mails pour relancer ?",
+          "Fonctions incluses : anniversaires, parrainage, avis, campagnes ?",
+        ],
+      },
+      { h: "En résumé" },
+      {
+        p: "Un programme de fidélité efficace coûte entre 19 et 45 € par mois pour une solution digitale complète et sans application. À ce prix, il se rembourse en quelques clients qui reviennent. Kado se situe dans cette fourchette, avec un essai gratuit de 14 jours pour vérifier la rentabilité avant de payer un centime.",
+      },
+    ],
+  },
+  {
+    slug: "qr-code-commerce-mode-emploi",
+    title: "QR code en commerce : le mode d'emploi complet",
+    metaTitle: "QR code en commerce : mode d'emploi complet (2026)",
+    description:
+      "À quoi sert un QR code en boutique, où le placer, comment le créer et l'utiliser pour gagner des avis, des abonnés et fidéliser. Le guide pratique.",
+    keywords: [
+      "qr code commerce",
+      "qr code restaurant",
+      "créer qr code magasin",
+      "qr code avis google",
+      "qr code fidélité",
+    ],
+    date: "2026-08-18",
+    readMinutes: 5,
+    category: "Outils",
+    emoji: "📱",
+    excerpt:
+      "Le QR code est devenu l'outil le plus simple pour connecter votre boutique physique au digital. Voici comment l'exploiter à fond.",
+    blocks: [
+      {
+        p: "Depuis quelques années, tout le monde sait scanner un QR code avec l'appareil photo de son téléphone. Pour un commerce, c'est une opportunité énorme : un simple carré imprimé peut transformer un client de passage en avis Google, en abonné Instagram ou en membre fidèle. Voici comment.",
+      },
+      { h: "À quoi sert un QR code en commerce ?" },
+      {
+        ul: [
+          "Rediriger vers votre page d'avis Google en un scan.",
+          "Faire suivre votre compte Instagram instantanément.",
+          "Ouvrir une carte de fidélité digitale.",
+          "Lancer un jeu (roue, carte à gratter) en caisse.",
+          "Permettre de commander en ligne (click & collect).",
+        ],
+      },
+      { h: "Où le placer pour qu'il soit scanné ?" },
+      {
+        p: "L'emplacement fait tout. Les meilleurs endroits : sur les tables (restaurant), au comptoir près de la caisse (le moment du paiement est idéal), sur le ticket de caisse, en vitrine, sur le sac ou l'emballage. Règle d'or : le QR doit être visible au moment où le client est content et disponible — c'est-à-dire souvent juste après avoir payé.",
+      },
+      { h: "Comment le rendre efficace" },
+      {
+        ul: [
+          "Ajoutez une phrase d'appel claire : « Scannez pour tenter de gagner un cadeau 🎡 ».",
+          "Taille suffisante (au moins 3 cm de côté) et bon contraste.",
+          "Un seul objectif par QR : ne noyez pas le client sous les choix.",
+          "Testez-le vous-même avant de l'imprimer en nombre.",
+        ],
+      },
+      { h: "L'erreur à éviter" },
+      {
+        p: "Un QR qui envoie vers une page compliquée ou qui demande d'installer une application fait fuir. Chaque étape supplémentaire perd la moitié des gens. Le parcours idéal : scan → action en 10 secondes → c'est fini. Sans compte à créer, sans installation.",
+      },
+      { h: "Le QR code qui fait tout à la fois" },
+      {
+        p: "L'idéal, c'est un seul QR qui enchaîne plusieurs bénéfices : le client scanne, on lui propose de suivre votre Instagram ou de laisser un avis, il joue à une roue, gagne un cadeau, et sa carte de fidélité se crée au passage. C'est exactement le principe de Kado : un QR, et vous récoltez avis, abonnés et fidélité en même temps.",
+      },
+      { h: "En résumé" },
+      {
+        p: "Le QR code est le pont le plus simple entre votre boutique et le digital. Bien placé, avec un appel clair et un parcours sans friction, il devient une machine à avis, à abonnés et à clients fidèles. Encore faut-il qu'il mène à la bonne expérience — c'est là que se joue toute la différence.",
+      },
+    ],
+  },
+  {
+    slug: "carte-fidelite-digitale-ou-papier",
+    title: "Carte de fidélité digitale ou papier : que choisir ?",
+    metaTitle: "Carte de fidélité digitale ou papier : le comparatif",
+    description:
+      "Carte à tampons papier ou carte de fidélité digitale ? Comparatif honnête des avantages, inconvénients et coûts pour choisir la bonne solution pour votre commerce.",
+    keywords: [
+      "carte de fidélité digitale",
+      "carte fidélité papier ou digitale",
+      "carte à tampons digitale",
+      "dématérialiser carte de fidélité",
+    ],
+    date: "2026-08-18",
+    readMinutes: 5,
+    category: "Fidélisation",
+    emoji: "🎫",
+    excerpt:
+      "La carte à tampons a fait son temps. Mais la version digitale est-elle vraiment meilleure ? Comparatif point par point.",
+    blocks: [
+      {
+        p: "Presque tous les commerces ont testé la carte à tampons en carton. Beaucoup se demandent aujourd'hui s'il faut passer au digital. Comparons honnêtement les deux, sans parti pris.",
+      },
+      { h: "La carte papier : ses forces" },
+      {
+        ul: [
+          "Coût d'impression très faible.",
+          "Aucune technologie, tout le monde comprend.",
+          "Tangible : certains clients aiment le geste du tampon.",
+        ],
+      },
+      { h: "La carte papier : ses limites" },
+      {
+        ul: [
+          "Perdue ou oubliée dans 7 cas sur 10.",
+          "Aucune donnée : vous ne savez rien de vos clients.",
+          "Impossible de les recontacter ou de les relancer.",
+          "Fraude facile (tampons copiés).",
+          "Aucune mesure : combien de cartes complétées ? Mystère.",
+        ],
+      },
+      { h: "La carte digitale : ses forces" },
+      {
+        ul: [
+          "Toujours dans le téléphone : jamais perdue, jamais oubliée.",
+          "Vous récupérez l'e-mail : relances, offres, anniversaires possibles.",
+          "Barre de progression visible : motive le client à revenir.",
+          "Anti-fraude : validation sécurisée en caisse.",
+          "Statistiques : vous voyez qui revient et à quelle fréquence.",
+        ],
+      },
+      { h: "La carte digitale : le seul vrai frein" },
+      {
+        p: "Le reproche classique : « mes clients devront installer une application ». C'était vrai avec les anciennes solutions. Les outils modernes fonctionnent sans installation : le client scanne un QR, sa carte s'ouvre dans le navigateur, et il peut l'ajouter à son écran d'accueil en un tap s'il le souhaite. Le frein a disparu.",
+      },
+      {
+        quote:
+          "La vraie différence n'est pas le tampon : c'est la donnée. La carte papier fidélise un peu. La carte digitale fidélise ET vous donne les moyens de faire revenir vos clients activement.",
+      },
+      { h: "Le verdict" },
+      {
+        p: "Pour un commerce qui veut simplement occuper les mains, le papier suffit. Pour un commerce qui veut vraiment faire revenir ses clients — les relancer, fêter leur anniversaire, mesurer ce qui marche — la carte digitale sans application gagne sur tous les tableaux, pour un coût très raisonnable.",
+      },
+      { h: "En résumé" },
+      {
+        p: "La carte digitale n'est pas juste une carte papier modernisée : c'est un outil de croissance. Elle transforme un simple système de tampons en canal de fidélisation actif. Kado propose cette carte digitale sans application, avec anniversaires et parrainage inclus — testable gratuitement 14 jours.",
+      },
+    ],
+  },
+  {
+    slug: "faire-revenir-clients-restaurant",
+    title: "Comment faire revenir ses clients au restaurant : 8 techniques",
+    metaTitle: "Faire revenir ses clients au restaurant : 8 techniques",
+    description:
+      "Un client qui revient vaut de l'or. Voici 8 techniques concrètes pour transformer un client de passage en habitué de votre restaurant.",
+    keywords: [
+      "faire revenir clients restaurant",
+      "fidéliser clients restaurant",
+      "augmenter fréquentation restaurant",
+      "marketing restaurant",
+    ],
+    date: "2026-08-18",
+    readMinutes: 6,
+    category: "Restauration",
+    emoji: "🍽️",
+    excerpt:
+      "Remplir une fois, c'est bien. Faire revenir, c'est ce qui fait vivre un restaurant. Voici 8 leviers concrets pour créer des habitués.",
+    blocks: [
+      {
+        p: "Dans la restauration, la rentabilité ne vient pas du premier repas d'un client, mais de sa fidélité. Un habitué qui revient chaque semaine vaut cent fois un client de passage. Voici 8 techniques éprouvées pour transformer vos clients d'un soir en habitués.",
+      },
+      { h: "1. Capturez le contact avant qu'il ne parte" },
+      {
+        p: "Un client qui repart sans que vous ayez son e-mail est un client que vous ne reverrez peut-être jamais. Un jeu ou une carte de fidélité digitale en fin de repas permet de récupérer ce contact — avec son accord — pour le recontacter plus tard.",
+      },
+      { h: "2. Offrez une raison de revenir tout de suite" },
+      {
+        p: "Un cadeau à récupérer lors de la prochaine visite (un café, un dessert, une réduction) plante une graine : le client repart avec une bonne raison de revenir. C'est le principe du jeu en caisse.",
+      },
+      { h: "3. Soignez l'anniversaire" },
+      {
+        p: "Un e-mail « Joyeux anniversaire, votre dessert est offert » quelques jours avant le jour J est l'un des messages qui convertit le mieux en restauration. Les gens sortent pour leur anniversaire — soyez le restaurant auquel ils pensent.",
+      },
+      { h: "4. Transformez chaque table en avis Google" },
+      {
+        p: "Plus d'avis = plus de visibilité = plus de nouveaux clients à fidéliser ensuite. Un QR sur la table qui propose de laisser un avis (contre un tour de jeu) alimente votre réputation en continu.",
+      },
+      { h: "5. Activez le bouche-à-oreille" },
+      {
+        p: "Vos habitués connaissent d'autres gourmands. Un système de parrainage — « amenez un ami, gagnez quelque chose » — transforme vos meilleurs clients en apporteurs d'affaires.",
+      },
+      { h: "6. Relancez intelligemment" },
+      {
+        p: "Une promo bien placée un mardi soir calme, envoyée par e-mail ou notification à vos clients, peut remplir des créneaux vides. À condition d'avoir capté leurs contacts (voir point 1).",
+      },
+      { h: "7. Proposez la commande à emporter" },
+      {
+        p: "Tous vos clients ne peuvent pas toujours s'attabler. La commande en ligne avec retrait (click & collect) capte une demande que vous perdez sinon, et augmente la fréquence.",
+      },
+      { h: "8. Créez un rituel" },
+      {
+        p: "Le plat du jeudi, l'happy hour du vendredi, la carte qui change chaque mois : un rendez-vous récurrent donne une raison de revenir régulièrement. Communiquez-le à votre base de clients fidèles.",
+      },
+      { h: "En résumé" },
+      {
+        p: "Faire revenir ses clients repose sur deux piliers : capter le contact au bon moment, puis donner des raisons de revenir (cadeau, anniversaire, offres, rituels). Kado réunit ces leviers pour la restauration — jeu en caisse, carte de fidélité, anniversaires, avis Google et click & collect — dans un seul outil, sans application.",
+      },
+    ],
+  }
+);
+
 export function getArticle(slug: string): Article | undefined {
   return ARTICLES.find((a) => a.slug === slug);
 }
