@@ -377,6 +377,16 @@ export default function CampaignsClient({
           </button>
         </div>
 
+        <span
+          style={{
+            display: "block",
+            marginBottom: 8,
+            marginTop: 4,
+            fontWeight: 600,
+          }}
+        >
+          Quand l'envoyer ?
+        </span>
         <div className="camp-when">
           <button
             type="button"
