@@ -5259,7 +5259,7 @@ html { scroll-behavior: smooth; }
 .decor-e {
   position: absolute;
   pointer-events: none; /* décoratif : ne bloque jamais un bouton (essentiel sur mobile) */
-  opacity: 0.5;
+  opacity: 0.36;
   filter: saturate(1.05) drop-shadow(0 3px 6px rgba(0, 0, 0, 0.12));
   user-select: none;
   transition: opacity 0.2s, transform 0.2s;
