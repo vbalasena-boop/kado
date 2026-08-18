@@ -3,12 +3,12 @@
 import { useState } from "react";
 
 const SEGMENTS = [
-  { emoji: "🎁", label: "Cadeau surprise", color: "#ff5d73" },
-  { emoji: "☕", label: "Café offert", color: "#ffc24d" },
-  { emoji: "🍰", label: "Dessert offert", color: "#39d98a" },
-  { emoji: "🏷️", label: "-10 % sur l'addition", color: "#4fc3f7" },
-  { emoji: "🍹", label: "Boisson offerte", color: "#8b6cff" },
-  { emoji: "⭐", label: "Une bonne surprise", color: "#ff8a5c" },
+  { emoji: "🎁", label: "Cadeau surprise", color: "#c0603f" },
+  { emoji: "☕", label: "Café offert", color: "#8a5a34" },
+  { emoji: "🍰", label: "Dessert offert", color: "#d98a5a" },
+  { emoji: "🏷️", label: "-10 % sur l'addition", color: "#9c6b3f" },
+  { emoji: "🍹", label: "Boisson offerte", color: "#e0a34a" },
+  { emoji: "⭐", label: "Une bonne surprise", color: "#b8875a" },
 ];
 
 const SEG = 360 / SEGMENTS.length;
@@ -82,7 +82,7 @@ export default function HomeWheel() {
             })}
           </g>
           <circle cx="50" cy="50" r="44" fill="none" stroke="#f0a52e" strokeWidth="3" />
-          <circle cx="50" cy="50" r="11" fill="#ffc24d" stroke="#1b1035" strokeWidth="3" />
+          <circle cx="50" cy="50" r="11" fill="#8a5a34" stroke="#1b1035" strokeWidth="3" />
         </svg>
       </div>
 

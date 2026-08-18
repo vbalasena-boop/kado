@@ -5476,3 +5476,27 @@ html { scroll-behavior: smooth; }
   line-height: 1.45;
   text-align: center;
 }
+
+/* ===== Démo accueil « Café Lumière » : téléphone au style café clair ===== */
+.pv-screen {
+  background: radial-gradient(120% 100% at 50% 0%, #fffaf3 0%, #f6efe3 62%);
+}
+.pv-brand { color: #8a5a34; }
+.pv-foot { color: #6b5a48; opacity: 0.85; }
+.pv-screen .hg-tabs { background: rgba(138, 90, 52, 0.1); }
+.pv-screen .hg-tab { color: #7a6552; }
+.pv-screen .hg-tab.on { background: #8a5a34; color: #fff; }
+.pv-screen .hg-hint { color: #8a7a66; }
+.pv-screen .hw-result > b { color: #8a5a34; }
+.pv-screen .hw-again {
+  background: #8a5a34;
+  color: #fff;
+  border: none;
+}
+.pv-screen .hw-again:hover { background: #6f4626; }
+.pv-screen .sl-machine { background: #4a3423; border-color: #c98a4b; }
+.pv-screen .hw-btn {
+  background: linear-gradient(180deg, #c98a4b, #8a5a34);
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(138, 90, 52, 0.4);
+}

@@ -25,9 +25,9 @@ function HomeScratch() {
     if (!ctx) return;
     ctx.globalCompositeOperation = "source-over";
     const g = ctx.createLinearGradient(0, 0, c.width, c.height);
-    g.addColorStop(0, "#8b6cff");
-    g.addColorStop(0.5, "#b18cff");
-    g.addColorStop(1, "#8b6cff");
+    g.addColorStop(0, "#a9763f");
+    g.addColorStop(0.5, "#c98a4b");
+    g.addColorStop(1, "#a9763f");
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, c.width, c.height);
     ctx.fillStyle = "rgba(255,255,255,0.85)";
