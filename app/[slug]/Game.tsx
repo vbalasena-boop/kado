@@ -1159,6 +1159,7 @@ export default function Game({
                       <span>{prize.code}</span>
                     </div>
                     {prizeQr && (
+                      // eslint-disable-next-line @next/next/no-img-element -- data URI (QR généré), pas d'optimisation next/image utile
                       <img
                         src={prizeQr}
                         alt="QR du code cadeau"
