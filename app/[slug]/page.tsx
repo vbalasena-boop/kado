@@ -112,6 +112,14 @@ export default async function Page({
   const prizeValidity: number | null =
     pvErr || !pv ? 30 : ((pv as any).prize_validity_days ?? null);
 
+  // Décor animé (lecture tolérante si la migration 0027 manque)
+  const { data: dec, error: decErr } = await supa
+    .from("wheel_configs")
+    .select("decor_emojis")
+    .eq("business_id", biz.id)
+    .maybeSingle();
+  const decorEmojis: string = decErr ? "" : ((dec as any)?.decor_emojis ?? "");
+
   // Tours déjà joués par ce navigateur (verrou côté serveur)
   const played: Record<string, { label: string; code: string }> = {};
   const playerId = readPlayerId();
@@ -133,6 +141,7 @@ export default async function Page({
       logoUrl={biz.logo_url}
       orderEnabled={orderEnabled}
       prizeValidityDays={prizeValidity}
+      decorEmojis={decorEmojis}
       prizes={prizes ?? []}
       config={
         config ?? {

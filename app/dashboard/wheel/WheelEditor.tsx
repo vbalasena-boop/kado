@@ -11,6 +11,9 @@ type Prize = {
 };
 type Config = {
   primary_color: string;
+  accent_color?: string | null;
+  bg_color?: string | null;
+  decor_emojis?: string | null;
   instagram_url: string | null;
   review_url: string | null;
   compliance_note: string | null;
@@ -331,6 +334,90 @@ export default function WheelEditor({
                   Une photo de ton commerce ou de tes plats (JPG/PNG, 6 Mo max). Un
                   voile sombre est ajouté pour garder le texte lisible.
                 </p>
+              </div>
+
+              <div className="dash-card">
+                <h2>Apparence &amp; ambiance</h2>
+                <p className="muted" style={{ marginBottom: 14 }}>
+                  Accordez la page à votre identité : fond clair ou sombre, vos
+                  couleurs, et un décor animé qui flotte autour du jeu.
+                </p>
+                <div className="theme-presets">
+                  {[
+                    { n: "🌙 Festif sombre", p: "#ffc24d", a: "#ff5d73", b: "#150c29", d: "" },
+                    { n: "☀️ Clair élégant", p: "#e0a232", a: "#d05672", b: "#ffffff", d: "" },
+                    { n: "🍝 Trattoria", p: "#2e7d4f", a: "#c73e2e", b: "#fdfaf4", d: "🍝🍅🌿🫒🧄" },
+                    { n: "☕ Coffee shop", p: "#8a5a34", a: "#c98a4b", b: "#faf5ee", d: "☕🥐🍪" },
+                    { n: "💇 Beauté", p: "#c98ab0", a: "#8a5ac9", b: "#fdf7fb", d: "✨💅🌸" },
+                  ].map((t) => (
+                    <button
+                      key={t.n}
+                      type="button"
+                      className="theme-preset"
+                      style={{ background: t.b, color: t.p, borderColor: t.p }}
+                      onClick={() =>
+                        setConfig({
+                          ...config,
+                          primary_color: t.p,
+                          accent_color: t.a,
+                          bg_color: t.b,
+                          decor_emojis: t.d,
+                        })
+                      }
+                    >
+                      {t.n}
+                    </button>
+                  ))}
+                </div>
+                <div className="color-row">
+                  <label className="field color-field">
+                    <span>Couleur principale</span>
+                    <input
+                      type="color"
+                      value={config.primary_color || "#ffc24d"}
+                      onChange={(e) =>
+                        setConfig({ ...config, primary_color: e.target.value })
+                      }
+                    />
+                  </label>
+                  <label className="field color-field">
+                    <span>Couleur d'accent</span>
+                    <input
+                      type="color"
+                      value={config.accent_color || "#ff5d73"}
+                      onChange={(e) =>
+                        setConfig({ ...config, accent_color: e.target.value })
+                      }
+                    />
+                  </label>
+                  <label className="field color-field">
+                    <span>Couleur de fond</span>
+                    <input
+                      type="color"
+                      value={config.bg_color || "#150c29"}
+                      onChange={(e) =>
+                        setConfig({ ...config, bg_color: e.target.value })
+                      }
+                    />
+                  </label>
+                </div>
+                <p className="muted" style={{ margin: "4px 0 14px", fontSize: 12.5 }}>
+                  💡 Fond clair (ex. blanc) : les textes passent automatiquement
+                  en sombre pour rester lisibles. Copiez les codes couleur de
+                  votre site pour une page parfaitement assortie.
+                </p>
+                <label className="field">
+                  <span>Décor animé (emojis flottants, vide = aucun)</span>
+                  <input
+                    type="text"
+                    maxLength={40}
+                    placeholder="Ex. 🍝🍅🌿🫒 pour un restaurant italien"
+                    value={config.decor_emojis || ""}
+                    onChange={(e) =>
+                      setConfig({ ...config, decor_emojis: e.target.value })
+                    }
+                  />
+                </label>
               </div>
 
               <div className="dash-card">

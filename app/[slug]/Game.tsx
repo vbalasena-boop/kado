@@ -97,14 +97,45 @@ function mix(hex: string, target: [number, number, number], amt: number) {
 const lighten = (h: string, a: number) => mix(h, [255, 255, 255], a);
 const darken = (h: string, a: number) => mix(h, [0, 0, 0], a);
 
-/** Construit le thème CSS d'un commerce à partir de ses couleurs. */
+/** Luminance perçue (0 sombre → 1 clair) d'une couleur hex. */
+function luminance(hex: string) {
+  const h = (hex || "#000000").replace("#", "");
+  if (h.length !== 6) return 0;
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+}
+
+/** Construit le thème CSS d'un commerce à partir de ses couleurs.
+ *  Fond clair (ex. blanc) → mode clair complet : textes sombres, cartes
+ *  blanches, ombres douces. Fond sombre → thème nuit historique. */
 function buildTheme(
   primary: string,
   accent: string,
   bg: string,
   bgImage?: string | null
 ) {
-  const vars = `
+  const isLight = luminance(bg) > 0.55;
+  const vars = isLight
+    ? `
+:root{
+  --gold:${primary};
+  --gold-deep:${darken(primary, 0.16)};
+  --coral:${accent};
+  --night:${bg};
+  --night-2:${darken(bg, 0.03)};
+  --surface:#ffffff;
+  --surface-2:${darken(bg, 0.04)};
+  --surface-glass:rgba(255,255,255,.88);
+  --surface-glass-2:rgba(255,255,255,.8);
+  --glow:${lighten(primary, 0.55)};
+  --stroke:rgba(30,20,50,.12);
+  --cream:#241b35;
+  --cream-dim:#6b6480;
+  --shadow:0 24px 70px -30px rgba(30,20,50,.28);
+}`
+    : `
 :root{
   --gold:${primary};
   --gold-deep:${darken(primary, 0.16)};
@@ -119,14 +150,82 @@ function buildTheme(
   --stroke:rgba(253,244,227,.16);
 }`;
   if (!bgImage) return vars;
-  // image de fond + voile sombre pour la lisibilité
+  // image de fond + voile (sombre ou clair selon le thème) pour la lisibilité
+  const veil = isLight
+    ? `linear-gradient(${rgba("#ffffff", 0.86)}, ${rgba("#ffffff", 0.94)})`
+    : `linear-gradient(${rgba(bg, 0.82)}, ${rgba(bg, 0.94)})`;
   return `${vars}
 body{
   background:
-    linear-gradient(${rgba(bg, 0.82)}, ${rgba(bg, 0.94)}),
+    ${veil},
     url("${bgImage.replace(/"/g, "")}") center center / cover no-repeat fixed !important;
 }`;
 }
+/** Découpe une chaîne d'emojis en éléments (gère les emojis composés). */
+function splitEmojis(s: string): string[] {
+  const clean = (s || "").replace(/[\s,;·]+/g, "");
+  if (!clean) return [];
+  try {
+    const seg = new (Intl as any).Segmenter("fr", { granularity: "grapheme" });
+    return [...seg.segment(clean)].map((x: any) => x.segment).slice(0, 12);
+  } catch {
+    return Array.from(clean).slice(0, 12);
+  }
+}
+
+/** Décor ambiant : emojis flottants (🍝🍅…), tapotables, choisis par le
+ *  commerçant. Positions tirées au montage (client uniquement). */
+function FloatingDecor({ emojis }: { emojis: string[] }) {
+  const [items, setItems] = useState<
+    { e: string; x: number; y: number; s: number; d: number; delay: number }[]
+  >([]);
+  const [popped, setPopped] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (emojis.length === 0) return;
+    const list = [];
+    const count = Math.min(10, Math.max(6, emojis.length * 2));
+    for (let i = 0; i < count; i++) {
+      list.push({
+        e: emojis[i % emojis.length],
+        x: 4 + Math.random() * 88, // % de la largeur
+        y: 6 + Math.random() * 84, // % de la hauteur
+        s: 22 + Math.random() * 26, // taille px
+        d: 5 + Math.random() * 5, // durée d'animation s
+        delay: Math.random() * 4,
+      });
+    }
+    setItems(list);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [emojis.join("")]);
+
+  if (items.length === 0) return null;
+  return (
+    <div className="decor" aria-hidden="true">
+      {items.map((it, i) => (
+        <span
+          key={i}
+          className={`decor-e${popped === i ? " burst" : ""}`}
+          style={{
+            left: `${it.x}%`,
+            top: `${it.y}%`,
+            fontSize: it.s,
+            animationDuration: `${it.d}s`,
+            animationDelay: `${it.delay}s`,
+          }}
+          onClick={() => {
+            haptic(30);
+            setPopped(i);
+            window.setTimeout(() => setPopped(null), 500);
+          }}
+        >
+          {it.e}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 type Played = Record<string, { label: string; code: string }>;
 type PlayType = "instagram" | "review";
 type Screen = "rules" | "hub" | "spin" | "prize" | "done";
@@ -330,6 +429,7 @@ export default function Game({
   preview = false,
   orderEnabled = false,
   prizeValidityDays = 30,
+  decorEmojis = "",
 }: {
   slug: string;
   name: string;
@@ -340,6 +440,7 @@ export default function Game({
   preview?: boolean;
   orderEnabled?: boolean;
   prizeValidityDays?: number | null;
+  decorEmojis?: string;
 }) {
   // Canaux proposés par le commerçant (au moins un). Rétro-compatible :
   // une valeur absente/vraie = canal actif.
@@ -750,11 +851,27 @@ export default function Game({
     setScreen(usedCount >= totalTurns ? "done" : "hub");
   }
 
+  const [logoSpin, setLogoSpin] = useState(false);
+  function pokeLogo() {
+    haptic(25);
+    setLogoSpin(true);
+    window.setTimeout(() => setLogoSpin(false), 750);
+  }
   const logo = logoUrl ? (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={logoUrl} alt={name} className="logo-img" />
+    <img
+      src={logoUrl}
+      alt={name}
+      className={`logo-img logo-anim${logoSpin ? " poke" : ""}`}
+      onClick={pokeLogo}
+    />
   ) : (
-    <div className="logo">{(name || "?").charAt(0).toUpperCase()}</div>
+    <div
+      className={`logo logo-anim${logoSpin ? " poke" : ""}`}
+      onClick={pokeLogo}
+    >
+      {(name || "?").charAt(0).toUpperCase()}
+    </div>
   );
 
   const themeCss = buildTheme(
@@ -768,6 +885,7 @@ export default function Game({
     <>
       <style dangerouslySetInnerHTML={{ __html: themeCss }} />
       <canvas id="confetti" ref={confettiRef} />
+      <FloatingDecor emojis={splitEmojis(decorEmojis)} />
       <div className="app">
         {preview && (
           <div className="preview-banner">

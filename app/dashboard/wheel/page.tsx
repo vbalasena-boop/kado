@@ -13,7 +13,7 @@ export default async function WheelPage() {
     admin
       .from("wheel_configs")
       .select(
-        "primary_color, instagram_url, review_url, compliance_note, daily_prize_limit, bg_image_url, collect_email, instagram_enabled, review_enabled, loyalty_enabled, loyalty_goal, loyalty_reward, loyalty_reward_emoji, loyalty_stamp_emoji, game_type, birthday_enabled, birthday_reward, referral_enabled"
+        "primary_color, accent_color, bg_color, instagram_url, review_url, compliance_note, daily_prize_limit, bg_image_url, collect_email, instagram_enabled, review_enabled, loyalty_enabled, loyalty_goal, loyalty_reward, loyalty_reward_emoji, loyalty_stamp_emoji, game_type, birthday_enabled, birthday_reward, referral_enabled"
       )
       .eq("business_id", business.id)
       .maybeSingle(),
@@ -33,6 +33,14 @@ export default async function WheelPage() {
   const prizeValidity: number | null =
     vErr || !v ? 30 : ((v as any).prize_validity_days ?? null);
 
+  // Décor animé (lecture tolérante si la migration 0027 manque)
+  const { data: dec, error: decErr } = await admin
+    .from("wheel_configs")
+    .select("decor_emojis")
+    .eq("business_id", business.id)
+    .maybeSingle();
+  const decorEmojis: string = decErr ? "" : ((dec as any)?.decor_emojis ?? "");
+
   return (
     <WheelEditor
       initialConfig={{
@@ -43,6 +51,7 @@ export default async function WheelPage() {
           compliance_note: "Le cadeau n'est pas conditionné à la note laissée.",
         }),
         prize_validity_days: prizeValidity,
+        decor_emojis: decorEmojis,
       }}
       initialPrizes={prizes ?? []}
       initialLogoUrl={business.logo_url}

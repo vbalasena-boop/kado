@@ -19,6 +19,9 @@ export async function POST(req: NextRequest) {
       compliance_note?: string;
       daily_prize_limit?: number | null;
       prize_validity_days?: number | null;
+      accent_color?: string | null;
+      bg_color?: string | null;
+      decor_emojis?: string | null;
       collect_email?: boolean;
       instagram_enabled?: boolean;
       review_enabled?: boolean;
@@ -56,11 +59,16 @@ export async function POST(req: NextRequest) {
     rvEnabled = true;
   }
 
+  // Couleurs : valeur hex valide sinon défaut
+  const hex = (v: string | null | undefined, def: string) =>
+    v && /^#[0-9a-fA-F]{6}$/.test(v) ? v : def;
+
   // upsert config (1-1 avec business)
-  const { error: cfgErr } = await admin.from("wheel_configs").upsert(
-    {
+  const basePayload = {
       business_id: business.id,
-      primary_color: cfg.primary_color || "#ffc24d",
+      primary_color: hex(cfg.primary_color, "#ffc24d"),
+      accent_color: hex(cfg.accent_color, "#ff5d73"),
+      bg_color: hex(cfg.bg_color, "#150c29"),
       instagram_url: cfg.instagram_url || null,
       review_url: cfg.review_url || null,
       compliance_note:
@@ -95,9 +103,17 @@ export async function POST(req: NextRequest) {
         cfg.prize_validity_days && cfg.prize_validity_days > 0
           ? Math.min(365, Math.max(1, Math.round(cfg.prize_validity_days)))
           : null,
-    },
-    { onConflict: "business_id" }
-  );
+  };
+  // décor animé : colonne récente (0027) → insertion tolérante
+  const decor = (cfg.decor_emojis || "").trim().slice(0, 40) || null;
+  let { error: cfgErr } = await admin
+    .from("wheel_configs")
+    .upsert({ ...basePayload, decor_emojis: decor }, { onConflict: "business_id" });
+  if (cfgErr && /decor_emojis/.test(cfgErr.message)) {
+    ({ error: cfgErr } = await admin
+      .from("wheel_configs")
+      .upsert(basePayload, { onConflict: "business_id" }));
+  }
   if (cfgErr)
     return Response.json(
       { error: "config_error", detail: cfgErr.message },

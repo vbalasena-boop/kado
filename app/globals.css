@@ -5134,3 +5134,84 @@ html { scroll-behavior: smooth; }
 .pv-screen .hg-tab { padding: 7px 8px; font-size: 11px; }
 .pv-screen .hg-tab { font-size: 16px; padding: 7px 12px; }
 .pv-screen .hg-tab-txt { display: none; }
+
+/* ───── Page de jeu : décor flottant, logo animé, micro-interactions ───── */
+.decor {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.decor-e {
+  position: absolute;
+  pointer-events: auto;
+  cursor: pointer;
+  opacity: 0.5;
+  filter: saturate(1.05);
+  animation: decor-float 6s ease-in-out infinite alternate;
+  user-select: none;
+  transition: opacity 0.2s;
+}
+.decor-e:hover { opacity: 0.85; }
+@keyframes decor-float {
+  0% { transform: translateY(0) rotate(-7deg); }
+  100% { transform: translateY(-26px) rotate(9deg); }
+}
+.decor-e.burst { animation: decor-burst 0.5s ease forwards; }
+@keyframes decor-burst {
+  30% { transform: scale(1.6) rotate(14deg); opacity: 1; }
+  100% { transform: scale(0.2) rotate(-30deg); opacity: 0; }
+}
+.app { z-index: 2; }
+
+.logo-anim { cursor: pointer; animation: logo-bob 3.4s ease-in-out infinite; }
+@keyframes logo-bob {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-4px) rotate(-2.5deg); }
+}
+.logo-anim.poke { animation: logo-poke 0.75s cubic-bezier(0.2, 1.4, 0.4, 1); }
+@keyframes logo-poke {
+  35% { transform: scale(1.18) rotate(10deg); }
+  70% { transform: scale(0.94) rotate(-6deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+/* Entrée des écrans du jeu : fondu + glissement */
+.screen.active { animation: screen-in 0.4s ease both; }
+@keyframes screen-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Retour tactile sur les boutons du jeu */
+.app .btn:active, .app button:active { transform: scale(0.97); }
+
+@media (prefers-reduced-motion: reduce) {
+  .decor-e, .logo-anim, .screen.active { animation: none; }
+}
+
+/* ───── Éditeur : préréglages de thème + champs couleur ───── */
+.theme-presets { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.theme-preset {
+  border: 2px solid;
+  border-radius: 999px;
+  padding: 9px 15px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.12s;
+}
+.theme-preset:hover { transform: translateY(-2px); }
+.color-row { display: flex; gap: 14px; flex-wrap: wrap; }
+.color-field { flex: 1 1 130px; }
+.color-field input[type="color"] {
+  width: 100%;
+  height: 46px;
+  border: 1px solid var(--g-line, #dadce0);
+  border-radius: 10px;
+  padding: 4px;
+  background: #fff;
+  cursor: pointer;
+}
