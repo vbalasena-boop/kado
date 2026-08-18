@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { reportError } from "@/lib/report";
 import {
   sendEmail,
   sendBatch,
@@ -383,6 +384,14 @@ export async function GET(req: NextRequest) {
 
   // Heartbeat : prouve au contrôle de santé que le cron a bien tourné
   await setSystemState("cron_daily_last_run", new Date().toISOString());
+
+  // Remonte les erreurs éventuelles à Sentry (sans bloquer le cron)
+  if (out.errors.length) {
+    reportError(new Error(`cron/daily: ${out.errors.length} erreur(s)`), {
+      where: "cron/daily",
+      errors: out.errors,
+    });
+  }
 
   return Response.json({ ok: true, ...out });
 }

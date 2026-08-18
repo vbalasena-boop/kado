@@ -3,6 +3,7 @@ import Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { sendEmail, emailLayout, getOwnerContact } from "@/lib/email";
+import { reportError } from "@/lib/report";
 
 /** Retrouve l'établissement lié à une facture (via metadata ou customer). */
 async function resolveBusinessId(
@@ -304,7 +305,8 @@ export async function POST(req: NextRequest) {
       default:
         break;
     }
-  } catch {
+  } catch (e) {
+    reportError(e, { where: "billing/webhook" });
     return Response.json({ error: "handler_error" }, { status: 500 });
   }
 
