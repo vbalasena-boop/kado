@@ -1,10 +1,11 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getMyBusiness, hasModule } from "@/lib/auth";
+import { getMyBusiness, getMyBusinesses, hasModule } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail } from "@/lib/admin-guard";
 import { Icon } from "@/components/icons";
 import { KadoMark } from "@/components/Logo";
+import { BusinessSwitcher } from "@/components/BusinessSwitcher";
 import { Onboarding } from "./Onboarding";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +18,8 @@ export default async function DashboardLayout({
   const { user, business } = await getMyBusiness();
   if (!user) redirect("/login");
   const admin = isAdminEmail(user.email);
+  // Liste des établissements du commerçant (pour le sélecteur multi-établissements)
+  const { businesses } = await getMyBusinesses();
 
   // Click & collect activé par l'admin ? (lecture tolérante)
   let clickCollect = false;
@@ -38,6 +41,12 @@ export default async function DashboardLayout({
       <header className="dash-top">
         <div className="dash-brand"><KadoMark size={22} /> Kado</div>
         <div className="dash-user">
+          {business && (
+            <BusinessSwitcher
+              businesses={businesses.map((b) => ({ id: b.id, name: b.name }))}
+              activeId={business.id}
+            />
+          )}
           {admin && (
             <Link href="/admin" className="dash-signout">
               <Icon name="key" size={16} /> Espace admin

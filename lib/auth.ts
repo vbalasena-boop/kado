@@ -1,5 +1,9 @@
+import { cookies } from "next/headers";
 import { createSSRClient } from "@/lib/supabase/ssr";
 import { getAdminClient } from "@/lib/supabase/admin";
+
+// Cookie mémorisant l'établissement actif (multi-établissements).
+export const ACTIVE_BIZ_COOKIE = "kado-biz";
 
 export type Business = {
   id: string;
@@ -53,19 +57,45 @@ export async function getSessionUser() {
  * L'établissement rattaché au commerçant connecté.
  * Renvoie { user, business } ; business est null si aucun n'est lié au compte.
  */
+const BIZ_COLUMNS =
+  "id, slug, name, logo_url, status, subscription_status, subscription_ends_at, stripe_customer_id, stripe_subscription_id, owner_user_id, plan";
+
+/**
+ * Tous les établissements rattachés au commerçant connecté (multi-établissements).
+ * Triés par date de création (le plus ancien d'abord).
+ */
+export async function getMyBusinesses(): Promise<{
+  user: Awaited<ReturnType<typeof getSessionUser>>;
+  businesses: Business[];
+}> {
+  const user = await getSessionUser();
+  if (!user) return { user: null, businesses: [] };
+  const admin = getAdminClient();
+  const { data } = await admin
+    .from("businesses")
+    .select(BIZ_COLUMNS)
+    .eq("owner_user_id", user.id)
+    .order("created_at", { ascending: true });
+  return { user, businesses: (data as Business[]) ?? [] };
+}
+
+/**
+ * L'établissement ACTIF du commerçant connecté.
+ * S'il en a plusieurs, celui mémorisé dans le cookie ; sinon le premier.
+ * Rétro-compatible : avec un seul établissement, renvoie toujours celui-ci.
+ */
 export async function getMyBusiness(): Promise<{
   user: Awaited<ReturnType<typeof getSessionUser>>;
   business: Business | null;
 }> {
-  const user = await getSessionUser();
-  if (!user) return { user: null, business: null };
-  const admin = getAdminClient();
-  const { data } = await admin
-    .from("businesses")
-    .select(
-      "id, slug, name, logo_url, status, subscription_status, subscription_ends_at, stripe_customer_id, stripe_subscription_id, owner_user_id, plan"
-    )
-    .eq("owner_user_id", user.id)
-    .maybeSingle();
-  return { user, business: (data as Business) ?? null };
+  const { user, businesses } = await getMyBusinesses();
+  if (!user || businesses.length === 0) return { user, business: null };
+  let active: Business | undefined;
+  try {
+    const activeId = cookies().get(ACTIVE_BIZ_COOKIE)?.value;
+    if (activeId) active = businesses.find((b) => b.id === activeId);
+  } catch {
+    /* hors contexte requête : on prend le premier */
+  }
+  return { user, business: active ?? businesses[0] };
 }

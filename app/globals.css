@@ -5500,3 +5500,27 @@ html { scroll-behavior: smooth; }
   color: #fff;
   box-shadow: 0 8px 20px rgba(138, 90, 52, 0.4);
 }
+
+/* ===== Sélecteur multi-établissements (en-tête espace commerçant) ===== */
+.biz-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--stroke);
+  border-radius: 999px;
+  padding: 4px 10px 4px 12px;
+  font-size: 13px;
+}
+.biz-switcher select {
+  border: none;
+  background: transparent;
+  color: var(--cream);
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  max-width: 160px;
+  padding-right: 2px;
+}
+.biz-switcher select:focus { outline: none; }
