@@ -286,7 +286,7 @@ export default async function DashboardHome() {
             <div className="dash-card">
               <p className="muted">
                 La carte de fidélité n'est pas encore activée.{" "}
-                <Link href="/dashboard/wheel">Activez-la dans « Ma roue »</Link>.
+                <Link href="/dashboard/wheel">Activez-la dans « Mon jeu »</Link>.
               </p>
             </div>
           )}

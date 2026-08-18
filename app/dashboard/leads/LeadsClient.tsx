@@ -35,7 +35,7 @@ export default function LeadsClient({ leads }: { leads: Lead[] }) {
       <h1 className="dash-h1">Clients collectés</h1>
       <p className="dash-sub">
         Les e-mails laissés par tes joueurs (avec leur consentement). Active la
-        collecte dans <b>Ma roue</b> si ce n'est pas déjà fait.
+        collecte dans <b>Mon jeu</b> si ce n'est pas déjà fait.
       </p>
 
       <div className="dash-card" style={{ padding: 0, overflow: "hidden" }}>

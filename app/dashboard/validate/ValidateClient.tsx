@@ -41,7 +41,7 @@ const FID_LABELS: Record<string, { txt: string; cls: string }> = {
   nothing_to_collect: { txt: "Aucune récompense à remettre.", cls: "warn" },
   not_found: { txt: "❌ Carte introuvable", cls: "bad" },
   loyalty_off: {
-    txt: "La carte de fidélité n'est pas activée. Activez-la dans « Ma roue ».",
+    txt: "La carte de fidélité n'est pas activée. Activez-la dans « Mon jeu ».",
     cls: "warn",
   },
 };
