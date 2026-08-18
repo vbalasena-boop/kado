@@ -1873,11 +1873,60 @@ canvas#confetti {
     box-shadow: none !important;
     border: none !important;
     margin: 0 auto !important;
-    max-width: 480px !important;
   }
+  .fmt-a4 .print-poster { max-width: 460px !important; }
+  .fmt-tent .print-poster { max-width: 340px !important; }
+  .fmt-window .print-poster { max-width: 620px !important; }
   @page {
     margin: 14mm;
   }
+}
+
+/* ===== Outil d'affiche : choix de format ===== */
+.fmt-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.fmt-chip {
+  border: 1.5px solid var(--stroke);
+  background: var(--surface-2);
+  color: var(--cream);
+  border-radius: 999px;
+  padding: 9px 14px;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 13.5px;
+  cursor: pointer;
+  transition: transform 0.12s, border-color 0.12s, background 0.12s;
+}
+.fmt-chip:hover { transform: translateY(-1px); }
+.fmt-chip.on { border-color: var(--gold); background: var(--surface); color: var(--gold); }
+.poster-stage { margin-top: 18px; }
+/* Tailles d'aperçu par format (l'impression a ses propres largeurs) */
+.fmt-a4 .print-poster { max-width: 420px; }
+.fmt-tent .print-poster { max-width: 320px; padding-bottom: 70px; }
+.fmt-window .print-poster { max-width: 520px; }
+.fmt-window .pp-name { font-size: 25px; }
+.fmt-window .pp-title { font-size: 33px; }
+.fmt-window .pp-sub { font-size: 16px; max-width: 32ch; }
+.fmt-window .pp-qr { width: 250px; height: 250px; }
+.fmt-window .pp-scan { font-size: 15px; }
+/* Repère de pliage (chevalet de table) */
+.pp-fold { display: none; }
+.fmt-tent .pp-fold {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 50px;
+  border-top: 2px dashed rgba(0, 0, 0, 0.4);
+}
+.fmt-tent .pp-fold span {
+  transform: translateY(-50%);
+  background: var(--pp-bg, #fffdf8);
+  color: rgba(0, 0, 0, 0.55);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 0 8px;
 }
 
 .v-plan {

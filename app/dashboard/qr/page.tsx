@@ -3,7 +3,7 @@ import QRCode from "qrcode";
 import { getMyBusiness } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { KadoMark } from "@/components/Logo";
-import { PrintButton } from "@/components/PrintButton";
+import { PosterTool } from "@/components/PosterTool";
 
 export const dynamic = "force-dynamic";
 
@@ -196,12 +196,8 @@ export default async function QrPage() {
         </a>
       </div>
 
-      <div className="poster-actions">
-        <h2 className="dash-h2">Affiche à imprimer</h2>
-        <PrintButton />
-      </div>
-
-      {/* Aperçu + version imprimable de l'affiche */}
+      {/* Sélecteur de format + aperçu + version imprimable de l'affiche */}
+      <PosterTool>
       <div className="print-poster" style={posterStyle}>
         {decorEmojis.length > 0 && (
           <div className="pp-decor" aria-hidden="true">
@@ -256,7 +252,13 @@ export default async function QrPage() {
           <KadoMark size={20} />
           <span>Propulsé par <b>Kado</b></span>
         </div>
+
+        {/* Repère de pliage — visible seulement en format chevalet de table */}
+        <div className="pp-fold" aria-hidden="true">
+          <span>✂ Pliez ici</span>
+        </div>
       </div>
+      </PosterTool>
     </>
   );
 }
