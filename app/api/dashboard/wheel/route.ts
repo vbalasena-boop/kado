@@ -51,6 +51,18 @@ export async function POST(req: NextRequest) {
   const admin = getAdminClient();
   const cfg = body.config ?? {};
 
+  // Page verrouillée par l'admin (formule Installation) ? Le commerçant ne
+  // peut plus modifier l'apparence (couleurs + décor). Lecture tolérante.
+  let themeLocked = false;
+  {
+    const { data: lk, error: lkErr } = await admin
+      .from("wheel_configs")
+      .select("theme_locked")
+      .eq("business_id", business.id)
+      .maybeSingle();
+    themeLocked = lkErr ? false : !!(lk as any)?.theme_locked;
+  }
+
   // Canaux activés (au moins un doit rester actif)
   let igEnabled = cfg.instagram_enabled !== false;
   let rvEnabled = cfg.review_enabled !== false;
@@ -66,9 +78,6 @@ export async function POST(req: NextRequest) {
   // upsert config (1-1 avec business)
   const basePayload = {
       business_id: business.id,
-      primary_color: hex(cfg.primary_color, "#ffc24d"),
-      accent_color: hex(cfg.accent_color, "#ff5d73"),
-      bg_color: hex(cfg.bg_color, "#150c29"),
       instagram_url: cfg.instagram_url || null,
       review_url: cfg.review_url || null,
       compliance_note:
@@ -104,15 +113,25 @@ export async function POST(req: NextRequest) {
           ? Math.min(365, Math.max(1, Math.round(cfg.prize_validity_days)))
           : null,
   };
-  // décor animé : colonne récente (0027) → insertion tolérante
-  const decor = (cfg.decor_emojis || "").trim().slice(0, 40) || null;
+  // Apparence (couleurs + décor) : ignorée si la page est verrouillée par
+  // l'admin, pour ne pas écraser la personnalisation « Installation ».
+  const appearance = themeLocked
+    ? {}
+    : {
+        primary_color: hex(cfg.primary_color, "#ffc24d"),
+        accent_color: hex(cfg.accent_color, "#ff5d73"),
+        bg_color: hex(cfg.bg_color, "#150c29"),
+        decor_emojis: (cfg.decor_emojis || "").trim().slice(0, 40) || null,
+      };
   let { error: cfgErr } = await admin
     .from("wheel_configs")
-    .upsert({ ...basePayload, decor_emojis: decor }, { onConflict: "business_id" });
+    .upsert({ ...basePayload, ...appearance }, { onConflict: "business_id" });
   if (cfgErr && /decor_emojis/.test(cfgErr.message)) {
+    // Migration 0027 absente : réessaie sans le décor.
+    const { decor_emojis, ...appNoDecor } = appearance as any;
     ({ error: cfgErr } = await admin
       .from("wheel_configs")
-      .upsert(basePayload, { onConflict: "business_id" }));
+      .upsert({ ...basePayload, ...appNoDecor }, { onConflict: "business_id" }));
   }
   if (cfgErr)
     return Response.json(

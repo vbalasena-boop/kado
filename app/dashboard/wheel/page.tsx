@@ -41,6 +41,14 @@ export default async function WheelPage() {
     .maybeSingle();
   const decorEmojis: string = decErr ? "" : ((dec as any)?.decor_emojis ?? "");
 
+  // Page verrouillée par l'admin (lecture tolérante si migration 0028 absente)
+  const { data: tl, error: tlErr } = await admin
+    .from("wheel_configs")
+    .select("theme_locked")
+    .eq("business_id", business.id)
+    .maybeSingle();
+  const themeLocked: boolean = tlErr ? false : !!(tl as any)?.theme_locked;
+
   return (
     <WheelEditor
       initialConfig={{
@@ -52,6 +60,7 @@ export default async function WheelPage() {
         }),
         prize_validity_days: prizeValidity,
         decor_emojis: decorEmojis,
+        theme_locked: themeLocked,
       }}
       initialPrizes={prizes ?? []}
       initialLogoUrl={business.logo_url}

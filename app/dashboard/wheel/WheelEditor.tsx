@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/icons";
+import { GAME_THEMES, matchTheme } from "@/lib/themes";
 
 type Prize = {
   label: string;
@@ -14,6 +15,7 @@ type Config = {
   accent_color?: string | null;
   bg_color?: string | null;
   decor_emojis?: string | null;
+  theme_locked?: boolean | null;
   instagram_url: string | null;
   review_url: string | null;
   compliance_note: string | null;
@@ -81,6 +83,9 @@ export default function WheelEditor({
 }) {
   // La section fidélité est verrouillée si la formule ne l'inclut pas.
   const fideliteLocked = !showFidelite;
+  // Page personnalisée par l'admin (formule Installation) : le commerçant
+  // ne peut plus changer l'apparence lui-même.
+  const themeLocked = !!initialConfig.theme_locked;
   const [config, setConfig] = useState<Config>(initialConfig);
   const [prizes, setPrizes] = useState<Prize[]>(
     initialPrizes.length
@@ -249,6 +254,7 @@ export default function WheelEditor({
     }
   }
 
+  const activeTheme = matchTheme(config);
   const totalWeight = prizes.reduce((s, p) => s + Math.max(0, Number(p.weight) || 0), 0);
   const igEnabled = config.instagram_enabled !== false;
   const rvEnabled = config.review_enabled !== false;
@@ -337,87 +343,80 @@ export default function WheelEditor({
               </div>
 
               <div className="dash-card">
-                <h2>Apparence &amp; ambiance</h2>
-                <p className="muted" style={{ marginBottom: 14 }}>
-                  Accordez la page à votre identité : fond clair ou sombre, vos
-                  couleurs, et un décor animé qui flotte autour du jeu.
-                </p>
-                <div className="theme-presets">
-                  {[
-                    { n: "🌙 Festif sombre", p: "#ffc24d", a: "#ff5d73", b: "#150c29", d: "" },
-                    { n: "☀️ Clair élégant", p: "#e0a232", a: "#d05672", b: "#ffffff", d: "" },
-                    { n: "🍝 Trattoria", p: "#2e7d4f", a: "#c73e2e", b: "#fdfaf4", d: "🍝🍅🌿🫒🧄" },
-                    { n: "☕ Coffee shop", p: "#8a5a34", a: "#c98a4b", b: "#faf5ee", d: "☕🥐🍪" },
-                    { n: "💇 Beauté", p: "#c98ab0", a: "#8a5ac9", b: "#fdf7fb", d: "✨💅🌸" },
-                  ].map((t) => (
-                    <button
-                      key={t.n}
-                      type="button"
-                      className="theme-preset"
-                      style={{ background: t.b, color: t.p, borderColor: t.p }}
-                      onClick={() =>
-                        setConfig({
-                          ...config,
-                          primary_color: t.p,
-                          accent_color: t.a,
-                          bg_color: t.b,
-                          decor_emojis: t.d,
-                        })
-                      }
+                <h2>Apparence de la page</h2>
+                {themeLocked ? (
+                  <div className="fid-lock-banner" style={{ marginTop: 4 }}>
+                    <span style={{ fontSize: 20 }}>🎨</span>
+                    <div>
+                      <b>Page personnalisée par notre équipe</b>
+                      <span>
+                        Votre page de jeu a été mise aux couleurs de votre
+                        établissement dans le cadre de la formule{" "}
+                        <b>Installation clé en main</b>. Pour une retouche,
+                        écrivez-nous — on s'en occupe.
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <p className="muted" style={{ marginBottom: 14 }}>
+                      Choisissez l'ambiance de votre page. Les couleurs et les
+                      textes s'adaptent automatiquement pour rester lisibles.
+                    </p>
+                    <div className="theme-cards">
+                      {GAME_THEMES.map((t) => {
+                        const on = activeTheme === t.id;
+                        const light = t.bg.toLowerCase() > "#999999";
+                        return (
+                          <button
+                            key={t.id}
+                            type="button"
+                            className={`theme-card${on ? " on" : ""}`}
+                            onClick={() =>
+                              setConfig({
+                                ...config,
+                                primary_color: t.primary,
+                                accent_color: t.accent,
+                                bg_color: t.bg,
+                                decor_emojis: t.decor,
+                              })
+                            }
+                            aria-pressed={on}
+                          >
+                            <span
+                              className="theme-card-swatch"
+                              style={{ background: t.bg }}
+                            >
+                              <i style={{ background: t.primary }} />
+                              <i style={{ background: t.accent }} />
+                              {t.decor && (
+                                <em
+                                  style={{
+                                    color: light ? "#241b35" : "#fff",
+                                  }}
+                                >
+                                  {t.decor.slice(0, 4)}
+                                </em>
+                              )}
+                            </span>
+                            <b>{t.name}</b>
+                            <small>{t.hint}</small>
+                            {on && <span className="theme-card-on">✓ Choisi</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p
+                      className="muted"
+                      style={{ margin: "12px 0 0", fontSize: 12.5 }}
                     >
-                      {t.n}
-                    </button>
-                  ))}
-                </div>
-                <div className="color-row">
-                  <label className="field color-field">
-                    <span>Couleur principale</span>
-                    <input
-                      type="color"
-                      value={config.primary_color || "#ffc24d"}
-                      onChange={(e) =>
-                        setConfig({ ...config, primary_color: e.target.value })
-                      }
-                    />
-                  </label>
-                  <label className="field color-field">
-                    <span>Couleur d'accent</span>
-                    <input
-                      type="color"
-                      value={config.accent_color || "#ff5d73"}
-                      onChange={(e) =>
-                        setConfig({ ...config, accent_color: e.target.value })
-                      }
-                    />
-                  </label>
-                  <label className="field color-field">
-                    <span>Couleur de fond</span>
-                    <input
-                      type="color"
-                      value={config.bg_color || "#150c29"}
-                      onChange={(e) =>
-                        setConfig({ ...config, bg_color: e.target.value })
-                      }
-                    />
-                  </label>
-                </div>
-                <p className="muted" style={{ margin: "4px 0 14px", fontSize: 12.5 }}>
-                  💡 Fond clair (ex. blanc) : les textes passent automatiquement
-                  en sombre pour rester lisibles. Copiez les codes couleur de
-                  votre site pour une page parfaitement assortie.
-                </p>
-                <label className="field">
-                  <span>Décor animé (emojis flottants, vide = aucun)</span>
-                  <input
-                    type="text"
-                    maxLength={40}
-                    placeholder="Ex. 🍝🍅🌿🫒 pour un restaurant italien"
-                    value={config.decor_emojis || ""}
-                    onChange={(e) =>
-                      setConfig({ ...config, decor_emojis: e.target.value })
-                    }
-                  />
-                </label>
+                      💡 Vous voulez une page 100 % à vos couleurs, avec vos
+                      photos et un décor sur-mesure ? C'est inclus dans la
+                      formule <b>Installation clé en main</b> : on la crée pour
+                      vous.
+                    </p>
+                  </>
+                )}
               </div>
 
               <div className="dash-card">

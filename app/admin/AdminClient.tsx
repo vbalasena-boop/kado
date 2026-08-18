@@ -905,6 +905,13 @@ export default function AdminClient({
                               🛒 Click &amp; collect{" "}
                               {b.click_collect ? "on" : "off"}
                             </button>
+                            <a
+                              className="btn-mini soft"
+                              href={`/admin/business/${b.id}/personnaliser`}
+                            >
+                              🎨 Personnaliser la page
+                              {b.setup_paid_at ? " · 🛠️" : ""}
+                            </a>
                             <button
                               className="btn-mini soft"
                               disabled={busy}
