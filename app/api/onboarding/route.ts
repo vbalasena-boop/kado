@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { cookies } from "next/headers";
 import { getSessionUser } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { slugify } from "@/lib/defaults";
@@ -96,6 +97,31 @@ export async function POST(req: NextRequest) {
         .update({ referred_by: sponsor.id })
         .eq("id", biz.id);
     }
+  }
+
+  // Vendeur / apporteur d'affaires : le cookie kado-aff (posé par le lien
+  // ?ref=code) attribue ce client au vendeur. Tolérant : la table peut ne
+  // pas exister encore.
+  try {
+    const affCode = (cookies().get("kado-aff")?.value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]/g, "");
+    if (affCode) {
+      const { data: aff } = await db
+        .from("affiliates")
+        .select("id, active")
+        .eq("code", affCode)
+        .maybeSingle();
+      if (aff?.active) {
+        await db
+          .from("businesses")
+          .update({ affiliate_id: aff.id })
+          .eq("id", biz.id);
+      }
+    }
+  } catch {
+    /* l'affiliation ne doit jamais bloquer une inscription */
   }
 
   // config + cadeaux par défaut

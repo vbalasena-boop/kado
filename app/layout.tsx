@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Plus_Jakarta_Sans } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
+import RefCapture from "@/components/RefCapture";
 import "./globals.css";
 
 const display = Bricolage_Grotesque({
@@ -91,6 +92,7 @@ export default function RootLayout({
   return (
     <html lang="fr" className={`${display.variable} ${sans.variable}`}>
       <body>
+        <RefCapture />
         {children}
         <Analytics />
       </body>

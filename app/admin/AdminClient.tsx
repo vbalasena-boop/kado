@@ -505,7 +505,8 @@ export default function AdminClient({
       <h1 className="dash-h1">Gestion des comptes</h1>
       <p className="dash-sub">
         Créez des établissements, gérez leur abonnement et leurs accès. L'accès à
-        la roue se coupe automatiquement quand l'abonnement expire.
+        la roue se coupe automatiquement quand l'abonnement expire.{" "}
+        <a href="/admin/vendeurs">🤝 Vendeurs &amp; commissions →</a>
       </p>
 
       {/* ---- État du système (auto-surveillance) ---- */}

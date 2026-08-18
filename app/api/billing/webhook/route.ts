@@ -192,6 +192,85 @@ export async function POST(req: NextRequest) {
           /* le parrainage ne doit jamais bloquer le webhook */
         }
 
+        // Vendeur / apporteur d'affaires : commission fixe créée au premier
+        // paiement réel du client (une seule fois — index unique en base).
+        try {
+          const commBizId = session.metadata?.business_id;
+          if (commBizId && session.subscription) {
+            const db = getAdminClient();
+            const { data: cb } = await db
+              .from("businesses")
+              .select("id, name, plan, affiliate_id")
+              .eq("id", commBizId)
+              .maybeSingle();
+            if (cb?.affiliate_id) {
+              const { data: aff } = await db
+                .from("affiliates")
+                .select(
+                  "id, name, email, active, commission_roue_cents, commission_fidelite_cents, commission_complet_cents"
+                )
+                .eq("id", cb.affiliate_id)
+                .maybeSingle();
+              if (aff?.active) {
+                const plan = cb.plan || "roue";
+                const amount =
+                  plan === "complet"
+                    ? aff.commission_complet_cents
+                    : plan === "fidelite"
+                      ? aff.commission_fidelite_cents
+                      : aff.commission_roue_cents;
+                // insert : échoue silencieusement si déjà créée (index unique)
+                const { error: insErr } = await db
+                  .from("affiliate_commissions")
+                  .insert({
+                    affiliate_id: aff.id,
+                    business_id: cb.id,
+                    amount_cents: amount,
+                    plan,
+                  });
+                if (!insErr) {
+                  const euros = (amount / 100).toFixed(0);
+                  const adminEmail = (process.env.ADMIN_EMAILS || "")
+                    .split(",")[0]
+                    ?.trim();
+                  if (adminEmail) {
+                    await sendEmail({
+                      to: adminEmail,
+                      subject: `Commission vendeur due — ${aff.name} : ${euros} €`,
+                      html: emailLayout({
+                        preview: "Un client amené par un vendeur vient de payer.",
+                        heading: "Commission à verser 💶",
+                        emoji: "🤝",
+                        bodyHtml: `Le client <b>${
+                          cb.name ?? cb.id
+                        }</b> (formule <b>${plan}</b>), amené par <b>${
+                          aff.name
+                        }</b>, vient de régler son premier abonnement.<br><br>Commission due : <b>${euros}&nbsp;€</b>.<br><br>Retrouvez le récapitulatif dans <a href="https://kado-app.fr/admin/vendeurs">Admin → Vendeurs</a> — demandez sa facture au vendeur puis marquez la commission comme payée.`,
+                      }),
+                    });
+                  }
+                  if (aff.email) {
+                    await sendEmail({
+                      to: aff.email,
+                      subject: `Bravo — commission de ${euros} € validée ! 🎉`,
+                      html: emailLayout({
+                        preview: "Un de vos clients vient de s'abonner à Kado.",
+                        heading: "Commission validée ! 🎉",
+                        emoji: "💶",
+                        bodyHtml: `Bonne nouvelle : le commerce <b>${
+                          cb.name ?? "que vous avez amené"
+                        }</b> vient de régler son premier abonnement Kado.<br><br>Votre commission de <b>${euros}&nbsp;€</b> est validée. Envoyez votre facture à Kado pour recevoir le virement.`,
+                      }),
+                    });
+                  }
+                }
+              }
+            }
+          }
+        } catch {
+          /* l'affiliation ne doit jamais bloquer le webhook */
+        }
+
         // Option « Installation clé en main » achetée avec l'abonnement
         const setup = session.metadata?.setup;
         const businessId = session.metadata?.business_id;
