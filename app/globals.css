@@ -5252,23 +5252,21 @@ html { scroll-behavior: smooth; }
 .decor {
   position: fixed;
   inset: 0;
-  z-index: 0;
+  z-index: 3; /* au-dessus de la carte (.app z-index:2) → visibles sur le fond blanc, même sur mobile */
   overflow: hidden;
-  pointer-events: none;
+  pointer-events: none; /* laisse passer les taps vers les boutons dessous */
 }
 .decor-e {
   position: absolute;
-  pointer-events: auto;
-  cursor: pointer;
-  opacity: 0.4;
-  filter: saturate(1.02) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
+  pointer-events: none; /* décoratif : ne bloque jamais un bouton (essentiel sur mobile) */
+  opacity: 0.5;
+  filter: saturate(1.05) drop-shadow(0 3px 6px rgba(0, 0, 0, 0.12));
   user-select: none;
   transition: opacity 0.2s, transform 0.2s;
   --dx: 20px;
   --rot: 10deg;
   will-change: transform;
 }
-.decor-e:hover { opacity: 0.72; transform: scale(1.08); }
 /* Trois trajectoires : chacune dérive, tangue et tourne différemment. */
 .decor-v0 { animation: decor-drift 6s ease-in-out infinite alternate; }
 .decor-v1 { animation: decor-sway 7s ease-in-out infinite alternate; }
