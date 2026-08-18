@@ -5443,3 +5443,36 @@ html { scroll-behavior: smooth; }
   border: 0;
   display: block;
 }
+
+/* ===== Aperçu thématisé dans l'éditeur commerçant ===== */
+.preview-stage {
+  position: relative;
+  border-radius: 20px;
+  padding: 10px;
+  background: radial-gradient(
+    circle at 50% 44%,
+    color-mix(in srgb, var(--pv-primary, #ffc24d) 22%, transparent),
+    transparent 68%
+  );
+}
+.preview-decor {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.preview-decor span {
+  position: absolute;
+  font-size: 30px;
+  opacity: 0.5;
+  animation: decor-float 6s ease-in-out infinite alternate;
+}
+.preview-stage .preview-wheel {
+  position: relative;
+  z-index: 1;
+}
+.preview-hint {
+  font-size: 13px;
+  line-height: 1.45;
+  text-align: center;
+}

@@ -35,6 +35,28 @@ type Config = {
   referral_enabled?: boolean | null;
 };
 
+// Luminance d'une couleur hex (0 = noir, 1 = blanc) pour choisir un texte lisible.
+function hexLum(hex: string): number {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex || "");
+  if (!m) return 0;
+  const n = parseInt(m[1], 16);
+  const r = (n >> 16) & 255,
+    g = (n >> 8) & 255,
+    b = n & 255;
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+}
+// Découpe une chaîne d'emojis en graphèmes (max 8) pour l'aperçu.
+function splitDecor(s: string): string[] {
+  const clean = (s || "").replace(/[\s,;·]+/g, "");
+  if (!clean) return [];
+  try {
+    const seg = new (Intl as any).Segmenter("fr", { granularity: "grapheme" });
+    return [...seg.segment(clean)].map((x: any) => x.segment).slice(0, 8);
+  } catch {
+    return Array.from(clean).slice(0, 8);
+  }
+}
+
 const GAME_TYPES = [
   { id: "wheel", emoji: "🎡", label: "Roue de la fortune", desc: "Le grand classique, effet garanti" },
   { id: "scratch", emoji: "🎫", label: "Carte à gratter", desc: "On gratte avec le doigt, suspense !" },
@@ -255,6 +277,14 @@ export default function WheelEditor({
   }
 
   const activeTheme = matchTheme(config);
+  // Aperçu thématisé : le fond et les textes suivent le thème choisi, pour
+  // que le commerçant voie l'effet en direct.
+  const pvBg = config.bg_color || "#150c29";
+  const pvLight = hexLum(pvBg) > 0.55;
+  const pvInk = pvLight ? "#241b35" : "#fdf4e3";
+  const pvInkDim = pvLight ? "rgba(36,27,53,.6)" : "rgba(253,244,227,.7)";
+  const pvPrimary = config.primary_color || "#ffc24d";
+  const pvDecor = splitDecor(config.decor_emojis || "");
   const totalWeight = prizes.reduce((s, p) => s + Math.max(0, Number(p.weight) || 0), 0);
   const igEnabled = config.instagram_enabled !== false;
   const rvEnabled = config.review_enabled !== false;
@@ -892,19 +922,54 @@ export default function WheelEditor({
 
         {showRoue && (
           <div className="editor-preview">
-            <div className="dash-card preview-card">
-              <h2>Aperçu</h2>
-              <canvas ref={canvasRef} width={520} height={520} className="preview-wheel" />
-              {(config.game_type ?? "wheel") !== "wheel" && (
-                <p className="muted" style={{ marginTop: 10 }}>
-                  {config.game_type === "scratch" ? "🎫" : "🎰"} Vos clients
-                  joueront à la{" "}
-                  {config.game_type === "scratch"
-                    ? "carte à gratter"
-                    : "machine à sous"}{" "}
-                  avec ces mêmes cadeaux et probabilités.
-                </p>
-              )}
+            <div
+              className="dash-card preview-card"
+              style={{
+                background: pvBg,
+                color: pvInk,
+                borderColor: pvLight
+                  ? "rgba(0,0,0,.1)"
+                  : "rgba(255,255,255,.14)",
+              }}
+            >
+              <h2 style={{ color: pvInk }}>Aperçu</h2>
+              <div
+                className="preview-stage"
+                style={{ ["--pv-primary" as any]: pvPrimary }}
+              >
+                {pvDecor.length > 0 && (
+                  <div className="preview-decor" aria-hidden="true">
+                    {[
+                      { t: "8%", l: "6%" },
+                      { t: "12%", l: "86%" },
+                      { t: "78%", l: "4%" },
+                      { t: "82%", l: "88%" },
+                    ].map((p, i) => (
+                      <span key={i} style={{ top: p.t, left: p.l }}>
+                        {pvDecor[i % pvDecor.length]}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <canvas ref={canvasRef} width={520} height={520} className="preview-wheel" />
+              </div>
+              <p
+                className="preview-hint"
+                style={{ color: pvInkDim, marginTop: 10 }}
+              >
+                {(config.game_type ?? "wheel") !== "wheel" ? (
+                  <>
+                    {config.game_type === "scratch" ? "🎫" : "🎰"} Vos clients
+                    joueront à la{" "}
+                    {config.game_type === "scratch"
+                      ? "carte à gratter"
+                      : "machine à sous"}{" "}
+                    avec ces mêmes cadeaux et couleurs.
+                  </>
+                ) : (
+                  <>Voici l'ambiance et les couleurs de votre page.</>
+                )}
+              </p>
             </div>
           </div>
         )}
