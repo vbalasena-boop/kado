@@ -77,6 +77,14 @@ h4,
   justify-content: center;
   align-items: center;
   margin-top: 16px;
+  padding: 8px 14px;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+  border-radius: 999px;
+  background: var(--surface-glass, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
   font-size: 11.5px;
   color: var(--cream-dim);
 }
@@ -3204,14 +3212,19 @@ canvas#confetti {
   text-decoration: none;
   padding: 12px;
   margin-top: 16px;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--surface-glass, rgba(255, 255, 255, 0.06));
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
   border: 1px solid var(--stroke);
   border-radius: 12px;
   font-weight: 600;
+  transition: transform 0.12s, background 0.2s;
 }
 .fid-link:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--surface-glass-2, rgba(255, 255, 255, 0.1));
+  transform: translateY(-1px);
 }
+.fid-link:active { transform: scale(0.98); }
 
 /* ===== Valider en caisse — onglets + panneau fidélité ===== */
 .val-tabs {
@@ -3783,6 +3796,40 @@ html { scroll-behavior: smooth; }
 .v-setup-opt b { display: block; color: var(--gold); font-size: 15px; }
 .v-setup-opt small { color: var(--cream-dim); font-size: 12.5px; line-height: 1.4; display: block; margin-top: 4px; }
 .v-setup-note { margin-top: 14px !important; font-size: 12.5px !important; }
+.v-setup-hl {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  text-align: left;
+  max-width: 520px;
+  margin: 0 auto 18px;
+  padding: 16px 18px;
+  border: 1px solid var(--gold);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--gold) 10%, transparent);
+}
+.v-setup-hl-badge {
+  flex: none;
+  align-self: center;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--gold);
+  border: 1px solid var(--gold);
+  border-radius: 999px;
+  padding: 5px 10px;
+  white-space: nowrap;
+}
+.v-setup-hl b { display: block; font-size: 15px; margin-bottom: 4px; }
+.v-setup-hl small {
+  color: var(--cream-dim);
+  font-size: 12.8px;
+  line-height: 1.5;
+  display: block;
+}
+@media (max-width: 560px) {
+  .v-setup-hl { flex-direction: column; gap: 10px; }
+  .v-setup-hl-badge { align-self: flex-start; }
+}
 
 /* ───── Carte fidélité : mode hors connexion ───── */
 .fid-offline {
@@ -5147,15 +5194,15 @@ html { scroll-behavior: smooth; }
   position: absolute;
   pointer-events: auto;
   cursor: pointer;
-  opacity: 0.55;
-  filter: saturate(1.08) drop-shadow(0 3px 6px rgba(0, 0, 0, 0.12));
+  opacity: 0.4;
+  filter: saturate(1.02) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
   user-select: none;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s, transform 0.2s;
   --dx: 20px;
   --rot: 10deg;
   will-change: transform;
 }
-.decor-e:hover { opacity: 0.9; }
+.decor-e:hover { opacity: 0.72; transform: scale(1.08); }
 /* Trois trajectoires : chacune dérive, tangue et tourne différemment. */
 .decor-v0 { animation: decor-drift 6s ease-in-out infinite alternate; }
 .decor-v1 { animation: decor-sway 7s ease-in-out infinite alternate; }

@@ -178,6 +178,20 @@ export default function Tarifs() {
             QR prête à poser. À régler une seule fois, au moment de votre
             abonnement.
           </p>
+          <div className="v-setup-hl">
+            <span className="v-setup-hl-badge">🎨 Exclusif Installation</span>
+            <div>
+              <b>Page de jeu sur-mesure incluse</b>
+              <small>
+                On crée votre page aux couleurs exactes de votre enseigne :
+                fond, teintes, ambiance et même un décor animé à votre image
+                (par ex. tomates, basilic &amp; pâtes qui flottent pour un
+                restaurant italien). Sans l'option, vous choisissez parmi
+                3 thèmes prêts à l'emploi — avec elle, c'est une page unique,
+                impossible à confondre avec une autre.
+              </small>
+            </div>
+          </div>
           <div className="v-setup-opts">
             <div className="v-setup-opt">
               <b>À distance — 79 €</b>
