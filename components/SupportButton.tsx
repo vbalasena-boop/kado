@@ -3,10 +3,17 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
- * Bouton d'assistance flottant (espace commerçant) : WhatsApp ou e-mail
- * en deux tapes, sans quitter la page.
+ * Bouton d'assistance flottant : WhatsApp ou e-mail en deux tapes, sans
+ * quitter la page. Deux tons : commerçant connecté (assistance) ou visiteur
+ * du site (question avant inscription).
  */
-export default function SupportButton({ business }: { business?: string }) {
+export default function SupportButton({
+  business,
+  prospect = false,
+}: {
+  business?: string;
+  prospect?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
 
@@ -28,19 +35,24 @@ export default function SupportButton({ business }: { business?: string }) {
   }, [open]);
 
   const ctx = business ? ` (${business})` : "";
-  const wa = `https://wa.me/33667797464?text=${encodeURIComponent(
-    `Bonjour, j'ai besoin d'aide avec Kado${ctx} :`
-  )}`;
+  const waText = prospect
+    ? "Bonjour, je découvre Kado et j'ai une question :"
+    : `Bonjour, j'ai besoin d'aide avec Kado${ctx} :`;
+  const wa = `https://wa.me/33667797464?text=${encodeURIComponent(waText)}`;
   const mail = `mailto:bonjour@kado-app.fr?subject=${encodeURIComponent(
-    `Assistance Kado${ctx}`
+    prospect ? "Question sur Kado" : `Assistance Kado${ctx}`
   )}`;
 
   return (
     <div className="support" ref={boxRef}>
       {open && (
         <div className="support-pop" role="dialog" aria-label="Assistance">
-          <b>Besoin d'aide ?</b>
-          <p>On vous répond vite — choisissez votre canal :</p>
+          <b>{prospect ? "Une question ?" : "Besoin d'aide ?"}</b>
+          <p>
+            {prospect
+              ? "On vous aide à démarrer — réponse rapide, sans engagement :"
+              : "On vous répond vite — choisissez votre canal :"}
+          </p>
           <a href={wa} target="_blank" rel="noreferrer" className="support-link">
             💬 WhatsApp <span>réponse rapide</span>
           </a>
@@ -51,11 +63,11 @@ export default function SupportButton({ business }: { business?: string }) {
       )}
       <button
         type="button"
-        className="support-fab"
+        className={prospect ? "support-fab sunset" : "support-fab"}
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
       >
-        {open ? "✕" : "❓ Assistance"}
+        {open ? "✕" : prospect ? "💬 Une question ?" : "❓ Assistance"}
       </button>
     </div>
   );

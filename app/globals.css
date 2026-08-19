@@ -5334,6 +5334,10 @@ html { scroll-behavior: smooth; }
   background: var(--g-blue, #1a73e8); box-shadow: 0 10px 30px rgba(26, 115, 232, 0.4);
 }
 .support-fab:hover { filter: brightness(1.06); }
+.support-fab.sunset {
+  background: linear-gradient(135deg, #ff6b4a, #f5b841 55%, #ff4e87);
+  color: #17092e; box-shadow: 0 10px 30px rgba(255, 78, 135, 0.45);
+}
 .support-pop {
   width: 270px; background: #fff; color: #202124; border-radius: 16px; padding: 16px;
   box-shadow: 0 18px 50px rgba(32, 33, 36, 0.28); border: 1px solid #e8eaed;

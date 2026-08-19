@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Logo } from "@/components/Logo";
+import SupportButton from "@/components/SupportButton";
 
 export const dynamic = "force-dynamic";
 
@@ -297,6 +298,7 @@ export default function Tarifs() {
         <a href="/legal/confidentialite">Confidentialité</a>
         <a href="/login">Espace commerçant</a>
       </footer>
+      <SupportButton prospect />
     </main>
   );
 }

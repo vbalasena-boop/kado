@@ -1,6 +1,7 @@
 import { Logo } from "@/components/Logo";
 import HomeGames from "@/components/HomeGames";
 import HomeLoyalty from "@/components/HomeLoyalty";
+import SupportButton from "@/components/SupportButton";
 
 export const dynamic = "force-dynamic";
 
@@ -457,6 +458,7 @@ export default function Home({
         <a href="/login">Connexion</a>
         <a href="/login?signup=1">Créer mon compte</a>
       </footer>
+      <SupportButton prospect />
     </main>
   );
 }
