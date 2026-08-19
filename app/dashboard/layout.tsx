@@ -6,6 +6,7 @@ import { isAdminEmail } from "@/lib/admin-guard";
 import { Icon } from "@/components/icons";
 import { KadoMark } from "@/components/Logo";
 import { BusinessSwitcher } from "@/components/BusinessSwitcher";
+import SupportButton from "@/components/SupportButton";
 import { Onboarding } from "./Onboarding";
 
 export const dynamic = "force-dynamic";
@@ -149,6 +150,7 @@ export default async function DashboardLayout({
             )}
           </nav>
           <main className="dash-main">{children}</main>
+          <SupportButton business={business?.name} />
         </>
       )}
     </div>
