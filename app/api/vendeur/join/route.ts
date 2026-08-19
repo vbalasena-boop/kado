@@ -7,8 +7,10 @@ import { sendEmail, emailLayout } from "@/lib/email";
 export const dynamic = "force-dynamic";
 
 /**
- * « Devenir promoteur » en libre-service : l'utilisateur connecté crée son
- * profil vendeur (un seul par compte). Barème par défaut 20/30/45 €.
+ * Candidature « Devenir promoteur » : l'utilisateur connecté dépose son
+ * profil (un seul par compte), créé INACTIF. L'admin le contacte, fait
+ * signer le contrat, puis l'active depuis Admin → Vendeurs — rien n'est
+ * attribué ni commissionné avant. Barème par défaut 20/30/45 €.
  */
 export async function POST(req: NextRequest) {
   const user = await getSessionUser();
@@ -51,6 +53,7 @@ export async function POST(req: NextRequest) {
         email: user.email ?? null,
         code,
         owner_user_id: user.id,
+        active: false, // candidature : l'admin active après contact + contrat
         commission_roue_cents: DEFAULT_COMMISSIONS.roue,
         commission_fidelite_cents: DEFAULT_COMMISSIONS.fidelite,
         commission_complet_cents: DEFAULT_COMMISSIONS.complet,
@@ -70,16 +73,16 @@ export async function POST(req: NextRequest) {
     if (adminEmail) {
       await sendEmail({
         to: adminEmail,
-        subject: `Nouveau promoteur inscrit — ${name}`,
+        subject: `Candidature promoteur à valider — ${name}`,
         html: emailLayout({
-          preview: "Un promoteur vient de rejoindre le programme.",
-          heading: "Nouveau promoteur ! 🤝",
+          preview: "Quelqu'un souhaite devenir promoteur Kado.",
+          heading: "Nouvelle candidature ! 🤝",
           emoji: "🤝",
           bodyHtml: `<b>${name}</b> (${
             user.email ?? "e-mail inconnu"
-          }) vient de s'inscrire comme promoteur.<br>Code : <b>${
+          }) souhaite devenir promoteur.<br>Code demandé : <b>${
             created.code
-          }</b><br><br>Pensez à lui envoyer le contrat d'apporteur d'affaires — retrouvez-le dans <a href="https://kado-app.fr/admin/vendeurs">Admin → Vendeurs</a>.`,
+          }</b><br><br>Son profil est <b>inactif</b> : son lien ne rapporte rien tant que vous ne l'avez pas activé.<br><br>1. Contactez-le et envoyez-lui le contrat d'apporteur d'affaires<br>2. Contrat signé → cliquez « Activer » dans <a href="https://kado-app.fr/admin/vendeurs">Admin → Vendeurs</a>.`,
         }),
       });
     }

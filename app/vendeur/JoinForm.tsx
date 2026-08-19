@@ -55,7 +55,7 @@ export default function JoinForm() {
         onChange={(e) => setCode(e.target.value)}
       />
       <button className="btn" disabled={busy}>
-        {busy ? "Création…" : "Devenir promoteur"}
+        {busy ? "Envoi…" : "Envoyer ma candidature"}
       </button>
       {error && <p className="err">{error}</p>}
     </form>

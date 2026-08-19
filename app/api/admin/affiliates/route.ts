@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { getAdminUser } from "@/lib/admin-guard";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { sendEmail, emailLayout } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -145,16 +146,35 @@ export async function PATCH(req: NextRequest) {
   if (body.action === "toggle_active") {
     const { data: aff } = await db
       .from("affiliates")
-      .select("active")
+      .select("active, name, email, code")
       .eq("id", id)
       .maybeSingle();
     if (!aff) return Response.json({ error: "not_found" }, { status: 404 });
+    const nowActive = !aff.active;
     const { error } = await db
       .from("affiliates")
-      .update({ active: !aff.active })
+      .update({ active: nowActive })
       .eq("id", id);
     if (error) return Response.json({ error: "update_failed" }, { status: 500 });
-    return Response.json({ ok: true, active: !aff.active });
+
+    // Activation d'une candidature : e-mail de bienvenue avec son lien.
+    if (nowActive && aff.email) {
+      try {
+        await sendEmail({
+          to: aff.email,
+          subject: "Votre lien promoteur Kado est activé ! 🚀",
+          html: emailLayout({
+            preview: "Vous pouvez commencer à recommander Kado.",
+            heading: "Bienvenue dans le programme ! 🤝",
+            emoji: "🚀",
+            bodyHtml: `Bonjour ${aff.name},<br><br>Votre profil promoteur est <b>activé</b>. Votre lien personnel :<br><br><b>https://kado-app.fr?ref=${aff.code}</b><br><br>Chaque commerce qui s'inscrit via ce lien puis s'abonne vous rapporte une commission (Fidélité 20&nbsp;€ · Jeux 30&nbsp;€ · Complet 45&nbsp;€), versée après son 2ᵉ prélèvement sur simple facture.<br><br>Suivez vos résultats en temps réel sur <a href="https://kado-app.fr/vendeur">kado-app.fr/vendeur</a> (connectez-vous avec cet e-mail) — la plaquette de vente y est téléchargeable.`,
+          }),
+        });
+      } catch {
+        /* l'e-mail ne doit pas bloquer l'activation */
+      }
+    }
+    return Response.json({ ok: true, active: nowActive });
   }
 
   return Response.json({ error: "unknown_action" }, { status: 400 });

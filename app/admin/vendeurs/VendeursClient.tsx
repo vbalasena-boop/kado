@@ -199,8 +199,12 @@ export default function VendeursClient({
         rows.map((r) => (
           <div className="dash-card" key={r.id}>
             <h2>
-              {r.active ? "🟢" : "⚪️"} {r.name}{" "}
-              {!r.active && <span className="muted">(désactivé)</span>}
+              {r.active ? "🟢" : "🟠"} {r.name}{" "}
+              {!r.active && (
+                <span className="muted">
+                  (inactif — lien coupé, à activer après signature du contrat)
+                </span>
+              )}
             </h2>
             <p className="muted">
               {r.email ?? "pas d'e-mail"} · commissions : Fidélité{" "}
@@ -277,10 +281,10 @@ export default function VendeursClient({
               )}{" "}
               <button
                 type="button"
-                className="btn-mini soft"
+                className={r.active ? "btn-mini soft" : "btn-mini ok"}
                 onClick={() => patch(r.id, "toggle_active")}
               >
-                {r.active ? "Désactiver" : "Réactiver"}
+                {r.active ? "Désactiver" : "✅ Activer"}
               </button>
             </p>
           </div>

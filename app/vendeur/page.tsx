@@ -30,7 +30,8 @@ function Pitch({ loggedIn }: { loggedIn: boolean }) {
         <div className="dash-card">
           <h2>Comment ça marche</h2>
           <p>
-            1️⃣ Créez votre profil — vous recevez votre lien personnel.
+            1️⃣ Déposez votre candidature — Kado vous contacte, vous signez le
+            contrat et votre lien personnel est activé.
             <br />
             2️⃣ Partagez-le aux commerçants (WhatsApp, e-mail, en main
             propre…).
@@ -58,7 +59,7 @@ function Pitch({ loggedIn }: { loggedIn: boolean }) {
         <div className="dash-card">
           {loggedIn ? (
             <>
-              <h2>🚀 Créer mon profil promoteur</h2>
+              <h2>🚀 Déposer ma candidature</h2>
               <JoinForm />
             </>
           ) : (
@@ -79,9 +80,10 @@ function Pitch({ loggedIn }: { loggedIn: boolean }) {
             </>
           )}
           <p className="muted">
-            En rejoignant le programme, vous exercez en indépendant (statut
-            requis pour facturer, ex. micro-entrepreneur). Un contrat
-            d'apporteur d'affaires vous sera envoyé.
+            Après votre candidature, Kado vous contacte pour finaliser
+            (contrat d'apporteur d'affaires) puis active votre lien. Vous
+            exercez en indépendant (statut requis pour facturer, ex.
+            micro-entrepreneur).
           </p>
         </div>
       </main>
@@ -127,10 +129,12 @@ export default async function VendeurHome() {
       <main className="landing">
         <div className="landing-card">
           <div className="landing-logo">🤝</div>
-          <h1>Profil désactivé</h1>
+          <h1>Candidature bien reçue !</h1>
           <p>
-            Votre profil promoteur est désactivé. Contactez Kado pour le
-            réactiver.
+            Merci <b>{aff.name}</b> — votre demande est en cours de
+            validation. Nous vous contactons très vite pour finaliser (contrat
+            d'apporteur d'affaires), puis votre lien et votre espace seront
+            activés. Si votre profil était actif auparavant, contactez Kado.
           </p>
         </div>
       </main>
