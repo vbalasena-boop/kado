@@ -8,6 +8,7 @@ export type AffiliateRow = {
   name: string;
   email: string | null;
   code: string;
+  statsKey: string | null;
   active: boolean;
   commissionRoue: number;
   commissionFidelite: number;
@@ -99,10 +100,9 @@ export default function VendeursClient({
     }
   }
 
-  function copyLink(code: string) {
-    const link = `https://kado-app.fr?ref=${code}`;
+  function copy(id: string, link: string) {
     navigator.clipboard?.writeText(link).then(() => {
-      setCopied(code);
+      setCopied(id);
       window.setTimeout(() => setCopied(null), 1500);
     });
   }
@@ -127,6 +127,32 @@ export default function VendeursClient({
           </p>
         </div>
       )}
+
+      <div className="dash-card">
+        <h2>📦 Kit vendeur — tout pour démarrer</h2>
+        <p className="muted">
+          Envoyez ces deux documents au vendeur avec son lien : la plaquette
+          pour vendre (page 1 : convaincre le commerçant · page 2 : son
+          programme et ses commissions) et le contrat à compléter puis signer.
+        </p>
+        <p>
+          <a
+            className="btn-mini soft"
+            href="/vendeurs/plaquette-vendeur-kado.pdf"
+            target="_blank"
+            rel="noreferrer"
+          >
+            📄 Plaquette de vente (PDF)
+          </a>{" "}
+          <a
+            className="btn-mini soft"
+            href="/vendeurs/contrat-apporteur-kado.docx"
+            download
+          >
+            📝 Contrat d'apporteur (Word)
+          </a>
+        </p>
+      </div>
 
       <div className="dash-card">
         <h2>Ajouter un vendeur</h2>
@@ -186,10 +212,32 @@ export default function VendeursClient({
               <button
                 type="button"
                 className="btn-mini soft"
-                onClick={() => copyLink(r.code)}
+                onClick={() =>
+                  copy(`ref-${r.id}`, `https://kado-app.fr?ref=${r.code}`)
+                }
               >
-                {copied === r.code ? "Copié ✔" : "Copier le lien"}
-              </button>
+                {copied === `ref-${r.id}` ? "Copié ✔" : "Copier le lien"}
+              </button>{" "}
+              {r.statsKey ? (
+                <button
+                  type="button"
+                  className="btn-mini soft"
+                  onClick={() =>
+                    copy(
+                      `stats-${r.id}`,
+                      `https://kado-app.fr/vendeur/${r.statsKey}`
+                    )
+                  }
+                >
+                  {copied === `stats-${r.id}`
+                    ? "Copié ✔"
+                    : "📊 Copier sa page stats"}
+                </button>
+              ) : (
+                <span className="muted">
+                  (page stats : passez la migration 0034)
+                </span>
+              )}
             </p>
             <p>
               👥 <b>{r.totalClients}</b> client{r.totalClients > 1 ? "s" : ""}{" "}

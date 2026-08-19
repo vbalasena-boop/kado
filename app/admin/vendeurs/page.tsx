@@ -14,15 +14,22 @@ export default async function VendeursPage() {
   // encore passée) → on affiche la marche à suivre.
   let tableMissing = false;
   let affiliates: any[] = [];
+  const AFF_COLS =
+    "id, name, email, code, active, commission_roue_cents, commission_fidelite_cents, commission_complet_cents, created_at";
   try {
+    // stats_key (migration 0034) lue en priorité, avec repli sans elle.
     const { data, error } = await db
       .from("affiliates")
-      .select(
-        "id, name, email, code, active, commission_roue_cents, commission_fidelite_cents, commission_complet_cents, created_at"
-      )
+      .select(`${AFF_COLS}, stats_key`)
       .order("created_at", { ascending: true });
-    if (error) tableMissing = true;
-    else affiliates = data ?? [];
+    if (error) {
+      const { data: d2, error: e2 } = await db
+        .from("affiliates")
+        .select(AFF_COLS)
+        .order("created_at", { ascending: true });
+      if (e2) tableMissing = true;
+      else affiliates = d2 ?? [];
+    } else affiliates = data ?? [];
   } catch {
     tableMissing = true;
   }
@@ -74,6 +81,7 @@ export default async function VendeursPage() {
       name: a.name,
       email: a.email,
       code: a.code,
+      statsKey: a.stats_key ?? null,
       active: a.active,
       commissionRoue: a.commission_roue_cents / 100,
       commissionFidelite: a.commission_fidelite_cents / 100,
