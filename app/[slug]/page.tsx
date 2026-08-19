@@ -102,6 +102,20 @@ export default async function Page({
   } catch {
     orderEnabled = false;
   }
+  // Essai gratuit : la commande est ouverte aussi — mais le bouton public
+  // n'apparaît que si le commerçant a déjà mis des produits au catalogue.
+  if (!orderEnabled && biz.subscription_status === "trial") {
+    try {
+      const { count } = await supa
+        .from("products")
+        .select("id", { count: "exact", head: true })
+        .eq("business_id", biz.id)
+        .eq("active", true);
+      orderEnabled = (count ?? 0) > 0;
+    } catch {
+      /* table produits absente : on n'affiche pas le bouton */
+    }
+  }
 
   // Validité des cadeaux (lecture tolérante, 30 j par défaut)
   const { data: pv, error: pvErr } = await supa

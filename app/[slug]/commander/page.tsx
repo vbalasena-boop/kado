@@ -37,7 +37,7 @@ export default async function CommanderPage({
     const { data } = await db
       .from("businesses")
       .select(
-        "id, slug, name, logo_url, status, subscription_ends_at, click_collect"
+        "id, slug, name, logo_url, status, subscription_status, subscription_ends_at, click_collect"
       )
       .eq("slug", params.slug)
       .maybeSingle();
@@ -46,7 +46,10 @@ export default async function CommanderPage({
     biz = null;
   }
 
-  if (!biz || !biz.click_collect) {
+  // Option activée — ou essai gratuit (toutes les options sont ouvertes).
+  const orderOn =
+    !!biz?.click_collect || biz?.subscription_status === "trial";
+  if (!biz || !orderOn) {
     return (
       <Unavailable message="Ce commerce ne propose pas la commande en ligne." />
     );

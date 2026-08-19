@@ -73,10 +73,15 @@ export async function POST(req: NextRequest) {
   const db = getAdminClient();
   const { data: biz } = await db
     .from("businesses")
-    .select("id, name, slug, status, subscription_ends_at, click_collect")
+    .select("id, name, slug, status, subscription_status, subscription_ends_at, click_collect")
     .eq("slug", body.slug)
     .maybeSingle();
-  if (!biz || !(biz as any).click_collect) {
+  // Commande ouverte si l'option est activée — ou pendant l'essai gratuit
+  // (toutes les options sont ouvertes pour tester).
+  const orderOn =
+    !!(biz as any)?.click_collect ||
+    (biz as any)?.subscription_status === "trial";
+  if (!biz || !orderOn) {
     return Response.json({ error: "not_found" }, { status: 404 });
   }
   if (!hasAccess(biz)) {

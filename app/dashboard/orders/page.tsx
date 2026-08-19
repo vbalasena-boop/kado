@@ -38,6 +38,8 @@ export default async function OrdersPage() {
       enabled = false;
     }
   }
+  // Essai gratuit : toutes les options sont ouvertes, commande incluse.
+  if (business.subscription_status === "trial") enabled = true;
 
   if (!enabled) {
     return (

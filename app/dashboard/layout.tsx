@@ -34,6 +34,8 @@ export default async function DashboardLayout({
     } catch {
       clickCollect = false;
     }
+    // Essai gratuit : toutes les options sont ouvertes, commande incluse.
+    if (business.subscription_status === "trial") clickCollect = true;
   }
 
   return (
