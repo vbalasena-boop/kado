@@ -153,6 +153,23 @@ export default async function QrPage() {
     /* colonnes absentes : valeurs par défaut */
   }
 
+  // Émojis des LOTS à gagner : c'est eux qu'on montre sur la roue de
+  // l'affiche (comme sur la vraie page de jeu) — pas le décor.
+  let prizeEmojis: string[] = [];
+  try {
+    const { data: pz } = await getAdminClient()
+      .from("prizes")
+      .select("emoji, position")
+      .eq("business_id", business.id)
+      .order("position", { ascending: true })
+      .limit(6);
+    prizeEmojis = (pz ?? [])
+      .map((p: any) => (p.emoji || "").trim())
+      .filter(Boolean);
+  } catch {
+    prizeEmojis = [];
+  }
+
   const bgLight = lum(bgColor) > 0.55;
   // Fond d'affiche : clair et imprimable dans tous les cas, teinté à la marque
   const posterBg = bgLight ? mix(bgColor, "#ffffff", 0.35) : "#fffdf8";
@@ -231,7 +248,12 @@ export default async function QrPage() {
         </div>
 
         <div className="pp-wheel">
-          <PosterWheel segs={segs} hub={primary} rim={rim} emojis={decorEmojis} />
+          <PosterWheel
+            segs={segs}
+            hub={primary}
+            rim={rim}
+            emojis={prizeEmojis.length > 0 ? prizeEmojis : decorEmojis}
+          />
         </div>
 
         <div className="pp-title">Tentez votre chance&nbsp;! 🎁</div>

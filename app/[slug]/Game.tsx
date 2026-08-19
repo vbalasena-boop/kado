@@ -904,7 +904,9 @@ export default function Game({
     <>
       <style dangerouslySetInnerHTML={{ __html: themeCss }} />
       <canvas id="confetti" ref={confettiRef} />
-      <FloatingDecor emojis={splitEmojis(decorEmojis)} />
+      {/* Décor animé sur l'écran d'accueil uniquement : dès qu'on joue,
+          la roue reste seule, sans distraction derrière. */}
+      {screen === "rules" && <FloatingDecor emojis={splitEmojis(decorEmojis)} />}
       <div className="app">
         {preview && (
           <div className="preview-banner">
