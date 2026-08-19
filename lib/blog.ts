@@ -23,6 +23,242 @@ export type Article = {
 
 export const ARTICLES: Article[] = [
   {
+    slug: "attirer-nouveaux-clients-commerce-local",
+    title: "Comment attirer de nouveaux clients dans son commerce local",
+    metaTitle: "Attirer de nouveaux clients : 8 leviers pour un commerce local",
+    description:
+      "Comment attirer plus de clients dans votre restaurant, salon ou boutique ? 8 leviers concrets et peu coûteux pour faire venir du monde, en 2026.",
+    keywords: [
+      "attirer des clients",
+      "attirer nouveaux clients commerce",
+      "faire venir des clients",
+      "attirer clients boutique",
+      "marketing commerce de proximité",
+    ],
+    date: "2026-08-19",
+    readMinutes: 7,
+    category: "Acquisition",
+    emoji: "🧲",
+    excerpt:
+      "Attirer de nouveaux clients ne demande pas un gros budget publicitaire — juste les bons leviers, bien exploités. Voici les 8 qui fonctionnent pour un commerce de proximité.",
+    blocks: [
+      {
+        p: "Attirer de nouveaux clients est le nerf de la guerre de tout commerce local. La bonne nouvelle : à l'échelle d'un quartier, ce ne sont pas les gros budgets qui gagnent, mais la visibilité en ligne et le bouche-à-oreille. Voici 8 leviers activables dès cette semaine, sans vous ruiner.",
+      },
+      { h: "1. Soignez votre fiche Google Business" },
+      {
+        p: "C'est votre vitrine numéro un : la plupart des clients vous découvrent via Google Maps avant même votre site. Photos récentes, horaires à jour, description claire, et surtout beaucoup d'avis récents. Une fiche vivante remonte plus haut dans les résultats locaux.",
+      },
+      { h: "2. Transformez chaque client en avis" },
+      {
+        p: "Plus d'avis Google = meilleur classement = plus de nouveaux clients qui vous trouvent. Le cercle est vertueux. L'astuce : demander l'avis au bon moment (en caisse) et le rendre ludique, par exemple avec un jeu qui récompense la participation.",
+      },
+      { h: "3. Soyez actif sur Instagram et TikTok" },
+      {
+        p: "Une story par jour, un reel par semaine : montrez les coulisses, vos produits, vos clients contents. Le contenu authentique et régulier fait bien plus pour un commerce local qu'une publicité coûteuse.",
+      },
+      { h: "4. Offrez une première expérience mémorable" },
+      {
+        p: "Un nouveau client qui repart avec un petit cadeau ou une réduction sur sa prochaine visite a une raison concrète de revenir — et d'en parler. Le premier passage est le moment décisif.",
+      },
+      { h: "5. Activez le parrainage" },
+      {
+        p: "Vos clients actuels connaissent des dizaines de personnes qui vous ressembleraient parfaitement. « Amenez un ami, gagnez tous les deux quelque chose » : le parrainage est le canal d'acquisition le moins cher qui existe.",
+      },
+      { h: "6. Capturez les contacts pour relancer" },
+      {
+        p: "Un client de passage qui laisse son e-mail devient un client que vous pouvez faire revenir. Une base de contacts, même modeste, vaut de l'or pour remplir un mardi soir calme avec une offre ciblée.",
+      },
+      { h: "7. Rendez-vous visible dans la rue" },
+      {
+        p: "Une affiche ou un sticker avec un QR code attractif (« Scannez, jouez, gagnez ») transforme les passants en visiteurs. La curiosité fait le reste.",
+      },
+      { h: "En résumé" },
+      {
+        p: "Attirer de nouveaux clients, c'est combiner visibilité en ligne (Google, réseaux) et bouche-à-oreille (avis, parrainage, expérience mémorable). Kado réunit ces leviers dans un seul outil : un jeu en caisse qui génère avis Google, abonnés Instagram, e-mails clients et parrainages — sans application ni budget publicitaire.",
+      },
+    ],
+  },
+  {
+    slug: "repondre-avis-google-negatif",
+    title: "Répondre à un avis Google négatif : la méthode qui rassure",
+    metaTitle: "Répondre à un avis négatif Google : exemples et méthode",
+    description:
+      "Un avis Google négatif ? Pas de panique. Voici comment y répondre pour transformer une critique en preuve de sérieux, avec des exemples concrets.",
+    keywords: [
+      "répondre avis négatif",
+      "avis google négatif",
+      "répondre à un mauvais avis",
+      "gérer avis négatif commerce",
+      "e-réputation",
+    ],
+    date: "2026-08-19",
+    readMinutes: 5,
+    category: "E-réputation",
+    emoji: "💬",
+    excerpt:
+      "Un avis négatif n'est pas une catastrophe — c'est une occasion de montrer votre professionnalisme. Voici comment y répondre, avec des exemples prêts à adapter.",
+    blocks: [
+      {
+        p: "Tout commerce reçoit un jour un avis négatif. Ce qui compte, ce n'est pas l'avis lui-même, mais votre réponse : les futurs clients la lisent, et une critique bien gérée rassure souvent plus qu'un 5★ de plus. Voici la méthode.",
+      },
+      { h: "1. Répondez vite, mais à froid" },
+      {
+        p: "Répondez sous 24 à 48 h, jamais à chaud. Prenez le temps de respirer : une réponse sèche ou défensive fait bien plus de mal que l'avis d'origine. L'objectif n'est pas d'avoir raison, mais de montrer que vous écoutez.",
+      },
+      { h: "2. Remerciez et reconnaissez" },
+      {
+        p: "Commencez toujours par remercier le client d'avoir pris le temps, et reconnaissez son ressenti — même si vous n'êtes pas d'accord. « Merci pour votre retour, nous sommes désolés que votre expérience n'ait pas été à la hauteur. »",
+      },
+      { h: "3. Restez factuel et courtois" },
+      {
+        p: "Si l'avis contient une erreur, corrigez-la calmement, sans polémiquer. N'entrez jamais dans un bras de fer public. Votre ton posé parle pour vous auprès de tous ceux qui liront l'échange.",
+      },
+      { h: "4. Proposez une suite en privé" },
+      {
+        p: "Invitez le client à vous contacter directement pour régler le problème : « Nous aimerions comprendre ce qui s'est passé, contactez-nous au… ». Cela montre votre bonne foi et sort le conflit de la vue publique.",
+      },
+      {
+        quote:
+          "Exemple de réponse : « Bonjour Julie, merci pour votre retour et navrés pour l'attente subie samedi. Ce n'est pas notre standard habituel. Nous aimerions nous rattraper — écrivez-nous à bonjour@… et nous vous réservons un accueil aux petits soins. »",
+      },
+      { h: "5. Noyez le négatif sous le positif" },
+      {
+        p: "La meilleure défense reste l'attaque : plus vous avez d'avis positifs récents, moins un avis négatif pèse dans votre note globale et dans l'esprit des visiteurs. Un flux régulier de nouveaux avis 5★ dilue naturellement les mauvais.",
+      },
+      { h: "En résumé" },
+      {
+        p: "Un avis négatif bien géré est une publicité gratuite pour votre sérieux. Répondez vite, avec calme et empathie, et surtout : générez en continu de nouveaux avis positifs. C'est ce que Kado automatise — chaque client satisfait devient une chance d'avis 5★, sans effort de votre part.",
+      },
+    ],
+  },
+  {
+    slug: "marketing-local-idees-petit-commerce",
+    title: "Marketing local : 10 idées pour un petit commerce en 2026",
+    metaTitle: "Marketing local : 10 idées concrètes pour petit commerce 2026",
+    description:
+      "10 idées de marketing local simples et peu coûteuses pour faire connaître votre petit commerce en 2026 : Google, réseaux, fidélité, événements.",
+    keywords: [
+      "marketing local",
+      "marketing petit commerce",
+      "idées marketing commerce",
+      "communication commerce de proximité",
+      "promouvoir son commerce",
+    ],
+    date: "2026-08-19",
+    readMinutes: 8,
+    category: "Marketing",
+    emoji: "📣",
+    excerpt:
+      "Pas besoin d'agence ni de gros budget : le marketing local repose sur des actions simples et régulières. Voici 10 idées à piocher selon votre commerce.",
+    blocks: [
+      {
+        p: "Le marketing local, c'est l'art de se faire connaître dans son quartier sans dépenser des fortunes. Pour un petit commerce, quelques actions bien menées valent mieux qu'une campagne coûteuse. Voici 10 idées à activer selon votre temps et votre budget.",
+      },
+      { h: "1. Optimisez votre présence sur Google" },
+      {
+        p: "Fiche Google Business complète, photos, avis récents : c'est la base. La majorité de vos futurs clients vous cherchent d'abord sur Google Maps.",
+      },
+      { h: "2. Publiez régulièrement sur les réseaux" },
+      {
+        p: "Instagram, TikTok, Facebook : montrez votre quotidien, vos nouveautés, vos clients. La régularité prime sur la perfection.",
+      },
+      { h: "3. Lancez un programme de fidélité" },
+      {
+        p: "Récompenser les habitués coûte bien moins cher que d'en conquérir de nouveaux. Une carte de fidélité digitale, toujours dans le téléphone, ne se perd jamais.",
+      },
+      { h: "4. Organisez un jeu en boutique" },
+      {
+        p: "Une roue de la fortune ou une carte à gratter crée du plaisir, de la conversation, et donne une raison de laisser un avis ou de suivre votre compte.",
+      },
+      { h: "5. Collectez les e-mails de vos clients" },
+      {
+        p: "Une base de contacts vous permet d'annoncer une promo, un événement ou une nouveauté à ceux qui vous aiment déjà.",
+      },
+      { h: "6. Créez des partenariats de quartier" },
+      {
+        p: "Un commerce voisin non concurrent (le fleuriste et le restaurant, le coiffeur et l'institut) : échangez des recommandations, des offres croisées, de la visibilité.",
+      },
+      { h: "7. Soignez votre vitrine et votre devanture" },
+      {
+        p: "Votre vitrine est votre première publicité, vue par des centaines de passants chaque jour. Une affiche attractive avec un QR code convertit la curiosité en visite.",
+      },
+      { h: "8. Fêtez les moments forts" },
+      {
+        p: "Anniversaire du commerce, fêtes de fin d'année, saisons : une opération spéciale crée l'événement et donne une raison de venir maintenant.",
+      },
+      { h: "9. Encouragez le parrainage" },
+      {
+        p: "Le bouche-à-oreille organisé est votre canal le plus rentable. Récompensez les clients qui amènent un ami.",
+      },
+      { h: "10. Mesurez ce qui marche" },
+      {
+        p: "Suivez d'où viennent vos clients, combien d'avis vous récoltez, combien de contacts vous captez. Sans chiffres, impossible d'améliorer.",
+      },
+      { h: "En résumé" },
+      {
+        p: "Le marketing local efficace tient en trois mots : visibilité, fidélité, régularité. Kado en automatise une bonne partie — avis Google, abonnés Instagram, e-mails clients, fidélité et parrainage — à partir d'un simple QR code en caisse, sans compétences techniques.",
+      },
+    ],
+  },
+  {
+    slug: "fideliser-clients-salon-coiffure-institut",
+    title: "Fidéliser les clients d'un salon de coiffure ou d'un institut",
+    metaTitle: "Fidéliser sa clientèle en salon de coiffure et institut",
+    description:
+      "Comment fidéliser durablement la clientèle d'un salon de coiffure ou d'un institut de beauté ? 7 techniques concrètes pour faire revenir vos clients.",
+    keywords: [
+      "fidéliser clients salon coiffure",
+      "fidélisation institut de beauté",
+      "faire revenir clients coiffeur",
+      "carte fidélité salon",
+      "fidélisation esthétique",
+    ],
+    date: "2026-08-19",
+    readMinutes: 6,
+    category: "Fidélisation",
+    emoji: "💇",
+    excerpt:
+      "Dans la coiffure et l'esthétique, tout se joue sur la relation et la régularité. Voici 7 techniques pour transformer un client d'essai en habitué fidèle.",
+    blocks: [
+      {
+        p: "Dans un salon de coiffure ou un institut de beauté, la rentabilité vient des habitués : un client qui revient toutes les 6 semaines vaut infiniment plus qu'un passage unique. Or la concurrence est rude et un client déçu part sans un mot. Voici comment fidéliser durablement.",
+      },
+      { h: "1. Reprogrammez le prochain rendez-vous… tout de suite" },
+      {
+        p: "Le meilleur moment pour fixer le prochain rendez-vous, c'est à la caisse, quand le client est satisfait de sa coupe ou de son soin. Un client qui repart avec une date en poche revient presque à coup sûr.",
+      },
+      { h: "2. Offrez une carte de fidélité digitale" },
+      {
+        p: "« La 6ᵉ coupe offerte », « -20 % après 5 soins » : le principe est connu et il marche. Mais la carte papier se perd. Une carte digitale, dans le téléphone du client, ne s'oublie jamais et se recharge à chaque visite.",
+      },
+      { h: "3. Célébrez les anniversaires" },
+      {
+        p: "Un e-mail automatique le jour de l'anniversaire, avec un petit soin ou une réduction offerte, crée un lien émotionnel fort. C'est l'attention qui fait revenir — et qui se raconte.",
+      },
+      { h: "4. Récompensez les avis et les recommandations" },
+      {
+        p: "Vos clients satisfaits sont vos meilleurs ambassadeurs. Un jeu qui récompense un avis Google ou un abonnement Instagram booste votre visibilité — essentielle dans un métier où l'on choisit son salon sur photos et avis.",
+      },
+      { h: "5. Personnalisez la relation" },
+      {
+        p: "Noter les préférences (couleur habituelle, produits utilisés, petites habitudes) et les retrouver à la visite suivante donne au client le sentiment d'être unique. C'est ce qui fait qu'on ne change pas de salon.",
+      },
+      { h: "6. Relancez les clients qui s'espacent" },
+      {
+        p: "Un client qui n'est pas revenu depuis 3 mois est un client en train de vous échapper. Une relance douce (« ça fait un moment, on vous réserve un créneau ? ») en récupère une bonne partie.",
+      },
+      { h: "7. Faites du parrainage un réflexe" },
+      {
+        p: "« Amenez une amie, vous gagnez toutes les deux une réduction » : dans la beauté, la recommandation entre proches est reine. Récompensez-la systématiquement.",
+      },
+      { h: "En résumé" },
+      {
+        p: "Fidéliser en coiffure et esthétique, c'est soigner la relation (rendez-vous, personnalisation, anniversaires) et récompenser l'engagement (fidélité, avis, parrainage). Kado réunit tout ça sans application : carte de fidélité digitale, anniversaires automatiques, avis Google, abonnés Instagram et parrainage, à partir d'un QR code à votre accueil.",
+      },
+    ],
+  },
+  {
     slug: "comment-avoir-plus-avis-google-commerce",
     title: "Comment avoir plus d'avis Google pour son commerce en 2026",
     metaTitle: "Plus d'avis Google pour son commerce : le guide 2026",
