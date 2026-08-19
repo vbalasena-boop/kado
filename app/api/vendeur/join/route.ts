@@ -13,7 +13,12 @@ export const dynamic = "force-dynamic";
  * attribué ni commissionné avant. Barème par défaut 20/30/45 €.
  */
 export async function POST(req: NextRequest) {
-  const user = await getSessionUser();
+  let user: Awaited<ReturnType<typeof getSessionUser>> = null;
+  try {
+    user = await getSessionUser();
+  } catch {
+    user = null; // auth non configurée = non connecté
+  }
   if (!user) return Response.json({ error: "unauthorized" }, { status: 401 });
 
   const db = getAdminClient();
