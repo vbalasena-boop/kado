@@ -2133,6 +2133,15 @@ canvas#confetti {
   color: var(--g-blue);
   border: 1px solid var(--g-line);
 }
+/* Ancres habillées en bouton (CTA de pages publiques type /vendeur) */
+.dash a.btn,
+.auth-page a.btn {
+  display: inline-block;
+  width: auto;
+  text-decoration: none;
+  text-align: center;
+  padding: 12px 22px;
+}
 .dash-signout {
   background: transparent;
   color: var(--g-blue);

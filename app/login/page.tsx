@@ -8,6 +8,12 @@ function LoginInner() {
   const router = useRouter();
   const params = useSearchParams();
   const isSignup = params.get("signup") === "1";
+  // Destination après connexion : chemin interne uniquement (anti-redirection
+  // ouverte). Par défaut : l'espace commerçant.
+  const rawNext = params.get("next") || "";
+  const next =
+    rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/dashboard";
+  const keepNext = next !== "/dashboard" ? `&next=${encodeURIComponent(next)}` : "";
 
   // Lien de parrainage commerçant (?p=slug) : mémorisé jusqu'à l'inscription
   useEffect(() => {
@@ -61,7 +67,7 @@ function LoginInner() {
         setError("Code invalide ou expiré. Réessayez.");
       } else {
         router.refresh();
-        router.push("/dashboard");
+        router.push(next);
       }
     } catch {
       setError("Une erreur est survenue.");
@@ -122,12 +128,14 @@ function LoginInner() {
               {isSignup ? (
                 <>
                   Vous avez déjà un compte ?{" "}
-                  <a href="/login">Se connecter</a>
+                  <a href={`/login?x=1${keepNext}`}>Se connecter</a>
                 </>
               ) : (
                 <>
                   Pas encore de compte ?{" "}
-                  <a href="/login?signup=1">Créer mon compte gratuit</a>
+                  <a href={`/login?signup=1${keepNext}`}>
+                    Créer mon compte gratuit
+                  </a>
                 </>
               )}
             </p>

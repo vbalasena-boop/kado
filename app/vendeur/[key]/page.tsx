@@ -1,4 +1,5 @@
 import { getAdminClient } from "@/lib/supabase/admin";
+import { getAffiliateStats } from "@/lib/affiliates";
 import StatsView, { VendorStatsData } from "./StatsView";
 
 export const dynamic = "force-dynamic";
@@ -55,68 +56,14 @@ export default async function VendeurPage({
   }
   if (!aff || !aff.active) return <Unavailable />;
 
-  // Clients amenés + commissions (mêmes règles que l'admin)
-  let referred: { id: string; subscription_status: string }[] = [];
-  let comms: {
-    business_id: string;
-    amount_cents: number;
-    status: string;
-    created_at: string;
-  }[] = [];
-  try {
-    const { data } = await db
-      .from("businesses")
-      .select("id, subscription_status")
-      .eq("affiliate_id", aff.id);
-    referred = (data as any[]) ?? [];
-  } catch {
-    referred = [];
-  }
-  try {
-    const { data } = await db
-      .from("affiliate_commissions")
-      .select("business_id, amount_cents, status, created_at")
-      .eq("affiliate_id", aff.id);
-    comms = (data as any[]) ?? [];
-  } catch {
-    comms = [];
-  }
-
-  const THIRTY_DAYS = 30 * 864e5;
-  const bizStatus = new Map(referred.map((b) => [b.id, b.subscription_status]));
-  const isActiveBiz = (id: string) =>
-    ["active", "trial"].includes(bizStatus.get(id) ?? "");
-
+  const stats = await getAffiliateStats(db, aff.id);
   const data: VendorStatsData = {
     name: aff.name,
     code: aff.code,
     commissionRoue: aff.commission_roue_cents / 100,
     commissionFidelite: aff.commission_fidelite_cents / 100,
     commissionComplet: aff.commission_complet_cents / 100,
-    totalClients: referred.length,
-    trialClients: referred.filter((b) => b.subscription_status === "trial")
-      .length,
-    paidClients: comms.filter((c) => c.status !== "canceled").length,
-    exigibleCents: comms
-      .filter(
-        (c) =>
-          c.status === "due" &&
-          isActiveBiz(c.business_id) &&
-          Date.now() - new Date(c.created_at).getTime() >= THIRTY_DAYS
-      )
-      .reduce((s, c) => s + c.amount_cents, 0),
-    pendingCents: comms
-      .filter(
-        (c) =>
-          c.status === "due" &&
-          isActiveBiz(c.business_id) &&
-          Date.now() - new Date(c.created_at).getTime() < THIRTY_DAYS
-      )
-      .reduce((s, c) => s + c.amount_cents, 0),
-    paidCents: comms
-      .filter((c) => c.status === "paid")
-      .reduce((s, c) => s + c.amount_cents, 0),
+    ...stats,
   };
-
   return <StatsView data={data} />;
 }

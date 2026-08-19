@@ -453,6 +453,7 @@ export default function Home({
         <a href="/legal/confidentialite">Confidentialité</a>
         <a href="/legal/cgu">CGU</a>
         <a href="/legal/cgv">CGV</a>
+        <a href="/vendeur">Devenir promoteur</a>
         <a href="/login">Connexion</a>
         <a href="/login?signup=1">Créer mon compte</a>
       </footer>
