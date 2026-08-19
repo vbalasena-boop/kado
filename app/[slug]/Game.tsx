@@ -173,9 +173,17 @@ function splitEmojis(s: string): string[] {
   }
 }
 
-/** Décor ambiant : emojis flottants (🍝🍅…), tapotables, choisis par le
- *  commerçant. Positions tirées au montage (client uniquement). */
-function FloatingDecor({ emojis }: { emojis: string[] }) {
+/** Décor ambiant : emojis flottants (🍝🍅…), choisis par le commerçant.
+ *  Positions tirées au montage (client uniquement). En mode `edges`, ils
+ *  restent en périphérie (bords/haut/bas) pour ne jamais passer devant la
+ *  roue pendant le jeu. */
+function FloatingDecor({
+  emojis,
+  edges = false,
+}: {
+  emojis: string[];
+  edges?: boolean;
+}) {
   const [items, setItems] = useState<
     {
       e: string;
@@ -196,21 +204,33 @@ function FloatingDecor({ emojis }: { emojis: string[] }) {
     const list = [];
     const count = Math.min(12, Math.max(7, emojis.length * 2));
     for (let i = 0; i < count; i++) {
+      let x: number, y: number;
+      if (edges) {
+        // Périphérie uniquement : gouttières gauche/droite, bandeaux haut/bas
+        const zone = i % 4;
+        if (zone === 0) { x = 1 + Math.random() * 5; y = 10 + Math.random() * 78; }
+        else if (zone === 1) { x = 90 + Math.random() * 6; y = 10 + Math.random() * 78; }
+        else if (zone === 2) { x = 6 + Math.random() * 84; y = 1 + Math.random() * 5; }
+        else { x = 6 + Math.random() * 84; y = 91 + Math.random() * 5; }
+      } else {
+        x = 4 + Math.random() * 88; // % de la largeur
+        y = 6 + Math.random() * 84; // % de la hauteur
+      }
       list.push({
         e: emojis[i % emojis.length],
-        x: 4 + Math.random() * 88, // % de la largeur
-        y: 6 + Math.random() * 84, // % de la hauteur
-        s: 22 + Math.random() * 28, // taille px
+        x,
+        y,
+        s: (edges ? 18 : 22) + Math.random() * (edges ? 18 : 28), // taille px
         d: 6 + Math.random() * 6, // durée d'animation s
         delay: Math.random() * 5,
-        dx: (Math.random() * 2 - 1) * 34, // dérive horizontale px
+        dx: (Math.random() * 2 - 1) * (edges ? 16 : 34), // dérive horizontale px
         rot: (Math.random() * 2 - 1) * 16, // rotation deg
         variant: i % 3, // 3 trajectoires différentes
       });
     }
     setItems(list);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [emojis.join("")]);
+  }, [emojis.join(""), edges]);
 
   if (items.length === 0) return null;
   return (
@@ -904,9 +924,12 @@ export default function Game({
     <>
       <style dangerouslySetInnerHTML={{ __html: themeCss }} />
       <canvas id="confetti" ref={confettiRef} />
-      {/* Décor animé sur l'écran d'accueil uniquement : dès qu'on joue,
-          la roue reste seule, sans distraction derrière. */}
-      {screen === "rules" && <FloatingDecor emojis={splitEmojis(decorEmojis)} />}
+      {/* Décor animé : plein écran à l'accueil, puis en périphérie pendant
+          le jeu — jamais devant la roue. */}
+      <FloatingDecor
+        emojis={splitEmojis(decorEmojis)}
+        edges={screen !== "rules"}
+      />
       <div className="app">
         {preview && (
           <div className="preview-banner">
