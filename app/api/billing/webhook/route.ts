@@ -45,8 +45,16 @@ async function applySubscription(sub: Stripe.Subscription) {
     typeof sub.customer === "string" ? sub.customer : sub.customer.id;
 
   const active = sub.status === "active" || sub.status === "trialing";
-  const endsAt = (sub as any).current_period_end
-    ? new Date((sub as any).current_period_end * 1000).toISOString()
+  // `current_period_end` est au niveau de l'abonnement dans les anciennes
+  // versions d'API Stripe, et au niveau des items depuis Basil (stripe v22+).
+  // On lit les deux emplacements pour rester robuste quelle que soit la version,
+  // sinon `subscription_ends_at` est silencieusement écrit à `null`.
+  const rawPeriodEnd =
+    (sub as any).current_period_end ??
+    (sub as any).items?.data?.[0]?.current_period_end ??
+    null;
+  const endsAt = rawPeriodEnd
+    ? new Date(rawPeriodEnd * 1000).toISOString()
     : null;
 
   const plan = sub.metadata?.plan;
