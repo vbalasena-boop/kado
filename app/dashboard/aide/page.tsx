@@ -143,6 +143,24 @@ export default function AidePage() {
         on vous répond vite.
       </p>
 
+      <div className="dash-card">
+        <h2>▶️ Démarrer en 3 minutes</h2>
+        <p style={{ marginBottom: 14 }}>
+          Une courte vidéo qui vous montre comment mettre Kado en place, étape
+          par étape.
+        </p>
+        <video
+          className="tuto-video"
+          controls
+          preload="metadata"
+          playsInline
+          poster="/tutoriel-kado-poster.jpg"
+        >
+          <source src="/tutoriel-kado.mp4" type="video/mp4" />
+          Votre navigateur ne peut pas lire cette vidéo.
+        </video>
+      </div>
+
       {GUIDE.map((section) => (
         <div className="dash-card" key={section.t}>
           <h2>{section.t}</h2>
