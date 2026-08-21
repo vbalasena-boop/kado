@@ -4,6 +4,7 @@ import { getSessionUser } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { slugify } from "@/lib/defaults";
 import { prizesForCategory } from "@/lib/categories";
+import { insertPrizes } from "@/lib/prizes";
 
 export const dynamic = "force-dynamic";
 
@@ -132,7 +133,8 @@ export async function POST(req: NextRequest) {
     loyalty_enabled: plan === "fidelite" || plan === "complet",
   });
   const prizes = prizesForCategory(body.category);
-  await db.from("prizes").insert(
+  await insertPrizes(
+    db,
     prizes.map((p, i) => ({ ...p, business_id: biz.id, position: i }))
   );
 

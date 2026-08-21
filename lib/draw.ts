@@ -35,6 +35,20 @@ export function labelIsLosing(label: string | null | undefined): boolean {
   return !!label && label.toLowerCase().includes("rien");
 }
 
+/**
+ * Vérité unique : un lot / un tour est-il « perdant » ?
+ * Priorité au drapeau explicite `is_losing` (colonne 0037) quand il vaut `true` ;
+ * repli sur le libellé sinon (données antérieures à la migration, ou drapeau non
+ * renseigné). Ainsi renommer une case perdante ne casse plus la détection dès
+ * lors que `is_losing = true` est posé, sans jamais régresser sur l'existant.
+ */
+export function prizeIsLosing(p: {
+  is_losing?: boolean | null;
+  label?: string | null;
+}): boolean {
+  return p.is_losing === true || labelIsLosing(p.label);
+}
+
 /** Code de lot court et lisible, ex: "KD-4K9Q2". */
 export function generateCode(prefix = "KD"): string {
   return `${prefix}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;

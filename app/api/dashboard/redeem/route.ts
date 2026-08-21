@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { getMyBusiness } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
-import { labelIsLosing } from "@/lib/draw";
+import { prizeIsLosing } from "@/lib/draw";
 
 export const dynamic = "force-dynamic";
 
@@ -28,17 +28,27 @@ export async function POST(req: NextRequest) {
   if (!code) return Response.json({ status: "not_found" });
 
   const db = getAdminClient();
-  const { data: play } = await db
+  let playRes = await db
     .from("plays")
-    .select("id, prize_label, prize_code, created_at, redeemed_at")
+    .select("id, prize_label, prize_code, created_at, redeemed_at, is_losing")
     .eq("business_id", business.id)
     .eq("prize_code", code)
     .maybeSingle();
+  // Repli si la colonne is_losing n'existe pas encore (migration 0037).
+  if (playRes.error && (playRes.error as { code?: string }).code === "42703") {
+    playRes = await db
+      .from("plays")
+      .select("id, prize_label, prize_code, created_at, redeemed_at")
+      .eq("business_id", business.id)
+      .eq("prize_code", code)
+      .maybeSingle();
+  }
+  const play = playRes.data;
 
   if (!play) return Response.json({ status: "not_found" });
 
   const label = play.prize_label || "";
-  if (labelIsLosing(label)) {
+  if (prizeIsLosing({ is_losing: (play as { is_losing?: boolean | null }).is_losing, label })) {
     return Response.json({ status: "no_win", prize: label });
   }
   if (play.redeemed_at) {
