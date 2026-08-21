@@ -2,11 +2,11 @@ import { getAdminUser } from "@/lib/admin-guard";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { runHealthChecks, type HealthCheck } from "@/lib/health";
 import AdminClient, { AdminBusiness, AdminStats } from "./AdminClient";
+import { labelIsLosing } from "@/lib/draw";
 
 export const dynamic = "force-dynamic";
 
-const isWin = (l: string | null) =>
-  !!l && !l.toLowerCase().includes("rien");
+const isWin = (l: string | null) => !labelIsLosing(l);
 
 export default async function AdminPage() {
   const user = await getAdminUser();

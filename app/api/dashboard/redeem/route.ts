@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { getMyBusiness } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { labelIsLosing } from "@/lib/draw";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +38,7 @@ export async function POST(req: NextRequest) {
   if (!play) return Response.json({ status: "not_found" });
 
   const label = play.prize_label || "";
-  if (label.toLowerCase().includes("rien")) {
+  if (labelIsLosing(label)) {
     return Response.json({ status: "no_win", prize: label });
   }
   if (play.redeemed_at) {

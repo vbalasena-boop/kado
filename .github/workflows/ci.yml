@@ -22,6 +22,12 @@ jobs:
       - name: Installer les dépendances
         run: npm ci
 
+      - name: Vérifier les types (tsc)
+        run: npx tsc --noEmit
+
+      - name: Analyser le code (lint)
+        run: npm run lint
+
       - name: Compiler le site
         run: npm run build
 

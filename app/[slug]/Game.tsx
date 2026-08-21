@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { labelIsLosing } from "@/lib/draw";
 
 type Prize = {
   id: string;
@@ -272,7 +273,7 @@ const FONT =
 const TAU = Math.PI * 2;
 
 function isNoWin(label: string) {
-  return label.toLowerCase().includes("rien");
+  return labelIsLosing(label);
 }
 
 /** Vibration mobile (si supportée) — ignorée silencieusement sinon. */
