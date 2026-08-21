@@ -82,11 +82,30 @@ export default function ArticlePage({
     mainEntityOfPage: `https://kado-app.fr/blog/${a.slug}`,
   };
 
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Accueil", item: "https://kado-app.fr" },
+      { "@type": "ListItem", position: 2, name: "Blog", item: "https://kado-app.fr/blog" },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: a.title,
+        item: `https://kado-app.fr/blog/${a.slug}`,
+      },
+    ],
+  };
+
   return (
     <main className="vitrine">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
       />
       <header className="v-topbar">
         <Link href="/"><Logo size={42} /></Link>

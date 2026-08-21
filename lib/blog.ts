@@ -23,6 +23,200 @@ export type Article = {
 
 export const ARTICLES: Article[] = [
   {
+    slug: "augmenter-panier-moyen-commerce",
+    title: "Comment augmenter le panier moyen de son commerce",
+    metaTitle: "Augmenter le panier moyen : 7 techniques (commerce 2026)",
+    description:
+      "7 techniques concrètes pour augmenter le panier moyen de votre commerce sans faire fuir les clients : montée en gamme, ventes croisées, offres et fidélité.",
+    keywords: [
+      "augmenter le panier moyen",
+      "panier moyen commerce",
+      "vente additionnelle",
+      "vente croisée commerce",
+      "augmenter le chiffre d'affaires commerce",
+    ],
+    date: "2026-08-21",
+    readMinutes: 6,
+    category: "Chiffre d'affaires",
+    emoji: "🛒",
+    excerpt:
+      "Vendre plus à chaque client déjà présent coûte bien moins cher que d'en attirer de nouveaux. Voici 7 leviers pour faire grimper le panier moyen, en douceur.",
+    blocks: [
+      {
+        p: "Le panier moyen, c'est le montant qu'un client dépense en moyenne à chaque passage. L'augmenter de quelques euros par ticket, sur des centaines de clients, transforme votre chiffre d'affaires — sans dépenser un centime en publicité. Voici 7 techniques éprouvées.",
+      },
+      { h: "1. Proposez la montée en gamme au bon moment" },
+      {
+        p: "« Une grande plutôt qu'une moyenne ? », « la version premium ? » : suggérée au moment du choix, la montée en gamme est acceptée bien plus souvent qu'on ne le croit. La clé est de la présenter comme un plus, jamais comme une pression.",
+      },
+      { h: "2. Créez des ventes croisées évidentes" },
+      {
+        p: "Le dessert avec le plat, la housse avec le téléphone, le soin avec la coupe : proposez le complément naturel du produit acheté. Placez-les physiquement à côté, ou faites-en une suggestion simple au comptoir.",
+      },
+      { h: "3. Construisez des offres groupées" },
+      {
+        p: "Un menu, un lot, un « pack » à prix légèrement avantageux augmente le montant total tout en donnant au client le sentiment de faire une bonne affaire. Le gagnant-gagnant par excellence.",
+      },
+      { h: "4. Utilisez les paliers psychologiques" },
+      {
+        p: "« Livraison offerte dès 30 € », « -10 % dès le 3e article » : un objectif chiffré pousse naturellement le client à ajouter un article pour l'atteindre.",
+      },
+      { h: "5. Récompensez sur place pour la prochaine fois" },
+      {
+        p: "Offrir un petit gain (réduction, cadeau) valable à la visite suivante augmente à la fois le panier et la fréquence de retour. Un jeu en caisse qui récompense chaque client fait exactement cela, tout en collectant avis et contacts.",
+      },
+      { h: "6. Formez (un peu) votre équipe" },
+      {
+        p: "La différence se joue souvent sur une phrase bien placée par la personne en caisse. Deux ou trois suggestions systématiques, formulées avec le sourire, suffisent à faire bouger la moyenne.",
+      },
+      { h: "7. Mesurez pour progresser" },
+      {
+        p: "Suivez votre panier moyen mois par mois. Ce que l'on mesure s'améliore : vous verrez vite quelles techniques fonctionnent chez vous.",
+      },
+      { h: "En résumé" },
+      {
+        p: "Augmenter le panier moyen repose sur la suggestion au bon moment (montée en gamme, ventes croisées), les offres qui donnent envie, et des raisons de revenir dépenser à nouveau. Kado y contribue avec un jeu en caisse qui récompense chaque client — panier plus élevé, retour plus fréquent, avis Google en prime — sans application ni budget pub.",
+      },
+    ],
+  },
+  {
+    slug: "remplir-heures-creuses-restaurant",
+    title: "Comment remplir les heures creuses de son restaurant",
+    metaTitle: "Remplir les heures creuses de son restaurant : 8 idées",
+    description:
+      "Salle vide le mardi soir ou l'après-midi ? 8 idées concrètes pour remplir les heures creuses de votre restaurant et lisser votre activité toute la semaine.",
+    keywords: [
+      "remplir les heures creuses",
+      "heures creuses restaurant",
+      "remplir son restaurant",
+      "remplir un restaurant vide",
+      "attirer clients restaurant semaine",
+    ],
+    date: "2026-08-21",
+    readMinutes: 6,
+    category: "Restauration",
+    emoji: "🍽️",
+    excerpt:
+      "Les heures creuses coûtent cher : loyer, personnel, charges tournent pour une salle vide. Voici 8 leviers pour attirer du monde pile quand vous en avez besoin.",
+    blocks: [
+      {
+        p: "Chaque service à vide pèse sur votre rentabilité : les charges tournent, pas le chiffre d'affaires. La bonne nouvelle, c'est que les heures creuses sont très pilotables — à condition d'avoir un moyen de toucher vos clients et de leur donner une raison de venir maintenant. Voici 8 idées.",
+      },
+      { h: "1. Créez un rendez-vous hebdomadaire" },
+      {
+        p: "Le « mardi burger », le plat du jour du jeudi, l'happy hour du mercredi : un rituel récurrent installe une habitude et remplit un créneau précis, semaine après semaine.",
+      },
+      { h: "2. Constituez une base de contacts" },
+      {
+        p: "Sans moyen de joindre vos clients, vous ne pouvez pas les faire revenir un soir calme. Collectez les e-mails (ou abonnés) au moment du paiement — c'est la brique qui rend tout le reste possible.",
+      },
+      { h: "3. Envoyez une offre ciblée le jour même" },
+      {
+        p: "Un message le mardi à 16 h — « ce soir, -20 % sur les desserts » — peut remplir une salle qui s'annonçait vide. La réactivité fait la différence sur les heures creuses.",
+      },
+      { h: "4. Misez sur la commande à emporter" },
+      {
+        p: "Tous vos clients ne peuvent pas s'attabler à 15 h. La commande en ligne avec retrait capte une demande que vous perdez sinon, précisément aux heures où la salle est calme.",
+      },
+      { h: "5. Récompensez les visites en semaine" },
+      {
+        p: "Un jeu ou une carte de fidélité qui offre un bonus les jours creux oriente naturellement les clients vers ces créneaux. On vient le mardi parce qu'on y gagne quelque chose.",
+      },
+      { h: "6. Travaillez la visibilité locale" },
+      {
+        p: "Beaucoup de clients « du midi calme » vous cherchent sur Google Maps à la dernière minute. Une fiche Google active, avec des avis récents, vous fait remonter au bon moment.",
+      },
+      { h: "7. Ciblez les publics disponibles en journée" },
+      {
+        p: "Télétravailleurs, retraités, étudiants, équipes en pause : une offre pensée pour eux (formule express, coin calme, wifi) remplit les heures que la clientèle du soir ne couvre pas.",
+      },
+      { h: "8. Faites revenir vos habitués" },
+      {
+        p: "Vos meilleurs clients sont la réponse la plus rentable à une salle vide. Un message d'anniversaire, une offre « on vous a gardé une place » : rappelez-vous à leur bon souvenir.",
+      },
+      { h: "En résumé" },
+      {
+        p: "Remplir les heures creuses, c'est pouvoir toucher ses clients au bon moment et leur donner une raison de venir maintenant. Kado réunit ces leviers pour la restauration — collecte de contacts, jeu en caisse, carte de fidélité, anniversaires et click & collect — dans un seul outil, sans application.",
+      },
+    ],
+  },
+  {
+    slug: "modele-message-demander-avis-google",
+    title: "Modèles de messages pour demander un avis Google (exemples)",
+    metaTitle: "Demander un avis Google : 7 modèles de messages (2026)",
+    description:
+      "7 modèles de messages prêts à l'emploi pour demander un avis Google à vos clients (SMS, e-mail, en caisse), et les règles à respecter pour rester conforme.",
+    keywords: [
+      "demander un avis google",
+      "message pour demander un avis",
+      "modèle message avis client",
+      "exemple demande avis google",
+      "solliciter avis client",
+    ],
+    date: "2026-08-21",
+    readMinutes: 5,
+    category: "Avis Google",
+    emoji: "✍️",
+    excerpt:
+      "Bien demander un avis change tout : le bon message, au bon moment, double vos chances. Voici 7 modèles prêts à copier — et les règles à respecter.",
+    blocks: [
+      {
+        p: "La plupart des clients satisfaits laisseraient volontiers un avis… si on le leur demandait simplement. Le secret tient en trois points : demander au bon moment, faciliter au maximum, et rester poli et non conditionnel. Voici des modèles prêts à l'emploi.",
+      },
+      { h: "La règle d'or : ne conditionnez jamais le cadeau à un avis positif" },
+      {
+        p: "Google interdit d'échanger une récompense contre un avis (et surtout contre un avis positif). Vous pouvez remercier un client d'avoir donné son avis, mais jamais lui promettre un gain « si c'est 5 étoiles ». La formulation doit rester neutre sur la note.",
+      },
+      { h: "Modèle 1 — En caisse, à l'oral" },
+      {
+        quote:
+          "« Si vous avez deux minutes, votre avis Google nous aiderait énormément — c'est juste ici en scannant ce QR code. Merci beaucoup ! »",
+      },
+      { h: "Modèle 2 — SMS après la visite" },
+      {
+        quote:
+          "« Bonjour {Prénom}, merci de votre visite chez {Commerce} ! Votre avis compte beaucoup pour nous : {lien}. Belle journée 🙏 »",
+      },
+      { h: "Modèle 3 — E-mail court" },
+      {
+        quote:
+          "« Merci d'être passé chez {Commerce} ! Si l'expérience vous a plu, un avis Google nous aiderait à nous faire connaître : {lien}. Ça prend 30 secondes. »",
+      },
+      { h: "Modèle 4 — Carton de table / addition" },
+      {
+        quote:
+          "« Vous avez aimé ? Dites-le à Google en 30 secondes — scannez le QR code. Merci de soutenir notre commerce ! »",
+      },
+      { h: "Modèle 5 — Sur les réseaux sociaux" },
+      {
+        quote:
+          "« Vos avis nous font vivre 💛 Un petit mot sur Google, ça compte plus que vous ne l'imaginez : {lien}. »",
+      },
+      { h: "Modèle 6 — Ludique (jeu à scanner)" },
+      {
+        quote:
+          "« Scannez, jouez, gagnez ! Un tour de roue offert — et si le cœur vous en dit, un avis Google nous aiderait beaucoup. »",
+      },
+      { h: "Modèle 7 — Relance douce" },
+      {
+        quote:
+          "« On espère que tout s'est bien passé chez {Commerce} ! Si vous avez un instant, votre retour sur Google nous serait précieux : {lien}. »",
+      },
+      { h: "Les 3 bons réflexes" },
+      {
+        ul: [
+          "Demandez au bon moment : juste après une expérience réussie (fin de repas, sortie de rendez-vous).",
+          "Facilitez : un lien direct ou un QR code qui ouvre la page d'avis en un geste.",
+          "Restez neutre sur la note : jamais de récompense conditionnée à un avis positif.",
+        ],
+      },
+      { h: "En résumé" },
+      {
+        p: "Un bon message, au bon moment, rendu simple : c'est ce qui transforme un client content en avis Google. Kado automatise exactement ça — un QR code « scannez, jouez, gagnez » qui invite à laisser un avis de façon ludique et conforme, sans conditionner le cadeau à la note.",
+      },
+    ],
+  },
+  {
     slug: "attirer-nouveaux-clients-commerce-local",
     title: "Comment attirer de nouveaux clients dans son commerce local",
     metaTitle: "Attirer de nouveaux clients : 8 leviers pour un commerce local",
