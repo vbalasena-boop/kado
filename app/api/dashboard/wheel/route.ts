@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { getMyBusiness } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { insertPrizes } from "@/lib/prizes";
 
 export const dynamic = "force-dynamic";
 
@@ -194,7 +195,8 @@ export async function POST(req: NextRequest) {
   }
 
   await admin.from("prizes").delete().eq("business_id", business.id);
-  const { error: insErr } = await admin.from("prizes").insert(
+  const { error: insErr } = await insertPrizes(
+    admin,
     prizes.map((p, i) => ({
       business_id: business.id,
       label: p.label.trim().slice(0, 40),

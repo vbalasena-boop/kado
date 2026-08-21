@@ -4,6 +4,7 @@ import { getSessionUser, ACTIVE_BIZ_COOKIE } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { DEFAULT_PRIZES, slugify } from "@/lib/defaults";
 import { reportError } from "@/lib/report";
+import { insertPrizes } from "@/lib/prizes";
 
 export const dynamic = "force-dynamic";
 
@@ -73,7 +74,8 @@ export async function POST(req: NextRequest) {
       primary_color: "#ffc24d",
       compliance_note: "Le cadeau n'est pas conditionné à la note laissée.",
     });
-    await db.from("prizes").insert(
+    await insertPrizes(
+      db,
       DEFAULT_PRIZES.map((p, i) => ({ ...p, business_id: biz.id, position: i }))
     );
 

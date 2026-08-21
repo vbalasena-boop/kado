@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { getOrCreatePlayerId } from "@/lib/player";
-import { weightedIndex, generateCode, labelIsLosing } from "@/lib/draw";
+import { weightedIndex, generateCode, prizeIsLosing } from "@/lib/draw";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { sendPushToBusiness } from "@/lib/push";
 
@@ -49,10 +49,10 @@ export async function POST(req: NextRequest) {
 
   const playerId = getOrCreatePlayerId();
 
-  const [{ data: prizes }, { data: cfg }] = await Promise.all([
+  const [prizesRes, { data: cfg }] = await Promise.all([
     supa
       .from("prizes")
-      .select("id, label, emoji, weight, color, position")
+      .select("id, label, emoji, weight, color, position, is_losing")
       .eq("business_id", biz.id)
       .order("position", { ascending: true }),
     supa
@@ -61,6 +61,26 @@ export async function POST(req: NextRequest) {
       .eq("business_id", biz.id)
       .maybeSingle(),
   ]);
+
+  // Repli si la colonne is_losing n'existe pas encore (migration 0037 non
+  // appliquée) : on refait la sélection sans elle (détection via le libellé).
+  let prizes: Array<{
+    id: string;
+    label: string;
+    emoji: string;
+    weight: number;
+    color: string;
+    position: number;
+    is_losing?: boolean | null;
+  }> | null = prizesRes.data;
+  if (prizesRes.error && (prizesRes.error as { code?: string }).code === "42703") {
+    const { data } = await supa
+      .from("prizes")
+      .select("id, label, emoji, weight, color, position")
+      .eq("business_id", biz.id)
+      .order("position", { ascending: true });
+    prizes = data;
+  }
 
   if (!prizes || prizes.length === 0) {
     return Response.json({ error: "no_prizes" }, { status: 409 });
@@ -75,13 +95,14 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "channel_disabled" }, { status: 403 });
   }
 
-  const isWin = (label: string) => !labelIsLosing(label);
+  const isWin = (p: { is_losing?: boolean | null; label: string }) =>
+    !prizeIsLosing(p);
 
   let idx = weightedIndex(prizes);
 
   // Plafond de cadeaux par jour : au-delà, on force un "Rien" (si disponible)
   const limit = cfg?.daily_prize_limit;
-  if (limit && limit > 0 && isWin(prizes[idx].label)) {
+  if (limit && limit > 0 && isWin(prizes[idx])) {
     const start = new Date();
     start.setHours(0, 0, 0, 0);
     // Miroir SQL de labelIsLosing() (lib/draw.ts) : compte les tours GAGNANTS
@@ -93,7 +114,7 @@ export async function POST(req: NextRequest) {
       .gte("created_at", start.toISOString())
       .not("prize_label", "ilike", "%rien%");
     if ((count ?? 0) >= limit) {
-      const noWin = prizes.findIndex((p) => !isWin(p.label));
+      const noWin = prizes.findIndex((p) => !isWin(p));
       if (noWin >= 0) idx = noWin;
     }
   }
@@ -101,13 +122,21 @@ export async function POST(req: NextRequest) {
   const prize = prizes[idx];
   const code = generateCode();
 
-  const { error } = await supa.from("plays").insert({
+  const baseRow = {
     business_id: biz.id,
     player_id: playerId,
     play_type: playType,
     prize_label: prize.label,
     prize_code: code,
-  });
+  };
+  // Instantané du caractère perdant au moment du tour (robuste à un renommage
+  // ultérieur du lot). Repli si la colonne is_losing n'existe pas encore.
+  let { error } = await supa
+    .from("plays")
+    .insert({ ...baseRow, is_losing: prizeIsLosing(prize) });
+  if (error && (error as { code?: string }).code === "42703") {
+    ({ error } = await supa.from("plays").insert(baseRow));
+  }
 
   if (error) {
     // 23505 = violation de contrainte unique => ce type de tour est déjà joué
@@ -133,7 +162,7 @@ export async function POST(req: NextRequest) {
 
   // Alerte temps réel au commerçant à chaque cadeau gagné (si activée).
   // Lecture tolérante : colonne 0029 peut manquer ; on n'échoue jamais le tour.
-  if (isWin(prize.label)) {
+  if (isWin(prize)) {
     try {
       const { data: alertCfg, error: alertErr } = await supa
         .from("wheel_configs")
