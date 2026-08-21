@@ -15,7 +15,7 @@ import {
 import { unsubToken } from "@/lib/unsub";
 import { setSystemState } from "@/lib/health";
 import { sendPushToClients } from "@/lib/push";
-import { generateCode } from "@/lib/draw";
+import { generateCode, labelIsLosing } from "@/lib/draw";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -360,7 +360,7 @@ export async function GET(req: NextRequest) {
 
         const tours = plays?.length ?? 0;
         const gagnes = (plays ?? []).filter(
-          (p) => p.prize_label && !p.prize_label.toLowerCase().includes("rien")
+          (p) => !labelIsLosing(p.prize_label)
         ).length;
         const emails = leads ?? 0;
         const fid = fidNew ?? 0;

@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { getOrCreatePlayerId } from "@/lib/player";
-import { weightedIndex, generateCode } from "@/lib/draw";
+import { weightedIndex, generateCode, labelIsLosing } from "@/lib/draw";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { sendPushToBusiness } from "@/lib/push";
 
@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "channel_disabled" }, { status: 403 });
   }
 
-  const isWin = (label: string) => !label.toLowerCase().includes("rien");
+  const isWin = (label: string) => !labelIsLosing(label);
 
   let idx = weightedIndex(prizes);
 
@@ -84,6 +84,8 @@ export async function POST(req: NextRequest) {
   if (limit && limit > 0 && isWin(prizes[idx].label)) {
     const start = new Date();
     start.setHours(0, 0, 0, 0);
+    // Miroir SQL de labelIsLosing() (lib/draw.ts) : compte les tours GAGNANTS
+    // du jour. Garder les deux définitions alignées.
     const { count } = await supa
       .from("plays")
       .select("*", { count: "exact", head: true })

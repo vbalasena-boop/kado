@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getMyBusiness, hasModule } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { Icon } from "@/components/icons";
+import { labelIsLosing } from "@/lib/draw";
 
 export const dynamic = "force-dynamic";
 
@@ -32,9 +33,7 @@ export default async function DashboardHome() {
   const insta = rows.filter((r) => r.play_type === "instagram").length;
   const review = rows.filter((r) => r.play_type === "review").length;
   const last30 = rows.filter((r) => r.created_at >= since).length;
-  const won = rows.filter(
-    (r) => r.prize_label && !r.prize_label.toLowerCase().includes("rien")
-  ).length;
+  const won = rows.filter((r) => !labelIsLosing(r.prize_label)).length;
   const redeemed = rows.filter((r) => (r as any).redeemed_at).length;
   const redemptionRate = won > 0 ? Math.round((redeemed / won) * 100) : 0;
 

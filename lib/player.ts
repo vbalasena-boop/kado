@@ -7,10 +7,28 @@ import crypto from "crypto";
  * Aucune donnée personnelle : juste un UUID aléatoire.
  */
 const COOKIE = "sr_pid";
-const SECRET = process.env.PLAYER_COOKIE_SECRET || "dev-secret-change-me";
+
+/**
+ * Secret de signature du cookie joueur. En production, il DOIT être défini :
+ * sans lui, les cookies deviennent forgeables et le verrou des 2 tours
+ * s'effondre. On tolère un repli uniquement hors production (dev/local).
+ */
+function getSecret(): string {
+  const s = process.env.PLAYER_COOKIE_SECRET;
+  if (s) return s;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "PLAYER_COOKIE_SECRET manquant : le verrou joueur serait forgeable."
+    );
+  }
+  return "dev-secret-change-me";
+}
 
 function sign(value: string): string {
-  return crypto.createHmac("sha256", SECRET).update(value).digest("base64url");
+  return crypto
+    .createHmac("sha256", getSecret())
+    .update(value)
+    .digest("base64url");
 }
 
 function pack(id: string): string {
