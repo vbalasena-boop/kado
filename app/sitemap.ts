@@ -5,11 +5,17 @@ const BASE = "https://kado-app.fr";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
-  const routes = [
+  const routes: { path: string; priority: number; lastModified?: string }[] = [
     { path: "/", priority: 1 },
     { path: "/tarifs", priority: 0.8 },
     { path: "/blog", priority: 0.7 },
-    ...ARTICLES.map((a) => ({ path: `/blog/${a.slug}`, priority: 0.6 })),
+    // Chaque article porte sa vraie date de publication (meilleur signal SEO
+    // que la date du jour).
+    ...ARTICLES.map((a) => ({
+      path: `/blog/${a.slug}`,
+      priority: 0.6,
+      lastModified: a.date,
+    })),
     { path: "/login", priority: 0.5 },
     { path: "/legal/mentions", priority: 0.3 },
     { path: "/legal/confidentialite", priority: 0.3 },
@@ -19,7 +25,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   ];
   return routes.map((r) => ({
     url: `${BASE}${r.path}`,
-    lastModified: now,
+    lastModified: r.lastModified ? new Date(r.lastModified) : now,
     changeFrequency: "monthly" as const,
     priority: r.priority,
   }));
