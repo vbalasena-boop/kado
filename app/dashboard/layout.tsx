@@ -37,6 +37,8 @@ export default async function DashboardLayout({
     }
     // Essai gratuit : toutes les options sont ouvertes, commande incluse.
     if (business.subscription_status === "trial") clickCollect = true;
+    // Plan « Comptoir seul » : accès aux commandes (bipeur digital).
+    if ((business as any).plan === "comptoir") clickCollect = true;
   }
 
   return (

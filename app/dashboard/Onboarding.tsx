@@ -26,6 +26,13 @@ const PLANS = [
     desc: "Jeux + fidélité — le meilleur tarif",
     recommended: true,
   },
+  {
+    id: "comptoir",
+    emoji: "🎫",
+    label: "Comptoir",
+    price: "19",
+    desc: "Bipeur digital : vos clients prévenus sur leur téléphone",
+  },
 ];
 
 export function Onboarding() {

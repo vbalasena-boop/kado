@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Tarifs",
   description:
-    "Kado : 3 formules pour booster votre commerce. Jeux 29 €/mois, Fidélité 19 €/mois, Complet 44 €/mois. Essai gratuit 14 jours, sans engagement.",
+    "Kado : 4 formules pour booster votre commerce : Jeux 29 €/mois, Fidélité 19 €/mois, Complet 44 €/mois, Comptoir (bipeur digital) 19 €/mois. Essai gratuit 14 jours, sans engagement.",
   alternates: { canonical: "/tarifs" },
 };
 
@@ -54,6 +54,20 @@ const PLANS = [
       "Capture d'e-mails (base marketing)",
       "Statistiques et export CSV",
       "Anti-triche & conformité RGPD",
+    ],
+  },
+  {
+    id: "comptoir",
+    name: "Comptoir",
+    price: "19",
+    desc: "Le bipeur digital — vos clients prévenus sur leur téléphone",
+    features: [
+      "Le client prend un numéro en scannant un QR",
+      "Suivi de commande en direct",
+      "Alerte quand c'est prêt (notification + e-mail)",
+      "Compatible avec votre caisse actuelle",
+      "Illimité — plus de bipeurs à acheter",
+      "Aussi disponible en option (+12 €/mois) sur les autres formules",
     ],
   },
 ];
@@ -121,7 +135,7 @@ export default function Tarifs() {
       </header>
 
       <section className="v-hero" style={{ paddingBottom: 10 }}>
-        <div className="v-badge">3 formules, sans engagement</div>
+        <div className="v-badge">4 formules, sans engagement</div>
         <h1>
           Choisissez votre <span>formule</span>
         </h1>

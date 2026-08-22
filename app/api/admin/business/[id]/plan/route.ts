@@ -10,6 +10,7 @@ const PRICE_MAP: Record<string, string | undefined> = {
   roue: process.env.STRIPE_PRICE_ROUE,
   fidelite: process.env.STRIPE_PRICE_FIDELITE,
   complet: process.env.STRIPE_PRICE_COMPLET,
+  comptoir: process.env.STRIPE_PRICE_COMPTOIR,
 };
 
 /**
@@ -31,7 +32,7 @@ export async function POST(
     return Response.json({ error: "bad_request" }, { status: 400 });
   }
   const plan = body.plan;
-  if (!plan || !["roue", "fidelite", "complet"].includes(plan)) {
+  if (!plan || !["roue", "fidelite", "complet", "comptoir"].includes(plan)) {
     return Response.json({ error: "invalid_plan" }, { status: 400 });
   }
 

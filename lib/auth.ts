@@ -19,15 +19,32 @@ export type Business = {
   plan: string;
 };
 
-export type Plan = "roue" | "fidelite" | "complet";
+export type Plan = "roue" | "fidelite" | "complet" | "comptoir";
 
 export function hasModule(
   b: { plan: string; subscription_status: string },
   module: "roue" | "fidelite"
 ): boolean {
+  // Le plan « comptoir » (bipeur digital seul) ne donne accès à aucun jeu.
+  if (b.plan === "comptoir") return false;
   if (b.subscription_status === "trial") return true;
   if (b.plan === "complet") return true;
   return b.plan === module;
+}
+
+/**
+ * Le commerce a-t-il l'option « Suivi au comptoir » (bipeur digital) ?
+ * Incluse dans le plan « comptoir », ouverte pendant l'essai. Pour les autres
+ * plans, elle s'active en option (drapeau businesses.order_tracking).
+ */
+export function hasComptoir(b: {
+  plan: string;
+  subscription_status: string;
+  order_tracking?: boolean | null;
+}): boolean {
+  if (b.plan === "comptoir") return true;
+  if (b.subscription_status === "trial") return true;
+  return !!b.order_tracking;
 }
 
 /**

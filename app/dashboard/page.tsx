@@ -108,6 +108,7 @@ export default async function DashboardHome() {
     roue: "Jeux",
     fidelite: "Fidélité",
     complet: "Complet",
+    comptoir: "Comptoir",
   };
 
   return (

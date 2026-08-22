@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
   }
   const name = (body.name || "").trim();
   if (!name) return Response.json({ error: "name_required" }, { status: 400 });
-  const plan = ["roue", "fidelite", "complet"].includes(body.plan ?? "")
+  const plan = ["roue", "fidelite", "complet", "comptoir"].includes(body.plan ?? "")
     ? body.plan!
     : "roue";
   // Téléphone : on ne garde que chiffres, + et espaces

@@ -30,6 +30,7 @@ const PLAN_LABEL: Record<string, string> = {
   roue: "Jeux 29 €",
   fidelite: "Fidélité 19 €",
   complet: "Complet 44 €",
+  comptoir: "Comptoir 19 €",
 };
 
 export type AdminStats = {
@@ -261,16 +262,27 @@ export default function AdminClient({
   /** Change la formule manuellement (Stripe ajusté si abonnement réel). */
   function changePlanAdmin(id: string, name: string, current: string | null) {
     const def =
-      current === "fidelite" ? "2" : current === "complet" ? "3" : "1";
+      current === "fidelite"
+        ? "2"
+        : current === "complet"
+        ? "3"
+        : current === "comptoir"
+        ? "4"
+        : "1";
     const raw = window.prompt(
-      `Changer la formule de « ${name} ».\n\n1 = Jeux (29 €)\n2 = Fidélité (19 €)\n3 = Complet (44 €)\n\nSi un abonnement Stripe est actif, la facturation est ajustée (prorata).\n\nVotre choix :`,
+      `Changer la formule de « ${name} ».\n\n1 = Jeux (29 €)\n2 = Fidélité (19 €)\n3 = Complet (44 €)\n4 = Comptoir (19 €)\n\nSi un abonnement Stripe est actif, la facturation est ajustée (prorata).\n\nVotre choix :`,
       def
     );
     if (raw === null) return;
-    const map: Record<string, string> = { "1": "roue", "2": "fidelite", "3": "complet" };
+    const map: Record<string, string> = {
+      "1": "roue",
+      "2": "fidelite",
+      "3": "complet",
+      "4": "comptoir",
+    };
     const plan = map[raw.trim()];
     if (!plan) {
-      setMsg("❌ Choix invalide (1, 2 ou 3).");
+      setMsg("❌ Choix invalide (1, 2, 3 ou 4).");
       return;
     }
     (async () => {

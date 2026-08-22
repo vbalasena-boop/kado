@@ -10,6 +10,7 @@ const PRICE_MAP: Record<string, string | undefined> = {
   roue: process.env.STRIPE_PRICE_ROUE,
   fidelite: process.env.STRIPE_PRICE_FIDELITE,
   complet: process.env.STRIPE_PRICE_COMPLET,
+  comptoir: process.env.STRIPE_PRICE_COMPTOIR,
 };
 
 // Option « Installation clé en main » (paiement unique sur la 1re facture)
@@ -37,7 +38,7 @@ export async function POST(req: NextRequest) {
   }
   const address = (body.address || "").trim().slice(0, 200) || null;
 
-  const plan = ["roue", "fidelite", "complet"].includes(body.plan ?? "")
+  const plan = ["roue", "fidelite", "complet", "comptoir"].includes(body.plan ?? "")
     ? body.plan!
     : biz.plan || "roue";
 
