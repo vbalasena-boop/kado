@@ -36,14 +36,30 @@ export async function POST(req: NextRequest) {
   if (!slug) return Response.json({ error: "bad_request" }, { status: 400 });
 
   const db = getAdminClient();
-  const { data: biz } = await db
-    .from("businesses")
-    .select("id, status, subscription_status, subscription_ends_at")
-    .eq("slug", slug)
-    .maybeSingle();
+  let biz: any = null;
+  try {
+    const { data } = await db
+      .from("businesses")
+      .select(
+        "id, status, subscription_status, subscription_ends_at, order_tracking"
+      )
+      .eq("slug", slug)
+      .maybeSingle();
+    biz = data;
+  } catch {
+    const { data } = await db
+      .from("businesses")
+      .select("id, status, subscription_status, subscription_ends_at")
+      .eq("slug", slug)
+      .maybeSingle();
+    biz = data;
+  }
   if (!biz) return Response.json({ error: "not_found" }, { status: 404 });
   if (!hasAccess(biz)) {
     return Response.json({ error: "unavailable" }, { status: 403 });
+  }
+  if (biz.order_tracking === false) {
+    return Response.json({ error: "disabled" }, { status: 403 });
   }
 
   // Numéro du jour (remise à zéro chaque jour) — lecture tolérante.

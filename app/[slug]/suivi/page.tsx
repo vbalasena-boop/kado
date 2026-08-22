@@ -31,14 +31,33 @@ export default async function SuiviIndexPage({
     return <Unavailable message="Le service n'est pas configuré." />;
   }
 
-  const { data: biz } = await db
-    .from("businesses")
-    .select("id, slug, name, logo_url, status, subscription_status, subscription_ends_at")
-    .eq("slug", params.slug)
-    .maybeSingle();
+  let biz: any = null;
+  try {
+    const { data } = await db
+      .from("businesses")
+      .select(
+        "id, slug, name, logo_url, status, subscription_status, subscription_ends_at, order_tracking"
+      )
+      .eq("slug", params.slug)
+      .maybeSingle();
+    biz = data;
+  } catch {
+    // colonne order_tracking absente : retente sans elle
+    const { data } = await db
+      .from("businesses")
+      .select("id, slug, name, logo_url, status, subscription_status, subscription_ends_at")
+      .eq("slug", params.slug)
+      .maybeSingle();
+    biz = data;
+  }
   if (!biz) return <Unavailable message="Commerce introuvable." />;
   if (!hasAccess(biz)) {
     return <Unavailable message="Le suivi est momentanément indisponible." />;
+  }
+  if (!biz.order_tracking) {
+    return (
+      <Unavailable message="Ce commerce ne propose pas encore le suivi au comptoir." />
+    );
   }
 
   let themeCss = "";

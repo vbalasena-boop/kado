@@ -5021,6 +5021,19 @@ html { scroll-behavior: smooth; }
   border-radius: 8px; padding: 3px 12px;
 }
 .order-card.is-buzzer { border-left: 4px solid #f5b841; }
+/* Carte option « Suivi au comptoir » */
+.opt-card.on { border-left: 4px solid #1a7a4a; }
+.opt-head { display: flex; align-items: flex-start; gap: 16px; justify-content: space-between; }
+.opt-head h2 { display: flex; align-items: center; gap: 10px; }
+.opt-head > button { flex: 0 0 auto; white-space: nowrap; }
+.opt-badge {
+  background: #eef7ee; color: #1a7a4a; border: 1px solid #cfe8cf;
+  border-radius: 999px; padding: 2px 12px; font-size: 12px; font-weight: 800;
+}
+@media (max-width: 560px) {
+  .opt-head { flex-direction: column; }
+  .opt-head > button { width: 100%; }
+}
 /* Affichette comptoir imprimable */
 .counter-print {
   display: flex; flex-direction: column; align-items: center; gap: 10px;

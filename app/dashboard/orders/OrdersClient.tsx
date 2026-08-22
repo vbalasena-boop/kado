@@ -196,12 +196,14 @@ export default function OrdersClient({
   orders,
   stats,
   hours,
+  tracking = false,
 }: {
   slug: string;
   products: Product[];
   orders: Order[];
   stats: OrderStats;
   hours: Hours;
+  tracking?: boolean;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -228,6 +230,36 @@ export default function OrdersClient({
   const [counterQr, setCounterQr] = useState<{ url: string; qr: string | null } | null>(
     null
   );
+  const [trackingOn, setTrackingOn] = useState(tracking);
+  const [trackingBusy, setTrackingBusy] = useState(false);
+  async function toggleTracking(next: boolean) {
+    setTrackingBusy(true);
+    try {
+      const res = await fetch("/api/dashboard/order-tracking", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled: next }),
+      });
+      if (res.ok) {
+        setTrackingOn(next);
+        if (!next) {
+          setPosOpen(false);
+          setCounterQr(null);
+        }
+      } else {
+        const d = await res.json().catch(() => ({}));
+        setMsg(
+          d.error === "not_ready"
+            ? "Lancez d'abord la migration SQL (order_tracking) dans Supabase."
+            : "Impossible de modifier l'option. Réessayez."
+        );
+      }
+    } catch {
+      setMsg("Erreur réseau. Réessayez.");
+    } finally {
+      setTrackingBusy(false);
+    }
+  }
   const [hoursDraft, setHoursDraft] = useState<
     Record<string, { open: boolean; from: string; to: string }>
   >(() => {
@@ -718,18 +750,22 @@ export default function OrdersClient({
       {msg && <p className="save-msg is-err">{msg}</p>}
 
       <div className="orders-toolbar">
-        <button className="btn scan-open" onClick={openCounterQr}>
-          🎫 QR de suivi (comptoir)
-        </button>
-        <button
-          className="btn scan-open"
-          onClick={() => {
-            setPosResult(null);
-            setPosOpen((v) => !v);
-          }}
-        >
-          🧾 Nouvelle commande (caisse)
-        </button>
+        {trackingOn && (
+          <>
+            <button className="btn scan-open" onClick={openCounterQr}>
+              🎫 QR de suivi (comptoir)
+            </button>
+            <button
+              className="btn scan-open"
+              onClick={() => {
+                setPosResult(null);
+                setPosOpen((v) => !v);
+              }}
+            >
+              🧾 Nouvelle commande (caisse)
+            </button>
+          </>
+        )}
         <button
           className="btn scan-open"
           onClick={() => {
@@ -748,6 +784,37 @@ export default function OrdersClient({
           <button className="btn-mini ok alerts-btn" onClick={enableAlerts}>
             🔔 Activer les alertes sonores
           </button>
+        )}
+      </div>
+
+      {/* ---- Option : Suivi client au comptoir (bipeur digital) ---- */}
+      <div className={`dash-card opt-card${trackingOn ? " on" : ""}`}>
+        <div className="opt-head">
+          <div>
+            <h2>🎫 Suivi client au comptoir {trackingOn && <span className="opt-badge">Activé</span>}</h2>
+            <p className="muted" style={{ margin: "2px 0 0" }}>
+              Le <b>bipeur digital</b> : le client scanne un QR, prend un numéro
+              et reçoit une alerte quand c'est prêt. Compatible avec votre caisse
+              actuelle — vous pouvez aussi saisir une commande au comptoir.
+            </p>
+          </div>
+          <button
+            className={trackingOn ? "btn-secondary" : "btn"}
+            disabled={trackingBusy}
+            onClick={() => toggleTracking(!trackingOn)}
+          >
+            {trackingBusy
+              ? "…"
+              : trackingOn
+              ? "Désactiver"
+              : "Activer l'option"}
+          </button>
+        </div>
+        {trackingOn && (
+          <p className="muted" style={{ marginTop: 10, fontSize: 13 }}>
+            👉 Utilisez les boutons <b>« 🎫 QR de suivi (comptoir) »</b> et
+            <b> « 🧾 Nouvelle commande (caisse) »</b> ci-dessus.
+          </p>
         )}
       </div>
 
