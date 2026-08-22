@@ -100,6 +100,7 @@ export default function OrderClient({
   const [done, setDone] = useState<{ code: string; total: number } | null>(
     null
   );
+  const [status, setStatus] = useState<string>("new");
 
   const total = useMemo(
     () =>
@@ -129,6 +130,35 @@ export default function OrderClient({
       alive = false;
     };
   }, [done]);
+
+  // Suivi en direct : on interroge le statut de la commande tant que le client
+  // reste sur l'écran de confirmation (jusqu'à « prête »/« retirée »/« annulée »).
+  useEffect(() => {
+    if (!done?.code) return;
+    let alive = true;
+    let timer: ReturnType<typeof setTimeout>;
+    async function poll() {
+      try {
+        const r = await fetch(
+          `/api/order/status?slug=${encodeURIComponent(
+            slug
+          )}&code=${encodeURIComponent(done!.code)}`
+        );
+        const d = await r.json().catch(() => ({}));
+        if (alive && d?.status) setStatus(d.status);
+        if (alive && !["ready", "done", "cancelled"].includes(d?.status)) {
+          timer = setTimeout(poll, 12000);
+        }
+      } catch {
+        if (alive) timer = setTimeout(poll, 20000);
+      }
+    }
+    timer = setTimeout(poll, 6000);
+    return () => {
+      alive = false;
+      clearTimeout(timer);
+    };
+  }, [done, slug]);
 
   function bump(id: string, delta: number) {
     setQty((q) => {
@@ -189,13 +219,60 @@ export default function OrderClient({
   }
 
   if (done) {
+    const cancelled = status === "cancelled";
+    // 0 Reçue · 1 En préparation · 2 Prête · 3 Retirée
+    const reached =
+      status === "done" ? 3 : status === "ready" ? 2 : 1;
+    const TRACK = ["Reçue", "En préparation", "Prête", "Retirée"];
+    const bannerEmoji = cancelled
+      ? "❌"
+      : status === "ready"
+      ? "✅"
+      : status === "done"
+      ? "🙌"
+      : "👨‍🍳";
+    const bannerText = cancelled
+      ? "Commande annulée"
+      : status === "ready"
+      ? "Votre commande est prête !"
+      : status === "done"
+      ? "Commande retirée — merci !"
+      : "En préparation…";
     return (
       <main className="uber">
         <div className="uber-done">
-          <div className="uber-done-emoji">🎉</div>
+          <div className="uber-done-emoji">{status === "ready" ? "✅" : "🎉"}</div>
           <h1>Commande envoyée !</h1>
+
+          {/* Suivi en direct */}
+          <div className={`track-banner${status === "ready" ? " ready" : ""}${cancelled ? " cancelled" : ""}`}>
+            <span className="track-banner-emoji">{bannerEmoji}</span>
+            <b>{bannerText}</b>
+          </div>
+          {!cancelled && (
+            <ol className="track">
+              {TRACK.map((label, i) => (
+                <li
+                  key={label}
+                  className={
+                    i < reached ? "done" : i === reached ? "active" : "todo"
+                  }
+                >
+                  <span className="track-dot">{i < reached ? "✓" : i + 1}</span>
+                  <span className="track-label">{label}</span>
+                </li>
+              ))}
+            </ol>
+          )}
+
           <p>
-            <b>{name}</b> prépare votre commande. Présentez ce code au retrait :
+            {status === "ready"
+              ? "Venez la récupérer ! Présentez ce code :"
+              : status === "done"
+              ? "À bientôt !"
+              : cancelled
+              ? "Contactez le commerce pour plus d'informations."
+              : <><b>{name}</b> prépare votre commande. Présentez ce code au retrait :</>}
           </p>
           <div className="uber-done-code">{done.code}</div>
           {qrUrl && (
@@ -207,7 +284,9 @@ export default function OrderClient({
           </p>
           <p className="uber-fine">
             💡 Le commerçant scanne ce QR (ou tape le code) au retrait.
-            {cEmail.trim()
+            {notifyReady
+              ? " Gardez cette page ouverte : elle se met à jour toute seule, et vous serez prévenu dès que c'est prêt."
+              : cEmail.trim()
               ? " Votre bon de commande vient de vous être envoyé par e-mail."
               : " Faites une capture d'écran pour le garder sous la main."}
           </p>

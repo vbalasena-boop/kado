@@ -4910,6 +4910,43 @@ html { scroll-behavior: smooth; }
 }
 .uber-notify span { font-size: 14.5px; color: #17092e; line-height: 1.35; }
 .uber-notify small { display: block; color: #7a6f88; font-size: 12.5px; margin-top: 2px; }
+
+/* ---- Suivi de commande en direct (écran de confirmation client) ---- */
+.track-banner {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: #fff8ec; border: 1px solid #f6e2b8; color: #7a5a12;
+  border-radius: 999px; padding: 9px 18px; font-size: 15px; margin: 6px 0 4px;
+}
+.track-banner.ready { background: #e7f7ec; border-color: #b6e3c4; color: #1a7a4a; }
+.track-banner.cancelled { background: #fde8e6; border-color: #f3c3bd; color: #b3261e; }
+.track-banner-emoji { font-size: 20px; }
+.track {
+  list-style: none; display: flex; gap: 4px; margin: 14px 0 4px; padding: 0;
+  width: 100%; max-width: 420px;
+}
+.track li {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px;
+  position: relative; font-size: 12px; text-align: center;
+}
+.track li::before {
+  content: ""; position: absolute; top: 15px; left: -50%; width: 100%; height: 3px;
+  background: #e6dff0; z-index: 0;
+}
+.track li:first-child::before { display: none; }
+.track li.done::before, .track li.active::before { background: #f5b841; }
+.track-dot {
+  position: relative; z-index: 1; width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; font-weight: 800;
+  font-size: 14px; background: #ece6f5; color: #9a8fb0; border: 2px solid #ece6f5;
+}
+.track li.done .track-dot { background: #f5b841; color: #fff; border-color: #f5b841; }
+.track li.active .track-dot {
+  background: #fff; color: #c2306a; border-color: #f5b841;
+  box-shadow: 0 0 0 4px #f5b84133; animation: trackpulse 1.4s ease-in-out infinite;
+}
+@keyframes trackpulse { 50% { box-shadow: 0 0 0 8px #f5b84122; } }
+.track-label { color: #7a6f88; line-height: 1.2; }
+.track li.active .track-label { color: #17092e; font-weight: 700; }
 .uber-submit {
   border: none;
   border-radius: 999px;
