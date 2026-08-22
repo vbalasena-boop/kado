@@ -1,6 +1,35 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+
+/** Bipeur intégré : son + vibration quand la commande passe « prête ». */
+function playReadyBuzz(ctx: AudioContext | null) {
+  try {
+    (navigator as any).vibrate?.([200, 100, 200, 100, 500]);
+  } catch {
+    /* iOS : pas de vibration */
+  }
+  if (!ctx) return;
+  try {
+    ctx.resume?.();
+    [0, 500, 1000].forEach((delay) => {
+      const t0 = ctx.currentTime + delay / 1000;
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(880, t0);
+      osc.frequency.setValueAtTime(1175, t0 + 0.18);
+      g.gain.setValueAtTime(0.001, t0);
+      g.gain.exponentialRampToValueAtTime(0.4, t0 + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.36);
+      osc.connect(g).connect(ctx.destination);
+      osc.start(t0);
+      osc.stop(t0 + 0.38);
+    });
+  } catch {
+    /* audio bloqué */
+  }
+}
 
 type Product = {
   id: string;
@@ -103,6 +132,32 @@ export default function OrderClient({
     null
   );
   const [status, setStatus] = useState<string>("new");
+  const [buzzing, setBuzzing] = useState(false);
+  const audioRef = useRef<AudioContext | null>(null);
+  const lastStatusRef = useRef("new");
+  const buzzedRef = useRef(false);
+
+  // Débloque l'audio dès la 1re interaction (iOS l'exige).
+  useEffect(() => {
+    function unlock() {
+      if (!audioRef.current) {
+        try {
+          const Ctx =
+            (window as any).AudioContext || (window as any).webkitAudioContext;
+          if (Ctx) audioRef.current = new Ctx();
+        } catch {
+          /* audio indisponible */
+        }
+      }
+      audioRef.current?.resume?.();
+    }
+    window.addEventListener("pointerdown", unlock, { once: true });
+    window.addEventListener("touchstart", unlock, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("touchstart", unlock);
+    };
+  }, []);
 
   const total = useMemo(
     () =>
@@ -147,7 +202,25 @@ export default function OrderClient({
           )}&code=${encodeURIComponent(done!.code)}`
         );
         const d = await r.json().catch(() => ({}));
-        if (alive && d?.status) setStatus(d.status);
+        if (alive && d?.status) {
+          if (
+            d.status === "ready" &&
+            lastStatusRef.current !== "ready" &&
+            !buzzedRef.current
+          ) {
+            buzzedRef.current = true;
+            playReadyBuzz(audioRef.current);
+            setBuzzing(true);
+            try {
+              document.title = "✅ C'est prêt !";
+            } catch {
+              /* ignore */
+            }
+            setTimeout(() => setBuzzing(false), 8000);
+          }
+          lastStatusRef.current = d.status;
+          setStatus(d.status);
+        }
         if (alive && !["ready", "done", "cancelled"].includes(d?.status)) {
           timer = setTimeout(poll, 12000);
         }
@@ -250,6 +323,11 @@ export default function OrderClient({
       : "En préparation…";
     return (
       <main className="uber">
+        {buzzing && (
+          <div className="buzz-flash" aria-hidden="true">
+            <div className="buzz-flash-in">✅ C'est prêt !</div>
+          </div>
+        )}
         <div className="uber-done">
           <div className="uber-done-emoji">{status === "ready" ? "✅" : "🎉"}</div>
           <h1>Commande envoyée !</h1>
@@ -300,12 +378,14 @@ export default function OrderClient({
             Total à régler sur place : <b>{euros(done.total)} €</b>
           </p>
           <p className="uber-fine">
-            💡 Le commerçant scanne ce QR (ou tape le code) au retrait.
+            💡 Le commerçant scanne ce QR (ou tape le code) au retrait.{" "}
+            <b>Gardez cette page ouverte</b> pour suivre votre commande en
+            direct.
             {notifyReady
-              ? " Gardez cette page ouverte : elle se met à jour toute seule, et vous serez prévenu dès que c'est prêt."
+              ? " Vous serez aussi prévenu dès que c'est prêt."
               : cEmail.trim()
               ? " Votre bon de commande vient de vous être envoyé par e-mail."
-              : " Faites une capture d'écran pour le garder sous la main."}
+              : " Ou faites une capture d'écran pour garder votre code."}
           </p>
         </div>
       </main>

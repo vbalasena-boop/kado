@@ -5068,6 +5068,27 @@ html { scroll-behavior: smooth; }
   font-size: 14px; color: #5f6368;
 }
 .mode-split b { color: #202124; font-weight: 800; }
+/* Bipeur intégré : flash plein écran quand la commande est prête */
+.buzz-flash {
+  position: fixed; inset: 0; z-index: 300; display: flex; align-items: center;
+  justify-content: center; pointer-events: none;
+  animation: buzzpulse 0.7s ease-in-out 8 alternate;
+}
+.buzz-flash-in {
+  background: #1a7a4a; color: #fff; font-size: 40px; font-weight: 800;
+  padding: 26px 44px; border-radius: 22px; box-shadow: 0 20px 60px rgba(0,0,0,.4);
+  animation: buzzscale 0.7s ease-in-out infinite alternate;
+}
+@keyframes buzzpulse {
+  from { background: rgba(26,122,74,0); } to { background: rgba(26,122,74,0.5); }
+}
+@keyframes buzzscale { from { transform: scale(1); } to { transform: scale(1.08); } }
+.ios-hint {
+  background: #eef4ff; border: 1px solid #cfe0ff; color: #24405e;
+  border-radius: 12px; padding: 11px 14px; font-size: 13px; line-height: 1.4;
+  max-width: 420px; margin-top: 8px;
+}
+.ios-hint b { color: #17324f; }
 @media (max-width: 560px) {
   .opt-head { flex-direction: column; }
   .opt-head > button { width: 100%; }

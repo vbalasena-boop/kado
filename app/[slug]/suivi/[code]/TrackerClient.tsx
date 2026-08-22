@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 function euros(cents: number) {
   return (cents / 100).toLocaleString("fr-FR", {
@@ -40,6 +40,81 @@ export default function TrackerClient({
   const isBuzzer = serviceMode === "buzzer" || buzzerNo != null;
   const [status, setStatus] = useState(initialStatus);
   const [alert, setAlert] = useState<"idle" | "on" | "ko">("idle");
+  const [buzzing, setBuzzing] = useState(false);
+  const [iosHint, setIosHint] = useState(false);
+
+  const audioRef = useRef<AudioContext | null>(null);
+  const lastStatusRef = useRef(initialStatus);
+  const alertedRef = useRef(false);
+
+  // Débloque l'audio dès la 1re interaction (iOS l'exige) + détecte iPhone.
+  useEffect(() => {
+    const ua = navigator.userAgent || "";
+    const isIOS = /iP(hone|ad|od)/.test(ua);
+    const standalone =
+      (navigator as any).standalone === true ||
+      window.matchMedia?.("(display-mode: standalone)").matches;
+    if (isIOS && !standalone) setIosHint(true);
+
+    function unlock() {
+      if (!audioRef.current) {
+        try {
+          const Ctx =
+            (window as any).AudioContext || (window as any).webkitAudioContext;
+          if (Ctx) audioRef.current = new Ctx();
+        } catch {
+          /* audio indisponible */
+        }
+      }
+      audioRef.current?.resume?.();
+    }
+    window.addEventListener("pointerdown", unlock, { once: true });
+    window.addEventListener("touchstart", unlock, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("touchstart", unlock);
+    };
+  }, []);
+
+  // Le « bipeur » : son + vibration + flash quand la commande passe « prête ».
+  function fireBuzzer() {
+    if (alertedRef.current) return;
+    alertedRef.current = true;
+    setBuzzing(true);
+    try {
+      (navigator as any).vibrate?.([200, 100, 200, 100, 500]);
+    } catch {
+      /* pas de vibration (iOS) */
+    }
+    const ctx = audioRef.current;
+    if (ctx) {
+      try {
+        ctx.resume?.();
+        [0, 500, 1000].forEach((delay) => {
+          const t0 = ctx.currentTime + delay / 1000;
+          const osc = ctx.createOscillator();
+          const g = ctx.createGain();
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(880, t0);
+          osc.frequency.setValueAtTime(1175, t0 + 0.18);
+          g.gain.setValueAtTime(0.001, t0);
+          g.gain.exponentialRampToValueAtTime(0.4, t0 + 0.03);
+          g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.36);
+          osc.connect(g).connect(ctx.destination);
+          osc.start(t0);
+          osc.stop(t0 + 0.38);
+        });
+      } catch {
+        /* audio bloqué */
+      }
+    }
+    try {
+      document.title = "✅ C'est prêt !";
+    } catch {
+      /* ignore */
+    }
+    setTimeout(() => setBuzzing(false), 8000);
+  }
 
   const onsite = serviceMode === "sur_place";
   const cancelled = status === "cancelled";
@@ -58,7 +133,13 @@ export default function TrackerClient({
           )}&code=${encodeURIComponent(code)}`
         );
         const d = await r.json().catch(() => ({}));
-        if (alive && d?.status) setStatus(d.status);
+        if (alive && d?.status) {
+          if (d.status === "ready" && lastStatusRef.current !== "ready") {
+            fireBuzzer();
+          }
+          lastStatusRef.current = d.status;
+          setStatus(d.status);
+        }
         if (alive && !["ready", "done", "cancelled"].includes(d?.status)) {
           timer = setTimeout(poll, 12000);
         }
@@ -135,6 +216,11 @@ export default function TrackerClient({
 
   return (
     <main className="uber">
+      {buzzing && (
+        <div className="buzz-flash" aria-hidden="true">
+          <div className="buzz-flash-in">✅ C'est prêt !</div>
+        </div>
+      )}
       <div className="uber-done">
         <div className="uber-done-emoji">{status === "ready" ? "✅" : "🧾"}</div>
         <h1>Suivi de commande</h1>
@@ -225,14 +311,23 @@ export default function TrackerClient({
             {alert === "ko" && (
               <p className="uber-fine">
                 Notifications non disponibles sur cet appareil — gardez cette
-                page ouverte, elle se met à jour toute seule.
+                page ouverte&nbsp;: elle <b>sonne et clignote</b> dès que c'est
+                prêt.
+              </p>
+            )}
+            {iosHint && alert !== "on" && (
+              <p className="ios-hint">
+                📲 <b>iPhone&nbsp;:</b> pour être prévenu même écran éteint,
+                touchez <b>Partager</b> → <b>« Sur l'écran d'accueil »</b>, puis
+                rouvrez Kado depuis l'icône. Sinon, gardez cette page ouverte.
               </p>
             )}
           </>
         )}
         <p className="uber-fine">
-          💡 Cette page se met à jour automatiquement. Présentez le code
-          ci-dessus au comptoir.
+          💡 <b>Gardez cette page ouverte</b>&nbsp;: elle <b>sonne et clignote</b>{" "}
+          dès que c'est prêt, et se met à jour toute seule. Présentez votre{" "}
+          {isBuzzer ? "numéro" : "code"} au comptoir.
         </p>
       </div>
     </main>
