@@ -211,6 +211,19 @@ export default function OrdersClient({
   const [scanning, setScanning] = useState(false);
   const [scanResult, setScanResult] = useState<string | null>(null);
   const [alertsOn, setAlertsOn] = useState(false);
+  // Commande en caisse (POS)
+  const [posOpen, setPosOpen] = useState(false);
+  const [posQty, setPosQty] = useState<Record<string, number>>({});
+  const [posName, setPosName] = useState("");
+  const [posMode, setPosMode] = useState<"emporter" | "sur_place">("sur_place");
+  const [posTable, setPosTable] = useState("");
+  const [posBusy, setPosBusy] = useState(false);
+  const [posResult, setPosResult] = useState<{
+    code: string;
+    total: number;
+    url: string;
+    qr: string | null;
+  } | null>(null);
   const [hoursDraft, setHoursDraft] = useState<
     Record<string, { open: boolean; from: string; to: string }>
   >(() => {
@@ -536,6 +549,58 @@ export default function OrdersClient({
   const ready = orders.filter((o) => o.status === "ready");
   const past = orders.filter((o) => o.status === "done" || o.status === "cancelled");
 
+  // ---- Commande en caisse (POS) ----
+  const posLines = products.filter((p) => (posQty[p.id] ?? 0) > 0);
+  const posTotal = posLines.reduce(
+    (s, p) => s + (posQty[p.id] ?? 0) * p.price_cents,
+    0
+  );
+  function posBump(id: string, delta: number) {
+    setPosQty((q) => {
+      const n = Math.max(0, Math.min(30, (q[id] ?? 0) + delta));
+      return { ...q, [id]: n };
+    });
+  }
+  async function submitPos() {
+    if (posLines.length === 0) return;
+    setPosBusy(true);
+    try {
+      const res = await fetch("/api/dashboard/orders/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: posName,
+          mode: posMode,
+          table: posTable,
+          items: posLines.map((p) => ({ id: p.id, qty: posQty[p.id] })),
+        }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (res.ok && d.code) {
+        const url = `${window.location.origin}/${slug}/suivi/${d.code}`;
+        let qr: string | null = null;
+        try {
+          const { default: QRCode } = await import("qrcode");
+          qr = await QRCode.toDataURL(url, { width: 240, margin: 1 });
+        } catch {
+          /* QR facultatif */
+        }
+        setPosResult({ code: d.code, total: d.total_cents ?? posTotal, url, qr });
+        setPosQty({});
+        setPosName("");
+        setPosTable("");
+        setPosOpen(false);
+        router.refresh();
+      } else {
+        setMsg("Impossible de créer la commande. Réessayez.");
+      }
+    } catch {
+      setMsg("Erreur réseau. Réessayez.");
+    } finally {
+      setPosBusy(false);
+    }
+  }
+
   function OrderCard({ o }: { o: Order }) {
     return (
       <li className={`order-card is-${o.status}`}>
@@ -625,6 +690,15 @@ export default function OrdersClient({
         <button
           className="btn scan-open"
           onClick={() => {
+            setPosResult(null);
+            setPosOpen((v) => !v);
+          }}
+        >
+          🧾 Nouvelle commande (caisse)
+        </button>
+        <button
+          className="btn scan-open"
+          onClick={() => {
             setScanResult(null);
             setScanning(true);
           }}
@@ -650,6 +724,105 @@ export default function OrdersClient({
           result={scanResult}
           busy={busy}
         />
+      )}
+
+      {/* ---- Commande en caisse (POS) ---- */}
+      {posOpen && (
+        <div className="dash-card pos-card">
+          <h2>🧾 Nouvelle commande (caisse)</h2>
+          <p className="muted" style={{ marginTop: -4 }}>
+            Saisissez la commande d'un client au comptoir. Il pourra scanner un
+            QR de suivi pour être prévenu quand c'est prêt.
+          </p>
+          <div className="pos-modes">
+            <button
+              type="button"
+              className={posMode === "sur_place" ? "on" : ""}
+              onClick={() => setPosMode("sur_place")}
+            >
+              🍽️ Sur place
+            </button>
+            <button
+              type="button"
+              className={posMode === "emporter" ? "on" : ""}
+              onClick={() => setPosMode("emporter")}
+            >
+              🥡 À emporter
+            </button>
+          </div>
+          <div className="pos-fields">
+            <input
+              type="text"
+              placeholder="Nom du client (facultatif)"
+              value={posName}
+              onChange={(e) => setPosName(e.target.value)}
+            />
+            {posMode === "sur_place" && (
+              <input
+                type="text"
+                placeholder="N° de table (facultatif)"
+                value={posTable}
+                onChange={(e) => setPosTable(e.target.value)}
+              />
+            )}
+          </div>
+          <ul className="pos-products">
+            {products
+              .filter((p) => p.active)
+              .map((p) => (
+                <li key={p.id}>
+                  <span className="pos-p-name">{p.name}</span>
+                  <span className="pos-p-price">{euros(p.price_cents)} €</span>
+                  <span className="pos-stepper">
+                    <button type="button" onClick={() => posBump(p.id, -1)}>
+                      −
+                    </button>
+                    <b>{posQty[p.id] ?? 0}</b>
+                    <button type="button" onClick={() => posBump(p.id, 1)}>
+                      +
+                    </button>
+                  </span>
+                </li>
+              ))}
+          </ul>
+          <div className="pos-foot">
+            <span>
+              Total : <b>{euros(posTotal)} €</b>
+            </span>
+            <button
+              className="btn"
+              disabled={posBusy || posLines.length === 0}
+              onClick={submitPos}
+            >
+              {posBusy ? "Création…" : "Créer la commande →"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ---- QR de suivi à faire scanner au client ---- */}
+      {posResult && (
+        <div className="pos-modal" onClick={() => setPosResult(null)}>
+          <div className="pos-modal-box" onClick={(e) => e.stopPropagation()}>
+            <div className="uber-done-emoji">✅</div>
+            <h2>Commande créée !</h2>
+            <div className="uber-done-code">{posResult.code}</div>
+            {posResult.qr && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={posResult.qr} alt="QR de suivi" className="pos-qr" />
+            )}
+            <p>
+              📱 <b>Faites scanner ce QR au client</b> : il suit sa commande en
+              direct et peut activer une alerte quand c'est prêt.
+            </p>
+            <p className="muted" style={{ fontSize: 12.5, wordBreak: "break-all" }}>
+              {posResult.url}
+            </p>
+            <button className="btn" onClick={() => setPosResult(null)}>
+              Terminé
+            </button>
+          </div>
+        </div>
       )}
 
       {/* ---- Commandes en cours ---- */}

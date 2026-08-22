@@ -4966,6 +4966,48 @@ html { scroll-behavior: smooth; }
   display: inline-block; background: #eef7ee; color: #1a7a4a; font-weight: 800;
   border: 1px solid #cfe8cf; border-radius: 8px; padding: 2px 10px; align-self: flex-start;
 }
+/* Commande en caisse (POS) */
+.pos-modes { display: flex; gap: 8px; margin: 10px 0; }
+.pos-modes button {
+  flex: 1; border: 1.5px solid #e2dcef; background: #faf9fd; color: #5f6368;
+  border-radius: 12px; padding: 11px; font-weight: 700; font-family: inherit;
+  font-size: 15px; cursor: pointer;
+}
+.pos-modes button.on { border-color: var(--g-blue, #1a73e8); background: #eaf1fe; color: #17092e; }
+.pos-fields { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.pos-fields input {
+  flex: 1; min-width: 160px; border: 1px solid #e2dcef; border-radius: 10px;
+  padding: 11px 12px; font-size: 15px; font-family: inherit;
+}
+.pos-products { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.pos-products li {
+  display: flex; align-items: center; gap: 10px; padding: 10px 0;
+  border-top: 1px solid #eef0f4;
+}
+.pos-p-name { flex: 1; font-weight: 600; }
+.pos-p-price { color: #5f6368; font-size: 14px; }
+.pos-stepper { display: inline-flex; align-items: center; gap: 12px; }
+.pos-stepper button {
+  width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid #d8d2e6;
+  background: #fff; font-size: 20px; font-weight: 800; cursor: pointer; color: #17092e;
+  line-height: 1;
+}
+.pos-stepper b { min-width: 20px; text-align: center; }
+.pos-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin-top: 14px; font-size: 17px;
+}
+.pos-modal {
+  position: fixed; inset: 0; background: rgba(23, 9, 46, 0.55); z-index: 200;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.pos-modal-box {
+  background: #fff; border-radius: 22px; padding: 26px; max-width: 380px;
+  width: 100%; text-align: center; display: flex; flex-direction: column;
+  align-items: center; gap: 10px;
+}
+.pos-modal-box p { margin: 0; font-size: 14px; color: #4a4459; }
+.pos-qr { width: 220px; height: 220px; border-radius: 12px; }
 .uber-submit {
   border: none;
   border-radius: 999px;
