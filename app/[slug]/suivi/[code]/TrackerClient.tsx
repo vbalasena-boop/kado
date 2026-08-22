@@ -25,6 +25,7 @@ export default function TrackerClient({
   totalCents,
   serviceMode,
   tableLabel,
+  buzzerNo,
 }: {
   slug: string;
   name: string;
@@ -34,7 +35,9 @@ export default function TrackerClient({
   totalCents: number;
   serviceMode: string;
   tableLabel: string | null;
+  buzzerNo: number | null;
 }) {
+  const isBuzzer = serviceMode === "buzzer" || buzzerNo != null;
   const [status, setStatus] = useState(initialStatus);
   const [alert, setAlert] = useState<"idle" | "on" | "ko">("idle");
 
@@ -166,21 +169,40 @@ export default function TrackerClient({
           <div className="track-table">🍽️ Table {tableLabel}</div>
         )}
 
-        <div className="uber-done-code">{code}</div>
-
-        {items.length > 0 && (
-          <ul className="order-items" style={{ width: "100%", maxWidth: 420 }}>
-            {items.map((l, i) => (
-              <li key={i}>
-                {l.qty} × {l.name}
-                <span>{euros(l.price_cents * l.qty)} €</span>
-              </li>
-            ))}
-          </ul>
+        {isBuzzer ? (
+          <>
+            {buzzerNo != null && (
+              <div className="track-number">
+                <span>Votre numéro</span>
+                <b>{buzzerNo}</b>
+              </div>
+            )}
+            {!cancelled && (
+              <p style={{ fontWeight: 700 }}>
+                📣 Donnez ce numéro au comptoir.
+              </p>
+            )}
+          </>
+        ) : (
+          <>
+            <div className="uber-done-code">{code}</div>
+            {items.length > 0 && (
+              <ul className="order-items" style={{ width: "100%", maxWidth: 420 }}>
+                {items.map((l, i) => (
+                  <li key={i}>
+                    {l.qty} × {l.name}
+                    <span>{euros(l.price_cents * l.qty)} €</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {totalCents > 0 && (
+              <p className="uber-done-total">
+                Total à régler sur place : <b>{euros(totalCents)} €</b>
+              </p>
+            )}
+          </>
         )}
-        <p className="uber-done-total">
-          Total à régler sur place : <b>{euros(totalCents)} €</b>
-        </p>
 
         {/* Activer l'alerte quand c'est prêt */}
         {!["ready", "done", "cancelled"].includes(status) && (

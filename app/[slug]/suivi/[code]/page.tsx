@@ -42,7 +42,7 @@ export default async function SuiviPage({
   const baseCols = "code, status, items, total_cents";
   let { data: order, error } = (await db
     .from("orders")
-    .select(`${baseCols}, service_mode, table_label`)
+    .select(`${baseCols}, service_mode, table_label, buzzer_no`)
     .eq("business_id", (biz as any).id)
     .eq("code", code)
     .order("created_at", { ascending: false })
@@ -91,6 +91,7 @@ export default async function SuiviPage({
         totalCents={order.total_cents ?? 0}
         serviceMode={order.service_mode ?? "emporter"}
         tableLabel={order.table_label ?? null}
+        buzzerNo={order.buzzer_no ?? null}
       />
     </>
   );

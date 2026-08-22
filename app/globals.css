@@ -5008,6 +5008,31 @@ html { scroll-behavior: smooth; }
 }
 .pos-modal-box p { margin: 0; font-size: 14px; color: #4a4459; }
 .pos-qr { width: 220px; height: 220px; border-radius: 12px; }
+/* Numéro de suivi (bipeur digital) — page client */
+.track-number {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  background: #17092e; color: #fff; border-radius: 20px; padding: 18px 40px; margin: 6px 0;
+}
+.track-number span { font-size: 15px; opacity: 0.85; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+.track-number b { font-size: 84px; line-height: 1; font-weight: 800; }
+/* Carte commande « bipeur » côté commerçant */
+.order-buzznum {
+  background: #17092e; color: #fff; font-weight: 800; font-size: 15px;
+  border-radius: 8px; padding: 3px 12px;
+}
+.order-card.is-buzzer { border-left: 4px solid #f5b841; }
+/* Affichette comptoir imprimable */
+.counter-print {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  border: 2px dashed #d8d2e6; border-radius: 16px; padding: 20px; width: 100%;
+}
+.counter-print h2 { font-size: 22px; }
+.counter-print .pos-qr { width: 260px; height: 260px; }
+@media print {
+  body * { visibility: hidden; }
+  .counter-print, .counter-print * { visibility: visible; }
+  .counter-print { position: fixed; inset: 0; margin: auto; border: none; width: 90vw; height: auto; }
+}
 .uber-submit {
   border: none;
   border-radius: 999px;

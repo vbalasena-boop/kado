@@ -158,6 +158,7 @@ export type Order = {
   created_at: string;
   service_mode?: string | null;
   table_label?: string | null;
+  buzzer_no?: number | null;
 };
 
 function euros(cents: number) {
@@ -224,6 +225,9 @@ export default function OrdersClient({
     url: string;
     qr: string | null;
   } | null>(null);
+  const [counterQr, setCounterQr] = useState<{ url: string; qr: string | null } | null>(
+    null
+  );
   const [hoursDraft, setHoursDraft] = useState<
     Record<string, { open: boolean; from: string; to: string }>
   >(() => {
@@ -561,6 +565,18 @@ export default function OrdersClient({
       return { ...q, [id]: n };
     });
   }
+  async function openCounterQr() {
+    const url = `${window.location.origin}/${slug}/suivi`;
+    let qr: string | null = null;
+    try {
+      const { default: QRCode } = await import("qrcode");
+      qr = await QRCode.toDataURL(url, { width: 320, margin: 1 });
+    } catch {
+      /* QR facultatif */
+    }
+    setCounterQr({ url, qr });
+  }
+
   async function submitPos() {
     if (posLines.length === 0) return;
     setPosBusy(true);
@@ -602,39 +618,54 @@ export default function OrdersClient({
   }
 
   function OrderCard({ o }: { o: Order }) {
+    const isBuzzer = o.service_mode === "buzzer" || o.buzzer_no != null;
     return (
-      <li className={`order-card is-${o.status}`}>
+      <li className={`order-card is-${o.status}${isBuzzer ? " is-buzzer" : ""}`}>
         <div className="order-head">
-          <span className="order-code">{o.code}</span>
-          <b>{o.customer_name}</b>
-          <a href={`tel:${o.customer_phone.replace(/\s/g, "")}`}>
-            📞 {o.customer_phone}
-          </a>
+          {isBuzzer && o.buzzer_no != null ? (
+            <span className="order-buzznum">N° {o.buzzer_no}</span>
+          ) : (
+            <span className="order-code">{o.code}</span>
+          )}
+          <b>{isBuzzer ? "Suivi client" : o.customer_name}</b>
+          {o.customer_phone.trim() && (
+            <a href={`tel:${o.customer_phone.replace(/\s/g, "")}`}>
+              📞 {o.customer_phone}
+            </a>
+          )}
           <span className="order-time">{fmtTime(o.created_at)}</span>
         </div>
         <div className="order-body">
-          {o.service_mode === "sur_place" ? (
+          {isBuzzer ? (
             <span className="order-mode onsite">
-              🍽️ Sur place
-              {o.table_label ? ` · Table ${o.table_label}` : ""}
+              🎫 Suivi client — commande encaissée sur votre caisse
             </span>
           ) : (
-            <span>
-              🥡 À emporter · <b>{o.pickup_at || "dès que possible"}</b>
-            </span>
+            <>
+              {o.service_mode === "sur_place" ? (
+                <span className="order-mode onsite">
+                  🍽️ Sur place
+                  {o.table_label ? ` · Table ${o.table_label}` : ""}
+                </span>
+              ) : (
+                <span>
+                  🥡 À emporter · <b>{o.pickup_at || "dès que possible"}</b>
+                </span>
+              )}
+              {o.note && <span>📝 {o.note}</span>}
+              <ul className="order-items">
+                {o.items.map((l, i) => (
+                  <li key={i}>
+                    {l.qty} × {l.name}
+                    <span>{euros(l.price_cents * l.qty)} €</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="order-total">
+                Total à encaisser : <b>{euros(o.total_cents)} €</b>
+              </div>
+            </>
           )}
-          {o.note && <span>📝 {o.note}</span>}
-          <ul className="order-items">
-            {o.items.map((l, i) => (
-              <li key={i}>
-                {l.qty} × {l.name}
-                <span>{euros(l.price_cents * l.qty)} €</span>
-              </li>
-            ))}
-          </ul>
-          <div className="order-total">
-            Total à encaisser : <b>{euros(o.total_cents)} €</b>
-          </div>
         </div>
         {(o.status === "new" || o.status === "ready") && (
           <div className="order-actions">
@@ -687,6 +718,9 @@ export default function OrdersClient({
       {msg && <p className="save-msg is-err">{msg}</p>}
 
       <div className="orders-toolbar">
+        <button className="btn scan-open" onClick={openCounterQr}>
+          🎫 QR de suivi (comptoir)
+        </button>
         <button
           className="btn scan-open"
           onClick={() => {
@@ -796,6 +830,37 @@ export default function OrdersClient({
             >
               {posBusy ? "Création…" : "Créer la commande →"}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* ---- QR « Suivez votre commande » à poser au comptoir ---- */}
+      {counterQr && (
+        <div className="pos-modal" onClick={() => setCounterQr(null)}>
+          <div className="pos-modal-box" onClick={(e) => e.stopPropagation()}>
+            <div className="counter-print">
+              <div className="uber-done-emoji">🎫</div>
+              <h2>Suivez votre commande</h2>
+              {counterQr.qr && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={counterQr.qr} alt="QR de suivi" className="pos-qr" />
+              )}
+              <p>
+                Scannez, prenez votre numéro, et soyez prévenu quand c'est prêt.
+              </p>
+            </div>
+            <p className="muted" style={{ fontSize: 12.5 }}>
+              Posez cette affichette sur votre comptoir. Le client scanne, reçoit
+              un numéro à vous donner, puis une alerte quand c'est prêt.
+            </p>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button className="btn" onClick={() => window.print()}>
+                🖨️ Imprimer
+              </button>
+              <button className="btn-secondary" onClick={() => setCounterQr(null)}>
+                Fermer
+              </button>
+            </div>
           </div>
         </div>
       )}
