@@ -64,7 +64,7 @@ async function applySubscription(sub: Stripe.Subscription) {
     status: active ? "active" : "suspended",
     subscription_ends_at: endsAt,
   };
-  if (plan && ["roue", "fidelite", "complet"].includes(plan)) {
+  if (plan && ["roue", "fidelite", "complet", "comptoir"].includes(plan)) {
     patch.plan = plan;
   }
   // Abonnement résilié : l'option Campagnes (article payant) disparaît avec
@@ -77,6 +77,18 @@ async function applySubscription(sub: Stripe.Subscription) {
   const query = db.from("businesses").update(patch);
   if (businessId) await query.eq("id", businessId);
   else await query.eq("stripe_customer_id", customerId);
+
+  // Idem pour l'option « Suivi au comptoir » — écriture séparée et tolérante
+  // (la colonne order_tracking peut ne pas exister si 0039 n'est pas passée).
+  if (sub.status === "canceled") {
+    try {
+      const q2 = db.from("businesses").update({ order_tracking: false });
+      if (businessId) await q2.eq("id", businessId);
+      else await q2.eq("stripe_customer_id", customerId);
+    } catch {
+      /* colonne absente : ignoré */
+    }
+  }
 }
 
 export async function POST(req: NextRequest) {
