@@ -95,6 +95,8 @@ export default function OrderClient({
   const [pickup, setPickup] = useState(PICKUP_CHOICES[0]);
   const [note, setNote] = useState("");
   const [notifyReady, setNotifyReady] = useState(true);
+  const [mode, setMode] = useState<"emporter" | "sur_place">("emporter");
+  const [table, setTable] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [done, setDone] = useState<{ code: string; total: number } | null>(
@@ -187,6 +189,8 @@ export default function OrderClient({
           note,
           email: cEmail,
           push,
+          mode,
+          table,
           items: Object.entries(qty)
             .filter(([, n]) => n > 0)
             .map(([id, n]) => ({ id, qty: n })),
@@ -223,7 +227,13 @@ export default function OrderClient({
     // 0 Reçue · 1 En préparation · 2 Prête · 3 Retirée
     const reached =
       status === "done" ? 3 : status === "ready" ? 2 : 1;
-    const TRACK = ["Reçue", "En préparation", "Prête", "Retirée"];
+    const onsite = mode === "sur_place";
+    const TRACK = [
+      "Reçue",
+      "En préparation",
+      "Prête",
+      onsite ? "Servie" : "Retirée",
+    ];
     const bannerEmoji = cancelled
       ? "❌"
       : status === "ready"
@@ -265,13 +275,20 @@ export default function OrderClient({
             </ol>
           )}
 
+          {onsite && table.trim() && !cancelled && (
+            <div className="track-table">🍽️ Table {table.trim()}</div>
+          )}
           <p>
             {status === "ready"
-              ? "Venez la récupérer ! Présentez ce code :"
+              ? onsite
+                ? "C'est prêt ! Présentez ce code au comptoir :"
+                : "Venez la récupérer ! Présentez ce code :"
               : status === "done"
-              ? "À bientôt !"
+              ? "Merci et à bientôt !"
               : cancelled
               ? "Contactez le commerce pour plus d'informations."
+              : onsite
+              ? <><b>{name}</b> prépare votre commande — <b>restez à votre place</b>, on vous prévient dès que c'est prêt.</>
               : <><b>{name}</b> prépare votre commande. Présentez ce code au retrait :</>}
           </p>
           <div className="uber-done-code">{done.code}</div>
@@ -427,6 +444,31 @@ export default function OrderClient({
             </div>
 
             <form onSubmit={submit} className="uber-form">
+              <div className="uber-mode" role="group" aria-label="Mode de service">
+                <button
+                  type="button"
+                  className={mode === "sur_place" ? "on" : ""}
+                  onClick={() => setMode("sur_place")}
+                >
+                  🍽️ Sur place
+                </button>
+                <button
+                  type="button"
+                  className={mode === "emporter" ? "on" : ""}
+                  onClick={() => setMode("emporter")}
+                >
+                  🥡 À emporter
+                </button>
+              </div>
+              {mode === "sur_place" && (
+                <input
+                  type="text"
+                  inputMode="text"
+                  placeholder="Numéro de table (facultatif — ex. 5)"
+                  value={table}
+                  onChange={(e) => setTable(e.target.value)}
+                />
+              )}
               <input
                 type="text"
                 required
@@ -447,13 +489,18 @@ export default function OrderClient({
                 value={cEmail}
                 onChange={(e) => setCEmail(e.target.value)}
               />
-              <select value={pickup} onChange={(e) => setPickup(e.target.value)}>
-                {PICKUP_CHOICES.map((c) => (
-                  <option key={c} value={c}>
-                    🕒 {c}
-                  </option>
-                ))}
-              </select>
+              {mode === "emporter" && (
+                <select
+                  value={pickup}
+                  onChange={(e) => setPickup(e.target.value)}
+                >
+                  {PICKUP_CHOICES.map((c) => (
+                    <option key={c} value={c}>
+                      🕒 {c}
+                    </option>
+                  ))}
+                </select>
+              )}
               <textarea
                 placeholder="Une précision ? (facultatif — ex. sans oignons)"
                 rows={2}

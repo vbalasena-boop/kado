@@ -156,6 +156,8 @@ export type Order = {
   total_cents: number;
   status: string;
   created_at: string;
+  service_mode?: string | null;
+  table_label?: string | null;
 };
 
 function euros(cents: number) {
@@ -546,9 +548,16 @@ export default function OrdersClient({
           <span className="order-time">{fmtTime(o.created_at)}</span>
         </div>
         <div className="order-body">
-          <span>
-            🕒 Retrait : <b>{o.pickup_at || "dès que possible"}</b>
-          </span>
+          {o.service_mode === "sur_place" ? (
+            <span className="order-mode onsite">
+              🍽️ Sur place
+              {o.table_label ? ` · Table ${o.table_label}` : ""}
+            </span>
+          ) : (
+            <span>
+              🥡 À emporter · <b>{o.pickup_at || "dès que possible"}</b>
+            </span>
+          )}
           {o.note && <span>📝 {o.note}</span>}
           <ul className="order-items">
             {o.items.map((l, i) => (

@@ -44,6 +44,8 @@ export async function POST(req: NextRequest) {
     email?: string;
     pickup?: string;
     note?: string;
+    mode?: string;
+    table?: string;
     items?: { id?: string; qty?: number }[];
     push?: { endpoint?: string; keys?: { p256dh?: string; auth?: string } };
   };
@@ -58,6 +60,11 @@ export async function POST(req: NextRequest) {
   const email = String(body.email ?? "").trim().slice(0, 120);
   const pickup = String(body.pickup ?? "").trim().slice(0, 60);
   const note = String(body.note ?? "").trim().slice(0, 300);
+  const serviceMode = body.mode === "sur_place" ? "sur_place" : "emporter";
+  const tableLabel =
+    serviceMode === "sur_place"
+      ? String(body.table ?? "").trim().slice(0, 40)
+      : "";
   if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
     return Response.json({ error: "bad_email" }, { status: 400 });
   }
@@ -157,8 +164,12 @@ export async function POST(req: NextRequest) {
   const optional: Record<string, unknown> = { ...baseInsert };
   if (email) optional.customer_email = email;
   if (notifyPush) optional.notify_push = notifyPush;
+  optional.service_mode = serviceMode;
+  if (tableLabel) optional.table_label = tableLabel;
   let { error } = await db.from("orders").insert(optional);
-  if (error && (email || notifyPush)) {
+  if (error) {
+    // Une colonne optionnelle peut ne pas exister encore (0021/0036/0037) :
+    // on retente avec le socle minimal garanti.
     ({ error } = await db.from("orders").insert(baseInsert));
   }
   if (error) {

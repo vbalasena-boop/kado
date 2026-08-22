@@ -74,14 +74,24 @@ export default async function OrdersPage() {
       .eq("business_id", business.id)
       .order("created_at", { ascending: true });
     products = (p as Product[]) ?? [];
-    const { data: o } = await db
+    // Lecture tolérante : service_mode / table_label peuvent ne pas exister
+    // encore (migration 0037 non appliquée).
+    const baseCols =
+      "id, code, customer_name, customer_phone, pickup_at, note, items, total_cents, status, created_at";
+    let { data: o, error: oErr } = (await db
       .from("orders")
-      .select(
-        "id, code, customer_name, customer_phone, pickup_at, note, items, total_cents, status, created_at"
-      )
+      .select(`${baseCols}, service_mode, table_label`)
       .eq("business_id", business.id)
       .order("created_at", { ascending: false })
-      .limit(150);
+      .limit(150)) as { data: any[] | null; error: any };
+    if (oErr) {
+      ({ data: o } = (await db
+        .from("orders")
+        .select(baseCols)
+        .eq("business_id", business.id)
+        .order("created_at", { ascending: false })
+        .limit(150)) as { data: any[] | null; error: any });
+    }
     orders = (o as Order[]) ?? [];
 
     // Toutes les commandes servies, pour les statistiques (2000 max)

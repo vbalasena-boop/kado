@@ -4947,6 +4947,25 @@ html { scroll-behavior: smooth; }
 @keyframes trackpulse { 50% { box-shadow: 0 0 0 8px #f5b84122; } }
 .track-label { color: #7a6f88; line-height: 1.2; }
 .track li.active .track-label { color: #17092e; font-weight: 700; }
+.track-table {
+  display: inline-block; background: #17092e; color: #fff; font-weight: 800;
+  font-size: 15px; border-radius: 999px; padding: 6px 16px; margin: 6px 0;
+}
+/* Sélecteur Sur place / À emporter */
+.uber-mode { display: flex; gap: 8px; }
+.uber-mode button {
+  flex: 1; border: 1.5px solid #e2dcef; background: #faf9fd; color: #5f5570;
+  border-radius: 12px; padding: 12px 10px; font-size: 15px; font-weight: 700;
+  font-family: inherit; cursor: pointer; transition: all 0.12s;
+}
+.uber-mode button.on {
+  border-color: #f5b841; background: #fff8ec; color: #17092e;
+  box-shadow: 0 0 0 3px #f5b84122;
+}
+.order-mode.onsite {
+  display: inline-block; background: #eef7ee; color: #1a7a4a; font-weight: 800;
+  border: 1px solid #cfe8cf; border-radius: 8px; padding: 2px 10px; align-self: flex-start;
+}
 .uber-submit {
   border: none;
   border-radius: 999px;
