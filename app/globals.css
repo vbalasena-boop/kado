@@ -5010,8 +5010,10 @@ html { scroll-behavior: smooth; }
 .pos-stepper button {
   width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid #d8d2e6;
   background: #fff; font-size: 20px; font-weight: 800; cursor: pointer; color: #17092e;
-  line-height: 1;
+  line-height: 1; transition: transform 0.1s, background 0.15s, border-color 0.15s;
 }
+.pos-stepper button:hover { background: #f6f3fc; border-color: #b9aee0; }
+.pos-stepper button:active { transform: scale(0.88); }
 .pos-stepper b { min-width: 20px; text-align: center; }
 .pos-foot {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
@@ -5057,6 +5059,10 @@ html { scroll-behavior: smooth; }
   padding: 11px 13px; font-size: 14px; background: #faf9fd; color: #17092e;
 }
 .share-row .btn { flex: 0 0 auto; white-space: nowrap; }
+/* Retour visuel « désactivé » cohérent sur les boutons d'action */
+.btn:disabled, .btn-secondary:disabled, .uber-submit:disabled, .opt-head > button:disabled {
+  opacity: 0.55; cursor: not-allowed; filter: grayscale(0.2);
+}
 .share-where {
   display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center;
   margin-top: 12px; font-size: 13px; color: #5f6368;

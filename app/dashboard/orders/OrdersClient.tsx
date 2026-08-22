@@ -811,66 +811,6 @@ export default function OrdersClient({
         )}
       </div>
 
-      {/* ---- Partagez votre lien de commande (commander à distance) ---- */}
-      <div className="dash-card share-card">
-        <h2>🔗 Votre lien de commande</h2>
-        <p className="muted" style={{ margin: "2px 0 10px" }}>
-          Vos clients commandent à distance (retrait sur place) — partagez ce
-          lien, aucune inscription pour eux.
-        </p>
-        <div className="share-row">
-          <input readOnly value={orderLink} onFocus={(e) => e.currentTarget.select()} />
-          <button className="btn" onClick={copyLink}>
-            {copied ? "✓ Copié" : "Copier"}
-          </button>
-        </div>
-        <div className="share-where">
-          <span>Où le mettre&nbsp;:</span>
-          <b>🔎 Fiche Google</b> (champ « Commander en ligne »)
-          <b>📸 Bio Instagram</b>
-          <b>💬 WhatsApp / SMS</b>
-          <b>🌐 Votre site</b>
-        </div>
-      </div>
-
-      {/* ---- Option : Suivi client au comptoir (bipeur digital) ---- */}
-      <div className={`dash-card opt-card${trackingOn ? " on" : ""}`}>
-        <div className="opt-head">
-          <div>
-            <h2>🎫 Suivi client au comptoir {trackingOn && <span className="opt-badge">Activé</span>}</h2>
-            <p className="muted" style={{ margin: "2px 0 0" }}>
-              Le <b>bipeur digital</b> : le client scanne un QR, prend un numéro
-              et reçoit une alerte quand c'est prêt. Compatible avec votre caisse
-              actuelle — vous pouvez aussi saisir une commande au comptoir.
-              {!trackingOn && (
-                <>
-                  {" "}
-                  <b>+12 €/mois</b> (inclus pendant l'essai et dans la formule
-                  Comptoir).
-                </>
-              )}
-            </p>
-          </div>
-          <button
-            className={trackingOn ? "btn-secondary" : "btn"}
-            disabled={trackingBusy}
-            onClick={() => toggleTracking(!trackingOn)}
-          >
-            {trackingBusy
-              ? "…"
-              : trackingOn
-              ? "Désactiver"
-              : "Activer l'option"}
-          </button>
-        </div>
-        {trackingOn && (
-          <p className="muted" style={{ marginTop: 10, fontSize: 13 }}>
-            👉 Utilisez les boutons <b>« 🎫 QR de suivi (comptoir) »</b> et
-            <b> « 🧾 Nouvelle commande (caisse) »</b> ci-dessus.
-          </p>
-        )}
-      </div>
-
       {scanning && (
         <QrScanner
           onCode={validateCode}
@@ -1060,6 +1000,66 @@ export default function OrdersClient({
               ))}
             </ul>
           </details>
+        )}
+      </div>
+
+      {/* ---- Partagez votre lien de commande (commander à distance) ---- */}
+      <div className="dash-card share-card">
+        <h2>🔗 Votre lien de commande</h2>
+        <p className="muted" style={{ margin: "2px 0 10px" }}>
+          Vos clients commandent à distance (retrait sur place) — partagez ce
+          lien, aucune inscription pour eux.
+        </p>
+        <div className="share-row">
+          <input readOnly value={orderLink} onFocus={(e) => e.currentTarget.select()} />
+          <button className="btn" onClick={copyLink}>
+            {copied ? "✓ Copié" : "Copier"}
+          </button>
+        </div>
+        <div className="share-where">
+          <span>Où le mettre&nbsp;:</span>
+          <b>🔎 Fiche Google</b> (champ « Commander en ligne »)
+          <b>📸 Bio Instagram</b>
+          <b>💬 WhatsApp / SMS</b>
+          <b>🌐 Votre site</b>
+        </div>
+      </div>
+
+      {/* ---- Option : Suivi client au comptoir (bipeur digital) ---- */}
+      <div className={`dash-card opt-card${trackingOn ? " on" : ""}`}>
+        <div className="opt-head">
+          <div>
+            <h2>🎫 Suivi client au comptoir {trackingOn && <span className="opt-badge">Activé</span>}</h2>
+            <p className="muted" style={{ margin: "2px 0 0" }}>
+              Le <b>bipeur digital</b> : le client scanne un QR, prend un numéro
+              et reçoit une alerte quand c'est prêt. Compatible avec votre caisse
+              actuelle — vous pouvez aussi saisir une commande au comptoir.
+              {!trackingOn && (
+                <>
+                  {" "}
+                  <b>+12 €/mois</b> (inclus pendant l'essai et dans la formule
+                  Comptoir).
+                </>
+              )}
+            </p>
+          </div>
+          <button
+            className={trackingOn ? "btn-secondary" : "btn"}
+            disabled={trackingBusy}
+            onClick={() => toggleTracking(!trackingOn)}
+          >
+            {trackingBusy
+              ? "…"
+              : trackingOn
+              ? "Désactiver"
+              : "Activer l'option"}
+          </button>
+        </div>
+        {trackingOn && (
+          <p className="muted" style={{ marginTop: 10, fontSize: 13 }}>
+            👉 Utilisez les boutons <b>« 🎫 QR de suivi (comptoir) »</b> et
+            <b> « 🧾 Nouvelle commande (caisse) »</b> tout en haut.
+          </p>
         )}
       </div>
 
