@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
-import { hasAccess } from "@/lib/auth";
+import { hasAccess, hasComptoir } from "@/lib/auth";
 import { sendPushToBusiness } from "@/lib/push";
 
 export const dynamic = "force-dynamic";
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     const { data } = await db
       .from("businesses")
       .select(
-        "id, status, subscription_status, subscription_ends_at, order_tracking"
+        "id, status, subscription_status, subscription_ends_at, order_tracking, plan"
       )
       .eq("slug", slug)
       .maybeSingle();
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
   } catch {
     const { data } = await db
       .from("businesses")
-      .select("id, status, subscription_status, subscription_ends_at")
+      .select("id, status, subscription_status, subscription_ends_at, plan")
       .eq("slug", slug)
       .maybeSingle();
     biz = data;
@@ -58,7 +58,8 @@ export async function POST(req: NextRequest) {
   if (!hasAccess(biz)) {
     return Response.json({ error: "unavailable" }, { status: 403 });
   }
-  if (biz.order_tracking === false) {
+  // Option activée, incluse dans le plan « Comptoir », ou essai gratuit.
+  if (!hasComptoir(biz)) {
     return Response.json({ error: "disabled" }, { status: 403 });
   }
 

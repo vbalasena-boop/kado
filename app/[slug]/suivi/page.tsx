@@ -1,5 +1,5 @@
 import { getAdminClient } from "@/lib/supabase/admin";
-import { hasAccess } from "@/lib/auth";
+import { hasAccess, hasComptoir } from "@/lib/auth";
 import { buildTheme } from "@/lib/theme";
 import TakeNumber from "./TakeNumber";
 
@@ -36,7 +36,7 @@ export default async function SuiviIndexPage({
     const { data } = await db
       .from("businesses")
       .select(
-        "id, slug, name, logo_url, status, subscription_status, subscription_ends_at, order_tracking"
+        "id, slug, name, logo_url, status, subscription_status, subscription_ends_at, order_tracking, plan"
       )
       .eq("slug", params.slug)
       .maybeSingle();
@@ -45,7 +45,7 @@ export default async function SuiviIndexPage({
     // colonne order_tracking absente : retente sans elle
     const { data } = await db
       .from("businesses")
-      .select("id, slug, name, logo_url, status, subscription_status, subscription_ends_at")
+      .select("id, slug, name, logo_url, status, subscription_status, subscription_ends_at, plan")
       .eq("slug", params.slug)
       .maybeSingle();
     biz = data;
@@ -54,7 +54,8 @@ export default async function SuiviIndexPage({
   if (!hasAccess(biz)) {
     return <Unavailable message="Le suivi est momentanément indisponible." />;
   }
-  if (!biz.order_tracking) {
+  // Option activée (drapeau), incluse dans le plan « Comptoir », ou essai.
+  if (!hasComptoir(biz)) {
     return (
       <Unavailable message="Ce commerce ne propose pas encore le suivi au comptoir." />
     );
