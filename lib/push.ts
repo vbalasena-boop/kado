@@ -68,6 +68,38 @@ async function sendToTable(
   return sent;
 }
 
+/**
+ * Push vers UN abonnement précis (ex. le client d'une commande donnée).
+ * `sub` = { endpoint, p256dh, auth }. Renvoie true si envoyé, false sinon
+ * (clés VAPID absentes, abonnement invalide ou expiré). Ne lève jamais.
+ */
+export async function sendPushToSubscription(
+  sub: { endpoint?: string; p256dh?: string; auth?: string } | null | undefined,
+  payload: PushPayload
+): Promise<boolean> {
+  const pub = process.env.VAPID_PUBLIC_KEY;
+  const priv = process.env.VAPID_PRIVATE_KEY;
+  if (!pub || !priv) return false;
+  if (!sub?.endpoint || !sub.p256dh || !sub.auth) return false;
+
+  try {
+    const webpush = (await import("web-push")).default;
+    webpush.setVapidDetails(
+      process.env.VAPID_SUBJECT || "mailto:contact@kado-app.fr",
+      pub,
+      priv
+    );
+    await webpush.sendNotification(
+      { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+      JSON.stringify(payload),
+      { TTL: 24 * 3600 }
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** Push vers les appareils du COMMERÇANT (alertes de commandes). */
 export function sendPushToBusiness(
   db: SupabaseClient,

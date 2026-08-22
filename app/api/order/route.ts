@@ -45,6 +45,7 @@ export async function POST(req: NextRequest) {
     pickup?: string;
     note?: string;
     items?: { id?: string; qty?: number }[];
+    push?: { endpoint?: string; keys?: { p256dh?: string; auth?: string } };
   };
   try {
     body = await req.json();
@@ -60,6 +61,18 @@ export async function POST(req: NextRequest) {
   if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
     return Response.json({ error: "bad_email" }, { status: 400 });
   }
+  // Abonnement push du client (opt-in) pour l'alerte « commande prête ».
+  const pushEndpoint = String(body.push?.endpoint ?? "");
+  const notifyPush =
+    pushEndpoint.startsWith("https://") &&
+    body.push?.keys?.p256dh &&
+    body.push?.keys?.auth
+      ? {
+          endpoint: pushEndpoint.slice(0, 1000),
+          p256dh: String(body.push!.keys!.p256dh),
+          auth: String(body.push!.keys!.auth),
+        }
+      : null;
   const items = (body.items ?? []).filter(
     (i) => i?.id && Number.isInteger(i.qty) && (i.qty as number) > 0
   );
@@ -139,11 +152,13 @@ export async function POST(req: NextRequest) {
     total_cents: total,
     status: "new",
   };
-  // Insertion tolérante : la colonne customer_email peut ne pas encore exister
-  let { error } = await db
-    .from("orders")
-    .insert(email ? { ...baseInsert, customer_email: email } : baseInsert);
-  if (error && email) {
+  // Insertion tolérante : les colonnes customer_email / notify_push peuvent ne
+  // pas encore exister (migrations 0021 / 0036 non appliquées).
+  const optional: Record<string, unknown> = { ...baseInsert };
+  if (email) optional.customer_email = email;
+  if (notifyPush) optional.notify_push = notifyPush;
+  let { error } = await db.from("orders").insert(optional);
+  if (error && (email || notifyPush)) {
     ({ error } = await db.from("orders").insert(baseInsert));
   }
   if (error) {

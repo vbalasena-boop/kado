@@ -17,6 +17,52 @@ function euros(cents: number) {
   });
 }
 
+/** Convertit la clé VAPID publique au format attendu par le navigateur. */
+function vapidKey(base64: string) {
+  const padding = "=".repeat((4 - (base64.length % 4)) % 4);
+  const raw = atob((base64 + padding).replace(/-/g, "+").replace(/_/g, "/"));
+  return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
+}
+
+/**
+ * Abonne CET appareil aux notifications, pour être prévenu quand la commande
+ * est prête. Renvoie l'abonnement (endpoint + clés) ou null si indisponible
+ * (refus, iPhone non installé en app, clés VAPID absentes…). Ne lève jamais.
+ */
+async function subscribeForReady(): Promise<
+  { endpoint: string; keys: { p256dh?: string; auth?: string } } | null
+> {
+  try {
+    if (
+      typeof window === "undefined" ||
+      !("Notification" in window) ||
+      !("serviceWorker" in navigator) ||
+      !("PushManager" in window)
+    )
+      return null;
+    if (Notification.permission === "default") {
+      await Notification.requestPermission();
+    }
+    if (Notification.permission !== "granted") return null;
+    const reg = await navigator.serviceWorker.register("/sw.js");
+    await navigator.serviceWorker.ready;
+    const res = await fetch("/api/push");
+    const { key } = await res.json();
+    if (!key) return null;
+    const sub =
+      (await reg.pushManager.getSubscription()) ??
+      (await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: vapidKey(key),
+      }));
+    const json = sub.toJSON();
+    if (!json.endpoint) return null;
+    return { endpoint: json.endpoint, keys: json.keys ?? {} };
+  } catch {
+    return null;
+  }
+}
+
 const PICKUP_CHOICES = [
   "Dès que possible",
   "Dans 30 minutes",
@@ -48,6 +94,7 @@ export default function OrderClient({
   const [qrUrl, setQrUrl] = useState<string | null>(null);
   const [pickup, setPickup] = useState(PICKUP_CHOICES[0]);
   const [note, setNote] = useState("");
+  const [notifyReady, setNotifyReady] = useState(true);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [done, setDone] = useState<{ code: string; total: number } | null>(
@@ -96,6 +143,9 @@ export default function OrderClient({
     if (count === 0) return;
     setBusy(true);
     try {
+      // Opt-in « prévenez-moi » : on tente d'abonner l'appareil (demande
+      // l'autorisation au navigateur). Sans blocage si refus/indisponible.
+      const push = notifyReady ? await subscribeForReady() : null;
       const res = await fetch("/api/order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -106,6 +156,7 @@ export default function OrderClient({
           pickup,
           note,
           email: cEmail,
+          push,
           items: Object.entries(qty)
             .filter(([, n]) => n > 0)
             .map(([id, n]) => ({ id, qty: n })),
@@ -330,6 +381,20 @@ export default function OrderClient({
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
               />
+              <label className="uber-notify">
+                <input
+                  type="checkbox"
+                  checked={notifyReady}
+                  onChange={(e) => setNotifyReady(e.target.checked)}
+                />
+                <span>
+                  🔔 Prévenez-moi quand ma commande est <b>prête</b>
+                  <small>
+                    Notification sur cet appareil{cEmail ? " + e-mail" : ""} —
+                    plus besoin de bipeur.
+                  </small>
+                </span>
+              </label>
               {err && <p className="uber-err">{err}</p>}
               <button className="uber-submit" disabled={busy || count === 0}>
                 {busy ? "Envoi…" : `Commander — ${euros(total)} €`}
