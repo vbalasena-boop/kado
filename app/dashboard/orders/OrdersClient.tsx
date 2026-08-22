@@ -230,6 +230,20 @@ export default function OrdersClient({
   const [counterQr, setCounterQr] = useState<{ url: string; qr: string | null } | null>(
     null
   );
+  const [copied, setCopied] = useState(false);
+  const orderLink =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/${slug}/commander`
+      : `https://kado-app.fr/${slug}/commander`;
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(orderLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setMsg("Copie impossible — sélectionnez le lien à la main.");
+    }
+  }
   const [trackingOn, setTrackingOn] = useState(tracking);
   const [trackingBusy, setTrackingBusy] = useState(false);
   async function toggleTracking(next: boolean) {
@@ -793,6 +807,28 @@ export default function OrdersClient({
             🔔 Activer les alertes sonores
           </button>
         )}
+      </div>
+
+      {/* ---- Partagez votre lien de commande (commander à distance) ---- */}
+      <div className="dash-card share-card">
+        <h2>🔗 Votre lien de commande</h2>
+        <p className="muted" style={{ margin: "2px 0 10px" }}>
+          Vos clients commandent à distance (retrait sur place) — partagez ce
+          lien, aucune inscription pour eux.
+        </p>
+        <div className="share-row">
+          <input readOnly value={orderLink} onFocus={(e) => e.currentTarget.select()} />
+          <button className="btn" onClick={copyLink}>
+            {copied ? "✓ Copié" : "Copier"}
+          </button>
+        </div>
+        <div className="share-where">
+          <span>Où le mettre&nbsp;:</span>
+          <b>🔎 Fiche Google</b> (champ « Commander en ligne »)
+          <b>📸 Bio Instagram</b>
+          <b>💬 WhatsApp / SMS</b>
+          <b>🌐 Votre site</b>
+        </div>
       </div>
 
       {/* ---- Option : Suivi client au comptoir (bipeur digital) ---- */}

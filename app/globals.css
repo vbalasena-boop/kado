@@ -3280,6 +3280,23 @@ canvas#confetti {
   margin-top: 8px;
   text-decoration: underline;
 }
+.game-order-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-decoration: none;
+  padding: 15px 16px;
+  margin-top: 16px;
+  border-radius: 14px;
+  background: var(--accent, #ff5d73);
+  color: #fff;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+  transition: transform 0.12s, filter 0.2s;
+}
+.game-order-cta:hover { transform: translateY(-1px); filter: brightness(1.05); }
+.game-order-cta .goc-main { font-weight: 800; font-size: 17px; }
+.game-order-cta .goc-sub { font-size: 12.5px; opacity: 0.9; font-weight: 600; }
 .fid-link {
   display: block;
   text-align: center;
@@ -5030,6 +5047,19 @@ html { scroll-behavior: smooth; }
   background: #eef7ee; color: #1a7a4a; border: 1px solid #cfe8cf;
   border-radius: 999px; padding: 2px 12px; font-size: 12px; font-weight: 800;
 }
+/* Carte « Votre lien de commande » */
+.share-row { display: flex; gap: 8px; }
+.share-row input {
+  flex: 1; min-width: 0; border: 1px solid #e2dcef; border-radius: 10px;
+  padding: 11px 13px; font-size: 14px; background: #faf9fd; color: #17092e;
+}
+.share-row .btn { flex: 0 0 auto; white-space: nowrap; }
+.share-where {
+  display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center;
+  margin-top: 12px; font-size: 13px; color: #5f6368;
+}
+.share-where span { font-weight: 700; color: #202124; }
+.share-where b { font-weight: 700; color: #202124; }
 @media (max-width: 560px) {
   .opt-head { flex-direction: column; }
   .opt-head > button { width: 100%; }

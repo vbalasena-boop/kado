@@ -1296,8 +1296,9 @@ export default function Game({
           </a>
         )}
         {orderEnabled && (
-          <a className="fid-link" href={`/${slug}/commander`}>
-            🛒 Commander (retrait sur place)
+          <a className="game-order-cta" href={`/${slug}/commander`}>
+            <span className="goc-main">🛒 Commander en ligne</span>
+            <span className="goc-sub">Retrait &amp; paiement sur place</span>
           </a>
         )}
         <footer className="game-footer">
