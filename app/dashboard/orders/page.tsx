@@ -74,6 +74,8 @@ export default async function OrdersPage() {
     total_cents: number;
     status: string;
     created_at: string;
+    service_mode?: string | null;
+    notified_ready_at?: string | null;
   }[] = [];
   try {
     const { data: p } = await db
@@ -102,14 +104,24 @@ export default async function OrdersPage() {
     }
     orders = (o as Order[]) ?? [];
 
-    // Toutes les commandes servies, pour les statistiques (2000 max)
-    const { data: s } = await db
+    // Toutes les commandes servies, pour les statistiques (2000 max).
+    // Lecture tolérante : service_mode / notified_ready_at peuvent manquer.
+    let { data: s, error: sErr } = (await db
       .from("orders")
-      .select("items, total_cents, status, created_at")
+      .select("items, total_cents, status, created_at, service_mode, notified_ready_at")
       .eq("business_id", business.id)
       .neq("status", "cancelled")
       .order("created_at", { ascending: false })
-      .limit(2000);
+      .limit(2000)) as { data: any[] | null; error: any };
+    if (sErr) {
+      ({ data: s } = (await db
+        .from("orders")
+        .select("items, total_cents, status, created_at")
+        .eq("business_id", business.id)
+        .neq("status", "cancelled")
+        .order("created_at", { ascending: false })
+        .limit(2000)) as { data: any[] | null; error: any });
+    }
     allForStats = (s as typeof allForStats) ?? [];
   } catch {
     /* tables absentes : listes vides */
@@ -146,6 +158,28 @@ export default async function OrdersPage() {
     .sort((a, b) => b.qty - a.qty)
     .slice(0, 5);
 
+  // Temps moyen de préparation (création → « prête »), sur les commandes servies.
+  let prepSum = 0;
+  let prepCount = 0;
+  for (const o of allForStats) {
+    if (!o.notified_ready_at) continue;
+    const ms = new Date(o.notified_ready_at).getTime() - new Date(o.created_at).getTime();
+    if (ms > 0 && ms < 6 * 3600 * 1000) {
+      prepSum += ms;
+      prepCount++;
+    }
+  }
+  const avgPrepMin =
+    prepCount > 0 ? Math.round(prepSum / prepCount / 60000) : null;
+
+  // Répartition par mode de service.
+  const modes = { surPlace: 0, emporter: 0, buzzer: 0 };
+  for (const o of allForStats) {
+    if (o.service_mode === "sur_place") modes.surPlace++;
+    else if (o.service_mode === "buzzer") modes.buzzer++;
+    else modes.emporter++;
+  }
+
   const stats: OrderStats = {
     today: dayOrders.length,
     todayCents: sum(dayOrders),
@@ -158,6 +192,8 @@ export default async function OrdersPage() {
         ? Math.round(sum(allForStats) / allForStats.length)
         : 0,
     top,
+    avgPrepMin,
+    modes,
   };
 
   return (

@@ -125,18 +125,31 @@ export async function POST(req: NextRequest) {
     /* l'affiliation ne doit jamais bloquer une inscription */
   }
 
-  // config + cadeaux par défaut
+  // Config (thème) — nécessaire aussi pour les pages commande/suivi.
   await db.from("wheel_configs").insert({
     business_id: biz.id,
     primary_color: "#ffc24d",
     compliance_note: "Le cadeau n'est pas conditionné à la note laissée.",
     loyalty_enabled: plan === "fidelite" || plan === "complet",
   });
-  const prizes = prizesForCategory(body.category);
-  await insertPrizes(
-    db,
-    prizes.map((p, i) => ({ ...p, business_id: biz.id, position: i }))
-  );
+  // Le plan « Comptoir » n'a pas de jeu : on active directement le suivi au
+  // comptoir et on ne crée aucun cadeau (pas de roue).
+  if (plan === "comptoir") {
+    try {
+      await db
+        .from("businesses")
+        .update({ order_tracking: true })
+        .eq("id", biz.id);
+    } catch {
+      /* colonne order_tracking absente : ignoré (hasComptoir couvre le plan) */
+    }
+  } else {
+    const prizes = prizesForCategory(body.category);
+    await insertPrizes(
+      db,
+      prizes.map((p, i) => ({ ...p, business_id: biz.id, position: i }))
+    );
+  }
 
   return Response.json({ ok: true, slug });
 }

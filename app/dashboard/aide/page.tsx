@@ -107,6 +107,46 @@ const GUIDE: { t: string; items: QA[] }[] = [
     ],
   },
   {
+    t: "🔔 Commandes & notifications",
+    items: [
+      {
+        q: "Comment le client est-il prévenu quand sa commande est prête ?",
+        a: (
+          <>
+            Quand vous marquez une commande <b>« Prête »</b>, le client reçoit
+            automatiquement une <b>notification</b> sur son téléphone (s'il l'a
+            acceptée) <b>et/ou un e-mail</b>. Il suit aussi l'avancement en
+            direct sur la page de sa commande.
+          </>
+        ),
+      },
+      {
+        q: "Les notifications marchent-elles sur iPhone ?",
+        a: (
+          <>
+            Oui, mais Apple demande une étape&nbsp;: le client doit d'abord
+            <b> « Ajouter à l'écran d'accueil »</b> (bouton Partager de Safari →
+            « Sur l'écran d'accueil »), puis rouvrir depuis l'icône. Sans ça,
+            iPhone bloque les notifications web. <b>Astuce</b>&nbsp;: incitez vos
+            clients à laisser leur <b>e-mail</b> — il prend le relais
+            automatiquement et fonctionne sur tous les téléphones.
+          </>
+        ),
+      },
+      {
+        q: "C'est quoi le « bipeur digital » ?",
+        a: (
+          <>
+            Le client scanne un QR posé sur votre comptoir, Kado lui donne un
+            <b> numéro</b>, et il est prévenu quand c'est prêt — comme un bipeur,
+            mais sur son propre téléphone. Activez l'option dans{" "}
+            <b>Commandes</b> → <b>« Suivi client au comptoir »</b>.
+          </>
+        ),
+      },
+    ],
+  },
+  {
     t: "💳 Abonnement & options",
     items: [
       {

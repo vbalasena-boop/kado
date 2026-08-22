@@ -104,6 +104,36 @@ export default async function DashboardHome() {
   const doneCount = steps.filter((s) => s.done).length;
   const showChecklist = !(hasLinks && hasPlays);
 
+  // Accueil dédié « Comptoir » : quelques chiffres de commandes.
+  const isComptoir = (business as any).plan === "comptoir";
+  let comptoirStats = { today: 0, pending: 0, ready: 0 };
+  if (isComptoir) {
+    try {
+      const startDay = new Date();
+      startDay.setHours(0, 0, 0, 0);
+      const [{ count: t }, { count: p }, { count: r }] = await Promise.all([
+        admin
+          .from("orders")
+          .select("*", { count: "exact", head: true })
+          .eq("business_id", business.id)
+          .gte("created_at", startDay.toISOString()),
+        admin
+          .from("orders")
+          .select("*", { count: "exact", head: true })
+          .eq("business_id", business.id)
+          .eq("status", "new"),
+        admin
+          .from("orders")
+          .select("*", { count: "exact", head: true })
+          .eq("business_id", business.id)
+          .eq("status", "ready"),
+      ]);
+      comptoirStats = { today: t ?? 0, pending: p ?? 0, ready: r ?? 0 };
+    } catch {
+      /* table absente : zéros */
+    }
+  }
+
   const PLAN_LABEL: Record<string, string> = {
     roue: "Jeux",
     fidelite: "Fidélité",
@@ -124,6 +154,43 @@ export default async function DashboardHome() {
           {PLAN_LABEL[business.plan] || business.plan}
         </span>
       </p>
+
+      {isComptoir && (
+        <>
+          <div className="dash-card hero-recap">
+            <h2>🎫 Votre suivi au comptoir</h2>
+            <div className="hero-recap-grid">
+              <div className="hero-recap-item">
+                <b>{comptoirStats.today}</b>
+                <span>commandes aujourd'hui</span>
+              </div>
+              <div className="hero-recap-item">
+                <b>{comptoirStats.pending}</b>
+                <span>en préparation</span>
+              </div>
+              <div className="hero-recap-item">
+                <b>{comptoirStats.ready}</b>
+                <span>prêtes à récupérer</span>
+              </div>
+            </div>
+          </div>
+          <div className="dash-card">
+            <h2>🚀 Gérer votre comptoir</h2>
+            <p className="muted" style={{ marginBottom: 14 }}>
+              Créez vos commandes, affichez le QR de suivi à poser au comptoir et
+              marquez les commandes « prêtes » — vos clients sont prévenus sur
+              leur téléphone.
+            </p>
+            <Link
+              href="/dashboard/orders"
+              className="btn"
+              style={{ textDecoration: "none", display: "inline-block" }}
+            >
+              Ouvrir mes commandes →
+            </Link>
+          </div>
+        </>
+      )}
 
       {showRoue && total > 0 && (
         <div className="dash-card hero-recap">

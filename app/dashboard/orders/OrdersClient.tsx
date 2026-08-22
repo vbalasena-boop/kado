@@ -143,6 +143,8 @@ export type OrderStats = {
   totalCents: number;
   avgCents: number;
   top: { name: string; qty: number; cents: number }[];
+  avgPrepMin?: number | null;
+  modes?: { surPlace: number; emporter: number; buzzer: number };
 };
 
 export type Order = {
@@ -1165,7 +1167,26 @@ export default function OrdersClient({
                 <div className="stat-l">Panier moyen</div>
               </div>
             </div>
+            {stats.avgPrepMin != null && (
+              <div className="stat">
+                <div className="stat-icon"><Icon name="event" size={22} /></div>
+                <div>
+                  <div className="stat-n">{stats.avgPrepMin} min</div>
+                  <div className="stat-l">Temps moyen de préparation</div>
+                </div>
+              </div>
+            )}
           </div>
+
+          {stats.modes &&
+            stats.modes.surPlace + stats.modes.emporter + stats.modes.buzzer >
+              0 && (
+              <div className="mode-split">
+                <span>🍽️ Sur place <b>{stats.modes.surPlace}</b></span>
+                <span>🥡 À emporter <b>{stats.modes.emporter}</b></span>
+                <span>🎫 Bipeur <b>{stats.modes.buzzer}</b></span>
+              </div>
+            )}
 
           {stats.top.length > 0 && (
             <>

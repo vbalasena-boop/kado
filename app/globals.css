@@ -5063,6 +5063,11 @@ html { scroll-behavior: smooth; }
 }
 .share-where span { font-weight: 700; color: #202124; }
 .share-where b { font-weight: 700; color: #202124; }
+.mode-split {
+  display: flex; flex-wrap: wrap; gap: 10px 20px; margin-top: 12px;
+  font-size: 14px; color: #5f6368;
+}
+.mode-split b { color: #202124; font-weight: 800; }
 @media (max-width: 560px) {
   .opt-head { flex-direction: column; }
   .opt-head > button { width: 100%; }
