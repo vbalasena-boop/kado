@@ -234,22 +234,30 @@ export default function OrdersClient({
   const [trackingBusy, setTrackingBusy] = useState(false);
   async function toggleTracking(next: boolean) {
     setTrackingBusy(true);
+    setMsg(null);
     try {
-      const res = await fetch("/api/dashboard/order-tracking", {
+      const res = await fetch("/api/billing/comptoir-addon", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ enabled: next }),
+        body: JSON.stringify({ enable: next }),
       });
+      const d = await res.json().catch(() => ({}));
       if (res.ok) {
         setTrackingOn(next);
         if (!next) {
           setPosOpen(false);
           setCounterQr(null);
         }
+        if (next && d.billed) {
+          setMsg("✅ Option activée (+12 €/mois, facturée au prorata).");
+        }
       } else {
-        const d = await res.json().catch(() => ({}));
         setMsg(
-          d.error === "not_ready"
+          d.error === "subscribe_first"
+            ? "Abonnez-vous d'abord, puis ajoutez l'option (+12 €/mois)."
+            : d.error === "addon_not_configured"
+            ? "Option pas encore disponible — réessayez plus tard."
+            : d.error === "not_ready"
             ? "Lancez d'abord la migration SQL (order_tracking) dans Supabase."
             : "Impossible de modifier l'option. Réessayez."
         );
@@ -796,6 +804,13 @@ export default function OrdersClient({
               Le <b>bipeur digital</b> : le client scanne un QR, prend un numéro
               et reçoit une alerte quand c'est prêt. Compatible avec votre caisse
               actuelle — vous pouvez aussi saisir une commande au comptoir.
+              {!trackingOn && (
+                <>
+                  {" "}
+                  <b>+12 €/mois</b> (inclus pendant l'essai et dans la formule
+                  Comptoir).
+                </>
+              )}
             </p>
           </div>
           <button
