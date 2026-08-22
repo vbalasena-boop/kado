@@ -42,7 +42,9 @@ export function hasComptoir(b: {
   subscription_status: string;
   order_tracking?: boolean | null;
 }): boolean {
-  if (b.plan === "comptoir") return true;
+  // Inclus dans les formules « Comptoir » et « Complet » (tout Kado), et
+  // pendant l'essai. Sinon, activable en option (drapeau order_tracking).
+  if (b.plan === "comptoir" || b.plan === "complet") return true;
   if (b.subscription_status === "trial") return true;
   return !!b.order_tracking;
 }

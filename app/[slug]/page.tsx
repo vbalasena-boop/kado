@@ -102,9 +102,13 @@ export default async function Page({
   } catch {
     orderEnabled = false;
   }
-  // Essai gratuit : la commande est ouverte aussi — mais le bouton public
-  // n'apparaît que si le commerçant a déjà mis des produits au catalogue.
-  if (!orderEnabled && biz.subscription_status === "trial") {
+  // Essai gratuit ou formule « Complet » (tout inclus) : la commande est
+  // ouverte — mais le bouton public n'apparaît que si le commerçant a déjà
+  // mis des produits au catalogue.
+  if (
+    !orderEnabled &&
+    (biz.subscription_status === "trial" || (biz as any).plan === "complet")
+  ) {
     try {
       const { count } = await supa
         .from("products")

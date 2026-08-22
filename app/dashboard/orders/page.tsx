@@ -42,8 +42,11 @@ export default async function OrdersPage() {
   }
   // Essai gratuit : toutes les options sont ouvertes, commande incluse.
   if (business.subscription_status === "trial") enabled = true;
-  // Plan « Comptoir seul » : accès aux commandes + suivi au comptoir inclus.
-  if ((business as any).plan === "comptoir") {
+  // Plans « Comptoir » et « Complet » : commandes + suivi au comptoir inclus.
+  if (
+    (business as any).plan === "comptoir" ||
+    (business as any).plan === "complet"
+  ) {
     enabled = true;
     tracking = true;
   }

@@ -37,10 +37,11 @@ export async function POST(req: NextRequest) {
     return true;
   }
 
-  // Inclus d'office : essai gratuit et plan « Comptoir » — pas de facturation.
+  // Inclus d'office : essai gratuit, plan « Comptoir » et plan « Complet ».
   const included =
     business.subscription_status === "trial" ||
-    (business as any).plan === "comptoir";
+    (business as any).plan === "comptoir" ||
+    (business as any).plan === "complet";
   if (included) {
     const ok = await setFlag(enable);
     if (!ok) return Response.json({ error: "not_ready" }, { status: 409 });
