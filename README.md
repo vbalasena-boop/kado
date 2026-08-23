@@ -6,7 +6,7 @@ Chaque client scanne un QR code, débloque **2 tours** (un pour un suivi Instagr
 pour un avis Google) et gagne un cadeau.
 
 > Projet cadré avec la **BMAD Method** — voir `docs/brief.md`, `docs/prd.md`,
-> `docs/architecture.md`.
+> `docs/architecture.md`. Pour installer BMAD dans Claude Code : `docs/bmad-install.md`.
 
 ---
 

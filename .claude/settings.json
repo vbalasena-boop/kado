@@ -1,0 +1,10 @@
+{
+  "extraKnownMarketplaces": {
+    "bmad-plugins": {
+      "source": {
+        "source": "github",
+        "repo": "bmad-code-org/bmad-plugins-marketplace"
+      }
+    }
+  }
+}
