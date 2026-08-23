@@ -1,19 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { subscribeWithCurrentKey } from "@/lib/push-client";
 
 function euros(cents: number) {
   return (cents / 100).toLocaleString("fr-FR", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
-}
-
-/** Convertit la clé VAPID publique au format attendu par le navigateur. */
-function vapidKey(base64: string) {
-  const padding = "=".repeat((4 - (base64.length % 4)) % 4);
-  const raw = atob((base64 + padding).replace(/-/g, "+").replace(/_/g, "/"));
-  return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
 }
 
 export default function TrackerClient({
@@ -183,12 +177,7 @@ export default function TrackerClient({
         setAlert("ko");
         return;
       }
-      const sub =
-        (await reg.pushManager.getSubscription()) ??
-        (await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: vapidKey(key),
-        }));
+      const sub = await subscribeWithCurrentKey(reg, key);
       const json = sub.toJSON();
       const r = await fetch("/api/order/subscribe", {
         method: "POST",

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { subscribeWithCurrentKey } from "@/lib/push-client";
 
 type CardData = {
   code: string;
@@ -100,15 +101,7 @@ export default function LoyaltyCard({
         setPushState("off");
         return;
       }
-      const padding = "=".repeat((4 - (key.length % 4)) % 4);
-      const raw = atob((key + padding).replace(/-/g, "+").replace(/_/g, "/"));
-      const appKey = Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
-      const sub =
-        (await reg.pushManager.getSubscription()) ??
-        (await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: appKey,
-        }));
+      const sub = await subscribeWithCurrentKey(reg, key);
       const json = sub.toJSON();
       const ok = await fetch("/api/push", {
         method: "POST",

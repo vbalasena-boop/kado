@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { subscribeWithCurrentKey } from "@/lib/push-client";
 
 /** Bipeur intégré : son + vibration quand la commande passe « prête ». */
 function playReadyBuzz(ctx: AudioContext | null) {
@@ -46,12 +47,6 @@ function euros(cents: number) {
   });
 }
 
-/** Convertit la clé VAPID publique au format attendu par le navigateur. */
-function vapidKey(base64: string) {
-  const padding = "=".repeat((4 - (base64.length % 4)) % 4);
-  const raw = atob((base64 + padding).replace(/-/g, "+").replace(/_/g, "/"));
-  return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
-}
 
 /**
  * Abonne CET appareil aux notifications, pour être prévenu quand la commande
@@ -78,12 +73,7 @@ async function subscribeForReady(): Promise<
     const res = await fetch("/api/push");
     const { key } = await res.json();
     if (!key) return null;
-    const sub =
-      (await reg.pushManager.getSubscription()) ??
-      (await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: vapidKey(key),
-      }));
+    const sub = await subscribeWithCurrentKey(reg, key);
     const json = sub.toJSON();
     if (!json.endpoint) return null;
     return { endpoint: json.endpoint, keys: json.keys ?? {} };

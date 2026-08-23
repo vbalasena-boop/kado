@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/icons";
+import { subscribeWithCurrentKey } from "@/lib/push-client";
 
 /** Scanner de QR de retrait (caméra + jsQR), rendu dans un volet plein écran. */
 function QrScanner({
@@ -430,13 +431,6 @@ export default function OrdersClient({
     }
   }
 
-  /** Convertit la clé VAPID publique au format attendu par le navigateur. */
-  function vapidKey(base64: string) {
-    const padding = "=".repeat((4 - (base64.length % 4)) % 4);
-    const raw = atob((base64 + padding).replace(/-/g, "+").replace(/_/g, "/"));
-    return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
-  }
-
   /** Abonne cet appareil aux notifications push (téléphone verrouillé). */
   async function subscribePush(reg: ServiceWorkerRegistration) {
     try {
@@ -445,12 +439,7 @@ export default function OrdersClient({
       const res = await fetch("/api/dashboard/push");
       const { key } = await res.json();
       if (!key) return; // clés VAPID pas encore configurées
-      const sub =
-        (await reg.pushManager.getSubscription()) ??
-        (await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: vapidKey(key),
-        }));
+      const sub = await subscribeWithCurrentKey(reg, key);
       const json = sub.toJSON();
       await fetch("/api/dashboard/push", {
         method: "POST",

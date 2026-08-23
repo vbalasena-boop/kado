@@ -1,13 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
-/** Convertit la clé VAPID publique au format attendu par le navigateur. */
-function vapidKey(base64: string) {
-  const padding = "=".repeat((4 - (base64.length % 4)) % 4);
-  const raw = atob((base64 + padding).replace(/-/g, "+").replace(/_/g, "/"));
-  return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
-}
+import { subscribeWithCurrentKey } from "@/lib/push-client";
 
 /** Bouton autonome : abonne CET appareil aux notifications du commerçant. */
 export function EnableNotifications() {
@@ -34,12 +28,7 @@ export function EnableNotifications() {
       const res = await fetch("/api/dashboard/push");
       const { key } = await res.json();
       if (!key) return; // clés VAPID pas configurées
-      const sub =
-        (await reg.pushManager.getSubscription()) ??
-        (await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: vapidKey(key),
-        }));
+      const sub = await subscribeWithCurrentKey(reg, key);
       const json = sub.toJSON();
       await fetch("/api/dashboard/push", {
         method: "POST",
