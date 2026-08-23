@@ -35,8 +35,9 @@ export async function POST(req: NextRequest) {
   const stripe = getStripe();
 
   try {
-    let acct = await getAccountId(db, business.id);
-    if (!acct) {
+    // Crée un compte Express neuf et l'enregistre (readiness remise à zéro).
+    // Renvoie l'id, ou null si les colonnes paiement manquent (migration 0040).
+    async function createAccount(): Promise<string | null> {
       const account = await stripe.accounts.create({
         type: "express",
         country: "FR",
@@ -46,24 +47,45 @@ export async function POST(req: NextRequest) {
           transfers: { requested: true },
         },
         business_type: "individual",
-        metadata: { business_id: business.id },
+        metadata: { business_id: business!.id },
       });
-      acct = account.id;
       const { error } = await db
         .from("businesses")
-        .update({ stripe_account_id: acct })
-        .eq("id", business.id);
-      if (error) {
-        return Response.json({ error: "not_ready" }, { status: 409 });
-      }
+        .update({ stripe_account_id: account.id, stripe_account_ready: false })
+        .eq("id", business!.id);
+      return error ? null : account.id;
     }
 
-    const link = await stripe.accountLinks.create({
-      account: acct,
-      refresh_url: `${origin}/dashboard/orders?connect=refresh`,
-      return_url: `${origin}/dashboard/orders?connect=done`,
-      type: "account_onboarding",
-    });
+    async function onboardingLink(account: string) {
+      return stripe.accountLinks.create({
+        account,
+        refresh_url: `${origin}/dashboard/orders?connect=refresh`,
+        return_url: `${origin}/dashboard/orders?connect=done`,
+        type: "account_onboarding",
+      });
+    }
+
+    let acct = await getAccountId(db, business.id);
+    if (!acct) {
+      acct = await createAccount();
+      if (!acct) return Response.json({ error: "not_ready" }, { status: 409 });
+    }
+
+    let link;
+    try {
+      link = await onboardingLink(acct);
+    } catch (e: any) {
+      // Compte stocké introuvable (supprimé, ou créé dans l'autre mode
+      // test/live) → on en recrée un propre et on réessaie une seule fois.
+      if (e?.code === "resource_missing" || e?.statusCode === 404) {
+        const fresh = await createAccount();
+        if (!fresh)
+          return Response.json({ error: "not_ready" }, { status: 409 });
+        link = await onboardingLink(fresh);
+      } else {
+        throw e;
+      }
+    }
     return Response.json({ url: link.url });
   } catch (e: any) {
     return Response.json(
@@ -87,7 +109,25 @@ export async function GET(req: NextRequest) {
   try {
     const acct = await getAccountId(db, business.id);
     if (!acct) return Response.json({ connected: false, ready: false });
-    const account = await stripe.accounts.retrieve(acct);
+    let account;
+    try {
+      account = await stripe.accounts.retrieve(acct);
+    } catch (e: any) {
+      // Compte introuvable dans ce mode (bascule test↔live) → on l'oublie
+      // pour qu'un prochain « Connecter Stripe » en crée un propre.
+      if (e?.code === "resource_missing" || e?.statusCode === 404) {
+        try {
+          await db
+            .from("businesses")
+            .update({ stripe_account_id: null, stripe_account_ready: false })
+            .eq("id", business.id);
+        } catch {
+          /* colonnes absentes */
+        }
+        return Response.json({ connected: false, ready: false });
+      }
+      throw e;
+    }
     const ready = !!account.charges_enabled;
     await db
       .from("businesses")
