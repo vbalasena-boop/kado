@@ -294,6 +294,8 @@ export default function OrdersClient({
         setMsg(
           d.error === "not_ready"
             ? "Lancez d'abord la migration SQL (paiement) dans Supabase."
+            : d.detail
+            ? "Stripe : " + d.detail
             : "Stripe indisponible. Réessayez."
         );
         setPayBusy(false);
