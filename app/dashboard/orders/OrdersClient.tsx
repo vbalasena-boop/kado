@@ -336,6 +336,13 @@ export default function OrdersClient({
       setPayBusy(false);
     }
   }
+  // Choix « paiement en ligne » : active si Stripe est prêt, sinon lance la
+  // connexion Stripe (l'onboarding). Le mode « en caisse » = online_payment off.
+  function chooseOnline() {
+    if (payOn) return; // déjà en ligne
+    if (payReadyOn) toggleOnlinePayment(true);
+    else connectStripe();
+  }
   async function toggleTracking(next: boolean) {
     setTrackingBusy(true);
     setMsg(null);
@@ -1159,43 +1166,76 @@ export default function OrdersClient({
         )}
       </div>
 
-      {/* ---- Paiement en ligne (Stripe Connect) ---- */}
+      {/* ---- Mode de paiement (en caisse / en ligne via Stripe) ---- */}
       <div className={`dash-card opt-card${payOn ? " on" : ""}`}>
         <div className="opt-head">
           <div>
             <h2>
-              💳 Paiement en ligne{" "}
-              {payOn && <span className="opt-badge">Activé</span>}
+              💳 Mode de paiement{" "}
+              {payOn && <span className="opt-badge">En ligne</span>}
             </h2>
             <p className="muted" style={{ margin: "2px 0 0" }}>
-              Vos clients <b>paient d'avance</b> leur commande — fini les
-              no-shows. L'argent arrive <b>directement sur votre compte</b> (via
-              Stripe). Sans paiement en ligne, le client règle sur place comme
-              aujourd'hui.
+              Choisissez comment vos clients règlent leur commande click&amp;collect.
             </p>
           </div>
-          {!payReadyOn ? (
+        </div>
+
+        <div className="pay-choice">
+          {/* En caisse / sur place */}
+          <button
+            type="button"
+            className={`pay-opt${!payOn ? " sel" : ""}`}
+            disabled={payBusy}
+            onClick={() => payOn && toggleOnlinePayment(false)}
+          >
+            {!payOn && <span className="pay-opt-tag">Actif</span>}
+            <span className="pay-opt-emoji">🏪</span>
+            <span className="pay-opt-title">En caisse / sur place</span>
+            <span className="pay-opt-desc">
+              Le client règle au comptoir, au retrait. Rien à configurer, ça
+              marche tout de suite.
+            </span>
+          </button>
+
+          {/* En ligne (Stripe) */}
+          <button
+            type="button"
+            className={`pay-opt${payOn ? " sel" : ""}`}
+            disabled={payBusy}
+            onClick={chooseOnline}
+          >
+            {payOn && <span className="pay-opt-tag">Actif</span>}
+            <span className="pay-opt-emoji">💳</span>
+            <span className="pay-opt-title">En ligne (Stripe)</span>
+            <span className="pay-opt-desc">
+              Le client <b>paie d'avance</b> — fini les no-shows. L'argent arrive{" "}
+              <b>directement sur votre compte</b>.
+            </span>
+            {!payReadyOn && (
+              <span className="pay-opt-note">⚠️ Nécessite de connecter Stripe</span>
+            )}
+          </button>
+        </div>
+
+        {!payReadyOn && (
+          <div className="pay-connect">
             <button className="btn" disabled={payBusy} onClick={connectStripe}>
               {payBusy
                 ? "…"
                 : payConnected
-                ? "Terminer la config Stripe"
-                : "Connecter Stripe"}
+                ? "Terminer la configuration Stripe"
+                : "Connecter Stripe pour encaisser en ligne"}
             </button>
-          ) : (
-            <button
-              className={payOn ? "btn-secondary" : "btn"}
-              disabled={payBusy}
-              onClick={() => toggleOnlinePayment(!payOn)}
-            >
-              {payBusy ? "…" : payOn ? "Désactiver" : "Activer l'encaissement"}
-            </button>
-          )}
-        </div>
-        {payReadyOn && !payOn && (
+            <p className="muted" style={{ fontSize: 13, marginTop: 8 }}>
+              Gratuit à mettre en place. Vous restez en « sur place » tant que
+              vous n'avez pas terminé.
+            </p>
+          </div>
+        )}
+        {payReadyOn && (
           <p className="muted" style={{ marginTop: 10, fontSize: 13 }}>
-            ✅ Compte Stripe connecté. Cliquez « Activer l'encaissement » pour que
-            vos clients paient en ligne.
+            ✅ Compte Stripe connecté — vous pouvez basculer d'un mode à l'autre
+            quand vous voulez.
           </p>
         )}
       </div>

@@ -5045,9 +5045,33 @@ html { scroll-behavior: smooth; }
 .order-card.is-buzzer { border-left: 4px solid #f5b841; }
 /* Carte option « Suivi au comptoir » */
 .opt-card.on { border-left: 4px solid #1a7a4a; }
-.opt-head { display: flex; align-items: flex-start; gap: 16px; justify-content: space-between; }
-.opt-head h2 { display: flex; align-items: center; gap: 10px; }
-.opt-head > button { flex: 0 0 auto; white-space: nowrap; }
+.opt-head { display: flex; align-items: center; gap: 18px; justify-content: space-between; }
+.opt-head > div { flex: 1 1 auto; min-width: 0; }
+.opt-head h2 { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+/* Le .btn de base fait width:100% ; dans une carte option il doit rester compact. */
+.opt-head > button { flex: 0 0 auto; width: auto; min-width: 190px; white-space: nowrap; }
+
+/* Carte paiement : choix du mode (en caisse / en ligne) */
+.pay-choice { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+.pay-opt {
+  position: relative; text-align: left; cursor: pointer;
+  border: 2px solid #e3e3e8; border-radius: 16px; background: #fff;
+  padding: 16px 16px 18px; display: flex; flex-direction: column; gap: 6px;
+  transition: border-color .15s, box-shadow .15s, background .15s;
+}
+.pay-opt:hover:not(:disabled) { border-color: #c7c7d2; }
+.pay-opt.sel { border-color: var(--g-blue); background: #f4f8ff; box-shadow: 0 8px 20px -12px rgba(26,115,232,.55); }
+.pay-opt:disabled { cursor: not-allowed; opacity: .7; }
+.pay-opt-emoji { font-size: 26px; line-height: 1; }
+.pay-opt-title { font-weight: 800; font-size: 15px; color: #202124; }
+.pay-opt-desc { font-size: 13px; color: #5f6368; line-height: 1.45; }
+.pay-opt-tag {
+  position: absolute; top: 12px; right: 12px; font-size: 11px; font-weight: 800;
+  color: #1a7a4a; background: #e6f4ec; padding: 3px 9px; border-radius: 999px;
+}
+.pay-opt-note { font-size: 12px; font-weight: 700; color: #b26b00; margin-top: 2px; }
+.pay-connect { margin-top: 14px; }
+@media (max-width: 640px) { .pay-choice { grid-template-columns: 1fr; } }
 .opt-badge {
   background: #eef7ee; color: #1a7a4a; border: 1px solid #cfe8cf;
   border-radius: 999px; padding: 2px 12px; font-size: 12px; font-weight: 800;
