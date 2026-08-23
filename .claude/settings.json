@@ -1,9 +1,9 @@
 {
   "extraKnownMarketplaces": {
-    "bmad-plugins": {
+    "bmad-plugin": {
       "source": {
         "source": "github",
-        "repo": "bmad-code-org/bmad-plugins-marketplace"
+        "repo": "PabloLION/bmad-plugin"
       }
     }
   }
