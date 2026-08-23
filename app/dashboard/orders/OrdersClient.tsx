@@ -616,11 +616,24 @@ export default function OrdersClient({
   async function setStatus(id: string, status: string) {
     setBusy(true);
     try {
-      await fetch("/api/dashboard/orders", {
+      const res = await fetch("/api/dashboard/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, status }),
       });
+      const d = await res.json().catch(() => ({}));
+      // Quand on passe une commande « prête », on montre au commerçant si le
+      // client a bien été prévenu (e-mail + notification), pour lever le doute.
+      if (status === "ready" && d?.notified) {
+        const bits: string[] = [];
+        if (d.notified.email === "sent") bits.push("e-mail envoyé");
+        if (d.notified.push === "sent") bits.push("notification envoyée 📲");
+        else if (d.notified.push === "failed")
+          bits.push("notification impossible (appareil injoignable)");
+        if (d.notified.push === "none" && d.notified.email === "none")
+          bits.push("client non abonné aux alertes");
+        setMsg(bits.length ? "Client prévenu : " + bits.join(" · ") : null);
+      }
       router.refresh();
     } finally {
       setBusy(false);

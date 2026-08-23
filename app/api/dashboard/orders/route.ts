@@ -118,23 +118,28 @@ export async function POST(req: NextRequest) {
 
   // Commande prête → on prévient le client (e-mail + push), en best effort :
   // aucune de ces étapes ne doit faire échouer la mise à jour de statut.
+  // On renvoie le résultat au commerçant pour qu'il sache ce qui est parti.
+  let pushResult: "sent" | "failed" | "none" = "none";
+  let emailResult: "sent" | "none" = "none";
   if (next === "ready") {
     const homeUrl = `/${business.slug}/commander`;
     // Push vers l'appareil du client (s'il l'a demandé à la commande)
     try {
       if (order.notify_push) {
-        await sendPushToSubscription(order.notify_push, {
+        const ok = await sendPushToSubscription(order.notify_push, {
           title: `✅ Votre commande est prête !`,
           body: `${business.name} — commande ${order.code}. Venez la récupérer 🎉`,
           url: homeUrl,
         });
+        pushResult = ok ? "sent" : "failed";
       }
     } catch {
-      /* push best effort */
+      pushResult = "failed"; // push best effort
     }
     // E-mail au client (s'il a laissé son adresse)
     try {
       if (order.customer_email) {
+        emailResult = "sent";
         await sendEmail({
           to: order.customer_email,
           subject: `Votre commande ${order.code} est prête chez ${business.name}`,
@@ -175,6 +180,7 @@ export async function POST(req: NextRequest) {
 
   return Response.json({
     ok: true,
+    notified: { push: pushResult, email: emailResult },
     order: {
       code: order.code,
       customer_name: order.customer_name,
