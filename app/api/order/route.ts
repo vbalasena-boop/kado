@@ -6,6 +6,7 @@ import { sendEmail, emailLayout, getOwnerContact } from "@/lib/email";
 import { escapeHtml } from "@/lib/campaigns";
 import { isOpenNow, nextOpeningLabel, type OrderHours } from "@/lib/hours";
 import { sendPushToBusiness } from "@/lib/push";
+import { getStripe } from "@/lib/stripe";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -91,16 +92,29 @@ export async function POST(req: NextRequest) {
   }
 
   const db = getAdminClient();
-  const { data: biz } = await db
+  // Lecture tolérante : online_payment / stripe_account_* peuvent manquer
+  // (migration 0040 non appliquée).
+  const bizBase =
+    "id, name, slug, status, subscription_status, subscription_ends_at, click_collect, plan";
+  let { data: biz, error: bizErr } = (await db
     .from("businesses")
-    .select("id, name, slug, status, subscription_status, subscription_ends_at, click_collect")
+    .select(
+      `${bizBase}, online_payment, stripe_account_id, stripe_account_ready`
+    )
     .eq("slug", body.slug)
-    .maybeSingle();
-  // Commande ouverte si l'option est activée — ou pendant l'essai gratuit
-  // (toutes les options sont ouvertes pour tester).
+    .maybeSingle()) as { data: any; error: any };
+  if (bizErr) {
+    ({ data: biz } = (await db
+      .from("businesses")
+      .select(bizBase)
+      .eq("slug", body.slug)
+      .maybeSingle()) as { data: any; error: any });
+  }
+  // Commande ouverte si l'option est activée, pendant l'essai, ou en Complet.
   const orderOn =
     !!(biz as any)?.click_collect ||
-    (biz as any)?.subscription_status === "trial";
+    (biz as any)?.subscription_status === "trial" ||
+    (biz as any)?.plan === "complet";
   if (!biz || !orderOn) {
     return Response.json({ error: "not_found" }, { status: 404 });
   }
@@ -147,6 +161,13 @@ export async function POST(req: NextRequest) {
     total += p.price_cents * qty;
   }
 
+  // Paiement en ligne activé + compte Stripe du commerçant prêt ?
+  const wantsOnline =
+    total > 0 &&
+    (biz as any).online_payment === true &&
+    (biz as any).stripe_account_ready === true &&
+    !!(biz as any).stripe_account_id;
+
   const code = pickupCode();
   const baseInsert: Record<string, unknown> = {
     business_id: biz.id,
@@ -157,7 +178,9 @@ export async function POST(req: NextRequest) {
     note: note || null,
     items: lines,
     total_cents: total,
-    status: "new",
+    // Paiement en ligne : la commande attend le règlement avant d'apparaître
+    // chez le commerçant. Sinon, directement « à préparer ».
+    status: wantsOnline ? "awaiting_payment" : "new",
   };
   // Insertion tolérante : les colonnes customer_email / notify_push peuvent ne
   // pas encore exister (migrations 0021 / 0036 non appliquées).
@@ -177,6 +200,68 @@ export async function POST(req: NextRequest) {
       { error: "save_failed", detail: error.message },
       { status: 500 }
     );
+  }
+
+  // ---- Paiement en ligne (Stripe Connect) : l'argent va au commerçant ----
+  if (wantsOnline) {
+    try {
+      const stripe = getStripe();
+      const origin = new URL(req.url).origin;
+      // Commission plateforme optionnelle (en points de base, ex. 150 = 1,5 %).
+      const feeBps = parseInt(process.env.KADO_ORDER_FEE_BPS || "0", 10) || 0;
+      const appFee = feeBps > 0 ? Math.round((total * feeBps) / 10000) : 0;
+      const session = await stripe.checkout.sessions.create({
+        mode: "payment",
+        line_items: lines.map((l) => ({
+          quantity: l.qty,
+          price_data: {
+            currency: "eur",
+            unit_amount: l.price_cents,
+            product_data: { name: l.name },
+          },
+        })),
+        payment_intent_data: {
+          transfer_data: { destination: (biz as any).stripe_account_id },
+          ...(appFee > 0 ? { application_fee_amount: appFee } : {}),
+          description: `Commande ${code} · ${biz.name}`,
+        },
+        ...(email ? { customer_email: email } : {}),
+        success_url: `${origin}/${biz.slug}/suivi/${code}`,
+        cancel_url: `${origin}/${biz.slug}/commander?canceled=1`,
+        metadata: { kind: "order", order_code: code, business_id: biz.id },
+      });
+      // Mémorise la session pour réconciliation (best effort).
+      try {
+        await db
+          .from("orders")
+          .update({ stripe_session_id: session.id })
+          .eq("business_id", biz.id)
+          .eq("code", code);
+      } catch {
+        /* colonne absente : ignoré */
+      }
+      return Response.json({
+        ok: true,
+        code,
+        total_cents: total,
+        checkoutUrl: session.url,
+      });
+    } catch (e: any) {
+      // Échec de création du paiement : on annule la commande en attente.
+      try {
+        await db
+          .from("orders")
+          .update({ status: "cancelled" })
+          .eq("business_id", biz.id)
+          .eq("code", code);
+      } catch {
+        /* ignore */
+      }
+      return Response.json(
+        { error: "payment_failed", detail: e?.message ?? "stripe" },
+        { status: 500 }
+      );
+    }
   }
 
   // Notification push au commerçant, même téléphone verrouillé (best effort)

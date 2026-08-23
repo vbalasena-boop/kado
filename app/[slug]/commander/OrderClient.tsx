@@ -107,6 +107,7 @@ export default function OrderClient({
   products,
   open = true,
   nextOpen = null,
+  payOnline = false,
 }: {
   slug: string;
   name: string;
@@ -114,6 +115,7 @@ export default function OrderClient({
   products: Product[];
   open?: boolean;
   nextOpen?: string | null;
+  payOnline?: boolean;
 }) {
   const [qty, setQty] = useState<Record<string, number>>({});
   const [checkout, setCheckout] = useState(false);
@@ -270,7 +272,11 @@ export default function OrderClient({
         }),
       });
       const d = await res.json().catch(() => ({}));
-      if (res.ok) {
+      if (res.ok && d.checkoutUrl) {
+        // Paiement en ligne : redirection vers la page sécurisée Stripe.
+        window.location.href = d.checkoutUrl;
+        return;
+      } else if (res.ok) {
         setDone({ code: d.code, total: d.total_cents });
         setCheckout(false);
       } else if (res.status === 429) {
@@ -603,11 +609,16 @@ export default function OrderClient({
               </label>
               {err && <p className="uber-err">{err}</p>}
               <button className="uber-submit" disabled={busy || count === 0}>
-                {busy ? "Envoi…" : `Commander — ${euros(total)} €`}
+                {busy
+                  ? "Envoi…"
+                  : payOnline
+                  ? `Payer ${euros(total)} € →`
+                  : `Commander — ${euros(total)} €`}
               </button>
               <p className="uber-fine">
-                En commandant, vous acceptez d'être contacté par le commerce au
-                sujet de votre commande.
+                {payOnline
+                  ? "Paiement 100 % sécurisé par Stripe. Vous récupérez votre commande sur place."
+                  : "En commandant, vous acceptez d'être contacté par le commerce au sujet de votre commande."}
               </p>
             </form>
           </div>

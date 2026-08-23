@@ -33,18 +33,27 @@ export default async function CommanderPage({
   }
 
   let biz: any = null;
+  const bizCols =
+    "id, slug, name, logo_url, status, subscription_status, subscription_ends_at, click_collect, plan";
   try {
-    const { data } = await db
+    // Lecture tolérante : online_payment / stripe_account_ready peuvent manquer.
+    let { data, error } = (await db
       .from("businesses")
-      .select(
-        "id, slug, name, logo_url, status, subscription_status, subscription_ends_at, click_collect, plan"
-      )
+      .select(`${bizCols}, online_payment, stripe_account_ready`)
       .eq("slug", params.slug)
-      .maybeSingle();
+      .maybeSingle()) as { data: any; error: any };
+    if (error) {
+      ({ data } = (await db
+        .from("businesses")
+        .select(bizCols)
+        .eq("slug", params.slug)
+        .maybeSingle()) as { data: any; error: any });
+    }
     biz = data;
   } catch {
     biz = null;
   }
+  const payOnline = !!biz?.online_payment && !!biz?.stripe_account_ready;
 
   // Option activée, essai gratuit, ou formule « Complet » (tout inclus).
   const orderOn =
@@ -142,6 +151,7 @@ export default async function CommanderPage({
         products={products}
         open={open}
         nextOpen={nextOpen}
+        payOnline={payOnline}
       />
     </>
   );

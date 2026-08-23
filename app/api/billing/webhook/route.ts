@@ -112,6 +112,27 @@ export async function POST(req: NextRequest) {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
+
+        // Paiement d'une COMMANDE (click & collect) — la commande passe de
+        // « en attente de paiement » à « à préparer », marquée payée.
+        if (session.metadata?.kind === "order") {
+          const code = session.metadata.order_code;
+          const bizId = session.metadata.business_id;
+          if (code && bizId && session.payment_status === "paid") {
+            try {
+              await getAdminClient()
+                .from("orders")
+                .update({ status: "new", paid: true })
+                .eq("business_id", bizId)
+                .eq("code", code)
+                .eq("status", "awaiting_payment");
+            } catch {
+              /* colonnes absentes : ignoré */
+            }
+          }
+          break;
+        }
+
         if (session.subscription) {
           const sub = await stripe.subscriptions.retrieve(
             session.subscription as string
@@ -371,6 +392,23 @@ export async function POST(req: NextRequest) {
       case "customer.subscription.updated":
       case "customer.subscription.deleted": {
         await applySubscription(event.data.object as Stripe.Subscription);
+        break;
+      }
+      case "account.updated": {
+        // Compte Stripe Connect d'un commerçant : synchronise l'état
+        // « paiements activés » (peut passer à true après l'onboarding).
+        const account = event.data.object as Stripe.Account;
+        const bizId = account.metadata?.business_id;
+        try {
+          const db = getAdminClient();
+          const q = db
+            .from("businesses")
+            .update({ stripe_account_ready: !!account.charges_enabled });
+          if (bizId) await q.eq("id", bizId);
+          else await q.eq("stripe_account_id", account.id);
+        } catch {
+          /* colonne absente : ignoré */
+        }
         break;
       }
       case "invoice.payment_failed": {

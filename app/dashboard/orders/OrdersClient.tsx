@@ -161,6 +161,7 @@ export type Order = {
   service_mode?: string | null;
   table_label?: string | null;
   buzzer_no?: number | null;
+  paid?: boolean | null;
 };
 
 function euros(cents: number) {
@@ -199,6 +200,9 @@ export default function OrdersClient({
   stats,
   hours,
   tracking = false,
+  payConnected = false,
+  payReady = false,
+  onlinePayment = false,
 }: {
   slug: string;
   products: Product[];
@@ -206,6 +210,9 @@ export default function OrdersClient({
   stats: OrderStats;
   hours: Hours;
   tracking?: boolean;
+  payConnected?: boolean;
+  payReady?: boolean;
+  onlinePayment?: boolean;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -248,6 +255,84 @@ export default function OrdersClient({
   }
   const [trackingOn, setTrackingOn] = useState(tracking);
   const [trackingBusy, setTrackingBusy] = useState(false);
+
+  // ---- Paiement en ligne (Stripe Connect) ----
+  const [payReadyOn, setPayReadyOn] = useState(payReady);
+  const [payOn, setPayOn] = useState(onlinePayment);
+  const [payBusy, setPayBusy] = useState(false);
+  // Au retour de l'onboarding Stripe (?connect=done), on rafraîchit l'état.
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    if (sp.get("connect") === "done") {
+      (async () => {
+        try {
+          const r = await fetch("/api/billing/connect");
+          const d = await r.json().catch(() => ({}));
+          if (d?.ready) {
+            setPayReadyOn(true);
+            setMsg("✅ Compte Stripe connecté — vous pouvez encaisser en ligne.");
+          } else {
+            setMsg("Compte Stripe presque prêt — finalisez la configuration.");
+          }
+        } catch {
+          /* ignore */
+        }
+      })();
+      // nettoie l'URL
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
+  async function connectStripe() {
+    setPayBusy(true);
+    setMsg(null);
+    try {
+      const r = await fetch("/api/billing/connect", { method: "POST" });
+      const d = await r.json().catch(() => ({}));
+      if (r.ok && d.url) {
+        window.location.href = d.url;
+      } else {
+        setMsg(
+          d.error === "not_ready"
+            ? "Lancez d'abord la migration SQL (paiement) dans Supabase."
+            : "Stripe indisponible. Réessayez."
+        );
+        setPayBusy(false);
+      }
+    } catch {
+      setMsg("Erreur réseau. Réessayez.");
+      setPayBusy(false);
+    }
+  }
+  async function toggleOnlinePayment(next: boolean) {
+    setPayBusy(true);
+    setMsg(null);
+    try {
+      const r = await fetch("/api/dashboard/online-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled: next }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (r.ok) {
+        setPayOn(next);
+        setMsg(
+          next
+            ? "✅ Encaissement en ligne activé."
+            : "Encaissement en ligne désactivé (paiement sur place)."
+        );
+      } else {
+        setMsg(
+          d.error === "connect_first"
+            ? "Connectez d'abord votre compte Stripe."
+            : "Impossible de modifier. Réessayez."
+        );
+      }
+    } catch {
+      setMsg("Erreur réseau. Réessayez.");
+    } finally {
+      setPayBusy(false);
+    }
+  }
   async function toggleTracking(next: boolean) {
     setTrackingBusy(true);
     setMsg(null);
@@ -718,7 +803,11 @@ export default function OrdersClient({
                 ))}
               </ul>
               <div className="order-total">
-                Total à encaisser : <b>{euros(o.total_cents)} €</b>
+                {o.paid ? (
+                  <>✅ Payé en ligne : <b>{euros(o.total_cents)} €</b></>
+                ) : (
+                  <>Total à encaisser : <b>{euros(o.total_cents)} €</b></>
+                )}
               </div>
             </>
           )}
@@ -1059,6 +1148,47 @@ export default function OrdersClient({
           <p className="muted" style={{ marginTop: 10, fontSize: 13 }}>
             👉 Utilisez les boutons <b>« 🎫 QR de suivi (comptoir) »</b> et
             <b> « 🧾 Nouvelle commande (caisse) »</b> tout en haut.
+          </p>
+        )}
+      </div>
+
+      {/* ---- Paiement en ligne (Stripe Connect) ---- */}
+      <div className={`dash-card opt-card${payOn ? " on" : ""}`}>
+        <div className="opt-head">
+          <div>
+            <h2>
+              💳 Paiement en ligne{" "}
+              {payOn && <span className="opt-badge">Activé</span>}
+            </h2>
+            <p className="muted" style={{ margin: "2px 0 0" }}>
+              Vos clients <b>paient d'avance</b> leur commande — fini les
+              no-shows. L'argent arrive <b>directement sur votre compte</b> (via
+              Stripe). Sans paiement en ligne, le client règle sur place comme
+              aujourd'hui.
+            </p>
+          </div>
+          {!payReadyOn ? (
+            <button className="btn" disabled={payBusy} onClick={connectStripe}>
+              {payBusy
+                ? "…"
+                : payConnected
+                ? "Terminer la config Stripe"
+                : "Connecter Stripe"}
+            </button>
+          ) : (
+            <button
+              className={payOn ? "btn-secondary" : "btn"}
+              disabled={payBusy}
+              onClick={() => toggleOnlinePayment(!payOn)}
+            >
+              {payBusy ? "…" : payOn ? "Désactiver" : "Activer l'encaissement"}
+            </button>
+          )}
+        </div>
+        {payReadyOn && !payOn && (
+          <p className="muted" style={{ marginTop: 10, fontSize: 13 }}>
+            ✅ Compte Stripe connecté. Cliquez « Activer l'encaissement » pour que
+            vos clients paient en ligne.
           </p>
         )}
       </div>

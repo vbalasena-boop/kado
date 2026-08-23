@@ -17,27 +17,46 @@ export default async function OrdersPage() {
   // Module activé ? (lecture tolérante si la migration n'est pas passée)
   let enabled = false;
   let tracking = false;
+  let payConnected = false;
+  let payReady = false;
+  let onlinePayment = false;
   let orderHours: Record<string, [string, string] | null> | null = null;
   try {
     const { data } = await db
       .from("businesses")
-      .select("click_collect, order_hours, order_tracking")
+      .select(
+        "click_collect, order_hours, order_tracking, stripe_account_id, stripe_account_ready, online_payment"
+      )
       .eq("id", business.id)
       .maybeSingle();
     enabled = !!(data as any)?.click_collect;
     tracking = !!(data as any)?.order_tracking;
+    payConnected = !!(data as any)?.stripe_account_id;
+    payReady = !!(data as any)?.stripe_account_ready;
+    onlinePayment = !!(data as any)?.online_payment;
     orderHours = (data as any)?.order_hours ?? null;
   } catch {
-    // colonne order_hours absente : retente sans elle
+    // Colonnes paiement (0040) absentes : retente sans elles.
     try {
       const { data } = await db
         .from("businesses")
-        .select("click_collect")
+        .select("click_collect, order_hours, order_tracking")
         .eq("id", business.id)
         .maybeSingle();
       enabled = !!(data as any)?.click_collect;
+      tracking = !!(data as any)?.order_tracking;
+      orderHours = (data as any)?.order_hours ?? null;
     } catch {
-      enabled = false;
+      try {
+        const { data } = await db
+          .from("businesses")
+          .select("click_collect")
+          .eq("id", business.id)
+          .maybeSingle();
+        enabled = !!(data as any)?.click_collect;
+      } catch {
+        enabled = false;
+      }
     }
   }
   // Essai gratuit : toutes les options sont ouvertes, commande incluse.
@@ -93,7 +112,7 @@ export default async function OrdersPage() {
       "id, code, customer_name, customer_phone, pickup_at, note, items, total_cents, status, created_at";
     let { data: o, error: oErr } = (await db
       .from("orders")
-      .select(`${baseCols}, service_mode, table_label, buzzer_no`)
+      .select(`${baseCols}, service_mode, table_label, buzzer_no, paid`)
       .eq("business_id", business.id)
       .order("created_at", { ascending: false })
       .limit(150)) as { data: any[] | null; error: any };
@@ -207,6 +226,9 @@ export default async function OrdersPage() {
       stats={stats}
       hours={orderHours}
       tracking={tracking}
+      payConnected={payConnected}
+      payReady={payReady}
+      onlinePayment={onlinePayment}
     />
   );
 }

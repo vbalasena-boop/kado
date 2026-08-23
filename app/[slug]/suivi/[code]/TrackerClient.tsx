@@ -26,6 +26,7 @@ export default function TrackerClient({
   serviceMode,
   tableLabel,
   buzzerNo,
+  paid = false,
 }: {
   slug: string;
   name: string;
@@ -36,6 +37,7 @@ export default function TrackerClient({
   serviceMode: string;
   tableLabel: string | null;
   buzzerNo: number | null;
+  paid?: boolean;
 }) {
   const isBuzzer = serviceMode === "buzzer" || buzzerNo != null;
   const [status, setStatus] = useState(initialStatus);
@@ -284,7 +286,11 @@ export default function TrackerClient({
             )}
             {totalCents > 0 && (
               <p className="uber-done-total">
-                Total à régler sur place : <b>{euros(totalCents)} €</b>
+                {paid ? (
+                  <>✅ Payé en ligne : <b>{euros(totalCents)} €</b></>
+                ) : (
+                  <>Total à régler sur place : <b>{euros(totalCents)} €</b></>
+                )}
               </p>
             )}
           </>
