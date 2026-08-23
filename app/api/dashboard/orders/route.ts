@@ -3,7 +3,7 @@ import { getMyBusiness } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { sendEmail, emailLayout } from "@/lib/email";
 import { escapeHtml } from "@/lib/campaigns";
-import { sendPushToSubscription } from "@/lib/push";
+import { pushToSubscriptionDetailed } from "@/lib/push";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -120,21 +120,24 @@ export async function POST(req: NextRequest) {
   // aucune de ces étapes ne doit faire échouer la mise à jour de statut.
   // On renvoie le résultat au commerçant pour qu'il sache ce qui est parti.
   let pushResult: "sent" | "failed" | "none" = "none";
+  let pushReason = "none";
   let emailResult: "sent" | "none" = "none";
   if (next === "ready") {
     const homeUrl = `/${business.slug}/commander`;
     // Push vers l'appareil du client (s'il l'a demandé à la commande)
     try {
       if (order.notify_push) {
-        const ok = await sendPushToSubscription(order.notify_push, {
+        const res = await pushToSubscriptionDetailed(order.notify_push, {
           title: `✅ Votre commande est prête !`,
           body: `${business.name} — commande ${order.code}. Venez la récupérer 🎉`,
           url: homeUrl,
         });
-        pushResult = ok ? "sent" : "failed";
+        pushResult = res.ok ? "sent" : "failed";
+        pushReason = res.reason;
       }
     } catch {
       pushResult = "failed"; // push best effort
+      pushReason = "error";
     }
     // E-mail au client (s'il a laissé son adresse)
     try {
@@ -180,7 +183,7 @@ export async function POST(req: NextRequest) {
 
   return Response.json({
     ok: true,
-    notified: { push: pushResult, email: emailResult },
+    notified: { push: pushResult, email: emailResult, reason: pushReason },
     order: {
       code: order.code,
       customer_name: order.customer_name,

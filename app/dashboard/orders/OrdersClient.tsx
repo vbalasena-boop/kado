@@ -629,7 +629,10 @@ export default function OrdersClient({
         if (d.notified.email === "sent") bits.push("e-mail envoyé");
         if (d.notified.push === "sent") bits.push("notification envoyée 📲");
         else if (d.notified.push === "failed")
-          bits.push("notification impossible (appareil injoignable)");
+          bits.push(
+            "notification impossible" +
+              (d.notified.reason ? " [" + d.notified.reason + "]" : "")
+          );
         if (d.notified.push === "none" && d.notified.email === "none")
           bits.push("client non abonné aux alertes");
         setMsg(bits.length ? "Client prévenu : " + bits.join(" · ") : null);

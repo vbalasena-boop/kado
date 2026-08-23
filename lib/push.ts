@@ -77,10 +77,24 @@ export async function sendPushToSubscription(
   sub: { endpoint?: string; p256dh?: string; auth?: string } | null | undefined,
   payload: PushPayload
 ): Promise<boolean> {
+  return (await pushToSubscriptionDetailed(sub, payload)).ok;
+}
+
+/**
+ * Comme sendPushToSubscription, mais renvoie AUSSI une raison lisible en cas
+ * d'échec (diagnostic) : "no_keys" (clés VAPID absentes), "bad_sub"
+ * (abonnement incomplet), "http_403"/"http_410"… (réponse du service push),
+ * "error" (autre). "ok" quand la notification est acceptée par le service.
+ */
+export async function pushToSubscriptionDetailed(
+  sub: { endpoint?: string; p256dh?: string; auth?: string } | null | undefined,
+  payload: PushPayload
+): Promise<{ ok: boolean; reason: string }> {
   const pub = process.env.VAPID_PUBLIC_KEY;
   const priv = process.env.VAPID_PRIVATE_KEY;
-  if (!pub || !priv) return false;
-  if (!sub?.endpoint || !sub.p256dh || !sub.auth) return false;
+  if (!pub || !priv) return { ok: false, reason: "no_keys" };
+  if (!sub?.endpoint || !sub.p256dh || !sub.auth)
+    return { ok: false, reason: "bad_sub" };
 
   try {
     const webpush = (await import("web-push")).default;
@@ -94,9 +108,10 @@ export async function sendPushToSubscription(
       JSON.stringify(payload),
       { TTL: 24 * 3600 }
     );
-    return true;
-  } catch {
-    return false;
+    return { ok: true, reason: "sent" };
+  } catch (e: any) {
+    const code = e?.statusCode;
+    return { ok: false, reason: code ? "http_" + code : "error" };
   }
 }
 
