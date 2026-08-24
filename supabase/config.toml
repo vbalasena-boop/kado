@@ -1,0 +1,14 @@
+# Supabase CLI — configuration du projet Kado.
+# Ce fichier permet d'utiliser la CLI Supabase pour appliquer les migrations de
+# façon versionnée (`supabase db push`) au lieu de coller le SQL à la main.
+#
+# Le projet HÉBERGÉ (Supabase Cloud) se lie une fois via :
+#   supabase link --project-ref <ton-project-ref>
+# Le ref n'est PAS stocké ici (il vit dans supabase/.temp, ignoré par git).
+#
+# `project_id` ci-dessous n'est qu'un identifiant LOCAL (pour `supabase start`).
+project_id = "kado"
+
+[db]
+# Version majeure de Postgres (Supabase Cloud héberge actuellement en 15).
+major_version = 15
