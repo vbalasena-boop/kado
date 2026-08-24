@@ -1,6 +1,6 @@
 ---
 title: "Attribution boucle produit ↔ parrainage commerçant — Kado"
-status: draft
+status: final
 created: 2026-08-24
 updated: 2026-08-24
 ---
@@ -126,15 +126,18 @@ parrain ; parcours Instagram ; classement/gamification des parrains.
 - `supabase/migrations/0011_growth.sql` — `businesses.referred_by`, `referral_rewarded_at`.
 - Système affilié (`kado-aff`, `/vendeur`, `lib/affiliates.ts`) — modèle de cookie, à NE PAS mélanger.
 
-## 9. Hypothèses & Questions ouvertes
+## 9. Décisions de cadrage & hypothèses techniques
+
+**Décisions (tranchées).**
+- **Attribution silencieuse côté filleul en v1** : le prospect ne voit pas qui l'a
+  parrainé pendant son inscription. La transparence (« Recommandé par… ») est reportée.
+- **« Recommandé par [Nom] » sur `/tarifs` → v1.1**, hors périmètre v1.
+
+**Hypothèses techniques (à confirmer à l'architecture).**
 - `[HYPOTHÈSE]` Le cookie `kado-parrain` est posé au niveau public (middleware/layout),
-  comme `kado-aff` — à confirmer à l'architecture.
-- `[HYPOTHÈSE]` La reprise de récompense sur remboursement (FR8) passe par les events
+  comme `kado-aff`.
+- `[HYPOTHÈSE]` La reprise de récompense sur remboursement (FR8) s'appuie sur les events
   Stripe `charge.refunded` / `charge.dispute.created`.
-- **Question ouverte.** Le filleul doit-il *voir* qui l'a parrainé (transparence) ou
-  l'attribution reste-t-elle silencieuse côté filleul ? *(proposé : silencieuse en v1.)*
-- **Question ouverte.** Faut-il pré-remplir/afficher le nom du parrain sur `/tarifs`
-  quand `?parrain=` est présent (« Recommandé par [Nom] ») pour rassurer ? *(candidat v1.1.)*
 
 ## 10. Prochaines étapes
 `bmad-architecture` (spine technique : pose du cookie, events Stripe, journalisation
