@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { revalidateTag } from "next/cache";
 import { getMyBusiness } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { imageExt } from "@/lib/upload";
@@ -67,5 +68,6 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "save_failed" }, { status: 500 });
   }
 
+  revalidateTag(`biz-${business.slug}`);
   return Response.json({ ok: true, logo_url: logoUrl });
 }
