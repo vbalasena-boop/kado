@@ -133,13 +133,17 @@ tout depuis un tableau de bord.
 ## Considérations techniques
 
 - **Réutiliser la stack Kado** : Next.js (App Router) + Supabase (Postgres + Auth) +
-  Vercel, et **Resend** déjà branché pour l'email → coût marginal ~0 €.
+  Vercel → coût marginal ~0 €. **Attention** : l'envoi de prospection **ne réutilise pas
+  Resend** (son règlement interdit le cold email et une infraction menacerait les emails
+  de connexion Kado) → **fournisseur d'envoi séparé** sur un **domaine distinct**.
 - **Sourcing + avis Google** : le sourcing local (type Google Maps / Places) fournit
   déjà **note moyenne et nombre d'avis** — réutilisés directement comme signaux de
   qualification. Respecter les conditions d'usage et les quotas gratuits des sources
   (choix exact de la source et de ses limites à trancher au PRD/architecture).
-- **Délivrabilité email** *(cœur du projet)* : domaine d'envoi dédié, **SPF/DKIM/DMARC**,
-  volume lent et progressif, contenu non-spammy, lien de désinscription, purge des bounces.
+- **Délivrabilité email** *(cœur du projet)* : **domaine d'envoi séparé** (distinct de
+  celui de Kado), **SPF/DKIM/DMARC**, volume lent et progressif (warm-up), contenu
+  non-spammy, lien de désinscription, purge des bounces. Fournisseur d'envoi dédié au cold
+  email (SMTP dédié ou outil type Instantly/Smartlead), **jamais Resend**.
 - **Sécurité Instagram** : pas d'automatisation d'envoi ; actions humaines depuis le
   compte ; quotas conservateurs.
 

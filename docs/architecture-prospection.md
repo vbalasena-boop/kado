@@ -20,7 +20,7 @@ créer de nouvelles — c'est ce qui garantit **0 € de coût marginal** et la 
 
 | Besoin prospection | Brique Kado réutilisée |
 |---|---|
-| Envoi email (Resend) | `lib/email.ts` (`sendEmail`, `sendBatch`, `emailLayout`) |
+| Rendu visuel des emails | `lib/email.ts` (`emailLayout`) — **rendu seulement** |
 | Désinscription | `lib/unsub.ts` (`unsubToken`) + `app/api/unsubscribe/route.ts` |
 | Tâches planifiées | Cron Vercel `app/api/cron/daily` (secret `CRON_SECRET`) |
 | Accès base sécurisé | `lib/supabase/admin.ts` (clé service, côté serveur) |
@@ -28,8 +28,19 @@ créer de nouvelles — c'est ce qui garantit **0 € de coût marginal** et la 
 | Validation entrées | `zod` (déjà utilisé) |
 | Zone admin / auth | Espace `/admin` + middleware existants |
 
+> ⚠️ **Décision critique — l'ENVOI des emails de prospection NE passe PAS par Resend.**
+> Le règlement de Resend **interdit le cold email** ; pire, mélanger prospection et
+> transactionnel sur le **même compte Resend** peut faire suspendre **aussi** les emails
+> de connexion (OTP) des commerçants Kado. On **cloisonne** :
+> - **Resend = transactionnel Kado uniquement** (inchangé, protégé).
+> - **Prospection = fournisseur d'envoi séparé**, derrière une interface abstraite
+>   (`lib/prospection/sender.ts`), branchable sur un outil autorisé pour le cold email
+>   (SMTP dédié + warm-up, ou Instantly/Smartlead/lemlist) **et sur un domaine séparé**.
+>   Aucun envoi de prospection ne partage le compte ni le domaine du transactionnel.
+
 **Nouveau à ajouter** : intégration **Google Places**, tables `prospect*`, le **scoring**,
-la **génération de messages**, l'**UI d'administration prospection**, et un **cron dédié**.
+la **génération de messages**, l'**interface d'envoi prospection** (`sender.ts`),
+l'**UI d'administration prospection**, et un **cron dédié**.
 
 ## 2. Vue d'ensemble
 
@@ -159,16 +170,23 @@ Fonction pure `lib/prospection/score.ts` → `score` + `score_factors` :
 
 ## 7. Envoi email & délivrabilité (Epic D) — cœur du risque
 
-- **Domaine dédié** : sous-domaine d'envoi distinct du transactionnel Kado
-  (ex. `hello.prospection.kado-app.fr`) pour **isoler la réputation**. **SPF, DKIM,
-  DMARC** configurés dans Resend + DNS.
+- **Interface d'envoi abstraite** `lib/prospection/sender.ts` : un contrat
+  `sendProspectEmail(to, subject, body, headers)` avec des implémentations
+  interchangeables (SMTP dédié via `nodemailer`, ou API d'un outil cold email). Le reste
+  du système ne connaît que l'interface → on change de fournisseur sans rien casser.
+  **Jamais Resend** (règlement + risque sur le transactionnel Kado).
+- **Domaine séparé** (choix « je verrai à l'usage » : décision différée mais **isolée dans
+  la config**, `PROSPECT_EMAIL_FROM`). Recommandé : un **nom de domaine distinct** de
+  `kado-app.fr` pour que la réputation prospection n'affecte jamais le transactionnel.
+  **SPF, DKIM, DMARC** sur ce domaine.
 - **Cadence lente & plafond** : `MAX_PROSPECT_EMAILS_PER_DAY` (petit au départ), montée
   **progressive** (warm-up). Envois pilotés par le **cron** (pas de rafale).
 - **Séquence** : message initial → **1 relance** après N jours si pas de réponse.
 - **Suppression** : avant tout envoi, contrôle `suppression_list` ; un désinscrit / bounce
   dur n'est **jamais** recontacté.
-- **Bounces & plaintes** : **webhook Resend** → `POST /api/webhooks/resend` met à jour
-  `prospect_events` + ajoute à `suppression_list`. Alerte si taux dépasse un seuil.
+- **Bounces & plaintes** : **webhook du fournisseur d'envoi** →
+  `POST /api/webhooks/prospection-email` met à jour `prospect_events` + ajoute à
+  `suppression_list`. Alerte si taux dépasse un seuil.
 - **Détection des réponses** : `Reply-To` sur une **boîte dédiée**. MVP : marquage
   « répondu » (manuel dans l'UI) qui **stoppe la relance** ; post-MVP : ingestion
   automatique (webhook inbound / IMAP).
@@ -191,7 +209,7 @@ Fonction pure `lib/prospection/score.ts` → `score` + `score_factors` :
 - `POST /api/admin/prospection/[id]/generate` — générer/regénérer messages.
 - `POST /api/admin/prospection/[id]/approve` — approuver (email → séquence, DM → file).
 - `POST /api/admin/prospection/[id]/status` — changer statut / exclure / noter.
-- `POST /api/webhooks/resend` — bounces/plaintes (public, signé).
+- `POST /api/webhooks/prospection-email` — bounces/plaintes du fournisseur (public, signé).
 - `GET /api/cron/prospection` — drip + relances (cron, secret).
 
 **UI**
@@ -204,11 +222,14 @@ Fonction pure `lib/prospection/score.ts` → `score` + `score_factors` :
 | Variable | Rôle |
 |---|---|
 | `GOOGLE_PLACES_API_KEY` | Sourcing (serveur uniquement) |
-| `PROSPECT_EMAIL_FROM` | Expéditeur (sous-domaine dédié) |
+| `PROSPECT_EMAIL_FROM` | Expéditeur prospection (**domaine séparé**, jamais Kado) |
 | `PROSPECT_REPLY_TO` | Boîte de réception des réponses |
+| `PROSPECT_SMTP_*` **ou** `PROSPECT_SENDER_API_KEY` | Fournisseur d'envoi prospection (SMTP dédié ou outil cold email) |
 | `MAX_PROSPECT_EMAILS_PER_DAY` | Plafond quotidien email (warm-up) |
 | `MAX_PROSPECT_DM_PER_DAY` | Plafond quotidien DM Instagram |
-| `RESEND_API_KEY`, `CRON_SECRET` | *(déjà présents)* |
+| `CRON_SECRET` | *(déjà présent)* |
+
+> `RESEND_API_KEY` reste **réservé au transactionnel Kado** — non utilisé par la prospection.
 
 ## 11. Sécurité & conformité
 
@@ -227,7 +248,7 @@ Fonction pure `lib/prospection/score.ts` → `score` + `score_factors` :
 | A | Migration `prospects` + intégration Google Places + `POST /source` + dédup |
 | B | `lib/prospection/score.ts` + filtres/tri UI + exclusion |
 | C | `templates.ts` + génération email/DM + édition + anti-spam |
-| D | Envoi Resend (domaine dédié, warm-up), séquence, webhook bounces, cron dédié |
+| D | Interface d'envoi `sender.ts` (fournisseur dédié, **pas Resend**, domaine séparé, warm-up), séquence, webhook bounces, cron dédié |
 | E | File Instagram assistée + tableau de bord + statuts + quotas |
 
 **Démarrage recommandé** : **Epic A story A1** (migration + sourcing d'une ville), car

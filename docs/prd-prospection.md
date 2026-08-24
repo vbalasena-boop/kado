@@ -140,8 +140,11 @@ Envoyer les emails de façon fiable, en protégeant la réputation du domaine.
 
 - **US-D1** — En tant qu'opérateur, j'**approuve** un prospect → son email entre dans une
   **séquence** : message initial, puis **une relance** si pas de réponse après N jours.
-- **US-D2** — Le système envoie via **Resend** depuis un **domaine dédié** correctement
-  configuré (**SPF, DKIM, DMARC**), à **cadence lente** et plafonnée par jour.
+- **US-D2** — Le système envoie via un **fournisseur d'envoi dédié à la prospection**
+  (SMTP dédié ou outil cold email — **jamais** le compte/domaine Resend transactionnel de
+  Kado), depuis un **domaine séparé** correctement configuré (**SPF, DKIM, DMARC**), à
+  **cadence lente** et plafonnée par jour. *Motif : le règlement de Resend interdit le cold
+  email et une infraction menacerait aussi les emails de connexion des commerçants.*
 - **US-D3** — Le système gère la **désinscription** (lien fonctionnel, liste de suppression
   respectée) et **ne recontacte jamais** un désinscrit ou un « ne pas contacter ».
 - **US-D4** — Le système traite les **bounces** (retours) : purge/suspension des adresses
@@ -190,7 +193,9 @@ Piloter la prospection sans jamais automatiser l'envoi Instagram.
 - **NFR-2 Conformité RGPD** : désinscription en 1 clic, liste de suppression persistante,
   mentions d'origine des données, gestion des demandes de suppression, journal des envois.
 - **NFR-3 Conformité plateformes** : aucun envoi DM Instagram automatisé (CGU Meta) ;
-  respect des conditions d'usage et quotas des sources de sourcing.
+  respect des conditions d'usage et quotas des sources de sourcing ; **le cold email ne
+  transite jamais par Resend** (interdit par son règlement) ni par le domaine/compte
+  transactionnel de Kado.
 - **NFR-4 Coût** : rester dans les offres gratuites (Vercel/Supabase/Resend) ; alerte avant
   tout risque de dépassement.
 - **NFR-5 Sécurité & accès** : outil réservé à l'opérateur authentifié (réutilise l'auth
@@ -218,8 +223,10 @@ Piloter la prospection sans jamais automatiser l'envoi Instagram.
 - `[ASSUMPTION]` Le sourcing gratuit couvre suffisamment une ville pour alimenter le flux.
 - `[ASSUMPTION]` Volume « artisanal » (dizaines/semaine), pas de multi-domaine au MVP.
 - **Q1** — Source de sourcing exacte + ses quotas gratuits ? (→ architecture)
-- **Q2** — Domaine d'envoi : sous-domaine dédié dédié à la prospection (pour isoler la
-  réputation du domaine transactionnel Kado) ? *(recommandé)*
+- **Q2** — ✅ *Tranché* : l'envoi de prospection est **cloisonné** du transactionnel Kado.
+  Fournisseur d'envoi **séparé** (pas Resend, qui interdit le cold email) + **domaine
+  séparé**. Choix précis de l'outil/domaine différé (« je verrai à l'usage »), mais isolé
+  derrière l'interface `sender.ts` et la config.
 - **Q3** — Réception des réponses email : boîte dédiée + webhook, ou parsing ? (→ architecture)
 - **Q4** — Base légale RGPD : confirmer intérêt légitime B2B + rédiger les mentions type.
 

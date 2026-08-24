@@ -70,10 +70,16 @@ Chaque story = petit incrément testable. Légende effort : ● petit · ●● 
 
 ## Epic D — Envoi email & délivrabilité (cœur du risque)
 
-- **D1 — Domaine d'envoi dédié + DNS** ● *(config, hors code)* 
-  Sous-domaine dédié dans Resend + **SPF/DKIM/DMARC**. Variables `PROSPECT_EMAIL_FROM`,
-  `PROSPECT_REPLY_TO`.
-  *DoD* : domaine vérifié, SPF/DKIM/DMARC OK (test de délivrabilité passé).
+- **D0 — Interface d'envoi `sender.ts`** ● 
+  `lib/prospection/sender.ts` : contrat `sendProspectEmail(...)` + une implémentation
+  (SMTP dédié via `nodemailer`, ou stub). **Jamais Resend.** Isole le fournisseur.
+  *DoD* : le reste du code n'appelle que l'interface ; fournisseur changeable par config.
+
+- **D1 — Domaine d'envoi séparé + DNS** ● *(config, hors code)* 
+  **Domaine distinct** de `kado-app.fr`, dédié à la prospection, + **SPF/DKIM/DMARC**.
+  Variables `PROSPECT_EMAIL_FROM`, `PROSPECT_REPLY_TO`, `PROSPECT_SMTP_*`.
+  *DoD* : domaine vérifié, SPF/DKIM/DMARC OK (test de délivrabilité passé), aucun lien avec
+  le compte/domaine Resend transactionnel.
 
 - **D2 — Approbation → séquence** ●● 
   `POST /[id]/approve` : email → programmé (message initial), DM → file. Contrôle
@@ -86,8 +92,8 @@ Chaque story = petit incrément testable. Légende effort : ● petit · ●● 
   *DoD* : jamais > plafond/jour ; pas de double envoi ; relance stoppée si « répondu ».
 
 - **D4 — Webhook bounces/plaintes** ● 
-  `POST /api/webhooks/resend` (signé) → `prospect_events` + `suppression_list` ; alerte si
-  taux de bounce/plainte > seuil.
+  `POST /api/webhooks/prospection-email` (signé) → `prospect_events` + `suppression_list` ;
+  alerte si taux de bounce/plainte > seuil.
   *DoD* : bounce dur → suppression + jamais recontacté ; alerte fonctionnelle.
 
 - **D5 — Marquage « répondu »** ● 
