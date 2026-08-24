@@ -13,6 +13,7 @@ import {
   DAILY_CHUNK,
 } from "@/lib/campaigns";
 import { unsubToken } from "@/lib/unsub";
+import { mapLimit } from "@/lib/async";
 import { setSystemState } from "@/lib/health";
 import { sendPushToClients } from "@/lib/push";
 import { generateCode, labelIsLosing } from "@/lib/draw";
@@ -62,10 +63,11 @@ export async function GET(req: NextRequest) {
       .lte("subscription_ends_at", new Date(now + 3 * 864e5).toISOString());
     if (error) throw new Error(error.message);
 
-    for (const biz of trials ?? []) {
-      if (biz.trial_reminder_sent_at) continue;
+    // Envois parallélisés (concurrence bornée) pour tenir dans maxDuration.
+    await mapLimit(trials ?? [], 5, async (biz) => {
+      if (biz.trial_reminder_sent_at) return;
       const { email, businessName } = await getOwnerContact(db, biz.id);
-      if (!email) continue;
+      if (!email) return;
 
       const daysLeft = Math.max(
         1,
@@ -94,7 +96,7 @@ export async function GET(req: NextRequest) {
           .eq("id", biz.id);
         out.reminders++;
       }
-    }
+    });
   } catch (e: any) {
     out.errors.push(`reminders: ${e?.message ?? "error"}`);
   }
@@ -124,16 +126,16 @@ export async function GET(req: NextRequest) {
       const bizBy = new Map((bizs ?? []).map((b: any) => [b.id, b]));
       const yearAgo = Date.now() - 300 * 864e5; // marge : 1 envoi max / ~an
 
-      for (const c of cards) {
+      await mapLimit(cards, 5, async (c) => {
         const cfg: any = cfgBy.get(c.business_id);
         const biz: any = bizBy.get(c.business_id);
-        if (!cfg?.birthday_enabled || !biz || biz.status !== "active") continue;
-        if (c.unsubscribed_at) continue;
+        if (!cfg?.birthday_enabled || !biz || biz.status !== "active") return;
+        if (c.unsubscribed_at) return;
         if (
           c.birthday_sent_at &&
           new Date(c.birthday_sent_at).getTime() > yearAgo
         )
-          continue;
+          return;
 
         const unsub = `${SITE}/api/unsubscribe?b=${c.business_id}&e=${encodeURIComponent(
           Buffer.from(c.email).toString("base64url")
@@ -160,7 +162,7 @@ export async function GET(req: NextRequest) {
             .eq("id", c.id);
           out.birthdays++;
         }
-      }
+      });
     }
   } catch (e: any) {
     out.errors.push(`birthdays: ${e?.message ?? "error"}`);
@@ -329,9 +331,9 @@ export async function GET(req: NextRequest) {
         .eq("status", "active");
       if (error) throw new Error(error.message);
 
-      for (const biz of actives ?? []) {
+      await mapLimit(actives ?? [], 5, async (biz) => {
         // anti-doublon si le cron se déclenche deux fois
-        if (biz.recap_sent_at && biz.recap_sent_at > fiveDaysAgo) continue;
+        if (biz.recap_sent_at && biz.recap_sent_at > fiveDaysAgo) return;
 
         const [
           { data: plays },
@@ -369,10 +371,10 @@ export async function GET(req: NextRequest) {
         const emails = leads ?? 0;
         const fid = fidNew ?? 0;
         const echanges = redeemed ?? 0;
-        if (tours + emails + fid === 0) continue; // rien à raconter
+        if (tours + emails + fid === 0) return; // rien à raconter
 
         const { email } = await getOwnerContact(db, biz.id);
-        if (!email) continue;
+        if (!email) return;
 
         const res = await sendEmail({
           to: email,
@@ -393,7 +395,7 @@ export async function GET(req: NextRequest) {
             .eq("id", biz.id);
           out.recaps++;
         }
-      }
+      });
     }
   } catch (e: any) {
     out.errors.push(`recaps: ${e?.message ?? "error"}`);

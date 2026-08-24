@@ -1,145 +1,162 @@
 # Architecture — Kado
 
-> Document produit selon la **BMAD Method** · Rôle : **Architecte** · v0.1 · 2026-08-13
-> Sources : `docs/brief.md`, `docs/prd.md`
+> Mise à jour **2026-08-24** (audit technique BMAD). Ce document remplace la v0.1
+> qui ne décrivait que le MVP « roue ». Il reflète le produit réel : jeux,
+> fidélité, click & collect, comptoir (bipeur digital), affiliation vendeurs,
+> campagnes et paiements Stripe.
 
 ---
 
 ## 1. Vue d'ensemble
 
-Application **fullstack Next.js** (App Router) déployée sur **Vercel**, adossée à
-**Supabase** pour l'authentification, la base Postgres et le stockage (logos).
-Architecture **multi-tenant** : un seul déploiement sert tous les établissements,
-isolés par identifiant de tenant et **Row Level Security** (RLS).
+Application **fullstack Next.js 14** (App Router) déployée sur **Vercel**, adossée
+à **Supabase** (Auth + Postgres + Storage). Architecture **multi-tenant** : un seul
+déploiement sert tous les établissements, isolés par `business_id`.
 
 ```
-        Joueur (mobile)                 Commerçant                 Admin (toi)
-             │                              │                          │
-             ▼                              ▼                          ▼
-   /{slug}  (public)             /dashboard (privé)          /admin (privé)
-             │                              │                          │
-             └──────────────► Next.js (Vercel) ◄──────────────────────┘
-                          Server Components + API Routes
-                                     │
-                        ┌────────────┴─────────────┐
-                        ▼                           ▼
-                  Supabase Auth              Supabase Postgres (RLS)
-                                             + Storage (logos)
+   Client final (mobile)         Commerçant                Admin (toi)          Vendeur
+        │                            │                         │                    │
+        ▼                            ▼                         ▼                    ▼
+  /{slug}  (public)         /dashboard (privé)         /admin (privé)        /vendeur/{key}
+  jeu · fidélité · commande  config · stats · commandes  comptes · vendeurs   stats affilié
+        │                            │                         │                    │
+        └──────────────────► Next.js (Vercel) ◄───────────────┴────────────────────┘
+                     Server Components + Route Handlers (API)
+                                    │
+             ┌──────────────────────┼───────────────────────┬──────────────┐
+             ▼                      ▼                        ▼              ▼
+       Supabase Auth      Supabase Postgres (RLS)     Stripe          Resend / web-push
+       (OTP e-mail)       + Storage (logos/photos)  abonnements       e-mails / notifs
+                                                    + Connect
 ```
 
-## 2. Stack technique
+## 2. Stack
 
-| Couche            | Choix                        | Raison                              |
-|-------------------|------------------------------|-------------------------------------|
-| Framework         | Next.js 14+ (App Router)     | SSR, API routes, déploiement Vercel |
-| Hébergement       | Vercel (offre Hobby)         | Gratuit, CI/CD Git intégré          |
-| Auth              | Supabase Auth (e-mail/OTP)   | Gratuit, simple, sessions gérées    |
-| Base de données   | Supabase Postgres + RLS      | Multi-tenant sûr, gratuit au départ |
-| Stockage          | Supabase Storage             | Logos des établissements            |
-| QR code           | lib `qrcode` (génération)    | Pas de service externe              |
-| Roue              | Canvas (repris du prototype) | Zéro dépendance lourde              |
-| Paiement (v2)     | Stripe                       | Standard abonnement                 |
+| Couche | Choix | Rôle |
+|---|---|---|
+| Framework | Next.js 14 (App Router) | SSR, Route Handlers, déploiement Vercel |
+| Auth | Supabase Auth (OTP e-mail) | Connexion commerçant / admin |
+| Base | Supabase Postgres + RLS | Multi-tenant, 15 tables |
+| Stockage | Supabase Storage (buckets publics) | Logos, fonds de roue, photos produits |
+| Paiement | Stripe (abonnements + **Connect**) | Formules commerçant + encaissement click & collect |
+| E-mail | Resend | Transactionnel + marketing (campagnes, anniversaires) |
+| Push | web-push (VAPID) | Alertes commerçant + offres clients |
+| Observabilité | Sentry (+ Vercel Analytics) | Erreurs serveur & client |
+| Cron | Vercel Cron | Tâches quotidiennes (voir §7) |
 
-## 3. Modèle de données
+## 3. Modèle de données (15 tables, toutes en RLS)
 
-```sql
--- Établissement (tenant)
-businesses(
-  id uuid pk,
-  slug text unique,              -- URL publique /{slug}
-  name text,
-  logo_url text,
-  status text,                   -- 'active' | 'suspended'
-  subscription_status text,      -- 'trial' | 'active' | 'suspended'
-  owner_user_id uuid,            -- lien vers auth.users
-  created_at timestamptz
-)
+**Cœur tenant**
+- `businesses` — l'établissement (tenant). Slug public, statut, plan
+  (`roue`/`fidelite`/`complet`/`comptoir`), abonnement Stripe, options
+  (`click_collect`, `order_tracking`, `online_payment`), compte Connect.
+- `wheel_configs` — configuration 1-1 du commerce (couleurs, canaux IG/avis,
+  fidélité, tirage au sort, décor, validité des lots…).
+- `prizes` — lots de la roue (libellé, poids, `is_losing`).
+- `plays` — tours joués (verrou serveur `unique(business_id, player_id, play_type)`,
+  code de lot, `redeemed_at`).
 
--- Configuration de la roue (1-1 avec business)
-wheel_configs(
-  id uuid pk,
-  business_id uuid fk,
-  primary_color text,
-  instagram_url text,
-  review_url text,
-  compliance_note text
-)
+**Fidélité & croissance**
+- `loyalty_cards` — carte à tampons par (business, e-mail), code unique,
+  consentement marketing, anniversaire.
+- `leads` — e-mails capturés (participants tirage, marketing).
+- `campaigns` — campagnes e-mail/push programmées, envoi étalé.
 
--- Cadeaux de la roue (n par config)
-prizes(
-  id uuid pk,
-  business_id uuid fk,
-  label text,
-  emoji text,
-  weight int,                    -- probabilité relative
-  position int
-)
+**Commandes (click & collect / comptoir)**
+- `products` — catalogue (prix, photo, actif).
+- `orders` — commandes (code de retrait, lignes, total, statut, paiement,
+  mode de service, bipeur).
 
--- Tours joués (verrou serveur des 2 tours)
-plays(
-  id uuid pk,
-  business_id uuid fk,
-  player_id text,                -- issu d'un cookie signé
-  play_type text,                -- 'instagram' | 'review'
-  prize_label text,
-  prize_code text,
-  created_at timestamptz,
-  unique(business_id, player_id, play_type)   -- empêche de rejouer un type
-)
-```
+**Affiliation vendeurs**
+- `affiliates` — apporteurs d'affaires (barèmes de commission, `stats_key`).
+- `affiliate_commissions` — commissions dues (une par premier paiement client).
 
-**RLS** : chaque table filtre sur `business_id` rattaché à `auth.uid()` (le commerçant
-ne voit que son établissement). Un rôle **admin** (claim JWT) contourne le filtre pour
-la gestion globale. La table `plays` est écrite via une **API route serveur** (clé
-service), jamais directement par le client.
+**Notifications & système**
+- `push_subscriptions` — abonnements push des commerçants.
+- `client_push_subscriptions` — abonnements push des clients (offres, commande prête).
+- `rate_limits` — support de la RPC `rate_limit_hit` (limitation de débit atomique).
+- `system_state` — état interne (heartbeats cron, health-check).
 
-## 4. Routes applicatives
+## 4. Isolation multi-tenant (important)
 
-**Public**
-- `GET /{slug}` — page de jeu (Server Component, charge config si `status = active`).
-- `POST /api/play` — enregistre un tour ; refuse si le type est déjà joué (contrainte
-  unique) ou si l'établissement est suspendu ; renvoie le lot tiré côté serveur.
+Le point clé, différent de la v0.1 du document : **toutes les 15 tables ont la RLS
+activée sans policy** → « default-deny » pour `anon`/`authenticated`. Concrètement,
+**personne n'accède aux données via la clé publique**.
 
-**Commerçant (auth requise)**
-- `/dashboard` — vue d'ensemble + stats.
-- `/dashboard/wheel` — éditeur de roue (aperçu live).
-- `/dashboard/qr` — génération/téléchargement du QR.
+Les accès applicatifs passent par le **client `service_role`** (`lib/supabase/admin.ts`),
+qui **contourne la RLS**. L'isolation tenant repose donc sur une **discipline
+applicative** : chaque requête filtre explicitement par `.eq("business_id", …)`
+(dérivé côté serveur du compte connecté, jamais de l'entrée client).
 
-**Admin (rôle admin requis)**
-- `/admin` — liste des comptes, statut, activité.
-- `POST /api/admin/business` — créer un compte + inviter le commerçant.
-- `POST /api/admin/business/{id}/status` — activer / suspendre.
+Trois clients Supabase, usage strict :
+- `admin.ts` (service_role) — toutes les lectures/écritures de données.
+- `ssr.ts` (session cookie) — identifie l'utilisateur connecté (`auth.getUser()`).
+- `client.ts` (anon, navigateur) — uniquement le flux de connexion.
 
-## 5. Décisions clés
+> Risque assumé : un oubli de filtre `business_id` = fuite cross-tenant. Piste
+> d'évolution : réintroduire des policies RLS et lire via `ssr` pour les données
+> tenant. En attendant, le **wrapper de route** (§5) et les tests réduisent le risque.
 
-- **Tirage côté serveur** : le lot est déterminé dans `/api/play` (pas dans le navigateur),
-  pour éviter la triche et fiabiliser les statistiques. Le front anime seulement la roue
-  vers le résultat renvoyé.
-- **Verrou robuste** : combinaison `cookie player_id signé` + contrainte SQL `unique`.
-  Post-MVP possible : limite par empreinte réseau ou plafond global par établissement.
-- **Suspension = un seul champ** : `businesses.status`. Contrôlé à la fois par la page
-  publique (masque le jeu) et le middleware d'auth (bloque l'espace). Donner/retirer
-  l'accès = basculer ce champ.
-- **Config par défaut** : à la création d'un compte, une roue par défaut est générée pour
-  que le commerçant ait immédiatement une page fonctionnelle.
+## 5. Couche API & conventions
 
-## 6. Sécurité & conformité
+Les Route Handlers (`app/api/**`) suivent un **wrapper commun** `lib/api.ts` :
+`publicRoute` / `merchantRoute` / `adminRoute`. Il centralise le garde d'auth, le
+parsing + la **validation zod** du corps, le rate-limit optionnel et le format
+d'erreur (`{ error: "code" }`). Migration incrémentale en cours (routes historiques
+encore en parsing manuel, comportement identique).
 
-- RLS sur toutes les tables tenant ; écritures sensibles via clé service côté serveur.
-- Aucune donnée personnelle joueur stockée (seul un identifiant anonyme de navigateur).
-- Mention conformité affichée (cadeau non conditionné à la note).
-- Variables secrètes (clés Supabase/Stripe) uniquement en variables d'environnement Vercel.
+- **Auth commerçant** : `getMyBusiness()` → établissements dont
+  `owner_user_id = auth.uid()`.
+- **Auth admin** : `getAdminUser()` → e-mail dans `ADMIN_EMAILS`.
+- **Rate-limit** : RPC Postgres atomique `rate_limit_hit`, avec **repli mémoire**
+  si la RPC échoue (jamais « fail-open »).
+- **TypeScript** : `strict: true`.
 
-## 7. Découpage de livraison (mapping epics)
+## 6. Intégrations
 
-| Epic | Livrable technique                                        |
-|------|-----------------------------------------------------------|
-| 1    | Projet Next.js + Supabase, schéma + RLS, page `/{slug}`, `/api/play` avec verrou |
-| 2    | Auth commerçant, éditeur de roue, QR, stats               |
-| 3    | Espace admin, création de compte, suspension, statut abonnement |
+- **Stripe abonnements** : formules commerçant. Le webhook
+  (`/api/billing/webhook`) vérifie la **signature** et applique l'état à
+  `businesses` (plan, statut, échéance).
+- **Stripe Connect** : encaissement en ligne du click & collect — l'argent va
+  directement au compte du commerçant (`payment_intent_data.transfer_data`),
+  commission plateforme optionnelle (`KADO_ORDER_FEE_BPS`).
+- **Parrainage & affiliation** : gérés dans le webhook au premier paiement
+  (récompense parrain, commission vendeur — une seule fois, idempotent).
+- **web-push** : alertes commerçant (nouvelle commande) et clients (offres,
+  commande prête).
+- **Resend** : e-mails transactionnels et marketing (réputations séparées via
+  `EMAIL_FROM` / `EMAIL_FROM_MARKETING`).
 
-## 8. Prochaines étapes (BMAD)
+## 7. Tâches planifiées (Vercel Cron)
 
-1. ✅ Architecture (ce document) — *Architecte*
-2. ➡️ Découpage fin & implémentation story par story — *Scrum Master → Dev → QA*
-   - Démarrage recommandé : **Epic 1, Story 1.1** (initialisation du projet).
+`/api/cron/daily` (protégé par `CRON_SECRET`, **obligatoire**) :
+1. Relance des essais à J-3.
+2. E-mails d'anniversaire (fidélité).
+3. Campagnes programmées + envoi étalé (une fournée/jour).
+4. Récap hebdomadaire (le lundi).
+5. Tirage au sort programmé.
+
+Les boucles d'envoi sont **parallélisées** (concurrence bornée, `lib/async.ts`)
+pour tenir dans `maxDuration`. `/api/cron/health` effectue un contrôle de santé.
+
+## 8. Performance
+
+- **Page de jeu `/{slug}`** (chemin critique mobile) : les données statiques
+  (établissement + config + lots) sont mises en **cache** (`unstable_cache`,
+  revalidation 60 s + invalidation par tag `biz-<slug>` à chaque édition). Les
+  tours joués (par joueur) restent hors cache.
+- **Pages marketing** (accueil, tarifs) : statiques (SSG), servies CDN.
+- **En-têtes de sécurité** globaux (anti-clickjacking, HSTS, nosniff) via
+  `next.config.mjs`.
+
+## 9. Migrations
+
+Fichiers SQL numérotés dans `supabase/migrations/`, appliqués via le SQL Editor
+Supabase. Numérotation unique (les collisions historiques ont été résolues).
+Le code reste tolérant aux colonnes récentes (repli si une migration n'est pas
+encore appliquée). Piste : adopter la CLI Supabase avec suivi de version.
+
+## 10. Historique
+
+Les documents `brief.md`, `prd.md`, `roadmap.md` datent du cadrage initial (MVP
+roue) et sont conservés à titre d'historique — le produit les a largement dépassés.
