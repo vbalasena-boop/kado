@@ -439,38 +439,24 @@ export async function POST(req: NextRequest) {
         }
         break;
       }
-      case "charge.refunded":
-      case "charge.dispute.created": {
-        // Reprise de récompense de parrainage : si le filleul est remboursé /
-        // conteste dans les 14 jours suivant la récompense, on annule le mois
-        // offert accordé au parrain (remise Stripe non consommée) et on remet
-        // le filleul en état « non récompensé ». Best-effort, tolérant.
-        // ⚠️ À VALIDER avec des clés Stripe de test avant la prod.
+      case "charge.refunded": {
+        // Reprise de parrainage — approche PRUDENTE : on ne mute pas Stripe
+        // automatiquement (impossible de cibler de façon fiable le coupon du
+        // bon filleul). On DÉTECTE le cas et on ALERTE l'admin pour qu'il
+        // retire le mois offert à la main. On n'agit que sur un remboursement
+        // TOTAL d'une facture d'ABONNEMENT, dans les 14 j suivant la récompense
+        // (exclut les remboursements de commande / installation / partiels).
         try {
-          const db = getAdminClient();
-          let customerId: string | null = null;
-          if (event.type === "charge.refunded") {
-            const ch = event.data.object as Stripe.Charge;
-            customerId =
-              typeof ch.customer === "string"
-                ? ch.customer
-                : ch.customer?.id ?? null;
-          } else {
-            const dp = event.data.object as Stripe.Dispute;
-            const chId =
-              typeof dp.charge === "string" ? dp.charge : dp.charge?.id;
-            if (chId) {
-              const ch = await stripe.charges.retrieve(chId);
-              customerId =
-                typeof ch.customer === "string"
-                  ? ch.customer
-                  : ch.customer?.id ?? null;
-            }
-          }
-          if (customerId) {
+          const ch = event.data.object as Stripe.Charge;
+          const fullRefund = ch.amount > 0 && ch.amount_refunded >= ch.amount;
+          const isSubscription = !!(ch as { invoice?: unknown }).invoice;
+          const customerId =
+            typeof ch.customer === "string" ? ch.customer : ch.customer?.id ?? null;
+          if (fullRefund && isSubscription && customerId) {
+            const db = getAdminClient();
             const { data: filleul } = await db
               .from("businesses")
-              .select("id, referred_by, referral_rewarded_at")
+              .select("id, name, referred_by, referral_rewarded_at")
               .eq("stripe_customer_id", customerId)
               .maybeSingle();
             const rewardedAt = filleul?.referral_rewarded_at
@@ -478,47 +464,45 @@ export async function POST(req: NextRequest) {
               : 0;
             const within14 = rewardedAt > 0 && Date.now() - rewardedAt < 14 * 864e5;
             if (filleul?.referred_by && within14) {
-              // 1) filleul → non récompensé
-              await db
-                .from("businesses")
-                .update({ referral_rewarded_at: null })
-                .eq("id", filleul.id);
-              // 2) retirer la remise du parrain SI c'est bien notre coupon et
-              //    qu'elle n'est pas encore consommée.
-              const { data: sponsor } = await db
-                .from("businesses")
-                .select("id, stripe_subscription_id")
-                .eq("id", filleul.referred_by)
-                .maybeSingle();
-              if (sponsor?.stripe_subscription_id) {
-                try {
-                  const sub = await stripe.subscriptions.retrieve(
-                    sponsor.stripe_subscription_id
-                  );
-                  const couponName = (sub as any).discount?.coupon?.name as
-                    | string
-                    | undefined;
-                  if (couponName?.startsWith("Parrainage Kado")) {
-                    await stripe.subscriptions.deleteDiscount(
-                      sponsor.stripe_subscription_id
-                    );
-                  }
-                } catch {
-                  /* remise déjà consommée / absente : rien à retirer */
-                }
-              }
-              // 3) journal
+              // Journal (on NE remet PAS referral_rewarded_at à null : éviterait
+              // un 2ᵉ versement si le filleul se réabonne plus tard).
               try {
                 await db.from("referral_blocks").insert({
                   filleul_business_id: filleul.id,
                   parrain_slug: null,
-                  reason:
-                    event.type === "charge.refunded"
-                      ? "reward_reversed_refund"
-                      : "reward_reversed_dispute",
+                  reason: "reward_reversed_refund",
                 });
               } catch {
                 /* table absente : ignoré */
+              }
+              // Alerte admin pour retirer manuellement le mois offert du parrain.
+              try {
+                const { data: sponsor } = await db
+                  .from("businesses")
+                  .select("id, name")
+                  .eq("id", filleul.referred_by)
+                  .maybeSingle();
+                const adminEmail = (process.env.ADMIN_EMAILS || "")
+                  .split(",")[0]
+                  ?.trim();
+                if (adminEmail) {
+                  await sendEmail({
+                    to: adminEmail,
+                    subject: "Parrainage à reprendre — filleul remboursé",
+                    html: emailLayout({
+                      preview: "Un filleul a été remboursé dans les 14 jours.",
+                      heading: "Reprise de parrainage à effectuer",
+                      emoji: "↩️",
+                      bodyHtml: `Le filleul <b>${
+                        filleul.name ?? filleul.id
+                      }</b> a été intégralement remboursé de son abonnement dans les 14 jours suivant la récompense.<br><br>Merci de <b>retirer le mois offert</b> accordé au parrain <b>${
+                        sponsor?.name ?? filleul.referred_by
+                      }</b> : annulez la remise « Parrainage Kado » sur son abonnement Stripe si elle n'est pas encore consommée.`,
+                    }),
+                  });
+                }
+              } catch {
+                /* l'alerte ne doit jamais bloquer le webhook */
               }
             }
           }

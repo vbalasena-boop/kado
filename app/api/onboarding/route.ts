@@ -94,21 +94,21 @@ export async function POST(req: NextRequest) {
   if (parrainSlug && parrainSlug !== slug) {
     const { data: sponsor } = await db
       .from("businesses")
-      .select("id, phone, owner_user_id")
+      .select("id, phone")
       .eq("slug", parrainSlug)
       .maybeSingle();
     if (sponsor && sponsor.id !== biz.id) {
       // Anti-fraude : on refuse l'attribution si parrain et filleul partagent
-      // un identifiant (même propriétaire ou même téléphone). Le contrôle
-      // carte/client Stripe se fait plus tard, au versement (webhook).
+      // le même téléphone. Le contrôle carte/client Stripe se fait plus tard,
+      // au versement (webhook). (Un même compte ne peut pas être son propre
+      // parrain : un utilisateur ne possède qu'un seul commerce.)
       const samePhone = !!phone && !!sponsor.phone && phone === sponsor.phone;
-      const sameOwner = sponsor.owner_user_id === user.id;
-      if (samePhone || sameOwner) {
+      if (samePhone) {
         try {
           await db.from("referral_blocks").insert({
             filleul_business_id: biz.id,
             parrain_slug: parrainSlug,
-            reason: sameOwner ? "same_owner" : "same_phone",
+            reason: "same_phone",
           });
         } catch {
           /* table absente (migration 0042 non appliquée) : on ignore */
