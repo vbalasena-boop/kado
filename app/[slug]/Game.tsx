@@ -1383,7 +1383,7 @@ export default function Game({
                 {!preview && (
                   <a
                     className="merchant-loop-cta"
-                    href={`/tarifs?ref=${encodeURIComponent(slug)}`}
+                    href={`/tarifs?parrain=${encodeURIComponent(slug)}`}
                     target="_blank"
                     rel="noopener"
                   >
