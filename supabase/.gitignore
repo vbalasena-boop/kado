@@ -1,0 +1,3 @@
+# Artefacts locaux de la CLI Supabase (ne jamais committer)
+.branches
+.temp
