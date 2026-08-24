@@ -21,6 +21,9 @@
 --  • Tables SENSIBLES laissées en default-deny (AUCUNE policy, donc illisibles
 --    même par un authentifié) : `affiliates`, `affiliate_commissions`
 --    (PII vendeurs + stats_key secret), `rate_limits`, `system_state` (interne).
+--  • RÉSILIENT À LA DÉRIVE DE SCHÉMA : la boucle ne pose une policy que si la
+--    table existe (`to_regclass`), pour ne pas échouer si une migration
+--    antérieure n'a pas été appliquée sur l'environnement cible.
 -- ========================================================================
 
 -- Vérifie que le business appartient à l'utilisateur courant. SECURITY DEFINER :
@@ -49,45 +52,25 @@ create policy businesses_owner_select on businesses
   using (owner_user_id = auth.uid());
 
 -- ── Tables enfant (scopées par business_id) ─────────────────────────────
-drop policy if exists wheel_configs_owner_select on wheel_configs;
-create policy wheel_configs_owner_select on wheel_configs
-  for select to authenticated using (owns_business(business_id));
-
-drop policy if exists prizes_owner_select on prizes;
-create policy prizes_owner_select on prizes
-  for select to authenticated using (owns_business(business_id));
-
-drop policy if exists plays_owner_select on plays;
-create policy plays_owner_select on plays
-  for select to authenticated using (owns_business(business_id));
-
-drop policy if exists loyalty_cards_owner_select on loyalty_cards;
-create policy loyalty_cards_owner_select on loyalty_cards
-  for select to authenticated using (owns_business(business_id));
-
-drop policy if exists leads_owner_select on leads;
-create policy leads_owner_select on leads
-  for select to authenticated using (owns_business(business_id));
-
-drop policy if exists campaigns_owner_select on campaigns;
-create policy campaigns_owner_select on campaigns
-  for select to authenticated using (owns_business(business_id));
-
-drop policy if exists products_owner_select on products;
-create policy products_owner_select on products
-  for select to authenticated using (owns_business(business_id));
-
-drop policy if exists orders_owner_select on orders;
-create policy orders_owner_select on orders
-  for select to authenticated using (owns_business(business_id));
-
-drop policy if exists push_subscriptions_owner_select on push_subscriptions;
-create policy push_subscriptions_owner_select on push_subscriptions
-  for select to authenticated using (owns_business(business_id));
-
-drop policy if exists client_push_subscriptions_owner_select on client_push_subscriptions;
-create policy client_push_subscriptions_owner_select on client_push_subscriptions
-  for select to authenticated using (owns_business(business_id));
+-- Boucle idempotente et tolérante à la dérive : la policy `<table>_owner_select`
+-- n'est (re)créée que si la table existe réellement.
+do $$
+declare t text;
+begin
+  foreach t in array array[
+    'wheel_configs', 'prizes', 'plays', 'loyalty_cards', 'leads',
+    'campaigns', 'products', 'orders',
+    'push_subscriptions', 'client_push_subscriptions'
+  ] loop
+    if to_regclass('public.' || t) is not null then
+      execute format('drop policy if exists %I on %I', t || '_owner_select', t);
+      execute format(
+        'create policy %I on %I for select to authenticated using (owns_business(business_id))',
+        t || '_owner_select', t
+      );
+    end if;
+  end loop;
+end $$;
 
 -- ── Tables SENSIBLES : volontairement AUCUNE policy (default-deny) ───────
 -- affiliates, affiliate_commissions, rate_limits, system_state restent
