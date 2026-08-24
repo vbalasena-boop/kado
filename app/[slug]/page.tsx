@@ -1,5 +1,6 @@
 import { readPlayerId } from "@/lib/player";
 import { redirect } from "next/navigation";
+import { unstable_cache } from "next/cache";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { hasAccess, hasModule, getSessionUser } from "@/lib/auth";
 import { isAdminEmail } from "@/lib/admin-guard";
@@ -11,6 +12,79 @@ export const fetchCache = "force-no-store";
 // Page « application » propre à chaque commerce : non indexée pour ne pas
 // diluer le référencement du site (Google se concentre sur les pages marketing).
 export const metadata = { robots: { index: false, follow: false } };
+
+const BIZ_BASE =
+  "id, slug, name, logo_url, status, subscription_ends_at, owner_user_id, plan, subscription_status";
+const CFG_BASE =
+  "primary_color, accent_color, bg_color, bg_image_url, collect_email, instagram_url, review_url, compliance_note, instagram_enabled, review_enabled, loyalty_enabled, game_type";
+const CFG_WIDE = `${CFG_BASE}, prize_validity_days, decor_emojis, monthly_draw, monthly_draw_prize`;
+
+type PublicData = {
+  biz: any | null;
+  config: any | null;
+  cfgWide: boolean;
+  prizes: any[];
+};
+
+/**
+ * Données publiques d'une page de jeu (établissement + config de roue + lots).
+ * Identiques pour tous les visiteurs d'un même commerce → mises en cache par
+ * slug (revalidation 60 s + invalidation par tag `biz-<slug>` à chaque édition
+ * côté commerçant). Les données personnalisées (tours joués) restent hors cache.
+ */
+function loadPublicData(slug: string): Promise<PublicData> {
+  return unstable_cache(
+    async (): Promise<PublicData> => {
+      const supa = getAdminClient();
+      // Établissement : lecture unique, `click_collect` inclus (repli si la
+      // migration 0019 n'est pas encore appliquée).
+      let bizRes = await supa
+        .from("businesses")
+        .select(`${BIZ_BASE}, click_collect`)
+        .eq("slug", slug)
+        .maybeSingle();
+      if (bizRes.error) {
+        bizRes = await supa
+          .from("businesses")
+          .select(BIZ_BASE)
+          .eq("slug", slug)
+          .maybeSingle();
+      }
+      const biz = bizRes.data as any;
+      if (!biz) return { biz: null, config: null, cfgWide: false, prizes: [] };
+
+      // Config (un seul select large, repli global) + lots, en parallèle.
+      const [cfg, prizes] = await Promise.all([
+        (async () => {
+          let r = await supa
+            .from("wheel_configs")
+            .select(CFG_WIDE)
+            .eq("business_id", biz.id)
+            .maybeSingle();
+          if (r.error) {
+            r = await supa
+              .from("wheel_configs")
+              .select(CFG_BASE)
+              .eq("business_id", biz.id)
+              .maybeSingle();
+            return { data: r.data as any, wide: false };
+          }
+          return { data: r.data as any, wide: true };
+        })(),
+        supa
+          .from("prizes")
+          .select("id, label, emoji, weight, color, position")
+          .eq("business_id", biz.id)
+          .order("position", { ascending: true })
+          .then((r) => r.data ?? []),
+      ]);
+
+      return { biz, config: cfg.data, cfgWide: cfg.wide, prizes: prizes ?? [] };
+    },
+    ["public-game", slug],
+    { tags: [`biz-${slug}`], revalidate: 60 }
+  )();
+}
 
 function Unavailable({ message }: { message: string }) {
   return (
@@ -31,32 +105,16 @@ export default async function Page({
   params: { slug: string };
   searchParams: { preview?: string };
 }) {
-  let supa;
+  // Service configuré ? (message amical plutôt qu'une erreur brute)
   try {
-    supa = getAdminClient();
+    getAdminClient();
   } catch {
     return (
       <Unavailable message="Le service n'est pas encore configuré (base de données manquante)." />
     );
   }
 
-  // Établissement : une seule lecture, `click_collect` inclus (avec repli si la
-  // migration 0019 n'est pas encore appliquée) — évite un second aller-retour.
-  const BIZ_BASE =
-    "id, slug, name, logo_url, status, subscription_ends_at, owner_user_id, plan, subscription_status";
-  let bizRes = await supa
-    .from("businesses")
-    .select(`${BIZ_BASE}, click_collect`)
-    .eq("slug", params.slug)
-    .maybeSingle();
-  if (bizRes.error) {
-    bizRes = await supa
-      .from("businesses")
-      .select(BIZ_BASE)
-      .eq("slug", params.slug)
-      .maybeSingle();
-  }
-  const biz = bizRes.data as any;
+  const { biz, config, cfgWide, prizes } = await loadPublicData(params.slug);
 
   if (!biz) {
     return <Unavailable message="Cet établissement n'existe pas." />;
@@ -66,10 +124,7 @@ export default async function Page({
   let preview = false;
   if (searchParams?.preview === "1") {
     const user = await getSessionUser();
-    if (
-      user &&
-      (user.id === biz.owner_user_id || isAdminEmail(user.email))
-    ) {
+    if (user && (user.id === biz.owner_user_id || isAdminEmail(user.email))) {
       preview = true;
     }
   }
@@ -80,22 +135,25 @@ export default async function Page({
     );
   }
 
-  const bizForPlan = { plan: biz.plan ?? "roue", subscription_status: biz.subscription_status ?? "trial" };
+  const bizForPlan = {
+    plan: biz.plan ?? "roue",
+    subscription_status: biz.subscription_status ?? "trial",
+  };
   if (!preview && !hasModule(bizForPlan, "roue")) {
     redirect(`/${biz.slug}/fidelite`);
   }
 
-  // Click & collect : issu de la lecture unique ci-dessus (plus de 2ᵉ appel).
+  // Click & collect : issu de la lecture mise en cache ci-dessus.
   let orderEnabled = !!biz.click_collect;
   // Essai gratuit ou formule « Complet » (tout inclus) : la commande est
   // ouverte — mais le bouton public n'apparaît que si le commerçant a déjà
-  // mis des produits au catalogue.
+  // mis des produits au catalogue. (Lecture dynamique, hors cache.)
   if (
     !orderEnabled &&
     (biz.subscription_status === "trial" || biz.plan === "complet")
   ) {
     try {
-      const { count } = await supa
+      const { count } = await getAdminClient()
         .from("products")
         .select("id", { count: "exact", head: true })
         .eq("business_id", biz.id)
@@ -106,64 +164,28 @@ export default async function Page({
     }
   }
 
-  // Configuration de la roue : UN SEUL select large au lieu de 4 lectures
-  // séparées de la même ligne. Repli global sur les colonnes de base si une
-  // migration (0025/0027/0030/0031) n'est pas encore appliquée.
-  const CFG_BASE =
-    "primary_color, accent_color, bg_color, bg_image_url, collect_email, instagram_url, review_url, compliance_note, instagram_enabled, review_enabled, loyalty_enabled, game_type";
-  const CFG_WIDE = `${CFG_BASE}, prize_validity_days, decor_emojis, monthly_draw, monthly_draw_prize`;
-
-  const playerId = readPlayerId();
-
-  // 2ᵉ vague : config + lots + tours joués en parallèle (Promise.all).
-  const [cfg, prizes, played] = await Promise.all([
-    (async () => {
-      let r = await supa
-        .from("wheel_configs")
-        .select(CFG_WIDE)
-        .eq("business_id", biz.id)
-        .maybeSingle();
-      if (r.error) {
-        r = await supa
-          .from("wheel_configs")
-          .select(CFG_BASE)
-          .eq("business_id", biz.id)
-          .maybeSingle();
-        return { data: r.data as any, wide: false };
-      }
-      return { data: r.data as any, wide: true };
-    })(),
-    supa
-      .from("prizes")
-      .select("id, label, emoji, weight, color, position")
-      .eq("business_id", biz.id)
-      .order("position", { ascending: true })
-      .then((r) => r.data),
-    (async () => {
-      const acc: Record<string, { label: string; code: string }> = {};
-      if (playerId && !preview) {
-        const { data: rows } = await supa
-          .from("plays")
-          .select("play_type, prize_label, prize_code")
-          .eq("business_id", biz.id)
-          .eq("player_id", playerId);
-        for (const r of rows ?? []) {
-          acc[r.play_type] = { label: r.prize_label, code: r.prize_code };
-        }
-      }
-      return acc;
-    })(),
-  ]);
-
-  const config = cfg.data;
   // 30 j par défaut si la colonne (0025) manque ou s'il n'y a pas de config.
   const prizeValidity: number | null =
-    !cfg.wide || !config ? 30 : (config.prize_validity_days ?? null);
+    !cfgWide || !config ? 30 : (config.prize_validity_days ?? null);
   const decorEmojis: string = config?.decor_emojis ?? "";
   const drawPrize: string =
-    cfg.wide && config?.monthly_draw
+    cfgWide && config?.monthly_draw
       ? String(config.monthly_draw_prize || "").trim()
       : "";
+
+  // Tours déjà joués par ce navigateur (verrou serveur) — personnalisé, hors cache.
+  const played: Record<string, { label: string; code: string }> = {};
+  const playerId = readPlayerId();
+  if (playerId && !preview) {
+    const { data: rows } = await getAdminClient()
+      .from("plays")
+      .select("play_type, prize_label, prize_code")
+      .eq("business_id", biz.id)
+      .eq("player_id", playerId);
+    for (const r of rows ?? []) {
+      played[r.play_type] = { label: r.prize_label, code: r.prize_code };
+    }
+  }
 
   return (
     <Game
@@ -182,8 +204,7 @@ export default async function Page({
           bg_color: "#150c29",
           instagram_url: null,
           review_url: null,
-          compliance_note:
-            "Le cadeau n'est pas conditionné à la note laissée.",
+          compliance_note: "Le cadeau n'est pas conditionné à la note laissée.",
           instagram_enabled: true,
           review_enabled: true,
           loyalty_enabled: false,

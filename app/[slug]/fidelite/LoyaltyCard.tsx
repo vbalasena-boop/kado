@@ -128,7 +128,12 @@ export default function LoyaltyCard({
       const res = await fetch("/api/loyalty/extra", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug, email: email.trim().toLowerCase(), ...patch }),
+        body: JSON.stringify({
+          slug,
+          email: email.trim().toLowerCase(),
+          code: card?.code,
+          ...patch,
+        }),
       });
       return res.ok;
     } catch {

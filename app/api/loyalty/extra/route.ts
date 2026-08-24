@@ -1,71 +1,81 @@
-import { NextRequest } from "next/server";
+import { z } from "zod";
+import { publicRoute } from "@/lib/api";
 import { getAdminClient } from "@/lib/supabase/admin";
-import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
-const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+const Body = z.object({
+  slug: z.string().trim().min(1),
+  email: z.string().trim().toLowerCase().email(),
+  // Preuve de possession : le code imprimé sur la carte du client (renvoyé par
+  // /api/loyalty/card). Requis pour toute modification.
+  code: z.string().trim().min(1),
+  birthday_day: z.number().int().min(1).max(31).optional(),
+  birthday_month: z.number().int().min(1).max(12).optional(),
+  marketing_ok: z.boolean().optional(),
+});
 
 /**
- * Complète la carte de fidélité d'un client : anniversaire (jour/mois)
- * et/ou consentement marketing.
+ * Complète la carte de fidélité d'un client : anniversaire et/ou consentement
+ * marketing. Exige le code de carte comme preuve de possession, et ne ré-active
+ * jamais une désinscription (RGPD) — voir plus bas.
  */
-export async function POST(req: NextRequest) {
-  const ip = clientIp(req);
-  if (!(await rateLimit(`loyalty-extra:${ip}`, 15, 60))) {
-    return Response.json({ error: "rate_limited" }, { status: 429 });
-  }
+export const POST = publicRoute({
+  schema: Body,
+  rateLimit: {
+    key: ({ ip }) => `loyalty-extra:${ip}`,
+    limit: 15,
+    windowSeconds: 60,
+  },
+  handler: async ({ body }) => {
+    const db = getAdminClient();
 
-  let body: {
-    slug?: string;
-    email?: string;
-    birthday_day?: number;
-    birthday_month?: number;
-    marketing_ok?: boolean;
-  };
-  try {
-    body = await req.json();
-  } catch {
-    return Response.json({ error: "bad_request" }, { status: 400 });
-  }
+    const { data: biz } = await db
+      .from("businesses")
+      .select("id, status")
+      .eq("slug", body.slug)
+      .maybeSingle();
+    if (!biz || biz.status !== "active") {
+      return Response.json({ error: "unavailable" }, { status: 404 });
+    }
 
-  const slug = (body.slug || "").trim();
-  const email = (body.email || "").trim().toLowerCase();
-  if (!slug || !EMAIL_RE.test(email)) {
-    return Response.json({ error: "bad_email" }, { status: 400 });
-  }
+    // La carte doit correspondre au trio (établissement, e-mail, code). Sans le
+    // bon code, un tiers ne peut pas modifier la carte d'autrui.
+    const { data: card } = await db
+      .from("loyalty_cards")
+      .select("id")
+      .eq("business_id", biz.id)
+      .eq("email", body.email)
+      .eq("code", body.code.toUpperCase())
+      .maybeSingle();
+    if (!card) {
+      return Response.json({ error: "not_found" }, { status: 404 });
+    }
 
-  const db = getAdminClient();
-  const { data: biz } = await db
-    .from("businesses")
-    .select("id, status")
-    .eq("slug", slug)
-    .maybeSingle();
-  if (!biz || biz.status !== "active") {
-    return Response.json({ error: "unavailable" }, { status: 404 });
-  }
+    const patch: Record<string, unknown> = {};
+    if (body.birthday_day && body.birthday_month) {
+      patch.birthday_day = body.birthday_day;
+      patch.birthday_month = body.birthday_month;
+    }
+    if (typeof body.marketing_ok === "boolean") {
+      patch.marketing_ok = body.marketing_ok;
+      // RGPD : on NE ré-efface PLUS `unsubscribed_at` ici. Un client qui s'était
+      // désinscrit ne peut pas être ré-abonné de force via cet endpoint public ;
+      // un ré-opt-in devrait passer par un double opt-in (non implémenté). Les
+      // crons respectent `unsubscribed_at`, donc un désinscrit reste protégé.
+    }
+    if (Object.keys(patch).length === 0) {
+      return Response.json({ error: "nothing_to_update" }, { status: 400 });
+    }
 
-  const patch: Record<string, unknown> = {};
-  const d = Number(body.birthday_day);
-  const m = Number(body.birthday_month);
-  if (Number.isInteger(d) && Number.isInteger(m) && d >= 1 && d <= 31 && m >= 1 && m <= 12) {
-    patch.birthday_day = d;
-    patch.birthday_month = m;
-  }
-  if (typeof body.marketing_ok === "boolean") {
-    patch.marketing_ok = body.marketing_ok;
-    if (body.marketing_ok) patch.unsubscribed_at = null;
-  }
-  if (Object.keys(patch).length === 0) {
-    return Response.json({ error: "nothing_to_update" }, { status: 400 });
-  }
+    const { error } = await db
+      .from("loyalty_cards")
+      .update(patch)
+      .eq("id", card.id);
+    if (error) {
+      return Response.json({ error: "update_failed" }, { status: 500 });
+    }
 
-  const { error } = await db
-    .from("loyalty_cards")
-    .update(patch)
-    .eq("business_id", biz.id)
-    .eq("email", email);
-  if (error) return Response.json({ error: "update_failed" }, { status: 500 });
-
-  return Response.json({ ok: true });
-}
+    return Response.json({ ok: true });
+  },
+});
