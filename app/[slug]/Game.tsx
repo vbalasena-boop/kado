@@ -1380,6 +1380,17 @@ export default function Game({
                 <p className="fine">
                   Présentez vos codes en caisse. À très vite&nbsp;!
                 </p>
+                {!preview && (
+                  <a
+                    className="merchant-loop-cta"
+                    href={`/tarifs?ref=${encodeURIComponent(slug)}`}
+                    target="_blank"
+                    rel="noopener"
+                  >
+                    🎁 Vous êtes commerçant&nbsp;? Offrez ça à vos clients —
+                    14&nbsp;jours offerts →
+                  </a>
+                )}
               </div>
             </section>
           )}
