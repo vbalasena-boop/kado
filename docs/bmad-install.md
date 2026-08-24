@@ -1,75 +1,60 @@
-# Installer BMAD Method dans Claude Code
+# BMAD Method dans ce projet
 
-Ce projet est cadré avec la **BMAD Method** (voir `brief.md`, `prd.md`,
-`architecture.md`, `roadmap.md`). Pour retravailler ces documents avec les
-agents BMAD (Analyst, PM, Architect, Scrum Master, Dev, QA…), tu as **deux
-options**.
+La **BMAD Method** (v6) est **déjà installée dans ce dépôt**. Les agents et
+workflows sont posés dans `.claude/skills/` et le cœur dans `_bmad/`, donc dès
+que tu ouvres le projet `kado` dans **Claude Code** (app bureau/web ou CLI),
+les skills BMAD sont disponibles — rien à installer en plus.
 
----
+## Ce qui a été installé
 
-## Option A — Plugin Claude Code (global, tous tes projets)
+- **Modules** : `core` + `bmm` (BMad Method — agents Analyst, PM, Architect,
+  UX, Scrum Master, Dev, QA…).
+- **Langue** : français (chat + documents générés).
+- **Connaissance projet** : dossier `docs/` (brief, PRD, architecture, roadmap
+  existants).
+- **Sorties** : générées dans `_bmad-output/` (planning + implémentation).
 
-> Le plus simple pour avoir BMAD partout. Le plugin `PabloLION/bmad-plugin`
-> est **communautaire** mais se synchronise sur la BMAD officielle
-> (BMad Code, LLC). L'annuaire officiel `bmad-code-org/bmad-plugins-marketplace`
-> est un **registre** (liste de modules), pas un marketplace installable en
-> l'état — ne pas l'utiliser avec `/plugin marketplace add`.
+Config lisible dans `_bmad/_config/config.toml` (géré par l'installeur — ne
+pas éditer à la main ; pour des réglages durables, re-lancer l'installeur ou
+utiliser `_bmad/custom/config.toml`).
 
-### Le marketplace est déjà déclaré dans le repo
+## Utiliser BMAD
 
-Le fichier [`.claude/settings.json`](../.claude/settings.json) déclare le
-marketplace. Quand tu ouvres ce dépôt dans Claude Code et que tu **fais
-confiance au dossier**, il est enregistré automatiquement.
+Ouvre `kado` dans Claude Code, puis invoque un agent via la palette de skills
+(les skills commencent par `bmad-`). Par exemple :
 
-### Installer (à faire dans TON Claude Code)
+- `bmad-help` — ne sais pas par où commencer ? demande-lui.
+- `bmad-agent-analyst` (Mary) — cadrage / analyse.
+- `bmad-agent-pm` (John) — PRD, épics.
+- `bmad-agent-architect` — architecture.
+- `bmad-agent-dev` — implémentation des stories.
 
-Lance Claude Code (`claude` dans un terminal) puis, **à l'intérieur** de
-l'interface Claude Code (pas dans le terminal zsh) :
+Workflow agile typique : Analyst → PM (PRD) → Architect → création des
+epics/stories → Dev/QA story par story.
+
+## Mettre à jour BMAD
+
+```bash
+npx bmad-method install --directory . --tools claude-code \
+  --modules core,bmm --action update
+```
+
+## Alternative : plugin global (tous tes projets)
+
+L'install ci-dessus vaut **pour ce dépôt**. Pour avoir BMAD dans **tous** tes
+projets sans réinstaller, un plugin Claude Code (communautaire, basé sur la
+BMAD officielle) existe — à faire dans **ton** Claude Code :
 
 ```
 /plugin marketplace add PabloLION/bmad-plugin
-/plugin install bmad@bmad-method
-/reload-plugins
+/plugin install bmad@bmad-method     # scope User = global
 ```
 
-À l'installation, choisis le scope **User** = global à tous tes projets.
-Vérifie ensuite avec `/` : des commandes BMAD (`/pm`, `/sm`, `/dev`, `/qa`…)
-doivent apparaître.
-
-> ⚠️ Les commandes qui commencent par `/` fonctionnent **uniquement dans
-> l'interface Claude Code**, pas au prompt zsh du terminal.
-
----
-
-## Option B — Installeur officiel `npx` (par projet)
-
-Méthode officielle BMAD, mais elle installe **dans le projet courant**
-(pas en global). Prérequis : Node.js ≥ 20.12.
-
-```bash
-cd chemin/vers/kado
-npx bmad-method install
-```
-
-L'assistant interactif demande : le dossier, les modules (core, bmm, bmb,
-cis, gds, tea) et les IDE cibles (coche **claude-code**). Il crée les
-commandes Claude Code (`/pm`, `/sm`, `/dev`, `/qa`…) pour ce projet.
-
----
-
-## Utiliser BMAD dans ce projet
-
-Une fois installé (option A ou B), dans le dossier `kado` :
-
-```
-/bmad:init        # ou les agents /pm, /sm, /dev… selon la version
-```
-
-Il s'appuie sur les docs existants dans `docs/`.
+> ℹ️ Ces commandes `/` fonctionnent uniquement **dans l'interface Claude Code**,
+> pas au prompt du terminal.
 
 ---
 
 Réf. : [BMAD Method](https://github.com/bmad-code-org/BMAD-METHOD) ·
-[Docs d'installation](https://docs.bmad-method.org/how-to/install-bmad/) ·
-[Plugin Claude Code (communautaire)](https://github.com/PabloLION/bmad-plugin) ·
-[Claude Code — Plugin marketplaces](https://code.claude.com/docs/en/plugin-marketplaces)
+[Docs](https://docs.bmad-method.org/how-to/install-bmad/) ·
+[Plugin communautaire](https://github.com/PabloLION/bmad-plugin)
