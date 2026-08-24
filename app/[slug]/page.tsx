@@ -40,13 +40,23 @@ export default async function Page({
     );
   }
 
-  const { data: biz } = await supa
+  // Établissement : une seule lecture, `click_collect` inclus (avec repli si la
+  // migration 0019 n'est pas encore appliquée) — évite un second aller-retour.
+  const BIZ_BASE =
+    "id, slug, name, logo_url, status, subscription_ends_at, owner_user_id, plan, subscription_status";
+  let bizRes = await supa
     .from("businesses")
-    .select(
-      "id, slug, name, logo_url, status, subscription_ends_at, owner_user_id, plan, subscription_status"
-    )
+    .select(`${BIZ_BASE}, click_collect`)
     .eq("slug", params.slug)
     .maybeSingle();
+  if (bizRes.error) {
+    bizRes = await supa
+      .from("businesses")
+      .select(BIZ_BASE)
+      .eq("slug", params.slug)
+      .maybeSingle();
+  }
+  const biz = bizRes.data as any;
 
   if (!biz) {
     return <Unavailable message="Cet établissement n'existe pas." />;
@@ -75,39 +85,14 @@ export default async function Page({
     redirect(`/${biz.slug}/fidelite`);
   }
 
-  const [{ data: config }, { data: prizes }] = await Promise.all([
-    supa
-      .from("wheel_configs")
-      .select(
-        "primary_color, accent_color, bg_color, bg_image_url, collect_email, instagram_url, review_url, compliance_note, instagram_enabled, review_enabled, loyalty_enabled, game_type"
-      )
-      .eq("business_id", biz.id)
-      .maybeSingle(),
-    supa
-      .from("prizes")
-      .select("id, label, emoji, weight, color, position")
-      .eq("business_id", biz.id)
-      .order("position", { ascending: true }),
-  ]);
-
-  // Click & collect actif ? (lecture tolérante si migration absente)
-  let orderEnabled = false;
-  try {
-    const { data: cc } = await supa
-      .from("businesses")
-      .select("click_collect")
-      .eq("id", biz.id)
-      .maybeSingle();
-    orderEnabled = !!(cc as any)?.click_collect;
-  } catch {
-    orderEnabled = false;
-  }
+  // Click & collect : issu de la lecture unique ci-dessus (plus de 2ᵉ appel).
+  let orderEnabled = !!biz.click_collect;
   // Essai gratuit ou formule « Complet » (tout inclus) : la commande est
   // ouverte — mais le bouton public n'apparaît que si le commerçant a déjà
   // mis des produits au catalogue.
   if (
     !orderEnabled &&
-    (biz.subscription_status === "trial" || (biz as any).plan === "complet")
+    (biz.subscription_status === "trial" || biz.plan === "complet")
   ) {
     try {
       const { count } = await supa
@@ -121,47 +106,64 @@ export default async function Page({
     }
   }
 
-  // Validité des cadeaux (lecture tolérante, 30 j par défaut)
-  const { data: pv, error: pvErr } = await supa
-    .from("wheel_configs")
-    .select("prize_validity_days")
-    .eq("business_id", biz.id)
-    .maybeSingle();
-  const prizeValidity: number | null =
-    pvErr || !pv ? 30 : ((pv as any).prize_validity_days ?? null);
+  // Configuration de la roue : UN SEUL select large au lieu de 4 lectures
+  // séparées de la même ligne. Repli global sur les colonnes de base si une
+  // migration (0025/0027/0030/0031) n'est pas encore appliquée.
+  const CFG_BASE =
+    "primary_color, accent_color, bg_color, bg_image_url, collect_email, instagram_url, review_url, compliance_note, instagram_enabled, review_enabled, loyalty_enabled, game_type";
+  const CFG_WIDE = `${CFG_BASE}, prize_validity_days, decor_emojis, monthly_draw, monthly_draw_prize`;
 
-  // Décor animé (lecture tolérante si la migration 0027 manque)
-  const { data: dec, error: decErr } = await supa
-    .from("wheel_configs")
-    .select("decor_emojis")
-    .eq("business_id", biz.id)
-    .maybeSingle();
-  const decorEmojis: string = decErr ? "" : ((dec as any)?.decor_emojis ?? "");
-
-  // Tirage au sort actif ? (lecture tolérante si migrations 0030/0031 absentes)
-  const { data: dr, error: drErr } = await supa
-    .from("wheel_configs")
-    .select("monthly_draw, monthly_draw_prize")
-    .eq("business_id", biz.id)
-    .maybeSingle();
-  const drawPrize: string =
-    !drErr && (dr as any)?.monthly_draw
-      ? ((dr as any)?.monthly_draw_prize || "").trim()
-      : "";
-
-  // Tours déjà joués par ce navigateur (verrou côté serveur)
-  const played: Record<string, { label: string; code: string }> = {};
   const playerId = readPlayerId();
-  if (playerId && !preview) {
-    const { data: rows } = await supa
-      .from("plays")
-      .select("play_type, prize_label, prize_code")
+
+  // 2ᵉ vague : config + lots + tours joués en parallèle (Promise.all).
+  const [cfg, prizes, played] = await Promise.all([
+    (async () => {
+      let r = await supa
+        .from("wheel_configs")
+        .select(CFG_WIDE)
+        .eq("business_id", biz.id)
+        .maybeSingle();
+      if (r.error) {
+        r = await supa
+          .from("wheel_configs")
+          .select(CFG_BASE)
+          .eq("business_id", biz.id)
+          .maybeSingle();
+        return { data: r.data as any, wide: false };
+      }
+      return { data: r.data as any, wide: true };
+    })(),
+    supa
+      .from("prizes")
+      .select("id, label, emoji, weight, color, position")
       .eq("business_id", biz.id)
-      .eq("player_id", playerId);
-    for (const r of rows ?? []) {
-      played[r.play_type] = { label: r.prize_label, code: r.prize_code };
-    }
-  }
+      .order("position", { ascending: true })
+      .then((r) => r.data),
+    (async () => {
+      const acc: Record<string, { label: string; code: string }> = {};
+      if (playerId && !preview) {
+        const { data: rows } = await supa
+          .from("plays")
+          .select("play_type, prize_label, prize_code")
+          .eq("business_id", biz.id)
+          .eq("player_id", playerId);
+        for (const r of rows ?? []) {
+          acc[r.play_type] = { label: r.prize_label, code: r.prize_code };
+        }
+      }
+      return acc;
+    })(),
+  ]);
+
+  const config = cfg.data;
+  // 30 j par défaut si la colonne (0025) manque ou s'il n'y a pas de config.
+  const prizeValidity: number | null =
+    !cfg.wide || !config ? 30 : (config.prize_validity_days ?? null);
+  const decorEmojis: string = config?.decor_emojis ?? "";
+  const drawPrize: string =
+    cfg.wide && config?.monthly_draw
+      ? String(config.monthly_draw_prize || "").trim()
+      : "";
 
   return (
     <Game

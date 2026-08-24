@@ -3,8 +3,6 @@ import HomeGames from "@/components/HomeGames";
 import HomeLoyalty from "@/components/HomeLoyalty";
 import SupportButton from "@/components/SupportButton";
 
-export const dynamic = "force-dynamic";
-
 /* --- Logos de marque (SVG, rendu côté serveur) --- */
 function InstagramGlyph({ size = 20 }: { size?: number }) {
   return (

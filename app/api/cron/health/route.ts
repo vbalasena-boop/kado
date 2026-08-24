@@ -12,12 +12,11 @@ export const maxDuration = 60;
  * l'admin par e-mail uniquement si quelque chose ne va pas.
  */
 export async function GET(req: NextRequest) {
+  // Sécurité : le secret est EXIGÉ (fail-closed). Sans CRON_SECRET défini côté
+  // Vercel, l'endpoint refuse — il expose sinon l'état interne (base/Stripe/Resend).
   const secret = process.env.CRON_SECRET;
-  if (secret) {
-    const auth = req.headers.get("authorization");
-    if (auth !== `Bearer ${secret}`) {
-      return Response.json({ error: "forbidden" }, { status: 403 });
-    }
+  if (!secret || req.headers.get("authorization") !== `Bearer ${secret}`) {
+    return Response.json({ error: "forbidden" }, { status: 403 });
   }
 
   const checks = await runHealthChecks();

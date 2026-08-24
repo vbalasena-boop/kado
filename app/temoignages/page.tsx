@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Logo } from "@/components/Logo";
 
-export const dynamic = "force-dynamic";
-
 // ⚠️ Page en `noindex` tant qu'elle contient des exemples. Une fois remplie
 // de VRAIS témoignages, retirez le bloc `robots` ci-dessous et le bandeau
 // « à personnaliser », puis ajoutez le lien dans la navigation.
