@@ -31,8 +31,12 @@ const SITE = "https://kado-app.fr";
 export async function GET(req: NextRequest) {
   // Vercel ajoute automatiquement "Authorization: Bearer <CRON_SECRET>"
   // quand la variable d'environnement CRON_SECRET est définie.
+  // Sécurité : le secret est EXIGÉ. Sans lui (ou avec un en-tête invalide) on
+  // refuse — sinon un endpoint oublié laisserait n'importe qui déclencher les
+  // envois d'e-mails et le tirage au sort. CRON_SECRET doit être défini côté
+  // Vercel (Settings → Environment Variables) pour que le cron s'exécute.
   const secret = process.env.CRON_SECRET;
-  if (secret && req.headers.get("authorization") !== `Bearer ${secret}`) {
+  if (!secret || req.headers.get("authorization") !== `Bearer ${secret}`) {
     return Response.json({ error: "unauthorized" }, { status: 401 });
   }
 

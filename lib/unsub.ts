@@ -1,11 +1,17 @@
 import { createHmac } from "crypto";
 
 function secret() {
-  return (
-    process.env.PLAYER_COOKIE_SECRET ||
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    "kado"
-  );
+  const s =
+    process.env.PLAYER_COOKIE_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (s) return s;
+  // Pas de repli codé en dur en production : un secret connu rendrait les
+  // jetons de désinscription forgeables. On ne tolère un repli qu'en dev/local.
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "PLAYER_COOKIE_SECRET manquant : les jetons de désinscription seraient forgeables."
+    );
+  }
+  return "dev-secret-change-me";
 }
 
 /** Jeton signé pour les liens de désinscription (b + e → HMAC tronqué). */

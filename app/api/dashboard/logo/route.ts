@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { getMyBusiness } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { imageExt } from "@/lib/upload";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +25,9 @@ export async function POST(req: NextRequest) {
   if (!(file instanceof File)) {
     return Response.json({ error: "no_file" }, { status: 400 });
   }
-  if (!file.type.startsWith("image/")) {
+  // Type déterminé par une whitelist (SVG refusé) — pas `startsWith("image/")`.
+  const ext = imageExt(file.type);
+  if (!ext) {
     return Response.json({ error: "not_an_image" }, { status: 400 });
   }
   if (file.size > MAX_BYTES) {
@@ -43,7 +46,6 @@ export async function POST(req: NextRequest) {
     /* déjà existant */
   }
 
-  const ext = (file.name.split(".").pop() || "png").toLowerCase().slice(0, 5);
   const path = `${business.id}-${Date.now()}.${ext}`;
   const buffer = Buffer.from(await file.arrayBuffer());
 
