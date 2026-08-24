@@ -439,6 +439,94 @@ export async function POST(req: NextRequest) {
         }
         break;
       }
+      case "charge.refunded":
+      case "charge.dispute.created": {
+        // Reprise de récompense de parrainage : si le filleul est remboursé /
+        // conteste dans les 14 jours suivant la récompense, on annule le mois
+        // offert accordé au parrain (remise Stripe non consommée) et on remet
+        // le filleul en état « non récompensé ». Best-effort, tolérant.
+        // ⚠️ À VALIDER avec des clés Stripe de test avant la prod.
+        try {
+          const db = getAdminClient();
+          let customerId: string | null = null;
+          if (event.type === "charge.refunded") {
+            const ch = event.data.object as Stripe.Charge;
+            customerId =
+              typeof ch.customer === "string"
+                ? ch.customer
+                : ch.customer?.id ?? null;
+          } else {
+            const dp = event.data.object as Stripe.Dispute;
+            const chId =
+              typeof dp.charge === "string" ? dp.charge : dp.charge?.id;
+            if (chId) {
+              const ch = await stripe.charges.retrieve(chId);
+              customerId =
+                typeof ch.customer === "string"
+                  ? ch.customer
+                  : ch.customer?.id ?? null;
+            }
+          }
+          if (customerId) {
+            const { data: filleul } = await db
+              .from("businesses")
+              .select("id, referred_by, referral_rewarded_at")
+              .eq("stripe_customer_id", customerId)
+              .maybeSingle();
+            const rewardedAt = filleul?.referral_rewarded_at
+              ? new Date(filleul.referral_rewarded_at).getTime()
+              : 0;
+            const within14 = rewardedAt > 0 && Date.now() - rewardedAt < 14 * 864e5;
+            if (filleul?.referred_by && within14) {
+              // 1) filleul → non récompensé
+              await db
+                .from("businesses")
+                .update({ referral_rewarded_at: null })
+                .eq("id", filleul.id);
+              // 2) retirer la remise du parrain SI c'est bien notre coupon et
+              //    qu'elle n'est pas encore consommée.
+              const { data: sponsor } = await db
+                .from("businesses")
+                .select("id, stripe_subscription_id")
+                .eq("id", filleul.referred_by)
+                .maybeSingle();
+              if (sponsor?.stripe_subscription_id) {
+                try {
+                  const sub = await stripe.subscriptions.retrieve(
+                    sponsor.stripe_subscription_id
+                  );
+                  const couponName = (sub as any).discount?.coupon?.name as
+                    | string
+                    | undefined;
+                  if (couponName?.startsWith("Parrainage Kado")) {
+                    await stripe.subscriptions.deleteDiscount(
+                      sponsor.stripe_subscription_id
+                    );
+                  }
+                } catch {
+                  /* remise déjà consommée / absente : rien à retirer */
+                }
+              }
+              // 3) journal
+              try {
+                await db.from("referral_blocks").insert({
+                  filleul_business_id: filleul.id,
+                  parrain_slug: null,
+                  reason:
+                    event.type === "charge.refunded"
+                      ? "reward_reversed_refund"
+                      : "reward_reversed_dispute",
+                });
+              } catch {
+                /* table absente : ignoré */
+              }
+            }
+          }
+        } catch {
+          /* la reprise ne doit jamais bloquer le webhook */
+        }
+        break;
+      }
       default:
         break;
     }
