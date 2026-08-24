@@ -25,21 +25,12 @@ export const POST = merchantRoute({
     if (!code) return Response.json({ status: "not_found" });
 
     const db = getAdminClient();
-    let playRes = await db
+    const playRes = await db
       .from("plays")
       .select("id, prize_label, prize_code, created_at, redeemed_at, is_losing")
       .eq("business_id", business.id)
       .eq("prize_code", code)
       .maybeSingle();
-    // Repli si la colonne is_losing n'existe pas encore (migration 0037).
-    if (playRes.error && (playRes.error as { code?: string }).code === "42703") {
-      playRes = await db
-        .from("plays")
-        .select("id, prize_label, prize_code, created_at, redeemed_at")
-        .eq("business_id", business.id)
-        .eq("prize_code", code)
-        .maybeSingle();
-    }
     const play = playRes.data;
 
     if (!play) return Response.json({ status: "not_found" });

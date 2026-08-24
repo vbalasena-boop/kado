@@ -23,6 +23,23 @@ supabase migration list
 supabase db push
 ```
 
+### Première adoption sur une base DÉJÀ migrée à la main
+
+Si les migrations `0001`→`0044` ont été appliquées manuellement (SQL Editor),
+la table de suivi de la CLI est vide : `db push` croirait devoir tout rejouer.
+On marque donc l'historique comme **déjà appliqué**, une seule fois :
+
+```bash
+supabase migration repair --status applied \
+  0001 0002 0003 0004 0005 0006 0007 0008 0009 0010 0011 \
+  0012 0013 0014 0015 0016 0017 0018 0019 0020 0021 0022 \
+  0023 0024 0025 0026 0027 0028 0029 0030 0031 0032 0033 \
+  0034 0035 0036 0037 0038 0039 0040 0041 0042 0043 0044
+supabase migration list   # tout doit être aligné (Local ✓ / Remote ✓)
+```
+
+Ensuite, `db push` n'appliquera plus que les migrations réellement nouvelles.
+
 ### Créer une nouvelle migration
 
 Conserver la **convention numérique séquentielle** (prochain numéro libre, ex.
@@ -52,20 +69,20 @@ correctif ponctuel.
   de la CLI se désynchronise).
 - **Un numéro = un fichier** : pas de collision de préfixe.
 
-## Plan : retrait des shims de compatibilité `42703`
+## Shims de compatibilité `42703`
 
-Tant qu'aucun outil ne garantissait l'application des migrations, le code porte des
-**béquilles défensives** : replis sur l'erreur Postgres `42703` (colonne
-inexistante) et `try/catch { /* colonne absente */ }`. On les trouve notamment
-dans :
+Historiquement, faute d'outil garantissant l'application des migrations, le code
+portait des **béquilles défensives** : replis sur l'erreur Postgres `42703`
+(colonne inexistante) et `try/catch { /* colonne absente */ }`.
 
-- `app/api/play/route.ts` (colonne `is_losing`)
-- `app/api/dashboard/redeem/route.ts` (`is_losing`, `prize_validity_days`)
-- `lib/orders.ts` / `app/api/order/route.ts` (colonnes commande récentes)
-- `lib/prizes.ts`, `lib/campaigns.ts`, `app/[slug]/page.tsx` (lectures tolérantes)
+**Fait** (après vérification que les 66 colonnes attendues existent en prod) : les
+**5 fallbacks `42703` explicites** ont été retirés — `app/api/play/route.ts`
+(sélection lots + insert `is_losing`), `app/api/dashboard/redeem/route.ts`
+(`is_losing`), `lib/prizes.ts`. Le chemin de code n'est plus doublé pour ces
+colonnes.
 
-**Une fois la CLI adoptée** et `supabase migration list` confirmant que TOUTES les
-migrations sont appliquées (un « socle » de version garanti), ces shims peuvent
-être retirés dans une PR dédiée : le schéma est alors garanti complet, et chaque
-nouvelle colonne n'a plus à doubler le chemin de code. À faire en une passe,
-après vérification `migration list` sur l'environnement de production.
+**Conservé volontairement** : les `try/catch` mous (`lib/campaigns.ts`,
+`app/[slug]/commander/page.tsx`, webhook, etc.) qui protègent aussi contre des
+erreurs runtime légitimes, pas seulement l'absence de colonne. À réévaluer au cas
+par cas, pas en bloc — le gain (simplicité) ne justifie pas le risque tant que la
+distinction colonne-absente / erreur-réelle n'est pas triée.

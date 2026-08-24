@@ -46,7 +46,7 @@ export const POST = publicRoute({
 
     const playerId = getOrCreatePlayerId();
 
-    const [prizesRes, { data: cfg }] = await Promise.all([
+    const [{ data: prizes }, { data: cfg }] = await Promise.all([
       supa
         .from("prizes")
         .select("id, label, emoji, weight, color, position, is_losing")
@@ -58,26 +58,6 @@ export const POST = publicRoute({
         .eq("business_id", biz.id)
         .maybeSingle(),
     ]);
-
-    // Repli si la colonne is_losing n'existe pas encore (migration 0037 non
-    // appliquée) : on refait la sélection sans elle (détection via le libellé).
-    let prizes: Array<{
-      id: string;
-      label: string;
-      emoji: string;
-      weight: number;
-      color: string;
-      position: number;
-      is_losing?: boolean | null;
-    }> | null = prizesRes.data;
-    if (prizesRes.error && (prizesRes.error as { code?: string }).code === "42703") {
-      const { data } = await supa
-        .from("prizes")
-        .select("id, label, emoji, weight, color, position")
-        .eq("business_id", biz.id)
-        .order("position", { ascending: true });
-      prizes = data;
-    }
 
     if (!prizes || prizes.length === 0) {
       return Response.json({ error: "no_prizes" }, { status: 409 });
@@ -127,13 +107,10 @@ export const POST = publicRoute({
       prize_code: code,
     };
     // Instantané du caractère perdant au moment du tour (robuste à un renommage
-    // ultérieur du lot). Repli si la colonne is_losing n'existe pas encore.
-    let { error } = await supa
+    // ultérieur du lot).
+    const { error } = await supa
       .from("plays")
       .insert({ ...baseRow, is_losing: prizeIsLosing(prize) });
-    if (error && (error as { code?: string }).code === "42703") {
-      ({ error } = await supa.from("plays").insert(baseRow));
-    }
 
     if (error) {
       // 23505 = violation de contrainte unique => ce type de tour est déjà joué
