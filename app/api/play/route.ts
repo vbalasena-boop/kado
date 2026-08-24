@@ -4,6 +4,7 @@ import { getOrCreatePlayerId } from "@/lib/player";
 import { weightedIndex, generateCode, prizeIsLosing } from "@/lib/draw";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { sendPushToBusiness } from "@/lib/push";
+import { isValidDeviceHash } from "@/lib/device-hash";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,7 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "rate_limited" }, { status: 429 });
   }
 
-  let body: { slug?: string; playType?: string };
+  let body: { slug?: string; playType?: string; deviceHash?: string | null };
   try {
     body = await req.json();
   } catch {
@@ -34,6 +35,10 @@ export async function POST(req: NextRequest) {
   if (!slug || !playType || !VALID_TYPES.includes(playType as any)) {
     return Response.json({ error: "invalid_params" }, { status: 400 });
   }
+
+  // Empreinte d'appareil (verrou secondaire). On n'accepte qu'un hex SHA-256
+  // bien formé ; toute autre valeur est ignorée (repli sur le cookie seul).
+  const deviceHash = isValidDeviceHash(body.deviceHash) ? body.deviceHash : null;
 
   const supa = getAdminClient();
 
@@ -48,6 +53,32 @@ export async function POST(req: NextRequest) {
   }
 
   const playerId = getOrCreatePlayerId();
+
+  // Verrou secondaire : cet APPAREIL a-t-il déjà joué ce type ? Attrape le
+  // rejeu en navigation privée / cookies vidés, que le cookie laisse passer.
+  // Vérification SOUPLE (SELECT) : on ne fait jamais échouer un tour à cause
+  // d'une collision d'empreinte, et on retombe sur le cookie si la colonne
+  // device_hash n'existe pas encore (migration 0041 non appliquée → 42703).
+  if (deviceHash) {
+    const { data: dup, error: dupErr } = await supa
+      .from("plays")
+      .select("prize_label, prize_code")
+      .eq("business_id", biz.id)
+      .eq("play_type", playType)
+      .eq("device_hash", deviceHash)
+      .limit(1)
+      .maybeSingle();
+    if (!dupErr && dup) {
+      return Response.json(
+        {
+          alreadyPlayed: true,
+          label: dup.prize_label ?? null,
+          code: dup.prize_code ?? null,
+        },
+        { status: 409 }
+      );
+    }
+  }
 
   const [prizesRes, { data: cfg }] = await Promise.all([
     supa
@@ -130,10 +161,11 @@ export async function POST(req: NextRequest) {
     prize_code: code,
   };
   // Instantané du caractère perdant au moment du tour (robuste à un renommage
-  // ultérieur du lot). Repli si la colonne is_losing n'existe pas encore.
+  // ultérieur du lot) + empreinte d'appareil. Repli si une colonne optionnelle
+  // (is_losing / device_hash) n'existe pas encore (migration non appliquée).
   let { error } = await supa
     .from("plays")
-    .insert({ ...baseRow, is_losing: prizeIsLosing(prize) });
+    .insert({ ...baseRow, is_losing: prizeIsLosing(prize), device_hash: deviceHash });
   if (error && (error as { code?: string }).code === "42703") {
     ({ error } = await supa.from("plays").insert(baseRow));
   }

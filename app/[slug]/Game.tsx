@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { labelIsLosing } from "@/lib/draw";
+import { deviceHash } from "@/lib/device-hash";
 
 type Prize = {
   id: string;
@@ -736,10 +737,13 @@ export default function Game({
     }
 
     try {
+      // Empreinte d'appareil : verrou secondaire qui survit à la navigation
+      // privée / au vidage des cookies (voir lib/device-hash.ts).
+      const fp = await deviceHash();
       const res = await fetch("/api/play", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug, playType: current }),
+        body: JSON.stringify({ slug, playType: current, deviceHash: fp }),
       });
       const data = await res.json();
 

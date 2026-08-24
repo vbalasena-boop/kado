@@ -13,7 +13,10 @@ pour un avis Google) et gagne un cadeau.
 ## Ce qui est déjà construit (Epic 1)
 
 - ✅ Page de jeu publique `/{slug}` (règles → 2 tours → cadeau + confettis)
-- ✅ **Verrou serveur des 2 tours** (impossible de rejouer, même en vidant le navigateur)
+- ✅ **Verrou serveur des 2 tours** — double signal : cookie joueur signé **+**
+  empreinte d'appareil (bloque aussi le rejeu en navigation privée / cookies
+  vidés sur le même appareil). Garde-fou anti-fraude ultime : code cadeau à
+  usage unique + plafond quotidien, validés en boutique.
 - ✅ Tirage du cadeau **côté serveur** (anti-triche, stats fiables)
 - ✅ Base de données multi-établissements (Supabase + RLS)
 - ✅ Suspension d'un établissement = page publique bloquée
