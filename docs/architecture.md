@@ -79,9 +79,16 @@ déploiement sert tous les établissements, isolés par `business_id`.
 
 ## 4. Isolation multi-tenant (important)
 
-Le point clé, différent de la v0.1 du document : **toutes les 15 tables ont la RLS
-activée sans policy** → « default-deny » pour `anon`/`authenticated`. Concrètement,
-**personne n'accède aux données via la clé publique**.
+Le point clé, différent de la v0.1 du document : **les 15 tables ont la RLS
+activée**. Historiquement **sans aucune policy** → « default-deny » total : seul
+`service_role` (serveur) accédait aux données. La migration `0044` ajoute des
+policies **SELECT par propriétaire** (rôle `authenticated`, `auth.uid()`) sur les
+tables tenant — un **filet de sécurité** (défense en profondeur) qui permet à un
+commerçant de lire *ses propres* lignes via l'API REST, et prépare une éventuelle
+lecture via le client `ssr`. Les tables sensibles (`affiliates`,
+`affiliate_commissions`, `rate_limits`, `system_state`) restent **sans policy**
+(default-deny). Le rôle `anon` (clé publique sans session) ne lit toujours rien,
+et **les écritures restent interdites** hors `service_role`.
 
 Les accès applicatifs passent par le **client `service_role`** (`lib/supabase/admin.ts`),
 qui **contourne la RLS**. L'isolation tenant repose donc sur une **discipline
@@ -93,9 +100,12 @@ Trois clients Supabase, usage strict :
 - `ssr.ts` (session cookie) — identifie l'utilisateur connecté (`auth.getUser()`).
 - `client.ts` (anon, navigateur) — uniquement le flux de connexion.
 
-> Risque assumé : un oubli de filtre `business_id` = fuite cross-tenant. Piste
-> d'évolution : réintroduire des policies RLS et lire via `ssr` pour les données
-> tenant. En attendant, le **wrapper de route** (§5) et les tests réduisent le risque.
+> Risque assumé : un oubli de filtre `business_id` côté serveur = fuite
+> cross-tenant. Les policies SELECT de `0044` limitent l'exposition côté REST
+> (un authentifié ne voit que ses lignes), et le **wrapper de route** (§5) + les
+> tests réduisent le risque côté service_role. Étape suivante possible : migrer
+> les lectures tenant vers le client `ssr` pour s'appuyer directement sur ces
+> policies plutôt que sur les filtres manuels.
 
 ## 5. Couche API & conventions
 
