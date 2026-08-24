@@ -50,8 +50,14 @@ Un pipeline en 4 étapes, pensé **qualité > volume** et **zéro risque** :
 
 1. **Sourcing** — constituer une liste de commerces d'une zone (ville/agglo test) à partir
    de sources publiques (ex. recherche Google Maps / annuaires), 100 % automatisé.
-2. **Qualification** — scorer chaque prospect (compte Instagram actif ? présent sur
-   Google ? peu d'avis = fort potentiel Kado ?) et écarter le hors-cible.
+2. **Qualification** — scorer chaque prospect à partir de **signaux publics**, dont les
+   **avis Google** en critère central :
+   - **Nombre d'avis Google** : peu d'avis (ou base à étoffer) = **fort potentiel Kado**.
+   - **Note moyenne** : une note perfectible ou volatile = besoin d'alimenter des avis récents.
+   - **Fraîcheur** : pas d'avis récent = commerce qui « décroche » → bon timing.
+   - **Instagram actif** (poste régulièrement) et **présence Google** confirmée.
+   Ces signaux donnent un **score de priorité** et servent aussi de **filtres de ciblage**
+   (ex. « restos < 50 avis Google dans la ville X »). Le hors-cible est écarté.
 3. **Rédaction** — générer un message **personnalisé** par prospect (accroche liée à son
    activité) pour Instagram **et** pour email, dans le ton Kado.
 4. **Envoi & suivi** :
@@ -96,7 +102,8 @@ de leur réputation Google — le cœur de cible de Kado.
 **Inclus (MVP)**
 - **Sourcing** d'une zone (une ville/agglo) → liste de commerces avec Instagram + site/email
   si trouvables.
-- **Qualification / scoring** automatique et déduplication.
+- **Qualification / scoring** automatique (dont **avis Google** : nombre, note, fraîcheur)
+  et **déduplication**, avec **filtres de ciblage** (segment, zone, seuil d'avis Google).
 - **Rédaction** d'un message personnalisé Instagram + email par prospect.
 - **Envoi email automatisé** (fournisseur légitime, ex. Resend/Brevo — déjà utilisé côté
   Kado), avec relance unique, désinscription et suivi des réponses.
@@ -127,8 +134,10 @@ tout depuis un tableau de bord.
 
 - **Réutiliser la stack Kado** : Next.js (App Router) + Supabase (Postgres + Auth) +
   Vercel, et **Resend** déjà branché pour l'email → coût marginal ~0 €.
-- **Sourcing** : sources publiques / gratuites au départ ; respecter les conditions
-  d'usage des sources.
+- **Sourcing + avis Google** : le sourcing local (type Google Maps / Places) fournit
+  déjà **note moyenne et nombre d'avis** — réutilisés directement comme signaux de
+  qualification. Respecter les conditions d'usage et les quotas gratuits des sources
+  (choix exact de la source et de ses limites à trancher au PRD/architecture).
 - **Délivrabilité email** *(cœur du projet)* : domaine d'envoi dédié, **SPF/DKIM/DMARC**,
   volume lent et progressif, contenu non-spammy, lien de désinscription, purge des bounces.
 - **Sécurité Instagram** : pas d'automatisation d'envoi ; actions humaines depuis le
