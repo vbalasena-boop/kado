@@ -8,6 +8,8 @@ import {
   type ProspectStatus,
 } from "@/lib/prospection/types";
 
+export type EmailState = "sent" | "approved" | "draft" | null;
+
 export type ProspectRow = {
   id: string;
   name: string;
@@ -21,6 +23,8 @@ export type ProspectRow = {
   score: number | null;
   status: ProspectStatus;
   created_at: string;
+  /** État d'envoi de l'email (le plus avancé des messages email du prospect). */
+  emailState?: EmailState;
 };
 
 const SEGMENT_LABEL: Record<ProspectSegment, string> = {
@@ -559,6 +563,13 @@ export default function ProspectionClient({
         </p>
       ) : (
         <div style={{ overflowX: "auto" }}>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", margin: "2px 0 10px", fontSize: 12, color: "#666" }}>
+            <span>Colonnes Email / DM :</span>
+            <Pill {...PILL.sent} />
+            <Pill {...PILL.approved} />
+            <Pill {...PILL.draft} />
+            <Pill {...PILL.none} />
+          </div>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
             <thead>
               <tr style={{ textAlign: "left", borderBottom: "2px solid #eee" }}>
@@ -569,6 +580,8 @@ export default function ProspectionClient({
                 <th style={th}>Note</th>
                 <th style={th}>Avis</th>
                 <th style={th}>Contact</th>
+                <th style={th}>Email</th>
+                <th style={th}>DM</th>
                 <th style={th}>Statut</th>
               </tr>
             </thead>
@@ -616,6 +629,12 @@ export default function ProspectionClient({
                     {!p.email && !p.instagram_handle && "—"}
                   </td>
                   <td style={td}>
+                    <EmailBadge p={p} />
+                  </td>
+                  <td style={td}>
+                    <DmBadge p={p} />
+                  </td>
+                  <td style={td}>
                     <select
                       value={p.status}
                       onChange={(e) =>
@@ -643,6 +662,51 @@ export default function ProspectionClient({
       )}
     </div>
   );
+}
+
+// --- Badges d'état d'envoi (Email / DM) ---
+type PillProps = { text: string; bg: string; color: string; title?: string };
+
+const PILL: Record<"sent" | "approved" | "draft" | "none", PillProps> = {
+  sent: { text: "✅ Envoyé", bg: "#e6f4ea", color: "#1e7d34" },
+  approved: { text: "⏳ À envoyer", bg: "#fff4e0", color: "#a86b00" },
+  draft: { text: "✍️ Brouillon", bg: "#eef0f3", color: "#555" },
+  none: { text: "—", bg: "#f5f5f7", color: "#999" },
+};
+
+function Pill({ text, bg, color, title }: PillProps) {
+  return (
+    <span
+      title={title}
+      style={{
+        display: "inline-block",
+        padding: "2px 8px",
+        borderRadius: 999,
+        fontSize: 12,
+        background: bg,
+        color,
+        whiteSpace: "nowrap",
+      }}
+    >
+      {text}
+    </span>
+  );
+}
+
+/** État d'envoi de l'email du prospect. */
+function EmailBadge({ p }: { p: ProspectRow }) {
+  if (p.emailState === "sent" || p.status === "emailed") return <Pill {...PILL.sent} />;
+  if (p.emailState === "approved") return <Pill {...PILL.approved} />;
+  if (p.emailState === "draft") return <Pill {...PILL.draft} />;
+  return <Pill {...PILL.none} title={p.email ? "Message pas encore généré" : "Pas d'email"} />;
+}
+
+/** État d'envoi du DM Instagram (suivi via le statut du prospect). */
+function DmBadge({ p }: { p: ProspectRow }) {
+  if (p.status === "dm_sent") return <Pill {...PILL.sent} />;
+  if (p.status === "dm_pending") return <Pill text="⏳ En file" bg="#fff4e0" color="#a86b00" />;
+  if (p.instagram_handle) return <Pill text="À envoyer" bg="#eef0f3" color="#555" title="Dans la file Instagram" />;
+  return <Pill {...PILL.none} title="Pas de compte Instagram" />;
 }
 
 function StatsBand({ stats }: { stats: Stats }) {
