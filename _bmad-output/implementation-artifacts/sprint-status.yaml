@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 08-25-2026 09:00
-last_updated: 08-25-2026 15:30
+last_updated: 08-25-2026 16:11
 project: kado
 project_key: NOKEY
 tracking_system: file-system
@@ -82,4 +82,32 @@ development_status:
   epic-11: done
   11-1-rembourser-une-commande-payée-en-ligne: done
   11-2-annuler-une-commande: done
-  epic-11-retrospective: optional
+  epic-11-retrospective: done
+action_items:
+  - id: "epic-11-retro-item-1-f1-résumé-ui-d-annulation-signaler-rembo"
+    epic: 11
+    action: "F1 — Résumé UI d annulation : signaler remboursement non tenté quand
+      cancelled && paid && !refund (payée en ligne, refund non tenté)"
+    owner: "Root"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-11-retro-08-25-2026.md"
+  - id: "epic-11-retro-item-2-f2-a2-réconciliation-webhook-des-refunds"
+    epic: 11
+    action: "F2/A2 — Réconciliation webhook des refunds (charge.refund.updated) :
+      ferme le double-refund post-24h et rattrape pending->failed"
+    owner: "Root"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-11-retro-08-25-2026.md"
+  - id: "epic-11-retro-item-3-f3-extraire-buildorderreadyemail-buildor"
+    epic: 11
+    action: "F3 — Extraire buildOrderReadyEmail/buildOrderCancelledEmail hors du POST
+      orders"
+    owner: "Root"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-11-retro-08-25-2026.md"
+  - id: "epic-11-retro-item-4-f4-garantir-l-exhaustivité-de-refundoutc"
+    epic: 11
+    action: "F4 — Garantir l exhaustivité de RefundOutcome côté frontend"
+    owner: "Root"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-11-retro-08-25-2026.md"
