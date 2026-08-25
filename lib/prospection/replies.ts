@@ -33,6 +33,9 @@ function imapConfig() {
 const EMAIL_RE = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/gi;
 const DAEMON_RE = /(mailer-daemon|postmaster|mail delivery|delivery status|no-?reply)/i;
 const CALENDLY_RE = /calendly\.com/i;
+// Mots-clés d'une confirmation de réservation (multilingue) — pour distinguer un
+// vrai RDV d'un simple email qui mentionne calendly.com (ex. signature).
+const BOOKING_RE = /(scheduled|programm|réserv|nouvel[\s-]*événement|new event|confirm|invit)/i;
 
 interface ScanResult {
   senders: Set<string>; // expéditeurs "normaux" (réponses potentielles)
@@ -60,12 +63,16 @@ async function scanInbox(sinceDays: number): Promise<ScanResult> {
     for await (const msg of client.fetch({ since }, { envelope: true, source: true })) {
       const from = msg.envelope?.from?.[0]?.address?.toLowerCase() ?? "";
       const subject = msg.envelope?.subject ?? "";
+      const body = msg.source ? msg.source.toString("utf8") : "";
       const isBounce = DAEMON_RE.test(from) || DAEMON_RE.test(subject);
-      const isCalendly = CALENDLY_RE.test(from);
+      // Robuste au transfert : le From peut être ta boîte, mais le corps garde
+      // les liens calendly.com. On exige aussi un mot-clé de réservation.
+      const isCalendly =
+        CALENDLY_RE.test(from) ||
+        (CALENDLY_RE.test(body) && BOOKING_RE.test(`${subject} ${body}`));
 
       if (isBounce) {
         // Rapport de non-remise : on extrait les adresses en échec du corps.
-        const body = msg.source ? msg.source.toString("utf8") : "";
         for (const m of body.matchAll(EMAIL_RE)) {
           const e = m[0].toLowerCase();
           // Ignore l'adresse d'envoi et les adresses techniques.
@@ -74,7 +81,7 @@ async function scanInbox(sinceDays: number): Promise<ScanResult> {
         }
       } else if (isCalendly) {
         // Notification Calendly : on extrait l'email de l'invité (le prospect).
-        const body = msg.source ? msg.source.toString("utf8") : "";
+        // Seules les adresses présentes dans la table prospects seront agies.
         for (const m of body.matchAll(EMAIL_RE)) {
           const e = m[0].toLowerCase();
           if (e === user.toLowerCase() || CALENDLY_RE.test(e) || DAEMON_RE.test(e)) continue;
