@@ -62,6 +62,8 @@ export type Stats = {
   sentTotal: number;
   /** Bounces durs détectés (adresses invalides), tout temps. */
   bouncedTotal: number;
+  /** Performance par variante d'objet : envoyés vs réponses. */
+  subjectPerf: { label: string; sent: number; replied: number }[];
 };
 
 export default function ProspectionClient({
@@ -351,6 +353,7 @@ export default function ProspectionClient({
       </p>
 
       {stats && <StatsBand stats={stats} />}
+      {stats && <SubjectPerf perf={stats.subjectPerf} />}
 
       {migrationMissing && (
         <div
@@ -711,6 +714,67 @@ function DmBadge({ p }: { p: ProspectRow }) {
   if (p.status === "dm_pending") return <Pill text="⏳ En file" bg="#fff4e0" color="#a86b00" />;
   if (p.instagram_handle) return <Pill text="À envoyer" bg="#eef0f3" color="#555" title="Dans la file Instagram" />;
   return <Pill {...PILL.none} title="Pas de compte Instagram" />;
+}
+
+/** Tableau « Performance par objet » : taux de réponse par variante d'objet. */
+function SubjectPerf({ perf }: { perf: Stats["subjectPerf"] }) {
+  const totalSent = perf.reduce((s, p) => s + p.sent, 0);
+  if (totalSent === 0) return null; // rien envoyé encore → pas de mesure
+
+  // Meilleure variante parmi celles ayant un minimum d'envois (fiabilité).
+  const eligible = perf.filter((p) => p.sent >= 5);
+  const best =
+    eligible.length > 0
+      ? eligible.reduce((a, b) => (b.replied / b.sent > a.replied / a.sent ? b : a))
+      : null;
+
+  return (
+    <div style={{ border: "1px solid #eee", borderRadius: 10, padding: 14, margin: "0 0 16px" }}>
+      <h3 style={{ margin: "0 0 2px" }}>📊 Performance par objet d'email</h3>
+      <p style={{ color: "#666", marginTop: 0, fontSize: 13 }}>
+        Taux de réponse selon l'objet utilisé — pour garder les formulations qui
+        marchent le mieux.
+      </p>
+      <div style={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
+          <thead>
+            <tr style={{ textAlign: "left", borderBottom: "2px solid #eee" }}>
+              <th style={th}>Objet</th>
+              <th style={th}>Envoyés</th>
+              <th style={th}>Réponses</th>
+              <th style={th}>Taux</th>
+            </tr>
+          </thead>
+          <tbody>
+            {perf.map((p) => {
+              const rate = p.sent > 0 ? Math.round((p.replied / p.sent) * 100) : 0;
+              const isBest = Boolean(best && p.label === best.label && p.sent >= 5);
+              return (
+                <tr
+                  key={p.label}
+                  style={{
+                    borderBottom: "1px solid #f0f0f0",
+                    background: isBest ? "#e6f4ea" : undefined,
+                  }}
+                >
+                  <td style={td}>
+                    {p.label.replace("{name}", "…")} {isBest && "🏆"}
+                  </td>
+                  <td style={td}>{p.sent}</td>
+                  <td style={td}>{p.replied}</td>
+                  <td style={td}>{p.sent > 0 ? `${rate}%` : "—"}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <p style={{ color: "#999", fontSize: 12, marginBottom: 0 }}>
+        Un taux n'est fiable qu'à partir de ~15–20 envois par objet. 🏆 = meilleure
+        variante à ce stade.
+      </p>
+    </div>
+  );
 }
 
 function StatsBand({ stats }: { stats: Stats }) {

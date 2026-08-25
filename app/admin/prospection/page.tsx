@@ -2,6 +2,7 @@ import { getAdminUser } from "@/lib/admin-guard";
 import { getAdminClient } from "@/lib/supabase/admin";
 import ProspectionClient, { type ProspectRow, type Stats } from "./ProspectionClient";
 import type { ProspectStatus } from "@/lib/prospection/types";
+import { SUBJECT_VARIANTS, emailSubjectVariant } from "@/lib/prospection/templates";
 
 export const dynamic = "force-dynamic";
 
@@ -99,6 +100,36 @@ export default async function ProspectionPage() {
       .eq("channel", "email")
       .eq("status", "approved");
 
+    // Performance PAR objet : parmi les prospects réellement emailés (message
+    // email step 1 « sent »), combien ont répondu — regroupé par variante d'objet
+    // (recalculée depuis l'id, choix déterministe → pas de stockage nécessaire).
+    const subjectPerf = SUBJECT_VARIANTS.map((label) => ({
+      label,
+      sent: 0,
+      replied: 0,
+    }));
+    const { data: sentEmails } = await admin
+      .from("prospect_messages")
+      .select("prospect_id")
+      .eq("channel", "email")
+      .eq("step", 1)
+      .eq("status", "sent")
+      .limit(5000);
+    const emailedIds = [...new Set((sentEmails ?? []).map((m) => m.prospect_id as string))];
+    if (emailedIds.length > 0) {
+      const { data: emailedProspects } = await admin
+        .from("prospects")
+        .select("id, status")
+        .in("id", emailedIds)
+        .limit(5000);
+      const REPLIED = new Set(["replied", "interested", "client"]);
+      for (const p of emailedProspects ?? []) {
+        const idx = emailSubjectVariant(p.id as string);
+        subjectPerf[idx].sent++;
+        if (REPLIED.has(p.status as string)) subjectPerf[idx].replied++;
+      }
+    }
+
     stats = {
       total: rows.length,
       byStatus,
@@ -110,6 +141,7 @@ export default async function ProspectionPage() {
       pendingEmails: pendingEmails ?? 0,
       sentTotal,
       bouncedTotal,
+      subjectPerf,
     };
   }
 
