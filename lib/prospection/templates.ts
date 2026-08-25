@@ -92,18 +92,30 @@ export function renderEmail(ctx: TemplateContext): GeneratedEmail {
   const pitch = pick(seed, "pitch", [
     `Chez Kado, on aide les commerces de proximité à obtenir plus d'avis Google ` +
       `et d'abonnés Instagram grâce à un petit jeu : vos clients scannent un QR code, ` +
-      `tournent une roue et gagnent un cadeau — en échange d'un avis ou d'un suivi.`,
+      `tournent une roue (ou grattent un ticket) et gagnent un cadeau — en échange ` +
+      `d'un avis ou d'un suivi.`,
     `Kado, c'est un petit jeu à scanner en boutique : vos clients gagnent un cadeau ` +
       `en laissant un avis Google ou en vous suivant sur Instagram. Ludique, et sans ` +
       `effort pour vous.`,
     `On a créé Kado pour transformer vos clients satisfaits en avis Google et en ` +
-      `abonnés Instagram : ils scannent un QR code, jouent, gagnent un cadeau.`,
+      `abonnés Instagram : ils scannent un QR code, jouent, gagnent un cadeau. Vous, ` +
+      `vous ne gérez rien.`,
     `Avec Kado, chaque client peut, en 30 secondes, vous laisser un avis Google ou ` +
-      `vous suivre sur Insta — motivé par un petit cadeau via un jeu de roue.`,
+      `vous suivre sur Insta — motivé par un petit cadeau via un jeu à scanner.`,
+  ]);
+
+  // Rappel de l'offre (essai offert / prix) — reflète tes formules.
+  const offer = pick(seed, "offer", [
+    `Vous pouvez l'essayer pendant 14 jours offerts, sans carte bancaire et sans ` +
+      `engagement — vous ne payez que si ça vous plaît.`,
+    `L'offre : 14 jours offerts (sans CB, sans engagement), puis à partir de ` +
+      `19 €/mois, résiliable en 1 clic.`,
+    `C'est sans engagement, avec 14 jours offerts pour essayer tranquillement — et ` +
+      `prêt en 2 minutes, sans installation.`,
   ]);
 
   const cta = pick(seed, "cta", [
-    `Seriez-vous ouvert(e) à une démo de 5 minutes ?`,
+    `Seriez-vous ouvert(e) à une démo de 5 minutes, ou je vous crée directement votre essai ?`,
     `Ça vous dirait d'en voir un aperçu en 5 minutes ?`,
     `Un rapide échange de 5 minutes pour vous montrer, ça vous tente ?`,
     `Je peux vous montrer ce que ça donnerait pour votre ${noun} — 5 minutes suffisent.`,
@@ -122,6 +134,8 @@ export function renderEmail(ctx: TemplateContext): GeneratedEmail {
     opener,
     ``,
     pitch,
+    ``,
+    offer,
     ``,
     cta,
     ``,
@@ -155,15 +169,16 @@ export function renderFollowupEmail(ctx: TemplateContext): GeneratedEmail {
 
   const pitch = pick(seed, "fu_pitch", [
     `En deux mots : Kado aide les ${noun}s comme le vôtre à récolter plus d'avis ` +
-      `Google et d'abonnés Instagram, via un petit jeu à scanner en boutique. Zéro effort.`,
+      `Google et d'abonnés Instagram, via un petit jeu à scanner en boutique. ` +
+      `14 jours offerts, sans engagement.`,
     `Pour rappel, Kado transforme vos clients en avis Google et abonnés Insta grâce à ` +
-      `un jeu de roue à scanner — sans rien à gérer de votre côté.`,
-    `L'idée de Kado : un QR code en boutique, vos clients jouent, gagnent un cadeau, et ` +
-      `vous laissent un avis ou un suivi.`,
+      `un jeu à scanner — sans rien à gérer. 14 jours offerts, sans CB.`,
+    `L'idée de Kado : un QR code en boutique, vos clients jouent, gagnent un cadeau, ` +
+      `et vous laissent un avis ou un suivi. Testable 14 jours, offerts.`,
   ]);
 
   const cta = pick(seed, "fu_cta", [
-    `Un simple « oui » et je vous montre en 5 minutes.`,
+    `Un simple « oui » et je vous crée votre accès d'essai.`,
     `Dites-moi si une démo de 5 minutes vous intéresse.`,
     `Répondez-moi juste « ok » et je vous envoie un aperçu.`,
   ]);
@@ -208,9 +223,9 @@ export function renderDm(ctx: TemplateContext): string {
   ]);
 
   const cta = pick(seed, "dm_cta", [
-    `Ça vous dirait qu'on vous montre en 2 min ?`,
-    `On vous fait une démo rapide ?`,
-    `Envie d'en voir un aperçu ?`,
+    `Ça vous dirait qu'on vous montre en 2 min ? (14 jours offerts, sans engagement)`,
+    `On vous fait une démo rapide ? 14 jours offerts pour tester 😉`,
+    `Envie d'essayer pendant 14 jours offerts ?`,
   ]);
 
   return [opener, body, cta].join("\n\n");
