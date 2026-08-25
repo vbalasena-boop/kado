@@ -7,6 +7,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // On espionne le payload passé à `.update(...)` sur wheel_configs.
 
 const updateCalls: Record<string, any>[] = [];
+// Payloads passés à `.upsert(...)` (l'upsert principal, où vivaient les flags
+// legacy instagram_enabled/review_enabled et l'ancien remnant « au moins un canal »).
+const upsertCalls: Record<string, any>[] = [];
 // Erreur simulée sur les chaînes update().eq() (les 4 blocs tolérants) : null par
 // défaut ; un test peut y injecter `{ code }` pour vérifier le tri absente/vraie.
 let updateError: any = null;
@@ -19,7 +22,10 @@ function makeBuilder() {
   b.select = () => b;
   b.eq = () => b;
   b.maybeSingle = () => Promise.resolve({ data: {}, error: null });
-  b.upsert = () => Promise.resolve({ error: null });
+  b.upsert = (payload: any) => {
+    upsertCalls.push(payload);
+    return Promise.resolve({ error: null });
+  };
   b.update = (payload: any) => {
     updateCalls.push(payload);
     return b;
@@ -59,6 +65,36 @@ function persistedTriggerActions(): string[] | undefined {
   const hit = [...updateCalls].reverse().find((c) => "trigger_actions" in c);
   return hit?.trigger_actions as string[] | undefined;
 }
+
+function persistedBasePayload(): Record<string, any> | undefined {
+  return [...upsertCalls].reverse().find((c) => "instagram_enabled" in c);
+}
+
+describe("POST /api/dashboard/wheel — colonnes canaux legacy (remnant retiré)", () => {
+  beforeEach(() => {
+    updateCalls.length = 0;
+    upsertCalls.length = 0;
+    updateError = null;
+    updateReject = false;
+  });
+
+  it("ne force plus instagram_enabled/review_enabled à true quand les deux sont faux", async () => {
+    // Ancien remnant : si les deux étaient faux → forçés à true. Retiré :
+    // trigger_actions est la seule source de vérité du « au moins un tour ».
+    await POST(post({ instagram_enabled: false, review_enabled: false, trigger_actions: ["loyalty"] }));
+    const base = persistedBasePayload();
+    expect(base?.instagram_enabled).toBe(false);
+    expect(base?.review_enabled).toBe(false);
+  });
+
+  it("écrit les colonnes canaux telles quelles (true par défaut si absentes)", async () => {
+    await POST(post({ trigger_actions: ["instagram"] }));
+    const base = persistedBasePayload();
+    // absentes du payload → défaut historique true (cfg.x !== false)
+    expect(base?.instagram_enabled).toBe(true);
+    expect(base?.review_enabled).toBe(true);
+  });
+});
 
 describe("POST /api/dashboard/wheel — persistance trigger_actions", () => {
   beforeEach(() => {

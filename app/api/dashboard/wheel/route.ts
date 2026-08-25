@@ -74,13 +74,14 @@ export async function POST(req: NextRequest) {
     themeLocked = lkErr ? false : !!(lk as any)?.theme_locked;
   }
 
-  // Canaux activés (au moins un doit rester actif)
-  let igEnabled = cfg.instagram_enabled !== false;
-  let rvEnabled = cfg.review_enabled !== false;
-  if (!igEnabled && !rvEnabled) {
-    igEnabled = true;
-    rvEnabled = true;
-  }
+  // Colonnes canaux (legacy). `trigger_actions` est désormais la SEULE source de
+  // vérité pour « quels tours sont débloqués » (réconciliation éditeur, Epic 9).
+  // On écrit ces colonnes telles quelles, SANS plus forcer « au moins un canal »
+  // (ancien garde retiré) : le garant du « au moins un tour » vit dans
+  // trigger_actions (resolveTriggerActions/sanitizeTriggerActions ne renvoient
+  // jamais une liste vide). `instagram_enabled` n'a plus aucun lecteur.
+  const igEnabled = cfg.instagram_enabled !== false;
+  const rvEnabled = cfg.review_enabled !== false;
 
   // Couleurs : valeur hex valide sinon défaut
   const hex = (v: string | null | undefined, def: string) =>
