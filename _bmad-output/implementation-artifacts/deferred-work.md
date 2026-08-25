@@ -58,3 +58,15 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-10-1-demander-confirmation-reabonnement.md`
   summary: `app/api/loyalty/extra` peut encore mettre `marketing_ok=true` côté serveur alors que `unsubscribed_at` est renseigné (l'UI masque la case, mais la garde est cliente). État incohérent possible ; en pratique les crons respectent `unsubscribed_at`, donc le désinscrit reste protégé.
   evidence: Constat revue (Blind). Pré-existant. À durcir : refuser `marketing_ok=true` côté `extra` tant que `unsubscribed_at` non nul (forcer le passage par le double opt-in).
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-11-1-rembourser-commande-payee.md`
+  summary: Pas de réconciliation du statut réel du refund Stripe. `stripe.refunds.create` peut revenir `pending` puis basculer `failed`/`canceled` (ex. solde négatif du compte connecté empêchant le `reverse_transfer`) ; la commande est marquée `refunded=true` dès la création, sans handler webhook `charge.refund.updated`/`refund.updated` pour corriger l'état. Idem, aucun `refunded_by` (acteur) ni motif n'est enregistré (traçabilité financière).
+  evidence: Constats revue (Blind/Edge). L'AC de 11.1 exige « un refund est créé » (création, pas règlement) → conforme, mais une réconciliation via webhook + une colonne `refunded_by`/`reason` durciraient le chemin argent. Migration + webhook → hors périmètre de la story.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-11-1-rembourser-commande-payee.md`
+  summary: Aucune notification au client lors d'un remboursement (e-mail/reçu). Stripe peut envoyer un reçu selon la configuration du compte, mais l'app n'informe pas explicitement le client remboursé.
+  evidence: Constat revue (Blind). Hors AC de 11.1 (la notif client est requise par 11.2 à l'annulation). À considérer comme amélioration UX, éventuellement mutualisée avec la notif d'annulation de 11.2.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-11-2-annuler-une-commande.md`
+  summary: Le remboursement déclenché à l'annulation (comme le refund manuel 11.1) n'est pas réconcilié : statut commande + drapeau `refunded` écrits séparément, sans handler webhook `charge.refund.updated` pour rattraper un refund `pending→failed`. Pas non plus d'horodatage `notified_cancelled_at` de la notif d'annulation (le `ready` a `notified_ready_at`).
+  evidence: Constats revue (Blind/Edge/Verif) sur 11.2. Mutualiser avec le defer réconciliation/audit de 11.1 : un webhook de réconciliation + une colonne `notified_cancelled_at` (migration) couvriraient les deux. Non bloquant.

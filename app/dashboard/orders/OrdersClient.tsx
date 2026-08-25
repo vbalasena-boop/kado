@@ -163,6 +163,7 @@ export type Order = {
   table_label?: string | null;
   buzzer_no?: number | null;
   paid?: boolean | null;
+  refunded?: boolean | null;
 };
 
 function euros(cents: number) {
@@ -633,7 +634,65 @@ export default function OrdersClient({
           bits.push("client non abonné aux alertes");
         setMsg(bits.length ? "Client prévenu : " + bits.join(" · ") : null);
       }
+      // À l'annulation, on résume au commerçant le sort du remboursement (si la
+      // commande était payée en ligne) et la notification client. Un refund en
+      // échec n'a PAS empêché l'annulation : on invite à réessayer via le bouton
+      // « Rembourser » resté disponible.
+      if (status === "cancelled") {
+        const bits: string[] = [];
+        const r = d?.refund;
+        if (r?.status === "refunded") bits.push("remboursement déclenché ↩️");
+        else if (r?.status === "failed")
+          bits.push(
+            "remboursement échoué — réessayez via « ↩️ Rembourser »"
+          );
+        else if (r?.status === "record_failed")
+          bits.push("remboursement Stripe effectué (état non enregistré)");
+        else if (r?.status === "no_payment_intent")
+          bits.push("remboursement impossible (paiement Stripe introuvable)");
+        else if (r?.status === "skipped" && r.code === "already_refunded")
+          bits.push("déjà remboursée");
+        if (d?.notified?.email === "sent") bits.push("e-mail envoyé");
+        if (d?.notified?.push === "sent") bits.push("notification envoyée 📲");
+        else if (d?.notified?.push === "failed")
+          bits.push("notification impossible");
+        setMsg(
+          bits.length
+            ? "Commande annulée · " + bits.join(" · ")
+            : "Commande annulée."
+        );
+      }
       router.refresh();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /** Rembourse une commande payée en ligne (refund Stripe + drapeau). */
+  async function refundOrder(id: string) {
+    setBusy(true);
+    setMsg(null);
+    try {
+      const res = await fetch("/api/dashboard/orders/refund", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (res.ok && d.ok) {
+        setMsg("✅ Commande remboursée — l'argent est repris au commerçant.");
+      } else if (d.error === "already_refunded") {
+        setMsg("Cette commande a déjà été remboursée.");
+      } else if (d.error === "not_online_paid") {
+        setMsg("Cette commande n'a pas été payée en ligne.");
+      } else if (d.error === "not_found") {
+        setMsg("Commande introuvable.");
+      } else {
+        setMsg("❌ " + (d.detail || "Remboursement impossible. Réessayez."));
+      }
+      router.refresh();
+    } catch {
+      setMsg("Erreur réseau. Réessayez.");
     } finally {
       setBusy(false);
     }
@@ -823,6 +882,27 @@ export default function OrdersClient({
                   <>Total à encaisser : <b>{euros(o.total_cents)} €</b></>
                 )}
               </div>
+              {o.paid && o.refunded && (
+                <span className="order-refunded">↩️ Remboursée</span>
+              )}
+              {o.paid && !o.refunded && (
+                <button
+                  className="btn-mini soft order-refund-btn"
+                  disabled={busy}
+                  onClick={() => {
+                    if (
+                      confirm(
+                        `Rembourser la commande ${o.code} (${euros(
+                          o.total_cents
+                        )} €) ? L'argent sera repris au commerçant.`
+                      )
+                    )
+                      refundOrder(o.id);
+                  }}
+                >
+                  ↩️ Rembourser
+                </button>
+              )}
             </>
           )}
         </div>
@@ -850,8 +930,13 @@ export default function OrdersClient({
               className="btn-mini danger"
               disabled={busy}
               onClick={() => {
-                if (confirm(`Annuler la commande ${o.code} ?`))
-                  setStatus(o.id, "cancelled");
+                const question =
+                  o.paid && !o.refunded
+                    ? `Annuler la commande ${o.code} ? Elle a été payée en ligne : le client sera remboursé (${euros(
+                        o.total_cents
+                      )} €).`
+                    : `Annuler la commande ${o.code} ?`;
+                if (confirm(question)) setStatus(o.id, "cancelled");
               }}
             >
               Annuler
@@ -1098,6 +1183,27 @@ export default function OrdersClient({
                       {o.status === "cancelled" ? "✖ annulée" : "✔ retirée"} ·{" "}
                       {fmtTime(o.created_at)}
                     </span>
+                    {o.paid && o.refunded && (
+                      <span className="order-refunded">↩️ Remboursée</span>
+                    )}
+                    {o.paid && !o.refunded && (
+                      <button
+                        className="btn-mini soft order-refund-btn"
+                        disabled={busy}
+                        onClick={() => {
+                          if (
+                            confirm(
+                              `Rembourser la commande ${o.code} (${euros(
+                                o.total_cents
+                              )} €) ? L'argent sera repris au commerçant.`
+                            )
+                          )
+                            refundOrder(o.id);
+                        }}
+                      >
+                        ↩️ Rembourser
+                      </button>
+                    )}
                   </div>
                 </li>
               ))}
