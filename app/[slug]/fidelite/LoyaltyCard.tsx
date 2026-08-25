@@ -16,6 +16,7 @@ type CardData = {
   referralEnabled?: boolean;
   birthdaySet?: boolean;
   marketingOk?: boolean;
+  unsubscribed?: boolean;
 };
 
 const MONTHS = [
@@ -52,6 +53,11 @@ export default function LoyaltyCard({
   const [bMonth, setBMonth] = useState("");
   const [bBusy, setBBusy] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [resubState, setResubState] = useState<
+    "idle" | "busy" | "sent" | "error"
+  >(
+    "idle"
+  );
   const [pushState, setPushState] = useState<
     "unsupported" | "off" | "busy" | "on"
   >("unsupported");
@@ -154,6 +160,24 @@ export default function LoyaltyCard({
   async function toggleMarketing(v: boolean) {
     if (card) setCard({ ...card, marketingOk: v });
     await saveExtra({ marketing_ok: v });
+  }
+
+  /** Demande de ré-abonnement (double opt-in) : déclenche l'e-mail de confirmation. */
+  async function requestResubscribe() {
+    setResubState("busy");
+    try {
+      const res = await fetch("/api/loyalty/resubscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug, email: email.trim().toLowerCase() }),
+      });
+      // La réponse serveur est neutre (anti-énumération) : `ok` ne révèle rien
+      // sur l'existence de l'e-mail. On distingue seulement un échec RÉSEAU
+      // (retentable) du cas nominal, pour ne pas mentir à l'utilisateur.
+      setResubState(res.ok ? "sent" : "error");
+    } catch {
+      setResubState("error");
+    }
   }
 
   async function shareReferral() {
@@ -513,15 +537,50 @@ export default function LoyaltyCard({
               <p className="fid-bday-ok">🎂 Anniversaire enregistré — surprise le jour J !</p>
             )}
 
-            {!card.marketingOk && (
-              <label className="fid-consent">
-                <input
-                  type="checkbox"
-                  checked={false}
-                  onChange={(e) => toggleMarketing(e.target.checked)}
-                />
-                <span>Recevoir les offres de {name} par e-mail</span>
-              </label>
+            {card.unsubscribed ? (
+              <div className="fid-extra">
+                <b>💌 Vous êtes désinscrit(e) des offres de {name}</b>
+                {resubState === "sent" ? (
+                  <p role="status">
+                    📧 E-mail de confirmation envoyé — cliquez sur le lien reçu
+                    pour finaliser votre ré-abonnement.
+                  </p>
+                ) : (
+                  <>
+                    <p>
+                      Pour recevoir de nouveau les offres, demandez un lien de
+                      confirmation par e-mail.
+                    </p>
+                    {resubState === "error" && (
+                      <p role="alert" className="fid-err">
+                        Connexion impossible. Réessayez dans un instant.
+                      </p>
+                    )}
+                    <button
+                      className="btn"
+                      onClick={requestResubscribe}
+                      disabled={resubState === "busy"}
+                    >
+                      {resubState === "busy"
+                        ? "Envoi…"
+                        : resubState === "error"
+                          ? "Réessayer"
+                          : "Me ré-abonner aux offres"}
+                    </button>
+                  </>
+                )}
+              </div>
+            ) : (
+              !card.marketingOk && (
+                <label className="fid-consent">
+                  <input
+                    type="checkbox"
+                    checked={false}
+                    onChange={(e) => toggleMarketing(e.target.checked)}
+                  />
+                  <span>Recevoir les offres de {name} par e-mail</span>
+                </label>
+              )
             )}
 
             <button className="btn-ghost-line" onClick={() => load(email || "")}>

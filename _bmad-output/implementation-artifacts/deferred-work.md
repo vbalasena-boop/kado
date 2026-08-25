@@ -46,3 +46,15 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-optin-email-collect.md`
   summary: L'étape « collect » poste l'e-mail à `/api/lead` SANS case de consentement explicite (choix utilisateur : consentement facultatif), alors que le formulaire post-victoire l'exige. Une mention de consentement IMPLICITE a été ajoutée à l'écran, mais la table `leads` reçoit désormais des opt-ins avec et sans consentement explicitement horodaté.
   evidence: Constat revue (Blind Hunter) — considération RGPD/traçabilité. Choix produit assumé (fluidité). À revoir si besoin de preuve de consentement : enregistrer un flag consent côté `/api/lead`.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-10-1-demander-confirmation-reabonnement.md`
+  summary: Pas de journal d'audit du consentement (RGPD Art. 7(1) « démontrer » le consentement) : la confirmation ne fait que basculer `unsubscribed_at`/`marketing_ok`, sans enregistrer un événement horodaté (source, IP/UA, `resubscribed_at`). Idem, un jeton reste valide 48 h et n'est pas à usage unique (rejeu possible dans la fenêtre si le client se re-désinscrit).
+  evidence: Constats revue (Blind/Edge). Nécessite une colonne/table d'événements de consentement + éventuel nonce à usage unique (lié à l'`unsubscribed_at` courant). Migration → hors périmètre de cette story.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-10-1-demander-confirmation-reabonnement.md`
+  summary: Le secret de signature des jetons repose sur `PLAYER_COOKIE_SECRET` (repli `SUPABASE_SERVICE_ROLE_KEY`, comme lib/unsub.ts) : couple la signature du consentement à la clé DB la plus privilégiée ; une rotation invaliderait tous les liens en cours. La confirmation ne re-vérifie pas le statut « active » du commerce. Timing d'énumération résiduel côté demande (travail conditionnel).
+  evidence: Constats revue. Améliorations possibles : secret dédié `RESUB_SECRET` rotable indépendamment ; re-check statut business à la confirmation ; normaliser le timing. Non bloquant.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-10-1-demander-confirmation-reabonnement.md`
+  summary: `app/api/loyalty/extra` peut encore mettre `marketing_ok=true` côté serveur alors que `unsubscribed_at` est renseigné (l'UI masque la case, mais la garde est cliente). État incohérent possible ; en pratique les crons respectent `unsubscribed_at`, donc le désinscrit reste protégé.
+  evidence: Constat revue (Blind). Pré-existant. À durcir : refuser `marketing_ok=true` côté `extra` tant que `unsubscribed_at` non nul (forcer le passage par le double opt-in).
