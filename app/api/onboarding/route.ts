@@ -86,9 +86,17 @@ export const POST = publicRoute({
       return Response.json({ error: "create_failed" }, { status: 500 });
     }
 
-    // Téléphone : mise à jour séparée et tolérante (colonne facultative)
+    // Téléphone : mise à jour séparée et tolérante (colonne facultative).
+    // Écriture secondaire → on n'interrompt pas l'inscription, mais on ne gobe
+    // plus une vraie panne en silence.
     if (phone) {
-      await db.from("businesses").update({ phone }).eq("id", biz.id);
+      const { error } = await db
+        .from("businesses")
+        .update({ phone })
+        .eq("id", biz.id);
+      if (error && !isMissingColumnError(error)) {
+        reportError(error, { where: "onboarding.phone" });
+      }
     }
 
     // Parrainage commerçant : on relie le filleul à son parrain (tolérant).
@@ -126,10 +134,13 @@ export const POST = publicRoute({
             reportError(e, { where: "onboarding.referral_blocks" });
           }
         } else {
-          await db
+          const { error } = await db
             .from("businesses")
             .update({ referred_by: sponsor.id })
             .eq("id", biz.id);
+          if (error && !isMissingColumnError(error)) {
+            reportError(error, { where: "onboarding.referred_by" });
+          }
         }
       }
     }
@@ -149,10 +160,13 @@ export const POST = publicRoute({
           .eq("code", affCode)
           .maybeSingle();
         if (aff?.active) {
-          await db
+          const { error } = await db
             .from("businesses")
             .update({ affiliate_id: aff.id })
             .eq("id", biz.id);
+          if (error && !isMissingColumnError(error)) {
+            reportError(error, { where: "onboarding.affiliate_id" });
+          }
         }
       }
     } catch {
