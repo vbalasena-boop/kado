@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [step-01, step-02, step-03]
+stepsCompleted: [step-01, step-02, step-03, step-04]
 inputDocuments:
   - docs/prd.md
   - docs/architecture.md
