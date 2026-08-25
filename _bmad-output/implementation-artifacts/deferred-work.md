@@ -10,3 +10,15 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-9-2-debloquer-les-tours-par-des-actions-non-avis.md`
   summary: Le comptage du plafond quotidien (`daily_prize_limit`) dans `app/api/play/route.ts` compte encore les tours GAGNANTS historiques de type `review` du jour ; aucun nettoyage des lignes `plays` de type `review` orphelines n'est prévu.
   evidence: Constat revue 9.2 (Blind Hunter #15). Pré-existant et sans impact futur (plus aucun tour `review` n'est créé), mais à confirmer/traiter éventuellement lors de la migration des configs existantes (story 9.4).
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-9-3-avis-google-cta-neutre.md`
+  summary: Le garde de sauvegarde `noChannel` de l'éditeur (`app/dashboard/wheel/WheelEditor.tsx`, ~l.336 + bouton Enregistrer l.1109) compte encore `review_enabled` comme un « canal à tour » et ignore `trigger_actions` : un commerçant n'activant que l'avis peut enregistrer alors que les joueurs n'ont aucun tour, et un commerçant n'utilisant que loyalty/optin (via trigger_actions) est bloqué à l'enregistrement ; l'avertissement « activez au moins un canal, sinon aucun tour » est devenu faux.
+  evidence: Constats revue 9.3 (les 3 relecteurs). Réel, mais marqué **Ask-First / hors périmètre** dans le spec 9.3 (ne pas toucher au garde `noChannel`). À traiter dans une story dédiée de réconciliation de l'éditeur : baser « au moins un tour » sur `trigger_actions` et non sur `instagram_enabled`/`review_enabled`.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-9-3-avis-google-cta-neutre.md`
+  summary: Deux sources de vérité pour Instagram non synchronisées — le toggle legacy `instagram_enabled` (éditeur) vs `"instagram" ∈ trigger_actions` (modèle de jeu 9.2) : désactiver le toggle ne retire pas `instagram` de `trigger_actions`, donc le jeu peut encore proposer le tour Instagram.
+  evidence: Constat revue 9.3 (Blind Hunter). Pré-existant au découpage 9.1/9.2. À unifier lors de la réconciliation de l'éditeur (mêmes travaux que le point noChannel ci-dessus).
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-9-3-avis-google-cta-neutre.md`
+  summary: La FAQ d'aide commerçant (`app/dashboard/aide/page.tsx`, ~l.88) est obsolète : « Est-ce légal d'offrir un cadeau contre un avis ? » — sous le modèle option A, le cadeau n'est plus lié à l'avis (CTA neutre non récompensé). Reformuler pour ne plus suggérer un cadeau conditionné à un avis.
+  evidence: Constat revue 9.3 (Blind Hunter). Hors Code Map de 9.3 (fichier d'aide non touché). Mise à jour documentaire à planifier.

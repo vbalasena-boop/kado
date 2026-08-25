@@ -3,7 +3,11 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { labelIsLosing } from "@/lib/draw";
 import { buildTheme } from "@/lib/theme";
-import { sanitizeTriggerActions, type TriggerAction } from "@/lib/wheel";
+import {
+  sanitizeTriggerActions,
+  reviewCtaHref,
+  type TriggerAction,
+} from "@/lib/wheel";
 
 type Prize = {
   id: string;
@@ -437,6 +441,9 @@ export default function Game({
   // jamais une action déclenchante.
   const enabledActions = sanitizeTriggerActions(config.trigger_actions);
   const totalTurns = enabledActions.length;
+
+  // CTA avis Google neutre (facultatif, non récompensé) : URL sûre ou null.
+  const reviewHref = reviewCtaHref(config);
 
   // Jeu choisi par le commerçant (roue par défaut)
   const gameType: GameType =
@@ -1214,6 +1221,22 @@ export default function Game({
         {config.loyalty_enabled && (
           <a className="fid-link" href={`/${slug}/fidelite`}>
             🎟️ Ma carte de fidélité
+          </a>
+        )}
+        {reviewHref && (
+          <a
+            className="review-cta"
+            href={reviewHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Laisser un avis Google — facultatif, sans incidence sur vos cadeaux"
+          >
+            <span className="rc-main">
+              <span aria-hidden="true">★ </span>Laisser un avis Google
+            </span>
+            <span className="rc-sub">
+              Facultatif — sans incidence sur vos cadeaux
+            </span>
           </a>
         )}
         {orderEnabled && (

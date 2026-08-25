@@ -3333,6 +3333,34 @@ canvas#confetti {
   transform: translateY(-1px);
 }
 .fid-link:active { transform: scale(0.98); }
+.review-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+  color: var(--cream);
+  text-decoration: none;
+  padding: 12px;
+  margin-top: 16px;
+  background: var(--surface-glass, rgba(255, 255, 255, 0.06));
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--stroke);
+  border-radius: 12px;
+  transition: transform 0.12s, background 0.2s;
+}
+.review-cta:hover {
+  background: var(--surface-glass-2, rgba(255, 255, 255, 0.1));
+  transform: translateY(-1px);
+}
+.review-cta:active { transform: scale(0.98); }
+.review-cta:focus-visible {
+  outline: 2px solid var(--cream);
+  outline-offset: 2px;
+}
+.review-cta .rc-main { font-weight: 700; font-size: 15px; }
+.review-cta .rc-sub { font-size: 12px; opacity: 0.75; font-weight: 500; }
 
 /* ===== Valider en caisse — onglets + panneau fidélité ===== */
 .val-tabs {

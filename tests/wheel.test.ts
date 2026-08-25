@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import {
   sanitizeTriggerActions,
   isTriggerActionAllowed,
+  shouldShowReviewCta,
+  reviewCtaHref,
   TRIGGER_ACTIONS,
 } from "@/lib/wheel";
 
@@ -105,5 +107,114 @@ describe("isTriggerActionAllowed", () => {
     expect(isTriggerActionAllowed("banana", ["instagram", "loyalty"])).toBe(
       false
     );
+  });
+});
+
+describe("shouldShowReviewCta", () => {
+  it("CTA affiché : activé + lien présent → true", () => {
+    expect(
+      shouldShowReviewCta({
+        review_enabled: true,
+        review_url: "https://g.page/r/x",
+      })
+    ).toBe(true);
+  });
+
+  it("lien absent (null) → masqué", () => {
+    expect(
+      shouldShowReviewCta({ review_enabled: true, review_url: null })
+    ).toBe(false);
+  });
+
+  it("lien vide ('' / espaces) → masqué", () => {
+    expect(
+      shouldShowReviewCta({ review_enabled: true, review_url: "" })
+    ).toBe(false);
+    expect(
+      shouldShowReviewCta({ review_enabled: true, review_url: "   " })
+    ).toBe(false);
+  });
+
+  it("désactivé par le commerçant → masqué (même avec un lien)", () => {
+    expect(
+      shouldShowReviewCta({
+        review_enabled: false,
+        review_url: "https://g.page/r/x",
+      })
+    ).toBe(false);
+  });
+
+  it("défaut tolérant : enabled absent + lien → true (!== false)", () => {
+    expect(shouldShowReviewCta({ review_url: "https://g.page/r/x" })).toBe(
+      true
+    );
+  });
+
+  it("enabled absent + lien absent → false", () => {
+    expect(shouldShowReviewCta({})).toBe(false);
+    expect(shouldShowReviewCta({ review_url: null })).toBe(false);
+  });
+
+  it("review_enabled null (valeur DB) → défaut tolérant : affiché si lien", () => {
+    expect(
+      shouldShowReviewCta({ review_enabled: null, review_url: "https://g.page/r/x" })
+    ).toBe(true);
+    expect(shouldShowReviewCta({ review_enabled: null, review_url: null })).toBe(
+      false
+    );
+  });
+
+  it("aucun review gating : la note/satisfaction n'est pas une entrée", () => {
+    // La signature n'accepte que {review_enabled, review_url}. Un champ de note
+    // éventuel est ignoré : la décision ne dépend jamais de la satisfaction.
+    expect(
+      shouldShowReviewCta({
+        review_enabled: true,
+        review_url: "https://g.page/r/x",
+        // @ts-expect-error — aucun paramètre de note n'est accepté
+        rating: 1,
+      })
+    ).toBe(true);
+  });
+});
+
+describe("reviewCtaHref", () => {
+  it("URL http(s) conservée telle quelle", () => {
+    expect(reviewCtaHref({ review_url: "https://g.page/r/x" })).toBe(
+      "https://g.page/r/x"
+    );
+    expect(reviewCtaHref({ review_url: "http://g.page/r/x" })).toBe(
+      "http://g.page/r/x"
+    );
+  });
+
+  it("domaine/chemin nu (sans schéma) → normalisé en https://", () => {
+    expect(reviewCtaHref({ review_url: "g.page/r/x" })).toBe(
+      "https://g.page/r/x"
+    );
+    expect(reviewCtaHref({ review_url: "www.google.com/avis" })).toBe(
+      "https://www.google.com/avis"
+    );
+  });
+
+  it("espaces autour du lien → trim", () => {
+    expect(reviewCtaHref({ review_url: "  https://g.page/r/x  " })).toBe(
+      "https://g.page/r/x"
+    );
+  });
+
+  it("schéma hostile (javascript:/data:/mailto:) → null (anti-XSS)", () => {
+    expect(reviewCtaHref({ review_url: "javascript:alert(1)" })).toBeNull();
+    expect(reviewCtaHref({ review_url: "data:text/html,x" })).toBeNull();
+    expect(reviewCtaHref({ review_url: "mailto:x@y.z" })).toBeNull();
+  });
+
+  it("désactivé / absent / vide → null", () => {
+    expect(
+      reviewCtaHref({ review_enabled: false, review_url: "https://g.page/r/x" })
+    ).toBeNull();
+    expect(reviewCtaHref({ review_url: "" })).toBeNull();
+    expect(reviewCtaHref({ review_url: "   " })).toBeNull();
+    expect(reviewCtaHref({})).toBeNull();
   });
 });

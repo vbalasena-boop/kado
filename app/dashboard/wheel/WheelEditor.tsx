@@ -546,18 +546,14 @@ export default function WheelEditor({
               <div className="dash-card">
                 <h2>Canaux &amp; liens</h2>
                 <p className="muted" style={{ marginBottom: 14 }}>
-                  Choisissez ce que vous proposez à vos clients : Instagram, les avis
-                  Google, ou les deux. Chaque canal activé donne <b>un tour de roue</b>.
+                  Le tour Instagram récompense un suivi de votre compte. Le lien
+                  avis Google est <b>facultatif et non récompensé</b> : il
+                  n'offre ni tour ni cadeau.
                 </p>
 
-                {igEnabled && !rvEnabled && (
+                {igEnabled && (
                   <p className="muted" style={{ marginBottom: 14 }}>
-                    Vos clients auront <b>1 tour</b> (Instagram uniquement).
-                  </p>
-                )}
-                {rvEnabled && !igEnabled && (
-                  <p className="muted" style={{ marginBottom: 14 }}>
-                    Vos clients auront <b>1 tour</b> (avis Google uniquement).
+                    Le suivi Instagram donne <b>1 tour</b>.
                   </p>
                 )}
 
@@ -597,8 +593,8 @@ export default function WheelEditor({
                     }
                   />
                   <span>
-                    <b>Proposer le tour Avis Google</b> — un avis contre un tour de
-                    roue.
+                    <b>Afficher un lien avis Google</b> — facultatif,{" "}
+                    <b>non récompensé</b> (aucun tour ni cadeau lié).
                   </span>
                 </label>
                 {rvEnabled && (

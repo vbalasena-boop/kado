@@ -44,3 +44,46 @@ export function isTriggerActionAllowed(
   const allowed = sanitizeTriggerActions(triggerActions);
   return allowed.includes(playType as TriggerAction);
 }
+
+/**
+ * URL sûre du CTA « Avis Google » neutre, ou `null` s'il ne doit pas s'afficher
+ * (logique pure).
+ *
+ * Le CTA est un lien facultatif, NON récompensé : il n'est jamais lié à un
+ * cadeau ou à un tour. Cette fonction n'accepte QUE `review_enabled` et
+ * `review_url` — l'absence de tout paramètre de note/satisfaction rend le
+ * *review gating* structurellement impossible.
+ *
+ * `review_url` est saisi par le commerçant et rendu tel quel dans un `href`
+ * visible par tous les joueurs : on le durcit ici.
+ *  - `null` si l'avis est désactivé (`review_enabled === false`) ou si
+ *    `review_url` est absent/vide (masqué proprement, jamais de lien vide) ;
+ *  - schéma `http(s)` conservé ; sans schéma → normalisé en `https://` ;
+ *  - tout autre schéma explicite (`javascript:`, `data:`, `mailto:`, …) → `null`
+ *    (défense anti-XSS : jamais de href actif hostile chez le joueur).
+ */
+export function reviewCtaHref(cfg: {
+  review_enabled?: unknown;
+  review_url?: unknown;
+}): string | null {
+  if (cfg.review_enabled === false) return null;
+  if (typeof cfg.review_url !== "string") return null;
+  const raw = cfg.review_url.trim();
+  if (raw === "") return null;
+  if (/^https?:\/\//i.test(raw)) return raw;
+  // Un schéma explicite autre que http(s) est rejeté.
+  if (/^[a-z][a-z0-9+.-]*:/i.test(raw)) return null;
+  // Domaine/chemin nu (sans schéma) → https://
+  return `https://${raw}`;
+}
+
+/**
+ * Le CTA avis neutre doit-il s'afficher ? Vrai ⟺ `reviewCtaHref` fournit une URL
+ * sûre. (Même garantie « pas de review gating » : aucun paramètre de note.)
+ */
+export function shouldShowReviewCta(cfg: {
+  review_enabled?: unknown;
+  review_url?: unknown;
+}): boolean {
+  return reviewCtaHref(cfg) !== null;
+}
