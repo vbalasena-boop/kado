@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [step-01, step-02]
+stepsCompleted: [step-01, step-02, step-03]
 inputDocuments:
   - docs/prd.md
   - docs/architecture.md
@@ -181,3 +181,217 @@ Permettre à un client désinscrit de se ré-abonner proprement via un double op
 ### Epic 11 · [Incrément] Commandes — remboursements & litiges
 Gérer l'annulation, le remboursement (Stripe Connect) et les litiges d'une commande payée en ligne. **Statut : 🔶 à faire.**
 **FRs covered:** FR27
+
+---
+
+# Détail des Epics & Stories
+
+> **Socle (Epics 1-8)** : 1 story de **ratification** par epic — décrit le comportement
+> livré, sert de référence d'acceptation / non-régression (pas de dev neuf).
+> **Incrément (Epics 9-11)** : stories **dev-ready** (Given/When/Then), taille 1 session,
+> sans dépendance vers une story future.
+
+## Epic 1: Jeux & acquisition  [Socle · ✅ Livré]
+
+### Story 1.1: [Ratification] Jouer et gagner via QR
+As a client final,
+I want scanner un QR et jouer jusqu'à 2 tours pour gagner un cadeau,
+So that je reçois une récompense à retirer en caisse.
+
+**Acceptance Criteria:**
+**Given** un établissement actif et sa page `/{slug}`,
+**When** je réalise les actions et lance un tour,
+**Then** le lot est tiré côté serveur (pondéré) et un code est produit,
+**And** un tour déjà joué est verrouillé (cookie signé + contrainte unique),
+**And** le commerçant configure jeu, apparence et lots, valide le code en caisse, et voit la mention de conformité.
+
+## Epic 2: Fidélité  [Socle · ✅ Livré]
+
+### Story 2.1: [Ratification] Carte de fidélité à tampons
+As a client final,
+I want cumuler des tampons par e-mail et débloquer une récompense,
+So that je suis incité à revenir.
+
+**Acceptance Criteria:**
+**Given** la fidélité activée,
+**When** le commerçant valide un tampon,
+**Then** le compteur progresse et une récompense (code) se débloque à l'objectif,
+**And** parrainage, anniversaire et consentement marketing (désinscription respectée) fonctionnent.
+
+## Epic 3: Commandes (click & collect + comptoir)  [Socle · ✅ Livré]
+
+### Story 3.1: [Ratification] Commander et suivre le retrait
+As a client final,
+I want commander en ligne et suivre l'état de ma commande,
+So that je récupère ma commande sans attendre.
+
+**Acceptance Criteria:**
+**Given** un catalogue actif et les horaires ouverts,
+**When** je passe commande,
+**Then** le total est recalculé côté serveur (anti-fraude) et un code de retrait est émis,
+**And** le paiement se fait sur place ou via Stripe Connect,
+**And** le client et le commerçant sont notifiés, avec bipeur digital au comptoir.
+
+## Epic 4: Campagnes & rétention  [Socle · ✅ Livré]
+
+### Story 4.1: [Ratification] Campagnes, tirage et récaps
+As a commerçant,
+I want envoyer des campagnes et animer ma base,
+So that je fais revenir mes clients.
+
+**Acceptance Criteria:**
+**Given** des clients opt-in,
+**When** je programme une campagne e-mail/push ou un tirage au sort,
+**Then** l'envoi est étalé et le gagnant notifié,
+**And** je reçois récap hebdo et relance de fin d'essai ; les leads opt-in sont collectés.
+
+## Epic 5: Affiliation vendeurs  [Socle · ✅ Livré]
+
+### Story 5.1: [Ratification] Parcours vendeur
+As a vendeur,
+I want candidater et suivre mes commissions,
+So that je suis rémunéré pour les commerces apportés.
+
+**Acceptance Criteria:**
+**Given** une candidature self-service validée par l'admin,
+**When** un commerce apporté paie,
+**Then** une commission (barème 3 tiers) est enregistrée au 1er paiement et exigible au 2ᵉ prélèvement,
+**And** je consulte mes stats via mon URL secrète ; admin et vendeur sont notifiés.
+
+## Epic 6: Espaces & administration  [Socle · ✅ Livré]
+
+### Story 6.1: [Ratification] Comptes & administration
+As a commerçant / admin,
+I want gérer mon espace et les comptes,
+So that l'exploitation est maîtrisée et isolée.
+
+**Acceptance Criteria:**
+**Given** l'authentification par OTP,
+**When** j'accède à mon espace,
+**Then** je gère mes établissements (multi), mon tableau de bord et mon QR,
+**And** l'admin crée / suspend / édite les comptes, et l'isolation multi-tenant est garantie.
+
+## Epic 7: Monétisation  [Socle · ✅ Livré]
+
+### Story 7.1: [Ratification] Abonnement Stripe self-service
+As a commerçant,
+I want m'abonner et gérer ma formule,
+So that j'accède aux fonctionnalités selon mon plan.
+
+**Acceptance Criteria:**
+**Given** un essai gratuit 14 j,
+**When** je choisis une des 4 formules,
+**Then** le checkout Stripe et le portail fonctionnent (changement de formule, options),
+**And** le webhook signé synchronise plan/statut/échéance et déclenche le parrainage commerçant.
+
+## Epic 8: Vitrine & marketing  [Socle · ✅ Livré]
+
+### Story 8.1: [Ratification] Vitrine & blog SEO
+As a prospect,
+I want découvrir Kado via des pages publiques,
+So that je comprends l'offre et je m'inscris.
+
+**Acceptance Criteria:**
+**Given** le site public,
+**When** je visite les pages,
+**Then** l'accueil, les tarifs, les témoignages et le blog SEO sont accessibles et référençables.
+
+## Epic 9: Conformité avis & actions déclenchantes du jeu  [Incrément · 🎯 Priorité]
+
+### Story 9.1: Configurer les actions déclenchantes (non-avis)
+As a commerçant,
+I want choisir quelles actions non-avis débloquent les tours,
+So that mon jeu reste conforme aux règles Google.
+
+**Acceptance Criteria:**
+**Given** l'éditeur de roue,
+**When** je configure les actions déclenchantes,
+**Then** je peux activer/désactiver « suivi Instagram », « inscription fidélité », « opt-in offres » (jamais l'avis Google),
+**And** au moins une action reste active (garde-fou),
+**And** la configuration est persistée dans `wheel_configs`.
+
+### Story 9.2: Débloquer les tours par des actions non-avis
+As a client final,
+I want débloquer mes tours par une action non-avis (ou en jouant),
+So that je ne suis jamais récompensé pour un avis.
+
+**Acceptance Criteria:**
+**Given** une configuration issue de la story 9.1,
+**When** je réalise l'action configurée,
+**Then** le tour se débloque et le lot est tiré côté serveur,
+**And** l'ouverture de la page d'avis Google **ne débloque plus aucun tour**,
+**And** le verrou des 2 tours reste inchangé.
+
+### Story 9.3: Avis Google en CTA neutre non récompensé
+As a commerçant,
+I want proposer l'avis Google comme CTA optionnel non récompensé,
+So that les avis de ma fiche ne risquent pas d'être supprimés.
+
+**Acceptance Criteria:**
+**Given** un client sur la page de jeu,
+**When** il termine ou navigue,
+**Then** un CTA « laisser un avis Google » optionnel s'affiche **à tous, au neutre** (pas de filtrage selon la satisfaction),
+**And** aucun cadeau ni tour n'est lié à ce CTA,
+**And** la mention de conformité reste affichée.
+
+### Story 9.4: Migrer les configurations « avis » existantes
+As a exploitant,
+I want migrer les établissements dont un tour était débloqué par l'avis,
+So that aucun commerçant ne reste sur la mécanique risquée.
+
+**Acceptance Criteria:**
+**Given** des `wheel_configs` où l'avis servait d'action déclenchante,
+**When** la migration s'applique,
+**Then** cette action est remplacée par une action non-avis par défaut (ou déblocage en jouant),
+**And** les commerçants concernés sont informés du changement.
+
+## Epic 10: Re-consentement fidélité (double opt-in)  [Incrément]
+
+### Story 10.1: Demander une confirmation de ré-abonnement
+As a client désinscrit,
+I want redemander à recevoir les offres,
+So that je peux revenir en le confirmant explicitement.
+
+**Acceptance Criteria:**
+**Given** une carte avec `unsubscribed_at` renseigné,
+**When** le client demande à se ré-abonner,
+**Then** un e-mail de confirmation avec **lien signé (token)** est envoyé,
+**And** `marketing_ok` n'est **pas** réactivé à ce stade.
+
+### Story 10.2: Confirmer le ré-abonnement via le lien
+As a client,
+I want confirmer via le lien reçu,
+So that mon consentement est rétabli proprement (RGPD).
+
+**Acceptance Criteria:**
+**Given** un token valide et non expiré (story 10.1),
+**When** je clique le lien de confirmation,
+**Then** `unsubscribed_at` est effacé et `marketing_ok=true`,
+**And** un token invalide/expiré est refusé avec un message clair,
+**And** l'opération est idempotente (double clic sans effet de bord).
+
+## Epic 11: Commandes — remboursements & litiges  [Incrément]
+
+### Story 11.1: Rembourser une commande payée en ligne
+As a commerçant,
+I want rembourser une commande payée via Stripe Connect,
+So that je gère les erreurs et les retours clients.
+
+**Acceptance Criteria:**
+**Given** une commande payée (`paid=true`, `stripe_session_id` présent),
+**When** je déclenche un remboursement depuis le dashboard,
+**Then** un refund Stripe est créé sur le **compte connecté** du commerçant,
+**And** le statut de la commande passe à « remboursée »,
+**And** un échec Stripe affiche une erreur claire sans corrompre l'état de la commande.
+
+### Story 11.2: Annuler une commande
+As a commerçant,
+I want annuler une commande,
+So that je gère les commandes impossibles à honorer.
+
+**Acceptance Criteria:**
+**Given** une commande active,
+**When** je l'annule,
+**Then** son statut passe à « annulée »,
+**And** si elle était payée en ligne, le remboursement de la story 11.1 est proposé/déclenché,
+**And** le client est notifié (e-mail/push best-effort, non bloquant).
