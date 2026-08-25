@@ -31,12 +31,21 @@ export type MessageRow = {
   status: string;
 };
 
+export type EventRow = {
+  id: string;
+  type: string;
+  meta: Record<string, unknown> | null;
+  created_at: string;
+};
+
 export default function ProspectDetailClient({
   prospect,
   messages,
+  events,
 }: {
   prospect: ProspectDetail;
   messages: MessageRow[];
+  events: EventRow[];
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -134,6 +143,9 @@ export default function ProspectDetailClient({
         </div>
       )}
 
+      {/* Historique */}
+      <Timeline events={events} />
+
       {/* Messages */}
       {!email && !dm ? (
         <p style={{ color: "#666" }}>
@@ -199,6 +211,56 @@ function ContactEditor({
         </button>
         {saved && <span style={{ fontSize: 13, color: "#555" }}>{saved}</span>}
       </div>
+    </details>
+  );
+}
+
+const EVENT_LABEL: Record<string, string> = {
+  sourced: "Sourcé (ajouté depuis Google)",
+  scored: "Score calculé",
+  enriched: "Enrichi (email / Instagram)",
+  contact_edited: "Contact modifié à la main",
+  messages_generated: "Messages générés",
+  email_sent: "Email envoyé",
+  email_bounced: "Email rejeté (bounce)",
+  email_replied: "A répondu par email",
+  dm_sent: "DM Instagram envoyé",
+  status_changed: "Statut modifié",
+  excluded: "Exclu",
+  unsubscribed: "Désinscrit",
+};
+
+function Timeline({ events }: { events: EventRow[] }) {
+  if (events.length === 0) return null;
+  const fmt = (iso: string) => {
+    try {
+      return new Date(iso).toLocaleString("fr-FR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return iso;
+    }
+  };
+  return (
+    <details style={{ margin: "8px 0 16px" }}>
+      <summary style={{ cursor: "pointer", color: "#555" }}>
+        🕒 Historique ({events.length})
+      </summary>
+      <ul style={{ fontSize: 14, color: "#555", listStyle: "none", paddingLeft: 0 }}>
+        {events.map((e) => (
+          <li key={e.id} style={{ padding: "4px 0", borderBottom: "1px solid #f2f2f2" }}>
+            <span style={{ color: "#999", marginRight: 8 }}>{fmt(e.created_at)}</span>
+            {EVENT_LABEL[e.type] ?? e.type}
+            {e.type === "status_changed" && e.meta?.status
+              ? ` → ${String(e.meta.status)}`
+              : ""}
+          </li>
+        ))}
+      </ul>
     </details>
   );
 }

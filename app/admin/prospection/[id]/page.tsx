@@ -4,6 +4,7 @@ import { getAdminClient } from "@/lib/supabase/admin";
 import ProspectDetailClient, {
   type ProspectDetail,
   type MessageRow,
+  type EventRow,
 } from "./ProspectDetailClient";
 
 export const dynamic = "force-dynamic";
@@ -42,10 +43,18 @@ export default async function ProspectPage({
     .order("channel", { ascending: true })
     .order("step", { ascending: true });
 
+  const { data: events } = await db
+    .from("prospect_events")
+    .select("id, type, meta, created_at")
+    .eq("prospect_id", params.id)
+    .order("created_at", { ascending: false })
+    .limit(50);
+
   return (
     <ProspectDetailClient
       prospect={p as ProspectDetail}
       messages={(msgs ?? []) as MessageRow[]}
+      events={(events ?? []) as EventRow[]}
     />
   );
 }
