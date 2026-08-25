@@ -79,9 +79,16 @@ export default async function ProspectionPage() {
       if (r.email) withEmail++;
       if (r.instagram_handle) withInstagram++;
     }
-    const [emailsToday, dmToday] = await Promise.all([
+    const countAll = async (type: string | string[]) => {
+      const q = admin.from("prospect_events").select("*", { count: "exact", head: true });
+      const res = Array.isArray(type) ? await q.in("type", type) : await q.eq("type", type);
+      return res.count ?? 0;
+    };
+    const [emailsToday, dmToday, sentTotal, bouncedTotal] = await Promise.all([
       countToday("email_sent"),
       countToday("dm_sent"),
+      countAll(["email_sent", "email_followup_sent"]),
+      countAll("email_bounced"),
     ]);
     const cap = Number(process.env.MAX_PROSPECT_EMAILS_PER_DAY || 20);
 
@@ -101,6 +108,8 @@ export default async function ProspectionPage() {
       dmToday,
       emailCap: cap,
       pendingEmails: pendingEmails ?? 0,
+      sentTotal,
+      bouncedTotal,
     };
   }
 
