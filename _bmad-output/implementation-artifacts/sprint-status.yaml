@@ -74,9 +74,9 @@ development_status:
   9-4-migrer-les-configurations-avis-existantes: review
   epic-9-retrospective: optional
 
-  epic-10: backlog
-  10-1-demander-une-confirmation-de-ré-abonnement: backlog
-  10-2-confirmer-le-ré-abonnement-via-le-lien: backlog
+  epic-10: in-progress
+  10-1-demander-une-confirmation-de-ré-abonnement: review
+  10-2-confirmer-le-ré-abonnement-via-le-lien: review
   epic-10-retrospective: optional
 
   epic-11: backlog

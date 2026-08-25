@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 const CARD_COLS = "id, code, stamps, rewards_earned, reward_ready, reward_code";
-const CARD_COLS_EXT = `${CARD_COLS}, birthday_day, marketing_ok`;
+const CARD_COLS_EXT = `${CARD_COLS}, birthday_day, marketing_ok, unsubscribed_at`;
 
 // Schéma permissif : la validation métier (e-mail, présence) reste dans le handler.
 const Body = z.object({
@@ -163,6 +163,7 @@ export const POST = publicRoute({
       referralEnabled,
       birthdaySet: card.birthday_day != null,
       marketingOk: !!card.marketing_ok,
+      unsubscribed: !!card.unsubscribed_at,
     });
   },
 });
