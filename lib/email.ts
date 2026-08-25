@@ -11,6 +11,15 @@ type SendArgs = {
    *  EMAIL_FROM_MARKETING si elle est définie (sous-domaine dédié),
    *  sinon retombe sur EMAIL_FROM. Sépare les réputations d'envoi. */
   marketing?: boolean;
+  /** Pièces jointes (Resend). `contentId` → image inline référençable via
+   *  `<img src="cid:...">` (les data:URI sont bloqués par Gmail). */
+  attachments?: {
+    filename: string;
+    /** Contenu encodé en base64. */
+    content: string;
+    contentId?: string;
+    contentType?: string;
+  }[];
 };
 
 type SendResult = { ok: boolean; skipped?: boolean; error?: string };
@@ -40,6 +49,7 @@ export async function sendEmail({
   replyTo,
   fromName,
   marketing,
+  attachments,
 }: SendArgs): Promise<SendResult> {
   const key = process.env.RESEND_API_KEY;
   if (!key) {
@@ -60,6 +70,16 @@ export async function sendEmail({
         html,
         text,
         ...(replyTo ? { reply_to: replyTo } : {}),
+        ...(attachments && attachments.length
+          ? {
+              attachments: attachments.map((a) => ({
+                filename: a.filename,
+                content: a.content,
+                ...(a.contentId ? { content_id: a.contentId } : {}),
+                ...(a.contentType ? { content_type: a.contentType } : {}),
+              })),
+            }
+          : {}),
       }),
     });
     if (!res.ok) {

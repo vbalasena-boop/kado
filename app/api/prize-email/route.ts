@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import QRCode from "qrcode";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { prizeIsLosing } from "@/lib/draw";
@@ -68,11 +69,40 @@ export async function POST(req: NextRequest) {
   }
 
   const shopName = biz.name || "le commerce";
+
+  // QR du code (PNG) généré côté serveur, joint en image INLINE via `cid:` —
+  // les data:URI sont bloqués par Gmail, donc on passe par une pièce jointe.
+  // Best-effort : si la génération échoue, on envoie l'e-mail sans le QR.
+  let qrAttachment:
+    | { filename: string; content: string; contentId: string; contentType: string }
+    | null = null;
+  try {
+    const qrBuf = await QRCode.toBuffer(code, {
+      width: 240,
+      margin: 1,
+      color: { dark: "#1b1035", light: "#ffffff" },
+    });
+    qrAttachment = {
+      filename: "code-qr.png",
+      content: qrBuf.toString("base64"),
+      contentId: "codeqr",
+      contentType: "image/png",
+    };
+  } catch {
+    /* génération QR indisponible : e-mail envoyé sans le QR */
+  }
+
+  const qrHtml = qrAttachment
+    ? `<p style="text-align:center;margin:6px 0 2px;"><img src="cid:codeqr" alt="QR du code ${escapeHtml(code)}" width="180" height="180" style="width:180px;height:180px;border-radius:12px;border:1px solid #eee;" /></p>
+      <p style="text-align:center;font-size:12px;color:#9a94b4;margin:0 0 6px;">Présentez ce QR ou le code ci-dessus en caisse.</p>`
+    : "";
+
   const html = emailLayout({
     preview: `Votre code cadeau ${code}`,
     heading: `Votre cadeau : ${label}`,
     bodyHtml: `<p>Voici votre code à présenter chez <b>${escapeHtml(shopName)}</b> :</p>
       <p style="font-size:28px;font-weight:800;letter-spacing:3px;color:#1b1035;background:#f4f0ff;border-radius:12px;padding:14px 10px;text-align:center;">${escapeHtml(code)}</p>
+      ${qrHtml}
       <p>Présentez-le à l'équipe lors de votre prochaine visite. À bientôt&nbsp;!</p>`,
   });
   const text = `Votre cadeau : ${label}\nCode : ${code}\nÀ présenter chez ${shopName}.`;
@@ -83,6 +113,7 @@ export async function POST(req: NextRequest) {
     html,
     text,
     fromName: shopName,
+    ...(qrAttachment ? { attachments: [qrAttachment] } : {}),
   });
   if (!result.ok) return Response.json({ error: "send_failed" }, { status: 502 });
   return Response.json({ ok: true });

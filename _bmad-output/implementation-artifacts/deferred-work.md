@@ -26,3 +26,23 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-9-4-banniere-migration-avis.md`
   summary: La fermeture de la bannière de migration avis n'est persistée que côté navigateur (`localStorage`, par établissement). Pour une communication de conformité, il n'y a ni accusé de réception côté serveur ni mesure de portée (le bandeau réapparaît sur un nouvel appareil/navigateur).
   evidence: Constat revue 9.4 (Blind Hunter / Edge Case). Choix assumé (spec 9.4 = dismiss localStorage, pas d'email/serveur). Enhancement possible si l'on veut prouver que les commerçants ont été informés : flag serveur `avis_notice_ack` + éventuelle analytics.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-editor-reconcile-trigger-actions.md`
+  summary: L'action déclenchante « Fidélité » est sélectionnable dès que le MODULE est dans la formule (`showFidelite`), sans vérifier que la carte de fidélité est réellement activée (`loyalty_enabled`). Un commerçant avec le module mais la carte désactivée peut offrir un tour « fidélité » renvoyant vers une carte non active.
+  evidence: Constat revue (Blind Hunter). Raffinement UX : gater aussi sur `loyalty_enabled`, ou prompter l'activation de la carte. Hors périmètre immédiat (le point demandé était le gating par formule).
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-editor-reconcile-trigger-actions.md`
+  summary: `app/api/dashboard/wheel/route.ts` (l.76-80) force encore `instagram_enabled/review_enabled` à true si les deux sont faux (« au moins un canal ») — remnant serveur du garde retiré de l'UI. Inerte aujourd'hui (l'UI n'envoie plus `instagram_enabled` → défaut true), mais incohérent avec le nettoyage.
+  evidence: Constat revue (Blind Hunter). Nettoyage serveur à faire (hors Code Map de cette story).
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-editor-reconcile-trigger-actions.md`
+  summary: Aucun backfill ne dérive `trigger_actions` des anciens `instagram_enabled=false` : un commerçant qui avait désactivé Instagram (ancien modèle) mais garde `trigger_actions=["instagram"]` (défaut 0045) débloque désormais des tours Instagram. Pré-existant à cette story (issu du découpage 9.1/9.2/9.4).
+  evidence: Constat revue (Blind Hunter). Migration data éventuelle, ou informer via la bannière 9.4.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-optin-email-collect.md`
+  summary: L'action « Fidélité » (loyalty) n'ouvre plus la page carte `/{slug}/fidelite` au clic (elle montre l'étape e-mail à la place, conforme au spec gelé). La carte reste accessible via le lien persistant « 🎟️ Ma carte de fidélité » — mais celui-ci est gaté sur `config.loyalty_enabled`, indépendant du fait que `loyalty` soit une action déclenchante. Si loyalty est un déclencheur mais `loyalty_enabled` faux, la carte est inatteignable.
+  evidence: Constat revue (Blind Hunter). Décision produit à confirmer : après collecte e-mail, faut-il aussi ouvrir/rendre visible la carte pour l'action Fidélité ? À traiter avec le point déjà reporté sur le gating `loyalty_enabled`.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-optin-email-collect.md`
+  summary: L'étape « collect » poste l'e-mail à `/api/lead` SANS case de consentement explicite (choix utilisateur : consentement facultatif), alors que le formulaire post-victoire l'exige. Une mention de consentement IMPLICITE a été ajoutée à l'écran, mais la table `leads` reçoit désormais des opt-ins avec et sans consentement explicitement horodaté.
+  evidence: Constat revue (Blind Hunter) — considération RGPD/traçabilité. Choix produit assumé (fluidité). À revoir si besoin de preuve de consentement : enregistrer un flag consent côté `/api/lead`.

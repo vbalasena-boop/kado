@@ -2,6 +2,9 @@ import { describe, it, expect } from "vitest";
 import {
   sanitizeTriggerActions,
   isTriggerActionAllowed,
+  isTriggerActionSelectable,
+  resolveTriggerActions,
+  nextTriggerActions,
   shouldShowReviewCta,
   reviewCtaHref,
   avisMigrationNoticeNeeded,
@@ -108,6 +111,111 @@ describe("isTriggerActionAllowed", () => {
     expect(isTriggerActionAllowed("banana", ["instagram", "loyalty"])).toBe(
       false
     );
+  });
+});
+
+describe("isTriggerActionSelectable", () => {
+  it("Instagram toujours sélectionnable", () => {
+    expect(
+      isTriggerActionSelectable("instagram", { fideliteAvailable: false })
+    ).toBe(true);
+    expect(
+      isTriggerActionSelectable("instagram", { fideliteAvailable: true })
+    ).toBe(true);
+  });
+
+  it("Offres (optin) toujours sélectionnable", () => {
+    expect(
+      isTriggerActionSelectable("optin", { fideliteAvailable: false })
+    ).toBe(true);
+    expect(
+      isTriggerActionSelectable("optin", { fideliteAvailable: true })
+    ).toBe(true);
+  });
+
+  it("Fidélité sélectionnable ⟺ module disponible", () => {
+    expect(
+      isTriggerActionSelectable("loyalty", { fideliteAvailable: true })
+    ).toBe(true);
+    expect(
+      isTriggerActionSelectable("loyalty", { fideliteAvailable: false })
+    ).toBe(false);
+  });
+
+  it("valeur inconnue (dont l'avis) → false", () => {
+    expect(
+      isTriggerActionSelectable("review", { fideliteAvailable: true })
+    ).toBe(false);
+    expect(
+      isTriggerActionSelectable("banana", { fideliteAvailable: true })
+    ).toBe(false);
+    expect(
+      isTriggerActionSelectable(undefined, { fideliteAvailable: true })
+    ).toBe(false);
+    expect(
+      isTriggerActionSelectable(null, { fideliteAvailable: true })
+    ).toBe(false);
+  });
+});
+
+describe("resolveTriggerActions", () => {
+  it("purge « loyalty » quand le module fidélité est absent → repli si vide", () => {
+    expect(
+      resolveTriggerActions(["loyalty"], { fideliteAvailable: false })
+    ).toEqual(["instagram"]);
+    expect(
+      resolveTriggerActions(["loyalty", "optin"], { fideliteAvailable: false })
+    ).toEqual(["optin"]);
+  });
+
+  it("conserve « loyalty » quand le module est disponible", () => {
+    expect(
+      resolveTriggerActions(["instagram", "loyalty"], { fideliteAvailable: true })
+    ).toEqual(["instagram", "loyalty"]);
+  });
+
+  it("normalise (avis filtré, repli) comme sanitize", () => {
+    expect(
+      resolveTriggerActions(["review"], { fideliteAvailable: true })
+    ).toEqual(["instagram"]);
+    expect(resolveTriggerActions(null, { fideliteAvailable: true })).toEqual([
+      "instagram",
+    ]);
+  });
+});
+
+describe("nextTriggerActions", () => {
+  it("ajoute une action en conservant l'ordre canonique", () => {
+    expect(
+      nextTriggerActions(["instagram"], "optin", { fideliteAvailable: true })
+    ).toEqual(["instagram", "optin"]);
+  });
+
+  it("retire une action active", () => {
+    expect(
+      nextTriggerActions(["instagram", "optin"], "optin", {
+        fideliteAvailable: true,
+      })
+    ).toEqual(["instagram"]);
+  });
+
+  it("refuse de retirer la dernière action", () => {
+    expect(
+      nextTriggerActions(["optin"], "optin", { fideliteAvailable: true })
+    ).toEqual(["optin"]);
+  });
+
+  it("une action non sélectionnable ne change rien (et purge l'existant verrouillé)", () => {
+    // loyalty verrouillée : le toggle est un no-op et le set effectif la purge
+    expect(
+      nextTriggerActions(["instagram", "loyalty"], "loyalty", {
+        fideliteAvailable: false,
+      })
+    ).toEqual(["instagram"]);
+    // id non-string → no-op (set effectif renvoyé)
+    expect(
+      nextTriggerActions(["instagram"], null, { fideliteAvailable: true })
+    ).toEqual(["instagram"]);
   });
 });
 
