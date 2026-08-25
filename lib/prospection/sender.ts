@@ -18,6 +18,8 @@ export interface SendArgs {
   to: string;
   subject: string;
   text: string;
+  /** Lien de désinscription, pour l'en-tête List-Unsubscribe (délivrabilité). */
+  unsubscribeUrl?: string;
 }
 
 export interface SendResult {
@@ -54,12 +56,21 @@ export async function sendProspectEmail(args: SendArgs): Promise<SendResult> {
         pass: process.env.PROSPECT_SMTP_PASS,
       },
     });
+    // En-têtes List-Unsubscribe : désinscription 1 clic native Gmail/Outlook,
+    // fort signal de légitimité (meilleure délivrabilité).
+    const headers: Record<string, string> = {};
+    if (args.unsubscribeUrl) {
+      headers["List-Unsubscribe"] = `<${args.unsubscribeUrl}>`;
+      headers["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click";
+    }
+
     await transporter.sendMail({
       from: process.env.PROSPECT_EMAIL_FROM,
       replyTo: process.env.PROSPECT_REPLY_TO || undefined,
       to: args.to,
       subject: args.subject,
       text: args.text,
+      headers,
     });
     return { ok: true };
   } catch (err) {

@@ -6,6 +6,7 @@
  */
 import { getAdminClient } from "@/lib/supabase/admin";
 import { sendProspectEmail, finalizeBody } from "@/lib/prospection/sender";
+import { unsubUrl } from "@/lib/prospection/unsub";
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://kado-app.fr";
 
@@ -50,7 +51,12 @@ export async function runProspectionSend(): Promise<SendSummary> {
     }
 
     const body = finalizeBody(m.body, email, SITE);
-    const res = await sendProspectEmail({ to: email, subject: m.subject ?? "Bonjour", text: body });
+    const res = await sendProspectEmail({
+      to: email,
+      subject: m.subject ?? "Bonjour",
+      text: body,
+      unsubscribeUrl: unsubUrl(email, SITE),
+    });
     if (!res.ok) {
       out.failed++;
       continue;
