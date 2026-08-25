@@ -114,12 +114,32 @@ def gift_logo(size):
     return im.resize((size,size),Image.LANCZOS)
 
 WHEEL_COLORS=[(255,111,174),(255,202,58),(155,93,229),(255,122,92),(241,91,181),(255,209,102)]
+WHEEL_EMOJI=["🎉","☕","🍰","🥐","🎁","😄"]  # icônes produits (comme le vrai réel Kado)
+EMOJI_FONT=ImageFont.truetype("/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf",109)
+_emoji_cache={}
+def emoji_img(ch,size):
+    key=(ch,size)
+    if key in _emoji_cache: return _emoji_cache[key]
+    tmp=Image.new("RGBA",(160,160),(0,0,0,0))
+    ImageDraw.Draw(tmp).text((8,4),ch,font=EMOJI_FONT,embedded_color=True)
+    bb=tmp.getbbox()
+    if bb: tmp=tmp.crop(bb)
+    m=max(tmp.size); sq=Image.new("RGBA",(m,m),(0,0,0,0))
+    sq.alpha_composite(tmp,((m-tmp.width)//2,(m-tmp.height)//2))
+    out=sq.resize((size,size),Image.LANCZOS); _emoji_cache[key]=out; return out
+
 def wheel(size,angle_deg):
     s=size*SS; im=Image.new("RGBA",(s,s),(0,0,0,0)); d=ImageDraw.Draw(im)
     n=len(WHEEL_COLORS); step=360/n
     d.ellipse([0,0,s,s],fill=(245,245,250)); pad=s*0.035
     for i in range(n):
         a0=angle_deg+i*step; d.pieslice([pad,pad,s-pad,s-pad],a0,a0+step,fill=WHEEL_COLORS[i])
+    # icônes produits, une par segment, gardées à l'endroit (lisibles)
+    er=int(s*0.30); esz=int(s*0.15)
+    for i,ch in enumerate(WHEEL_EMOJI):
+        mid=math.radians(angle_deg+(i+0.5)*step)
+        ex=s/2+er*math.cos(mid); ey=s/2+er*math.sin(mid)
+        ic=emoji_img(ch,esz); im.alpha_composite(ic,(int(ex-esz/2),int(ey-esz/2)))
     hub=s*0.16; d.ellipse([s/2-hub,s/2-hub,s/2+hub,s/2+hub],fill=NAVY)
     g=gift_logo(int(hub*2*0.9))
     im.alpha_composite(g,(int(s/2-hub*0.9),int(s/2-hub*0.9)))
