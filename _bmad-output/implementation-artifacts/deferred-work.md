@@ -38,3 +38,11 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-editor-reconcile-trigger-actions.md`
   summary: Aucun backfill ne dérive `trigger_actions` des anciens `instagram_enabled=false` : un commerçant qui avait désactivé Instagram (ancien modèle) mais garde `trigger_actions=["instagram"]` (défaut 0045) débloque désormais des tours Instagram. Pré-existant à cette story (issu du découpage 9.1/9.2/9.4).
   evidence: Constat revue (Blind Hunter). Migration data éventuelle, ou informer via la bannière 9.4.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-optin-email-collect.md`
+  summary: L'action « Fidélité » (loyalty) n'ouvre plus la page carte `/{slug}/fidelite` au clic (elle montre l'étape e-mail à la place, conforme au spec gelé). La carte reste accessible via le lien persistant « 🎟️ Ma carte de fidélité » — mais celui-ci est gaté sur `config.loyalty_enabled`, indépendant du fait que `loyalty` soit une action déclenchante. Si loyalty est un déclencheur mais `loyalty_enabled` faux, la carte est inatteignable.
+  evidence: Constat revue (Blind Hunter). Décision produit à confirmer : après collecte e-mail, faut-il aussi ouvrir/rendre visible la carte pour l'action Fidélité ? À traiter avec le point déjà reporté sur le gating `loyalty_enabled`.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-optin-email-collect.md`
+  summary: L'étape « collect » poste l'e-mail à `/api/lead` SANS case de consentement explicite (choix utilisateur : consentement facultatif), alors que le formulaire post-victoire l'exige. Une mention de consentement IMPLICITE a été ajoutée à l'écran, mais la table `leads` reçoit désormais des opt-ins avec et sans consentement explicitement horodaté.
+  evidence: Constat revue (Blind Hunter) — considération RGPD/traçabilité. Choix produit assumé (fluidité). À revoir si besoin de preuve de consentement : enregistrer un flag consent côté `/api/lead`.

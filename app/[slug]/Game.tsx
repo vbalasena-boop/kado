@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { labelIsLosing } from "@/lib/draw";
 import { deviceHash } from "@/lib/device-hash";
 import { buildTheme } from "@/lib/theme";
+import { isValidEmail, autoSendCodeTarget, needsCollectStep } from "@/lib/optin";
 import {
   sanitizeTriggerActions,
   reviewCtaHref,
@@ -190,7 +191,7 @@ type Played = Record<string, { label: string; code: string }>;
 // Un tour = une action déclenchante non-avis. L'avis (`review`) n'apparaît
 // jamais ici : il ne débloque plus aucun tour.
 type PlayType = TriggerAction;
-type Screen = "rules" | "hub" | "spin" | "prize" | "done";
+type Screen = "rules" | "hub" | "collect" | "spin" | "prize" | "done";
 
 const FONT =
   '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
@@ -471,6 +472,14 @@ export default function Game({
   const [error, setError] = useState<string | null>(null);
   const [leadEmail, setLeadEmail] = useState("");
   const [leadConsent, setLeadConsent] = useState(false);
+  // E-mail capté à l'étape « collect » (Offres/Fidélité) : alimente l'auto-envoi
+  // du code après une victoire. Distinct du formulaire post-victoire.
+  const [capturedEmail, setCapturedEmail] = useState<string | null>(null);
+  // Erreur inline de l'étape « collect » (e-mail saisi mais invalide).
+  const [collectError, setCollectError] = useState(false);
+  // Anti-doublon : dernier code auto-envoyé, et dernier e-mail posté à /api/lead.
+  const autoSentCodeRef = useRef<string | null>(null);
+  const leadSentEmailRef = useRef<string | null>(null);
   const [leadSent, setLeadSent] = useState(false);
   const [leadBusy, setLeadBusy] = useState(false);
   const [prizeQr, setPrizeQr] = useState<string | null>(null);
@@ -488,9 +497,10 @@ export default function Game({
 
   useEffect(() => {
     let alive = true;
-    // Nouveau lot affiché → on réinitialise le formulaire "recevoir par e-mail".
+    // Nouveau lot affiché → on réinitialise le formulaire "recevoir par e-mail"
+    // (pré-rempli avec l'e-mail déjà capté, s'il y en a un).
     setCodeEmailSent(false);
-    setCodeEmail("");
+    setCodeEmail(capturedEmail ?? "");
     if (prize && prize.code && !isNoWin(prize.label)) {
       import("qrcode")
         .then(({ default: QRCode }) =>
@@ -504,12 +514,36 @@ export default function Game({
           if (alive) setPrizeQr(u);
         })
         .catch(() => {});
+      // Auto-envoi best-effort du code à l'e-mail capté à l'étape « collect »
+      // (Offres/Fidélité). Un échec ne casse pas l'affichage du code : le
+      // formulaire manuel reste masqué uniquement si l'envoi a réussi.
+      const target = autoSendCodeTarget({
+        capturedEmail,
+        code: prize.code,
+        isWin: true,
+      });
+      // Anti-doublon : on n'auto-envoie qu'une fois par code (rejeu / remontée).
+      if (target && !preview && autoSentCodeRef.current !== prize.code) {
+        autoSentCodeRef.current = prize.code;
+        fetch("/api/prize-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ slug, code: prize.code, email: target }),
+        })
+          .then((res) => {
+            if (res.ok && alive) setCodeEmailSent(true);
+          })
+          .catch(() => {
+            /* silencieux : l'auto-envoi est un confort, pas un blocage */
+          });
+      }
     } else {
       setPrizeQr(null);
     }
     return () => {
       alive = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prize]);
 
   async function submitLead(e: React.FormEvent) {
@@ -714,7 +748,15 @@ export default function Game({
     if (!preview && played[kind]) return;
     setError(null);
     setCurrent(kind);
-    // en mode test, on n'ouvre pas les liens de l'action
+    // Offres / Fidélité : on propose d'abord de laisser un e-mail (facultatif)
+    // avant de débloquer le tour. Pas d'ouverture de lien ici.
+    if (needsCollectStep(kind)) {
+      setCollectError(false);
+      setScreen("collect");
+      return;
+    }
+    // Instagram : comportement inchangé — ouverture du lien puis tour.
+    // En mode test, on n'ouvre pas les liens de l'action.
     if (!preview) {
       const url = ACTIONS[kind].url(config, slug);
       if (url) {
@@ -723,6 +765,38 @@ export default function Game({
         } catch {
           /* ignore */
         }
+      }
+    }
+    rotRef.current = rotRef.current % TAU;
+    setScreen("spin");
+  }
+
+  /** Étape « collect » : le joueur continue avec ou sans e-mail. Si un e-mail
+   *  valide est fourni (hors preview) → enregistrement best-effort du lead +
+   *  mémorisation pour l'auto-envoi du code. Le tour se débloque dans tous les
+   *  cas. */
+  function continueFromCollect(e: React.FormEvent) {
+    e.preventDefault();
+    const email = leadEmail.trim();
+    // E-mail saisi mais invalide → on ne perd pas l'intention en silence.
+    if (email && !isValidEmail(email)) {
+      setCollectError(true);
+      return;
+    }
+    setCollectError(false);
+    if (!preview && isValidEmail(email)) {
+      setCapturedEmail(email);
+      // Best-effort, calqué sur submitLead ; anti-doublon si la même adresse a
+      // déjà été enregistrée (cas de deux actions collectrices dans un tour).
+      if (leadSentEmailRef.current !== email) {
+        leadSentEmailRef.current = email;
+        fetch("/api/lead", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ slug, email }),
+        }).catch(() => {
+          /* silencieux : la capture est facultative */
+        });
       }
     }
     rotRef.current = rotRef.current % TAU;
@@ -1082,6 +1156,80 @@ export default function Game({
             </section>
           )}
 
+          {/* COLLECT — étape e-mail facultative (Offres / Fidélité) */}
+          {screen === "collect" && (
+            <section className="screen active">
+              <div className="center">
+                <span className={`badge ${current ?? ""}`}>
+                  {current && (
+                    <>
+                      {ACTIONS[current].glyph(15)} {ACTIONS[current].badge}
+                    </>
+                  )}
+                </span>
+              </div>
+              <div className="wheel-head">
+                <h2>📧 Laissez votre e-mail</h2>
+                <p>
+                  Facultatif —{" "}
+                  {current === "loyalty"
+                    ? "pour votre carte de fidélité"
+                    : "pour recevoir vos offres"}
+                  . Vous pouvez continuer sans le renseigner.
+                </p>
+              </div>
+              <form className="lead-form" onSubmit={continueFromCollect}>
+                <label className="lead-label" htmlFor="collect-email">
+                  Votre e-mail (facultatif)
+                </label>
+                <div className="lead-row">
+                  <input
+                    id="collect-email"
+                    type="email"
+                    inputMode="email"
+                    autoComplete="email"
+                    placeholder="votre@email.fr"
+                    value={leadEmail}
+                    onChange={(e) => {
+                      setLeadEmail(e.target.value);
+                      if (collectError) setCollectError(false);
+                    }}
+                  />
+                </div>
+                {collectError && (
+                  <span className="onboarding-err">
+                    Adresse e-mail invalide. Corrigez-la ou laissez le champ vide
+                    pour continuer.
+                  </span>
+                )}
+                <button className="btn" type="submit">
+                  Continuer&nbsp;→
+                </button>
+              </form>
+              <button
+                type="button"
+                onClick={() => setScreen("hub")}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "inherit",
+                  opacity: 0.7,
+                  cursor: "pointer",
+                  textDecoration: "underline",
+                  padding: "8px",
+                  font: "inherit",
+                }}
+              >
+                ← Retour
+              </button>
+              <p className="fine">
+                En continuant avec votre e-mail, vous acceptez de recevoir les
+                offres de ce commerce. {config.compliance_note ||
+                  "Le cadeau n'est pas conditionné à la note laissée."}
+              </p>
+            </section>
+          )}
+
           {/* SPIN */}
           {screen === "spin" && (
             <section className="screen active">
@@ -1232,6 +1380,7 @@ export default function Game({
                 {config.collect_email &&
                   !preview &&
                   !isNoWin(prize.label) &&
+                  !capturedEmail &&
                   (leadSent ? (
                     <p className="lead-ok">✅ Merci, à bientôt&nbsp;!</p>
                   ) : (
