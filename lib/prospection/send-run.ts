@@ -17,13 +17,34 @@ export interface SendSummary {
   failed: number;
   followups: number;
   simulated: boolean;
-  cap: number;
+  cap: number; // budget d'envoi de ce passage
+  dailyCap: number; // plafond quotidien configuré
 }
 
 export async function runProspectionSend(): Promise<SendSummary> {
-  const cap = Number(process.env.MAX_PROSPECT_EMAILS_PER_DAY || 20);
+  const dailyCap = Number(process.env.MAX_PROSPECT_EMAILS_PER_DAY || 20);
+  // Débit par passage : par défaut = plafond quotidien (comportement actuel,
+  // 1 envoi/jour). Pour un envoi espacé (ex. cron toutes les 30 min → 1 mail
+  // par passage), mettre PROSPECT_SEND_BATCH=1 et un cron plus fréquent (Pro).
+  const batch = Number(process.env.PROSPECT_SEND_BATCH || dailyCap);
   const db = getAdminClient();
-  const out: SendSummary = { sent: 0, skipped: 0, failed: 0, followups: 0, simulated: false, cap };
+
+  // Compteur quotidien réel : ce qui a déjà été envoyé aujourd'hui (initiaux +
+  // relances) — garantit qu'on ne dépasse jamais le plafond, même sur plusieurs
+  // passages dans la journée.
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+  const { count: sentToday } = await db
+    .from("prospect_events")
+    .select("*", { count: "exact", head: true })
+    .in("type", ["email_sent", "email_followup_sent"])
+    .gte("created_at", startOfDay.toISOString());
+
+  const remainingToday = Math.max(0, dailyCap - (sentToday ?? 0));
+  const cap = Math.min(batch, remainingToday); // budget d'envoi de CE passage
+
+  const out: SendSummary = { sent: 0, skipped: 0, failed: 0, followups: 0, simulated: false, cap, dailyCap };
+  if (cap <= 0) return out; // plafond du jour déjà atteint
 
   const { data, error } = await db
     .from("prospect_messages")
