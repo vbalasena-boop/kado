@@ -377,15 +377,21 @@ export default function ProspectionClient({
                   <td style={td}>{p.google_rating ?? "—"}</td>
                   <td style={td}>{p.google_reviews_count ?? "—"}</td>
                   <td style={td}>
-                    {p.email && <span title={p.email}>✉️</span>}{" "}
+                    {p.email && (
+                      <a href={`mailto:${p.email}`} title="Écrire un email" style={{ fontSize: 13 }}>
+                        ✉️ {p.email}
+                      </a>
+                    )}
+                    {p.email && p.instagram_handle && <br />}
                     {p.instagram_handle && (
                       <a
                         href={`https://instagram.com/${p.instagram_handle}`}
                         target="_blank"
                         rel="noreferrer"
                         title={`@${p.instagram_handle}`}
+                        style={{ fontSize: 13 }}
                       >
-                        📸
+                        📸 @{p.instagram_handle}
                       </a>
                     )}
                     {!p.email && !p.instagram_handle && "—"}
