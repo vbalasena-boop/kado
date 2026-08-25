@@ -22,8 +22,12 @@ describe("reviewHook", () => {
   it("adapte l'accroche au nombre d'avis", () => {
     expect(reviewHook(0)).toContain("pas encore");
     expect(reviewHook(12)).toContain("seulement 12");
-    expect(reviewHook(200)).toContain("200");
-    expect(reviewHook(null)).toBe("vos avis Google");
+    expect(reviewHook(200)).toContain("déjà 200");
+    expect(reviewHook(null)).toBe("vous êtes présent sur Google");
+    // toujours une proposition (commence par "vous")
+    for (const c of [null, 0, 12, 200] as const) {
+      expect(reviewHook(c).startsWith("vous")).toBe(true);
+    }
   });
 });
 

@@ -43,12 +43,16 @@ function segmentNoun(category: string | null): string {
   return "commerce";
 }
 
-/** Accroche personnalisée selon le nombre d'avis Google. */
+/**
+ * Accroche personnalisée selon le nombre d'avis Google.
+ * Renvoie TOUJOURS une proposition complète (avec un verbe), pour s'insérer
+ * correctement après « que » / « : » dans les phrases générées.
+ */
 export function reviewHook(count: number | null): string {
-  if (count == null) return "vos avis Google";
+  if (count == null) return "vous êtes présent sur Google";
   if (count === 0) return "vous n'avez pas encore d'avis Google";
   if (count < 30) return `vous avez seulement ${count} avis Google`;
-  return `vos ${count} avis Google`;
+  return `vous avez déjà ${count} avis Google`;
 }
 
 // --- Moteur de variation déterministe (sans Math.random) ---
