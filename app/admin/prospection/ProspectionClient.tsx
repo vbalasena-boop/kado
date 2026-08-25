@@ -119,6 +119,30 @@ export default function ProspectionClient({
     }
   }
 
+  async function clearProspects(mode: "demo" | "all") {
+    const label =
+      mode === "all"
+        ? "Supprimer TOUS les prospects ? Cette action est irréversible."
+        : "Supprimer les prospects de démonstration ?";
+    if (!window.confirm(label)) return;
+    try {
+      const res = await fetch("/api/admin/prospection/clear", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMessage(`${data.deleted} prospect(s) supprimé(s).`);
+        router.refresh();
+      } else {
+        setMessage(`Erreur : ${data.error ?? "inconnue"}`);
+      }
+    } catch {
+      setMessage("Erreur réseau (suppression).");
+    }
+  }
+
   async function runEnrich() {
     setEnriching(true);
     setMessage(null);
@@ -290,6 +314,22 @@ export default function ProspectionClient({
         <span style={{ marginLeft: "auto", color: "#666", fontSize: 14 }}>
           {filtered.length} prospect(s)
         </span>
+        <button
+          onClick={() => clearProspects("demo")}
+          className="dash-signout"
+          style={{ fontSize: 13 }}
+          title="Supprime uniquement les prospects de démonstration"
+        >
+          Vider la démo
+        </button>
+        <button
+          onClick={() => clearProspects("all")}
+          className="dash-signout"
+          style={{ fontSize: 13, color: "#c0392b" }}
+          title="Supprime TOUS les prospects"
+        >
+          Tout vider
+        </button>
       </div>
 
       {/* --- Liste --- */}
