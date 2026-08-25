@@ -1,17 +1,20 @@
 ---
 title: PRD — Kado
-status: draft
-version: 2.0
+status: final
+version: 2.1
 created: 2026-08-13
-updated: 2026-08-24
+updated: 2026-08-25
 ---
 
 # PRD — Kado
 
-> **BMAD Method · PM** · v2.0 (brownfield) · 2026-08-24
-> Refonte du PRD v0.1 (MVP « roue ») pour refléter le **produit réel en production**.
-> Source de vérité technique : `docs/architecture.md`. Décrit le *quoi* (capacités),
-> pas le *comment* (voir architecture).
+> **BMAD Method · PM** · v2.1 (brownfield) · 2026-08-25
+> Refonte reflétant le **produit réel en production** + décisions de la revue qualité
+> et de la recherche conformité. Source de vérité technique : `docs/architecture.md`.
+> Recherche conformité : `_bmad-output/planning-artifacts/research/google-avis-conformite-2026-08-25/`.
+
+**Légende statut d'implémentation** (pour distinguer ratification vs prochain incrément) :
+✅ **Livré** · 🔧 **À modifier** (existe mais doit évoluer) · 🔶 **À faire** (non implémenté).
 
 ---
 
@@ -19,156 +22,183 @@ updated: 2026-08-24
 
 **Kado** est un SaaS multi-tenant qui aide les commerces de proximité à **acquérir des
 avis Google et des abonnés Instagram**, **fidéliser** leurs clients et **fluidifier la
-prise de commande** — via des mécaniques ludiques (jeux), une carte de fidélité digitale,
-le click & collect et un suivi de commande au comptoir, le tout sans app à installer côté
-client final (un simple QR code).
+prise de commande** — via des jeux, une carte de fidélité digitale, le click & collect
+et un suivi au comptoir, sans app à installer côté client (un simple QR code).
 
-Le produit a **largement dépassé le MVP** documenté en v0.1 (qui ne couvrait que la roue).
-Ce PRD ratifie l'existant et sert de base aux epics/stories.
+Le produit a **largement dépassé le MVP** documenté en v0.1 (roue seule). Ce PRD ratifie
+l'existant et sert de base aux epics/stories.
 
 **Objectifs produit**
-- Faire **jouer / s'inscrire / commander** le client final en < 60 s, sans friction, sur mobile.
+- Faire **jouer / s'inscrire / commander** le client final en < 60 s, sur mobile.
 - Donner au commerçant des **leviers de croissance** (avis, abonnés, e-mails opt-in, visites répétées) et des **outils opérationnels** (commandes, comptoir).
-- Rester **multi-tenant sûr** : chaque commerce isolé, accès donné/retiré par l'admin ou l'abonnement.
+- Rester **multi-tenant sûr** et **conforme** (Google, RGPD, jeux-concours).
 - Monétiser via un **abonnement mensuel sans engagement** (4 formules) + options.
-- `[ASSUMPTION]` Objectif business : convertir l'essai gratuit 14 j en abonnement payant, et faire croître le parc via l'affiliation vendeurs.
 
 **Acteurs**
 | Acteur | Espace | Rôle |
 |---|---|---|
-| **Client final** (joueur / client fidélité / acheteur) | `/{slug}` (public) | Scanne, joue, s'inscrit, commande. Aucun compte. |
-| **Commerçant** (abonné) | `/dashboard` | Configure, suit ses stats, gère commandes & campagnes. |
-| **Admin** (exploitant Kado) | `/admin` | Crée/suspend les comptes, gère plans, vendeurs, remboursements. |
-| **Vendeur** (apporteur d'affaires) | `/vendeur/{key}` | Suit ses commissions via une clé secrète. |
+| **Client final** | `/{slug}` (public) | Scanne, joue, s'inscrit, commande. Aucun compte. |
+| **Commerçant** | `/dashboard` | Configure, suit stats, gère commandes & campagnes. |
+| **Admin** | `/admin` | Crée/suspend comptes, plans, vendeurs, remboursements. |
+| **Vendeur** | `/vendeur/{key}` | Candidate, suit ses commissions. |
 
 ---
 
 ## 2. Exigences fonctionnelles (FR)
 
-> IDs globaux et stables, regroupés par domaine.
+### Domaine A — Jeux & acquisition (⚠️ décision conformité appliquée)
 
-### Domaine A — Jeux (acquisition avis & abonnés)
-- **FR1** — Le client accède à la page de jeu publique d'un établissement via `/{slug}` (lien/QR).
-- **FR2** — Le jeu propose jusqu'à **2 tours** : un débloqué par l'action Instagram, un par l'action Avis Google (canaux activables/désactivables par le commerçant).
-- **FR3** — Le **lot est tiré côté serveur** (pondéré), jamais dans le navigateur (anti-triche, stats fiables) ; le front anime seulement le résultat.
-- **FR4** — **Verrou serveur des 2 tours** : un type de tour déjà joué ne peut être rejoué, même après vidage du navigateur (cookie joueur signé + contrainte unique en base).
-- **FR5** — Le commerçant choisit le **type de jeu** : roue, carte à gratter, machine à sous.
-- **FR6** — Le commerçant configure l'**apparence** (couleurs, logo, image de fond, décor animé) et les **lots** (libellé, emoji, probabilité, lot « perdant » explicite).
-- **FR7** — Le lot gagné produit un **code** présentable en caisse, avec **durée de validité** paramétrable ; le commerçant **valide/échange** le code (anti-double-validation).
-- **FR8** — **Plafond de cadeaux par jour** optionnel : au-delà, le tirage force un lot perdant.
-- **FR9** — La page affiche la **mention de conformité** (cadeau non conditionné à la note) et un **règlement de jeu**.
-- **FR10** — Alerte temps réel (push) au commerçant à chaque cadeau gagné (optionnel).
+> **Décision (2026-08-25, option A)** : suite à la recherche conformité, la récompense
+> du jeu **n'est plus liée à l'action « avis Google »**. Voir §5 Risques.
+
+- **FR1 · ✅** — Le client accède à la page de jeu publique via `/{slug}` (lien/QR).
+- **FR2 · 🔧** — Le jeu propose jusqu'à **2 tours**, débloqués par des **actions
+  NON-avis** (suivi Instagram, inscription fidélité, opt-in offres) ou par le simple
+  fait de jouer — **jamais** en échange d'un avis. *(Aujourd'hui un tour se débloque
+  via l'action « avis Google » → à modifier.)*
+- **FR3 · 🔧** — L'**avis Google** est proposé comme **CTA optionnel, NON récompensé**,
+  présenté séparément du cadeau, et offert **à tous les clients au neutre** (pas de
+  *review gating*).
+- **FR4 · ✅** — Le **lot est tiré côté serveur** (pondéré), jamais dans le navigateur.
+- **FR5 · ✅** — **Verrou serveur des 2 tours** (cookie signé + contrainte unique).
+- **FR6 · ✅** — Le commerçant choisit le **type de jeu** : roue, carte à gratter, slot.
+- **FR7 · ✅** — Le commerçant configure l'**apparence** (couleurs, logo, fond, décor).
+- **FR8 · ✅** — Le commerçant gère les **lots** (libellé, emoji, probabilité, « perdant »).
+- **FR9 · ✅** — Un lot gagné produit un **code** avec **durée de validité** paramétrable.
+- **FR10 · ✅** — Le commerçant **valide/échange** le code en caisse (anti-double-validation).
+- **FR11 · ✅** — **Plafond de cadeaux par jour** optionnel (au-delà : lot perdant forcé).
+- **FR12 · ✅** — Affichage de la **mention de conformité** + **règlement de jeu**.
+- **FR13 · ✅** — Alerte **push** au commerçant à chaque cadeau gagné (optionnel).
+- **FR14 · 🔶** — L'**action déclenchante** de chaque tour est **configurable** par le
+  commerçant (parmi les actions non-avis), pour s'adapter à ses objectifs.
 
 ### Domaine B — Fidélité
-- **FR11** — Le client crée/consulte une **carte de fidélité à tampons** identifiée par e-mail, sur `/{slug}/fidelite`.
-- **FR12** — Le commerçant **valide un tampon** en caisse ; à l'objectif atteint, une **récompense** avec code est débloquée.
-- **FR13** — **Parrainage** : un client parraine via son code ; le parrain est crédité au premier passage en caisse du filleul.
-- **FR14** — **Anniversaire** : le client renseigne sa date ; un e-mail cadeau est envoyé le jour J (une fois/an).
-- **FR15** — **Consentement marketing** géré côté client, avec **désinscription** respectée (RGPD) et non ré-activable de force.
+- **FR15 · ✅** — Carte de **fidélité à tampons** par e-mail sur `/{slug}/fidelite`.
+- **FR16 · ✅** — Le commerçant **valide un tampon** ; à l'objectif, **récompense** + code.
+- **FR17 · ✅** — **Parrainage** : le parrain reçoit **un tampon** au 1er passage en caisse du filleul.
+- **FR18 · ✅** — **Anniversaire** : e-mail cadeau le jour J (1×/an).
+- **FR19 · ✅** — **Consentement marketing** géré côté client, **désinscription respectée**.
+- **FR20 · 🔶** — **Re-consentement** après désinscription via **double opt-in** *(non implémenté)*.
 
-### Domaine C — Click & collect (commande + paiement)
-- **FR16** — Le commerçant gère un **catalogue de produits** (nom, prix, photo, actif/inactif).
-- **FR17** — Le client **commande** depuis `/{slug}/commander` ; le **total est recalculé côté serveur** depuis le catalogue (anti-fraude prix).
-- **FR18** — La commande génère un **code de retrait** ; e-mail de confirmation au client et alerte (push + e-mail) au commerçant.
-- **FR19** — **Horaires de commande** paramétrables ; hors créneaux, la commande est refusée avec le prochain créneau.
-- **FR20** — **Paiement en ligne optionnel** via **Stripe Connect** : l'argent va directement au compte du commerçant (commission plateforme optionnelle) ; sinon paiement sur place.
-- **FR21** — Le commerçant suit les commandes via une **machine à états** (en attente de paiement → à préparer → prête → …) et notifie le client quand c'est prêt.
-- **FR22** — Modes de service **sur place / à emporter** (+ n° de table).
+### Domaine C — Click & collect
+- **FR21 · ✅** — **Catalogue produits** (nom, prix, photo, actif/inactif).
+- **FR22 · ✅** — Commande depuis `/{slug}/commander` ; **total recalculé côté serveur** (anti-fraude).
+- **FR23 · ✅** — **Code de retrait** + e-mail au client + alerte (push/e-mail) au commerçant.
+- **FR24 · ✅** — **Horaires de commande** paramétrables (hors créneaux → refus + prochain créneau).
+- **FR25 · ✅** — **Paiement en ligne** optionnel via **Stripe Connect** (argent au commerçant) ; sinon sur place.
+- **FR26 · ✅** — **Statuts de commande** : `en attente de paiement → nouvelle → prête → …`.
+- **FR27 · 🔶** — **Remboursement / annulation / litige** d'une commande payée en ligne *(à cadrer)*.
+- **FR28 · ✅** — Modes **sur place / à emporter** (+ n° de table).
 
-### Domaine D — Comptoir (bipeur digital / suivi)
-- **FR23** — Le client scanne un QR au comptoir et reçoit un **numéro de suivi** (bipeur digital), indépendant de la caisse.
-- **FR24** — Le commerçant marque la commande **prête** ; le client est prévenu (push/e-mail) sur `/{slug}/suivi/{code}`.
+### Domaine D — Comptoir (bipeur)
+- **FR29 · ✅** — Le client reçoit un **numéro de suivi** (bipeur digital) via QR au comptoir.
+- **FR30 · ✅** — Le commerçant marque **prête** ; le client est prévenu (push/e-mail) sur `/{slug}/suivi/{code}`.
 
 ### Domaine E — Campagnes & rétention
-- **FR25** — Le commerçant crée des **campagnes e-mail et/ou push** (offres) vers ses clients opt-in, avec **programmation** et **envoi étalé**.
-- **FR26** — **Tirage au sort** périodique parmi les e-mails collectés (fréquence + date paramétrables), gagnant tiré et notifié automatiquement.
-- **FR27** — **Récap hebdomadaire** d'activité envoyé au commerçant ; **relance** automatique en fin d'essai (J-3).
-- **FR28** — Collecte d'**e-mails opt-in** (leads) à l'occasion des jeux / de la fidélité.
+- **FR31 · ✅** — **Campagnes e-mail/push** vers clients opt-in, avec **programmation** et **envoi étalé**.
+- **FR32 · ✅** — **Tirage au sort** périodique parmi les e-mails, gagnant tiré et notifié.
+- **FR33 · ✅** — **Récap hebdomadaire** d'activité au commerçant.
+- **FR34 · ✅** — **Relance de fin d'essai** (J-3) automatique.
+- **FR35 · ✅** — Collecte d'**e-mails opt-in** (leads) via jeux / fidélité.
 
 ### Domaine F — Affiliation vendeurs
-- **FR29** — Un **vendeur** (apporteur d'affaires) est rattaché à des établissements ; une **commission** (barème par formule) est due au **premier paiement** du client (une seule fois).
-- **FR30** — Le vendeur consulte ses stats via une **URL secrète** (`/vendeur/{stats_key}`, non indexée).
-- **FR31** — L'admin gère les vendeurs, marque les commissions **à verser / versées**, et est notifié à chaque commission acquise.
+- **FR36 · ✅** — **Candidature vendeur self-service** (`/vendeur`) : profil créé **inactif**, **validé par l'admin**.
+- **FR37 · ✅** — **Connexion vendeur** par compte + accès à ses stats via **URL secrète** (`stats_key`, non indexée).
+- **FR38 · ✅** — **Commission** rattachée aux établissements apportés, **barème à 3 tiers** (roue / fidélité / complet — **pas de tier comptoir** : retombe sur roue).
+- **FR39 · ✅** — Le **record** de commission est créé au 1er paiement ; **exigibilité après le 2ᵉ prélèvement** du client.
+- **FR40 · ✅** — L'admin **marque les commissions** (à verser / versées) ; **admin ET vendeur** notifiés à l'acquisition.
 
 ### Domaine G — Espaces & administration
-- **FR32** — **Authentification commerçant** par e-mail (OTP Supabase) ; accès refusé si compte suspendu.
-- **FR33** — Un commerçant peut gérer **plusieurs établissements** et basculer entre eux.
-- **FR34** — **Tableau de bord** : stats (tours, avis vs Instagram, cadeaux, fidélité, commandes), QR imprimable, onboarding.
-- **FR35** — L'**admin** crée un compte (génère slug + config par défaut + invitation e-mail), **active/suspend** (coupe page publique **et** espace), édite plan/options, note interne, remboursement.
-- **FR36** — **Suspension = un seul champ** : un compte suspendu rend la page publique indisponible et bloque l'espace ; la réactivation restaure sans perte de config.
-- **FR37** — **Isolation multi-tenant** : un commerçant ne voit que ses données.
+- **FR41 · ✅** — **Authentification commerçant** par e-mail (OTP) ; accès refusé si suspendu.
+- **FR42 · ✅** — **Multi-établissements** : un commerçant gère et bascule entre plusieurs.
+- **FR43 · ✅** — **Tableau de bord** : stats, QR imprimable, onboarding.
+- **FR44 · ✅** — Admin : **créer un compte** (slug + config par défaut + invitation e-mail).
+- **FR45 · ✅** — Admin : **activer / suspendre** (coupe page publique **et** espace ; réactivation sans perte).
+- **FR46 · ✅** — Admin : **éditer** plan, options, note interne, **remboursement**.
+- **FR47 · ✅** — **Isolation multi-tenant** : un commerçant ne voit que ses données *(cf. NFR2)*.
 
-### Domaine H — Monétisation & abonnements
-- **FR38** — **4 formules** mensuelles sans engagement : **Jeux 29 €**, **Fidélité 19 €**, **Complet 44 €** (tout inclus), **Comptoir 19 €** (bipeur seul) ; `[ASSUMPTION]` tarifs à confirmer/geler.
-- **FR39** — **Essai gratuit 14 jours** ouvrant l'accès complet ; à l'expiration, l'accès est coupé sauf abonnement.
-- **FR40** — **Abonnement Stripe self-service** : checkout, portail de gestion, changement de formule, options payantes (Campagnes, Comptoir, Installation clé en main).
-- **FR41** — Le **webhook Stripe** (signature vérifiée) synchronise plan / statut / échéance et déclenche parrainage & commissions.
-- **FR42** — **Parrainage commerçant** : 1 mois offert au parrain quand le filleul règle son 1er abonnement.
+### Domaine H — Monétisation
+- **FR48 · ✅** — **4 formules** mensuelles sans engagement : Jeux, Fidélité, Complet, Comptoir *(tarifs → [Q1])*.
+- **FR49 · ✅** — **Essai gratuit 14 j** (accès complet) ; expiration → accès coupé sauf abonnement.
+- **FR50 · ✅** — **Stripe self-service** : checkout, portail, changement de formule, **options** (Campagnes, Comptoir, Installation).
+- **FR51 · ✅** — **Webhook Stripe** (signature vérifiée) : synchronise plan/statut/échéance, déclenche parrainage & commissions.
+- **FR52 · ✅** — **Parrainage commerçant** : 1 mois offert au parrain au 1er règlement du filleul.
+
+### Domaine I — Vitrine & acquisition marketing
+- **FR53 · ✅** — **Blog SEO** (`/blog`) : moteur d'articles pour le référencement.
+- **FR54 · ✅** — Pages **vitrine** (accueil, tarifs, **témoignages**).
 
 ---
 
 ## 3. Exigences non fonctionnelles (NFR)
 
-- **NFR1 — Mobile-first** : la page publique `/{slug}` (chemin critique, scannée au QR) doit être rapide (données statiques mises en cache ; TTFB minimal). Aucune app à installer.
-- **NFR2 — Multi-tenant sûr** : RLS activée sur toutes les tables ; écritures serveur en `service_role` avec filtre `business_id` systématique ; policies SELECT par propriétaire (défense en profondeur).
-- **NFR3 — Sécurité** : secret cron obligatoire, signature webhook, en-têtes de sécurité (anti-clickjacking, HSTS), uploads d'images whitelistés (pas de SVG), rate-limiting anti-abus « fail-closed ».
-- **NFR4 — Conformité** : cadeau jamais conditionné à une note positive (règle Google) ; règlement de jeu (Meta/Instagram) ; RGPD (désinscription respectée, aucune donnée sensible côté joueur, opt-in marketing).
-- **NFR5 — Paiements** : Stripe (abonnements) + Stripe Connect (encaissement commerçant) ; l'argent des commandes va directement au commerçant.
-- **NFR6 — Fiabilité** : envois e-mail/push best-effort et non bloquants ; tâches planifiées (cron) idempotentes et parallélisées ; observabilité via Sentry + health-check.
-- **NFR7 — Coût** : rester sur les offres Vercel + Supabase + Resend adaptées au parc ; `[ASSUMPTION]` maîtrise du coût d'envoi e-mail à l'échelle.
-- **NFR8 — Accessibilité de base** : contraste, focus clavier, `prefers-reduced-motion`.
+- **NFR1 — Mobile-first** : page publique `/{slug}` (chemin critique) rapide (données statiques mises en cache) ; aucune app à installer ; objectif chargement < 2 s en 4G.
+- **NFR2 — Isolation multi-tenant** : **RLS activée** sur les 15 tables (**default-deny** + policies SELECT par propriétaire). En pratique, les accès applicatifs passent par le client `service_role` (contourne la RLS) **avec un filtre `business_id` explicite systématique** — l'isolation repose donc sur ce filtre + le default-deny côté REST. *(Évolution : migrer les lectures vers le client `ssr` pour s'appuyer directement sur les policies.)*
+- **NFR3 — Sécurité** : secret cron obligatoire, signature webhook, en-têtes de sécurité (anti-clickjacking, HSTS), uploads whitelistés (pas de SVG), rate-limiting « fail-closed ».
+- **NFR4 — Paiements** : Stripe (abonnements) + Stripe Connect (encaissement commerçant).
+- **NFR5 — Fiabilité** : e-mail/push best-effort non bloquants ; cron idempotent et parallélisé ; Sentry + health-check.
+- **NFR6 — Coût** : offres Vercel + Supabase + Resend adaptées au parc *(coût e-mail à l'échelle → [Q5])*.
+- **NFR7 — Accessibilité de base** : contraste, focus clavier, `prefers-reduced-motion`.
 
 ---
 
 ## 4. Parcours clés (résumé)
 
-- **Joueur** — Scan QR → règles → 2 tours (action IG / action avis) → cadeau + code → (fidélité / commande proposées).
-- **Client fidélité** — Ouvre sa carte par e-mail → cumule des tampons validés en caisse → récompense ; reçoit offres / anniversaire s'il opte-in.
-- **Acheteur click & collect** — Catalogue → panier → (paiement en ligne ou sur place) → code de retrait → notifié quand c'est prêt.
-- **Commerçant** — Connexion → dashboard → configure (roue/fidélité/catalogue/horaires) → QR → suit stats, commandes, campagnes → gère son abonnement.
-- **Admin** — Crée/suspend comptes, édite plans & options, gère vendeurs & commissions, rembourse.
-- **Vendeur** — Consulte ses commissions via son URL secrète.
+- **Joueur** — Scan QR → règles → 2 tours (actions **non-avis** : suivi Insta / inscription) → cadeau + code → *(CTA avis Google optionnel, non récompensé)*.
+- **Client fidélité** — Ouvre sa carte par e-mail → tampons validés en caisse → récompense ; offres / anniversaire si opt-in.
+- **Acheteur** — Catalogue → panier → (paiement en ligne ou sur place) → code de retrait → notifié quand prêt.
+- **Commerçant** — Connexion → dashboard → configure → QR → stats, commandes, campagnes → abonnement.
+- **Admin** — Comptes, plans/options, vendeurs & commissions, remboursements.
+- **Vendeur** — Candidate → validé → suit ses commissions.
 
 ---
 
-## 5. Métriques de succès `[ASSUMPTION]` (à valider)
+## 5. Risques & conformité
 
-- **Activation commerçant** : % d'essais qui configurent une roue/fidélité et impriment le QR sous 24-48 h.
-- **Conversion** : % d'essais 14 j → abonnement payant. **Contre-métrique** : taux de résiliation (churn mensuel).
-- **Engagement client final** : taux scan → tour joué (> 50 %) ; avis/abonnés générés par établissement/mois ; e-mails opt-in collectés.
-- **Valeur opérationnelle** : commandes click & collect / mois ; % payées en ligne. **Contre-métrique** : commandes annulées.
-- **Croissance** : nouveaux commerces via affiliation ; **contre-métrique** : coût d'acquisition (commissions versées).
+> Cette section formalise les décisions de conformité (absente de la v2.0, ajoutée après recherche).
 
----
+### 5.1 Avis Google — **décision : option A (découplage total)**
+- **Constat** (recherche 2026-08-25) : récompenser l'action liée à l'avis est en **zone grise
+  penchant risqué** côté Google ; depuis ~août 2025, Google demande aux utilisateurs
+  *« ce commerce offre-t-il une récompense contre avis ? »* → un « oui » **supprime les
+  avis rétroactivement**. **Le risque est porté par le commerçant** (sa fiche).
+- **Décision** : la récompense du jeu est **totalement découplée de l'avis** (FR2/FR3).
+  L'avis devient un **CTA neutre non récompensé**, proposé à tous → réponse honnête « non »
+  à la question de Google → **risque de suppression éliminé** sur ce motif.
+- **Bénéfice** : argument commercial fort — *« Kado ne met pas vos avis en danger. »*
 
-## 6. Hors périmètre / vision
+### 5.2 Risques résiduels (génériques, à maîtriser)
+- **Review gating** : ne jamais filtrer (« avis seulement si content ») → proposer l'avis **à tous, au neutre** (FR3).
+- **Pic de volume** : une salve d'avis peut être filtrée par l'anti-spam Google (mild, commun à tous les outils).
+- **Jeux-concours (droit FR)** : le **tirage au sort** (FR32) et les jeux nécessitent un **règlement** conforme.
+- **RGPD** : au-delà de la désinscription (FR19), cadrer **effacement / conservation / mentions légales / registre**.
 
-**Hors périmètre actuel**
-- Vérification réelle qu'un avis Google a été laissé (API limitée).
-- Marque blanche / revendeurs en self-service.
-- Analytics avancées (heatmap scans, ROI estimé), export.
-- Multi-langues, templates par secteur en self-service.
-
-**Vision**
-- Durcissement anti-contournement du verrou (plafond global, empreinte).
-- Migration des lectures tenant vers policies RLS (déjà posées) via client `ssr`.
-- Templates sectoriels, analytics, SMS.
-
----
-
-## 7. Questions ouvertes
-
-- **[Q1]** Geler les tarifs des 4 formules et le détail des options (Installation, Campagnes, Comptoir). *(FR38)*
-- **[Q2]** Objectifs chiffrés / métriques cibles (activation, conversion, churn) — actuellement `[ASSUMPTION]`. *(§5)*
-- **[Q3]** Politique de re-consentement marketing après désinscription (double opt-in) — non implémentée. *(FR15)*
-- **[Q4]** Modèle de commission vendeur définitif et conditions de versement. *(FR29-31)*
-- **[Q5]** Stratégie de coût e-mail marketing à l'échelle. *(NFR7)*
+> ⚠️ Réserve : la recherche s'appuie sur des sources secondaires (accès primaires bloqués) → **valider avec un conseil juridique FR** avant tout argumentaire commercial de conformité.
 
 ---
 
-## 8. Prochaines étapes (BMAD)
+## 6. Métriques de succès `[ASSUMPTION → Q2]`
+À **chiffrer** avant les epics : activation commerçant (config+QR < 48 h), **conversion essai→payant**, **churn mensuel** (contre-métrique), scan→tour joué (> 50 %), avis/abonnés/opt-in par établissement, commandes click&collect (+ % payées en ligne, contre-métrique : annulations), **unit economics affiliation** (CAC = commissions).
 
-1. ✅ PRD (ce document, v2.0 brownfield) — *PM*
-2. ✅ Architecture — *Architecte* → `docs/architecture.md` (déjà à jour)
-3. ➡️ **Epics & Stories** — `bmad-create-epics-and-stories` (ratifier l'existant en epics livrés + cadrer le prochain incrément)
-4. **Sprint planning** → **Build** pour le prochain incrément.
+---
+
+## 7. Hors périmètre / vision
+**Hors périmètre** : vérification réelle qu'un avis a été laissé (API limitée) ; marque blanche self-service ; analytics avancées/export ; multi-langues ; templates sectoriels self-service.
+**Vision** : durcissement anti-contournement du verrou ; migration lectures tenant vers policies RLS (`ssr`) ; SMS ; analytics.
+
+---
+
+## 8. Questions ouvertes
+- **[Q1]** Geler les tarifs des 4 formules + options. *(FR48)*
+- **[Q2]** Chiffrer les métriques de succès. *(§6)*
+- **[Q4]** Barème de commission définitif + conditions de versement. *(FR38-40)*
+- **[Q5]** Stratégie de coût e-mail marketing à l'échelle. *(NFR6)*
+- **[Q6]** Validation juridique FR de la conformité avis + règlement jeux-concours. *(§5)*
+
+---
+
+## 9. Prochaines étapes (BMAD)
+1. ✅ PRD v2.1 (ce document) — *PM*
+2. ✅ Architecture — `docs/architecture.md`
+3. ➡️ **Epics & Stories** — `bmad-create-epics-and-stories` : ratifier les FR ✅ **Livré** en epics « socle », et cadrer les 🔧/🔶 (option A, double opt-in, action configurable, remboursements) en **prochain incrément**.
+4. **Sprint planning** → **Build**.
