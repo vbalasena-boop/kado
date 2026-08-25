@@ -133,6 +133,7 @@ export async function runProspectionSend(): Promise<SendSummary> {
       city: p.city,
       category: p.category,
       google_reviews_count: p.google_reviews_count,
+      seed: f.prospect_id,
     });
     const body = finalizeBody(fu.body, email, SITE);
     const res = await sendProspectEmail({

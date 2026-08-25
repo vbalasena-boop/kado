@@ -38,6 +38,7 @@ export const POST = adminRoute({
       city: prospect.city,
       category: prospect.category,
       google_reviews_count: prospect.google_reviews_count,
+      seed: prospect.id,
     };
     const email = renderEmail(ctx);
     const dm = renderDm(ctx);

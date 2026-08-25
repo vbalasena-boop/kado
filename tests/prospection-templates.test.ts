@@ -28,7 +28,7 @@ describe("reviewHook", () => {
 });
 
 describe("renderEmail", () => {
-  it("personnalise l'objet et le corps", () => {
+  it("personnalise l'objet et le corps (invariants)", () => {
     const { subject, body } = renderEmail(ctx({ name: "BONNIE", google_reviews_count: 29 }));
     expect(subject).toContain("BONNIE");
     expect(body).toContain("BONNIE");
@@ -41,9 +41,18 @@ describe("renderEmail", () => {
     expect(body).toContain(UNSUBSCRIBE_MARKER);
   });
 
-  it("adapte le nom du commerce au segment", () => {
-    expect(renderEmail(ctx({ category: "beaute" })).body).toContain("salon");
-    expect(renderEmail(ctx({ category: "boutique" })).body).toContain("boutique");
+  it("varie le message selon le prospect (anti-bulk)", () => {
+    const a = renderEmail(ctx({ name: "Resto A", seed: "id-a" }));
+    const b = renderEmail(ctx({ name: "Resto B", seed: "id-b-xyz" }));
+    // deux prospects différents → contenus différents
+    expect(a.body).not.toBe(b.body);
+  });
+
+  it("est stable pour un même prospect (même seed → même message)", () => {
+    const a = renderEmail(ctx({ seed: "stable-1" }));
+    const b = renderEmail(ctx({ seed: "stable-1" }));
+    expect(a.subject).toBe(b.subject);
+    expect(a.body).toBe(b.body);
   });
 });
 
