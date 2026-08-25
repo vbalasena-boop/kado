@@ -89,45 +89,33 @@ export function renderEmail(ctx: TemplateContext): GeneratedEmail {
     `Petit message au sujet de votre ${noun}${city} : ${hook}.`,
   ]);
 
+  // Pitch court (1 phrase) + hook essai, sans prix.
   const pitch = pick(seed, "pitch", [
-    `Chez Kado, on aide les commerces de proximité à obtenir plus d'avis Google ` +
-      `et d'abonnés Instagram grâce à un petit jeu : vos clients scannent un QR code, ` +
-      `tournent une roue (ou grattent un ticket) et gagnent un cadeau — en échange ` +
-      `d'un avis ou d'un suivi.`,
-    `Kado, c'est un petit jeu à scanner en boutique : vos clients gagnent un cadeau ` +
-      `en laissant un avis Google ou en vous suivant sur Instagram. Ludique, et sans ` +
-      `effort pour vous.`,
-    `On a créé Kado pour transformer vos clients satisfaits en avis Google et en ` +
-      `abonnés Instagram : ils scannent un QR code, jouent, gagnent un cadeau. Vous, ` +
-      `vous ne gérez rien.`,
-    `Avec Kado, chaque client peut, en 30 secondes, vous laisser un avis Google ou ` +
-      `vous suivre sur Insta — motivé par un petit cadeau via un jeu à scanner.`,
-  ]);
-
-  // Rappel de l'offre (essai offert / prix) — reflète tes formules.
-  const offer = pick(seed, "offer", [
-    `Vous pouvez l'essayer pendant 14 jours offerts, sans carte bancaire et sans ` +
-      `engagement — vous ne payez que si ça vous plaît.`,
-    `L'offre : 14 jours offerts (sans CB, sans engagement), puis à partir de ` +
-      `19 €/mois, résiliable en 1 clic.`,
-    `C'est sans engagement, avec 14 jours offerts pour essayer tranquillement — et ` +
-      `prêt en 2 minutes, sans installation.`,
+    `Kado aide les commerces comme le vôtre à récolter plus d'avis Google et ` +
+      `d'abonnés Instagram : vos clients scannent un QR code, jouent et gagnent un ` +
+      `cadeau — en échange d'un avis ou d'un suivi. 14 jours offerts, sans engagement.`,
+    `Avec Kado, un petit jeu à scanner en boutique transforme vos clients en avis ` +
+      `Google et en abonnés Instagram, sans effort pour vous. Testable 14 jours, ` +
+      `sans engagement.`,
+    `Kado, c'est plus d'avis Google et d'abonnés Insta grâce à un jeu à scanner : ` +
+      `vos clients jouent, gagnent un cadeau, vous laissent un avis. 14 jours offerts.`,
   ]);
 
   const cta = pick(seed, "cta", [
-    `Seriez-vous ouvert(e) à une démo de 5 minutes, ou je vous crée directement votre essai ?`,
     `Ça vous dirait d'en voir un aperçu en 5 minutes ?`,
-    `Un rapide échange de 5 minutes pour vous montrer, ça vous tente ?`,
-    `Je peux vous montrer ce que ça donnerait pour votre ${noun} — 5 minutes suffisent.`,
+    `Je vous montre en 5 minutes, ou je vous crée directement votre essai ?`,
+    `Un rapide aperçu vous intéresserait ?`,
+    `Je peux vous montrer ce que ça donnerait pour votre ${noun} — dites-moi.`,
   ]);
 
   const signoff = pick(seed, "signoff", [
     `Belle journée,`,
-    `Au plaisir d'échanger,`,
+    `Au plaisir,`,
     `Bien à vous,`,
     `À très vite,`,
   ]);
 
+  // Email court : accroche + pitch (avec hook essai) + CTA.
   const body = [
     `Bonjour ${ctx.name},`,
     ``,
@@ -135,16 +123,13 @@ export function renderEmail(ctx: TemplateContext): GeneratedEmail {
     ``,
     pitch,
     ``,
-    offer,
-    ``,
     cta,
     ``,
     signoff,
     `L'équipe Kado`,
     ``,
     `—`,
-    `Vous recevez cet email car votre ${noun} est un professionnel de proximité. ` +
-      `Pour ne plus être contacté : ${UNSUBSCRIBE_MARKER}`,
+    `Pour ne plus être contacté : ${UNSUBSCRIBE_MARKER}`,
   ].join("\n");
 
   return { subject, body };
