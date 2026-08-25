@@ -360,7 +360,7 @@ export default function ProspectionClient({
                     <b>{p.score ?? "—"}</b>
                   </td>
                   <td style={td}>
-                    {p.name}
+                    <a href={`/admin/prospection/${p.id}`}>{p.name}</a>
                     {p.website && (
                       <>
                         {" "}
