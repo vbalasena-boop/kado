@@ -2,7 +2,7 @@
 title: 'RGPD — journal d''audit du consentement fidélité + lien de ré-abonnement à usage unique'
 type: 'feature'
 created: '2026-08-25'
-status: 'draft'
+status: 'done'
 review_loop_iteration: 0
 baseline_commit: '554eb43361475c152b9c8c6c8483e21957d89ddc'
 context: []
@@ -58,12 +58,12 @@ Confirmation (POST) :
 ## Tasks & Acceptance
 
 **Execution:**
-- [ ] `supabase/migrations/0048_consent_events.sql` -- table append-only + index + RLS (signaler application manuelle)
-- [ ] `lib/resubscribe.ts` -- lier la signature à `unsubAt` (sign/verify/build)
-- [ ] `app/api/loyalty/resubscribe/route.ts` -- passer `unsubAt` + corriger le texte TTL
-- [ ] `app/api/loyalty/resubscribe/confirm/route.ts` -- re-lecture carte + vérif liée + insert `consent_events` (best-effort)
-- [ ] `app/api/unsubscribe/route.ts` -- insert `consent_events` (unsubscribed, best-effort, périmètre fidélité)
-- [ ] `tests/resubscribe.test.ts` + `tests/resubscribe-route.test.ts` -- usage unique + audit
+- [x] `supabase/migrations/0048_consent_events.sql` -- table append-only + index + RLS (signaler application manuelle)
+- [x] `lib/resubscribe.ts` -- lier la signature à `unsubAt` (sign/verify/build)
+- [x] `app/api/loyalty/resubscribe/route.ts` -- passer `unsubAt` + corriger le texte TTL
+- [x] `app/api/loyalty/resubscribe/confirm/route.ts` -- re-lecture carte + vérif liée + insert `consent_events` (best-effort)
+- [x] `app/api/unsubscribe/route.ts` -- insert `consent_events` (unsubscribed, best-effort, périmètre fidélité)
+- [x] `tests/resubscribe.test.ts` + `tests/resubscribe-route.test.ts` -- usage unique + audit
 
 **Acceptance Criteria:**
 - Given un client désinscrit qui confirme son ré-abonnement, when le POST réussit, then `marketing_ok=true`/`unsubscribed_at=null` **et** un `consent_events` `resubscribe_confirmed` horodaté est enregistré.
@@ -75,6 +75,36 @@ Confirmation (POST) :
 
 - **Usage unique par liaison d'état :** inclure `unsubscribed_at` courant dans la signature suffit — pas de table de nonces. Dès que l'état change (ré-abonnement → null, ou nouvelle désinscription → autre timestamp), l'ancien token ne re-dérive plus la même signature. En défense de profondeur du filtre `.not("unsubscribed_at","is",null)` déjà présent.
 - **`unsubAt` identique des deux côtés :** demande et confirmation lisent la **même** colonne `loyalty_cards.unsubscribed_at` → même chaîne signée. Normaliser `String(unsubAt ?? "")`.
+
+## Suffix — Post-Review Fix
+
+Revue à 3 relecteurs (sécurité/RGPD). Cœur validé ; correctifs appliqués : **(1)** `unsubAt` **canonisé en epoch-ms** dans la signature → élimine tout risque de drift de sérialisation du `timestamptz` (deux représentations du même instant valident pareil) ; **(2)** désinscription fidélité **idempotente** (`.is(unsubscribed_at,null)`) → un re-hit ne re-écrit pas le timestamp (ne casse plus un lien de ré-abo en vol) et n'audite pas en double (event seulement sur transition réelle) ; **(3)** confirmation : re-clic bénin (carte déjà ré-abonnée) → page **« Déjà ré-abonné(e) » 200** (au lieu du 400 anxiogène) ; panne DB → **503 « réessayez »** (au lieu d'un 400 permanent) ; **(4)** **rate-limit sur le GET** (lecture non authentifiée) ; **(5)** migration : `check (type in …)` + index `(created_at)`. **Tests** : round-trip `buildResubConfirmUrl→verify`, spy `reportError` sur best-effort, nouveau `tests/unsubscribe-route.test.ts` (insert + idempotence sans doublon + best-effort), cas 503/déjà. **Reportés** (`deferred-work.md`) : rétention `on delete cascade`, enforcement append-only, audit des leads, IP/UA dans `meta`, refactor GET→POST de l'unsubscribe.
+
+## Suggested Review Order
+
+**Usage unique (lien lié à l'état)**
+
+- Signature liée à `unsubAt` **canonisé epoch-ms** (anti-drift + usage unique).
+  [`resubscribe.ts:55`](../../lib/resubscribe.ts#L55)
+- Confirmation : re-lecture de l'état courant + branchement ok / déjà-abonné(200) / readError(503) / invalide(400).
+  [`confirm/route.ts:102`](../../app/api/loyalty/resubscribe/confirm/route.ts#L102)
+
+**Journal d'audit (best-effort)**
+
+- Insert `resubscribe_confirmed` à la confirmation (id de la ligne modifiée).
+  [`confirm/route.ts:242`](../../app/api/loyalty/resubscribe/confirm/route.ts#L242)
+- Désinscription idempotente (`.is(unsubscribed_at,null)`) + audit `unsubscribed` sur transition réelle.
+  [`unsubscribe/route.ts:45`](../../app/api/unsubscribe/route.ts#L45)
+
+**Schéma**
+
+- `consent_events` append-only, `check` sur `type`, RLS service_role.
+  [`0048_consent_events.sql:13`](../../supabase/migrations/0048_consent_events.sql#L13)
+
+**Tests**
+
+- Usage unique, round-trip, best-effort+reportError, idempotence unsubscribe.
+  [`unsubscribe-route.test.ts:1`](../../tests/unsubscribe-route.test.ts#L1)
 
 ## Verification
 
