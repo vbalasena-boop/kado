@@ -105,6 +105,20 @@ export default function ProspectionClient({
     }
   }
 
+  async function changeStatus(id: string, status: ProspectStatus) {
+    try {
+      const res = await fetch(`/api/admin/prospection/${id}/status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      if (res.ok) router.refresh();
+      else setMessage("Impossible de changer le statut.");
+    } catch {
+      setMessage("Erreur réseau (changement de statut).");
+    }
+  }
+
   async function runEnrich() {
     setEnriching(true);
     setMessage(null);
@@ -335,7 +349,26 @@ export default function ProspectionClient({
                     )}
                     {!p.email && !p.instagram_handle && "—"}
                   </td>
-                  <td style={td}>{STATUS_LABEL[p.status] ?? p.status}</td>
+                  <td style={td}>
+                    <select
+                      value={p.status}
+                      onChange={(e) =>
+                        changeStatus(p.id, e.target.value as ProspectStatus)
+                      }
+                      style={{
+                        padding: "4px 6px",
+                        borderRadius: 6,
+                        border: "1px solid #ccc",
+                        fontSize: 13,
+                      }}
+                    >
+                      {(Object.keys(STATUS_LABEL) as ProspectStatus[]).map((s) => (
+                        <option key={s} value={s}>
+                          {STATUS_LABEL[s]}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
                 </tr>
               ))}
             </tbody>
