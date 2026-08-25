@@ -38,9 +38,13 @@ Next.js (App Router) · Supabase (Auth + Postgres) · déploiement Vercel — **
 ### 1. Créer la base de données (Supabase)
 
 1. Va sur [supabase.com](https://supabase.com) → **New project** (gratuit).
-2. Une fois créé, ouvre **SQL Editor** et exécute le contenu de :
-   - `supabase/migrations/0001_init.sql` (crée les tables)
-   - puis `supabase/seed.sql` (ajoute la démo « Café Lumière »)
+2. Applique le schéma. Deux options (détaillées dans
+   [`supabase/README.md`](supabase/README.md)) :
+   - **CLI (recommandé)** : `supabase link --project-ref <ref>` puis
+     `supabase db push` — applique les migrations en attente avec suivi de version.
+   - **Manuel** : ouvre **SQL Editor** et exécute `supabase/migrations/0001_init.sql`
+     (puis les migrations suivantes dans l'ordre), puis `supabase/seed.sql`
+     (démo « Café Lumière »).
 3. Va dans **Settings → API** et note :
    - **Project URL** → `SUPABASE_URL` **et** `NEXT_PUBLIC_SUPABASE_URL` (même valeur)
    - clé **`service_role`** (secrète) → `SUPABASE_SERVICE_ROLE_KEY`

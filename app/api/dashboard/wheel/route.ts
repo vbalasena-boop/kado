@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { revalidateTag } from "next/cache";
 import { getMyBusiness } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { insertPrizes } from "@/lib/prizes";
@@ -207,6 +208,10 @@ export async function POST(req: NextRequest) {
     }))
   );
   if (insErr) return Response.json({ error: "prizes_error" }, { status: 500 });
+
+  // La page de jeu publique met en cache config + lots : on l'invalide pour
+  // que l'édition soit visible immédiatement (sans attendre la revalidation).
+  revalidateTag(`biz-${business.slug}`);
 
   return Response.json({ ok: true });
 }

@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import { Logo } from "@/components/Logo";
 import SupportButton from "@/components/SupportButton";
 
-export const dynamic = "force-dynamic";
-
 export const metadata: Metadata = {
   title: "Tarifs",
   description:

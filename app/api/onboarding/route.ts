@@ -1,5 +1,5 @@
-import { NextRequest } from "next/server";
 import { cookies } from "next/headers";
+import { publicRoute } from "@/lib/api";
 import { getSessionUser } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { slugify } from "@/lib/defaults";
@@ -11,167 +11,173 @@ export const dynamic = "force-dynamic";
 /**
  * Inscription self-service : le commerçant connecté crée son propre
  * établissement (essai gratuit de 14 jours). Roue + cadeaux par défaut.
+ *
+ * Auth et vérification d'unicité ont lieu AVANT le parsing JSON : on conserve
+ * donc un parsing manuel dans le handler (pas de schéma dans le wrapper) pour
+ * préserver l'ordre exact des réponses d'erreur.
  */
-export async function POST(req: NextRequest) {
-  const user = await getSessionUser();
-  if (!user) return Response.json({ error: "unauthorized" }, { status: 401 });
+export const POST = publicRoute({
+  handler: async ({ req }) => {
+    const user = await getSessionUser();
+    if (!user) return Response.json({ error: "unauthorized" }, { status: 401 });
 
-  const db = getAdminClient();
+    const db = getAdminClient();
 
-  // Déjà un établissement rattaché à ce compte ? on ne recrée pas.
-  const { data: existing } = await db
-    .from("businesses")
-    .select("id, slug")
-    .eq("owner_user_id", user.id)
-    .maybeSingle();
-  if (existing) return Response.json({ ok: true, slug: existing.slug });
-
-  let body: {
-    name?: string;
-    category?: string;
-    plan?: string;
-    phone?: string;
-    parrain?: string;
-  };
-  try {
-    body = await req.json();
-  } catch {
-    return Response.json({ error: "bad_request" }, { status: 400 });
-  }
-  const name = (body.name || "").trim();
-  if (!name) return Response.json({ error: "name_required" }, { status: 400 });
-  const plan = ["roue", "fidelite", "complet", "comptoir"].includes(body.plan ?? "")
-    ? body.plan!
-    : "roue";
-  // Téléphone : on ne garde que chiffres, + et espaces
-  const phone =
-    (body.phone || "").replace(/[^\d+ .-]/g, "").trim().slice(0, 20) || null;
-
-  // slug unique
-  const base = slugify(name);
-  let slug = base;
-  for (let i = 2; i < 100; i++) {
-    const { data: exists } = await db
+    // Déjà un établissement rattaché à ce compte ? on ne recrée pas.
+    const { data: existing } = await db
       .from("businesses")
-      .select("id")
-      .eq("slug", slug)
+      .select("id, slug")
+      .eq("owner_user_id", user.id)
       .maybeSingle();
-    if (!exists) break;
-    slug = `${base}-${i}`;
-  }
+    if (existing) return Response.json({ ok: true, slug: existing.slug });
 
-  // établissement (essai gratuit de 14 jours)
-  const trialEnds = new Date(Date.now() + 14 * 864e5).toISOString();
-  const { data: biz, error: bizErr } = await db
-    .from("businesses")
-    .insert({
-      slug,
-      name,
-      plan,
-      status: "active",
-      subscription_status: "trial",
-      subscription_ends_at: trialEnds,
-      owner_user_id: user.id,
-    })
-    .select("id")
-    .single();
-  if (bizErr || !biz) {
-    return Response.json({ error: "create_failed" }, { status: 500 });
-  }
-
-  // Téléphone : mise à jour séparée et tolérante (colonne facultative)
-  if (phone) {
-    await db.from("businesses").update({ phone }).eq("id", biz.id);
-  }
-
-  // Parrainage commerçant : on relie le filleul à son parrain (tolérant).
-  // La source du parrain est le corps de la requête OU le cookie kado-parrain
-  // posé par RefCapture (lien /tarifs?parrain=<slug> depuis la roue).
-  const parrainSlug = (body.parrain || cookies().get("kado-parrain")?.value || "")
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9_-]/g, "");
-  if (parrainSlug && parrainSlug !== slug) {
-    const { data: sponsor } = await db
-      .from("businesses")
-      .select("id, phone")
-      .eq("slug", parrainSlug)
-      .maybeSingle();
-    if (sponsor && sponsor.id !== biz.id) {
-      // Anti-fraude : on refuse l'attribution si parrain et filleul partagent
-      // le même téléphone. Le contrôle carte/client Stripe se fait plus tard,
-      // au versement (webhook). (Un même compte ne peut pas être son propre
-      // parrain : un utilisateur ne possède qu'un seul commerce.)
-      const samePhone = !!phone && !!sponsor.phone && phone === sponsor.phone;
-      if (samePhone) {
-        try {
-          await db.from("referral_blocks").insert({
-            filleul_business_id: biz.id,
-            parrain_slug: parrainSlug,
-            reason: "same_phone",
-          });
-        } catch {
-          /* table absente (migration 0042 non appliquée) : on ignore */
-        }
-      } else {
-        await db
-          .from("businesses")
-          .update({ referred_by: sponsor.id })
-          .eq("id", biz.id);
-      }
+    let body: {
+      name?: string;
+      category?: string;
+      plan?: string;
+      phone?: string;
+      parrain?: string;
+    };
+    try {
+      body = await req.json();
+    } catch {
+      return Response.json({ error: "bad_request" }, { status: 400 });
     }
-  }
+    const name = (body.name || "").trim();
+    if (!name) return Response.json({ error: "name_required" }, { status: 400 });
+    const plan = ["roue", "fidelite", "complet", "comptoir"].includes(body.plan ?? "")
+      ? body.plan!
+      : "roue";
+    // Téléphone : on ne garde que chiffres, + et espaces
+    const phone =
+      (body.phone || "").replace(/[^\d+ .-]/g, "").trim().slice(0, 20) || null;
 
-  // Vendeur / apporteur d'affaires : le cookie kado-aff (posé par le lien
-  // ?ref=code) attribue ce client au vendeur. Tolérant : la table peut ne
-  // pas exister encore.
-  try {
-    const affCode = (cookies().get("kado-aff")?.value || "")
+    // slug unique
+    const base = slugify(name);
+    let slug = base;
+    for (let i = 2; i < 100; i++) {
+      const { data: exists } = await db
+        .from("businesses")
+        .select("id")
+        .eq("slug", slug)
+        .maybeSingle();
+      if (!exists) break;
+      slug = `${base}-${i}`;
+    }
+
+    // établissement (essai gratuit de 14 jours)
+    const trialEnds = new Date(Date.now() + 14 * 864e5).toISOString();
+    const { data: biz, error: bizErr } = await db
+      .from("businesses")
+      .insert({
+        slug,
+        name,
+        plan,
+        status: "active",
+        subscription_status: "trial",
+        subscription_ends_at: trialEnds,
+        owner_user_id: user.id,
+      })
+      .select("id")
+      .single();
+    if (bizErr || !biz) {
+      return Response.json({ error: "create_failed" }, { status: 500 });
+    }
+
+    // Téléphone : mise à jour séparée et tolérante (colonne facultative)
+    if (phone) {
+      await db.from("businesses").update({ phone }).eq("id", biz.id);
+    }
+
+    // Parrainage commerçant : on relie le filleul à son parrain (tolérant).
+    // La source du parrain est le corps de la requête OU le cookie kado-parrain
+    // posé par RefCapture (lien /tarifs?parrain=<slug> depuis la roue).
+    const parrainSlug = (body.parrain || cookies().get("kado-parrain")?.value || "")
       .trim()
       .toLowerCase()
       .replace(/[^a-z0-9_-]/g, "");
-    if (affCode) {
-      const { data: aff } = await db
-        .from("affiliates")
-        .select("id, active")
-        .eq("code", affCode)
+    if (parrainSlug && parrainSlug !== slug) {
+      const { data: sponsor } = await db
+        .from("businesses")
+        .select("id, phone")
+        .eq("slug", parrainSlug)
         .maybeSingle();
-      if (aff?.active) {
-        await db
-          .from("businesses")
-          .update({ affiliate_id: aff.id })
-          .eq("id", biz.id);
+      if (sponsor && sponsor.id !== biz.id) {
+        // Anti-fraude : on refuse l'attribution si parrain et filleul partagent
+        // le même téléphone. Le contrôle carte/client Stripe se fait plus tard,
+        // au versement (webhook). (Un même compte ne peut pas être son propre
+        // parrain : un utilisateur ne possède qu'un seul commerce.)
+        const samePhone = !!phone && !!sponsor.phone && phone === sponsor.phone;
+        if (samePhone) {
+          try {
+            await db.from("referral_blocks").insert({
+              filleul_business_id: biz.id,
+              parrain_slug: parrainSlug,
+              reason: "same_phone",
+            });
+          } catch {
+            /* table absente (migration 0042 non appliquée) : on ignore */
+          }
+        } else {
+          await db
+            .from("businesses")
+            .update({ referred_by: sponsor.id })
+            .eq("id", biz.id);
+        }
       }
     }
-  } catch {
-    /* l'affiliation ne doit jamais bloquer une inscription */
-  }
 
-  // Config (thème) — nécessaire aussi pour les pages commande/suivi.
-  await db.from("wheel_configs").insert({
-    business_id: biz.id,
-    primary_color: "#ffc24d",
-    compliance_note: "Le cadeau n'est pas conditionné à la note laissée.",
-    loyalty_enabled: plan === "fidelite" || plan === "complet",
-  });
-  // Le plan « Comptoir » n'a pas de jeu : on active directement le suivi au
-  // comptoir et on ne crée aucun cadeau (pas de roue).
-  if (plan === "comptoir") {
+    // Vendeur / apporteur d'affaires : le cookie kado-aff (posé par le lien
+    // ?ref=code) attribue ce client au vendeur. Tolérant : la table peut ne
+    // pas exister encore.
     try {
-      await db
-        .from("businesses")
-        .update({ order_tracking: true })
-        .eq("id", biz.id);
+      const affCode = (cookies().get("kado-aff")?.value || "")
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9_-]/g, "");
+      if (affCode) {
+        const { data: aff } = await db
+          .from("affiliates")
+          .select("id, active")
+          .eq("code", affCode)
+          .maybeSingle();
+        if (aff?.active) {
+          await db
+            .from("businesses")
+            .update({ affiliate_id: aff.id })
+            .eq("id", biz.id);
+        }
+      }
     } catch {
-      /* colonne order_tracking absente : ignoré (hasComptoir couvre le plan) */
+      /* l'affiliation ne doit jamais bloquer une inscription */
     }
-  } else {
-    const prizes = prizesForCategory(body.category);
-    await insertPrizes(
-      db,
-      prizes.map((p, i) => ({ ...p, business_id: biz.id, position: i }))
-    );
-  }
 
-  return Response.json({ ok: true, slug });
-}
+    // Config (thème) — nécessaire aussi pour les pages commande/suivi.
+    await db.from("wheel_configs").insert({
+      business_id: biz.id,
+      primary_color: "#ffc24d",
+      compliance_note: "Le cadeau n'est pas conditionné à la note laissée.",
+      loyalty_enabled: plan === "fidelite" || plan === "complet",
+    });
+    // Le plan « Comptoir » n'a pas de jeu : on active directement le suivi au
+    // comptoir et on ne crée aucun cadeau (pas de roue).
+    if (plan === "comptoir") {
+      try {
+        await db
+          .from("businesses")
+          .update({ order_tracking: true })
+          .eq("id", biz.id);
+      } catch {
+        /* colonne order_tracking absente : ignoré (hasComptoir couvre le plan) */
+      }
+    } else {
+      const prizes = prizesForCategory(body.category);
+      await insertPrizes(
+        db,
+        prizes.map((p, i) => ({ ...p, business_id: biz.id, position: i }))
+      );
+    }
+
+    return Response.json({ ok: true, slug });
+  },
+});
