@@ -52,6 +52,7 @@ export default async function InstagramQueuePage() {
           city: r.city,
           category: r.category,
           google_reviews_count: r.google_reviews_count,
+          seed: r.id,
         }),
     }));
 
