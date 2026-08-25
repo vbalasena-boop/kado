@@ -119,6 +119,25 @@ export default function ProspectionClient({
     }
   }
 
+  async function sendNow() {
+    if (!window.confirm("Envoyer maintenant les emails approuvés ?")) return;
+    setMessage(null);
+    try {
+      const res = await fetch("/api/admin/prospection/send-now", { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        setMessage(
+          `${data.sent} email(s) envoyé(s), ${data.skipped} ignoré(s), ${data.failed} échec(s)` +
+            (data.simulated ? " — MODE SIMULATION (aucun SMTP configuré, rien n'est réellement parti)" : "") +
+            `. Plafond du jour : ${data.cap}.`
+        );
+        router.refresh();
+      } else setMessage(`Erreur : ${data.error ?? "inconnue"}`);
+    } catch {
+      setMessage("Erreur réseau (envoi).");
+    }
+  }
+
   async function revalidate() {
     setMessage(null);
     try {
@@ -285,6 +304,13 @@ export default function ProspectionClient({
             title="Efface les emails/Instagram invalides déjà enregistrés (plateformes, exemples)"
           >
             Revérifier les contacts
+          </button>
+          <button
+            onClick={sendNow}
+            className="dash-signout"
+            title="Envoie maintenant les emails approuvés (sinon envoi automatique quotidien)"
+          >
+            ✉️ Envoyer les emails approuvés
           </button>
         </div>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 10 }}>
