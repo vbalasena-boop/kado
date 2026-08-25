@@ -1,0 +1,97 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Kado//Planning Reels//FR
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Kado — Publication Réels
+BEGIN:VEVENT
+UID:kado-reel2-20260827@kado-app.fr
+DTSTAMP:20260825T163500Z
+DTSTART:20260827T170000Z
+DURATION:PT15M
+SUMMARY:📲 Poster Réel 2 (3→47 avis) — Kado
+DESCRIPTION:Upload reel2-3avis-47avis.mp4 → ajoute un SON TENDANCE → colle la légende + 1er commentaire (kit-partage-instagram.md) → CTA « Commentez DEMO ».
+BEGIN:VALARM
+TRIGGER:PT0M
+ACTION:DISPLAY
+DESCRIPTION:Poster le Réel 2 maintenant
+END:VALARM
+BEGIN:VALARM
+TRIGGER:-PT10M
+ACTION:DISPLAY
+DESCRIPTION:Dans 10 min : poster le Réel 2
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:kado-reel5-20260829@kado-app.fr
+DTSTAMP:20260825T163500Z
+DTSTART:20260829T093000Z
+DURATION:PT15M
+SUMMARY:📲 Poster Réel 5 (Parcours 30 s) — Kado
+DESCRIPTION:Upload reel5-parcours-30s.mp4 → ajoute un SON TENDANCE → colle la légende + 1er commentaire (kit-partage-instagram.md) → CTA « Commentez DEMO ».
+BEGIN:VALARM
+TRIGGER:PT0M
+ACTION:DISPLAY
+DESCRIPTION:Poster le Réel 5 maintenant
+END:VALARM
+BEGIN:VALARM
+TRIGGER:-PT10M
+ACTION:DISPLAY
+DESCRIPTION:Dans 10 min : poster le Réel 5
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:kado-reel3-20260831@kado-app.fr
+DTSTAMP:20260825T163500Z
+DTSTART:20260831T170000Z
+DURATION:PT15M
+SUMMARY:📲 Poster Réel 3 (Calcul 29 €) — Kado
+DESCRIPTION:Upload reel3-calcul-29e.mp4 → ajoute un SON TENDANCE → colle la légende + 1er commentaire (kit-partage-instagram.md) → CTA « Commentez DEMO ».
+BEGIN:VALARM
+TRIGGER:PT0M
+ACTION:DISPLAY
+DESCRIPTION:Poster le Réel 3 maintenant
+END:VALARM
+BEGIN:VALARM
+TRIGGER:-PT10M
+ACTION:DISPLAY
+DESCRIPTION:Dans 10 min : poster le Réel 3
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:kado-reel4-20260902@kado-app.fr
+DTSTAMP:20260825T163500Z
+DTSTART:20260902T100000Z
+DURATION:PT15M
+SUMMARY:📲 Poster Réel 4 (Conformité) — Kado
+DESCRIPTION:Upload reel4-conformite.mp4 → ajoute un SON TENDANCE → colle la légende + 1er commentaire (kit-partage-instagram.md) → CTA « Commentez DEMO ».
+BEGIN:VALARM
+TRIGGER:PT0M
+ACTION:DISPLAY
+DESCRIPTION:Poster le Réel 4 maintenant
+END:VALARM
+BEGIN:VALARM
+TRIGGER:-PT10M
+ACTION:DISPLAY
+DESCRIPTION:Dans 10 min : poster le Réel 4
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:kado-reel7-20260904@kado-app.fr
+DTSTAMP:20260825T163500Z
+DTSTART:20260904T170000Z
+DURATION:PT15M
+SUMMARY:📲 Poster Réel 7 (Rentrée) — Kado
+DESCRIPTION:Upload reel7-rentree.mp4 → ajoute un SON TENDANCE → colle la légende + 1er commentaire (kit-partage-instagram.md) → CTA « Commentez DEMO ».
+BEGIN:VALARM
+TRIGGER:PT0M
+ACTION:DISPLAY
+DESCRIPTION:Poster le Réel 7 maintenant
+END:VALARM
+BEGIN:VALARM
+TRIGGER:-PT10M
+ACTION:DISPLAY
+DESCRIPTION:Dans 10 min : poster le Réel 7
+END:VALARM
+END:VEVENT
+END:VCALENDAR
