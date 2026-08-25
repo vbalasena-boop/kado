@@ -85,13 +85,16 @@ const GUIDE: { t: string; items: QA[] }[] = [
     t: "⭐ Avis, abonnés & clients",
     items: [
       {
-        q: "Est-ce légal d'offrir un cadeau contre un avis ?",
+        q: "Puis-je offrir un cadeau en échange d'un avis Google ?",
         a: (
           <>
-            Oui. Le cadeau récompense la <b>participation au jeu</b>, jamais la
-            note laissée. Le client reste libre de son avis (ou de n'en laisser
-            aucun) et gagne quand même sa chance. Kado respecte les règles de
-            Google et le droit français.
+            <b>Non — et c'est voulu.</b> Conditionner un avantage à un avis est
+            interdit par Google et par le droit français. Sur Kado, le cadeau
+            récompense la <b>participation au jeu</b> (débloquée par des actions
+            comme suivre votre Instagram ou s'inscrire à la fidélité), <b>jamais
+            un avis</b>. Le lien « Avis Google » proposé au client reste
+            <b> purement facultatif</b> : il n'est lié à aucun cadeau ni tour, et
+            le client est libre de laisser son avis (ou non).
           </>
         ),
       },
