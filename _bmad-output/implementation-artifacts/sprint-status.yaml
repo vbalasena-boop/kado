@@ -1,0 +1,85 @@
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created, ready for development
+#   - in-progress: Developer actively working on implementation
+#   - review: Implementation complete, ready for review
+#   - done: Story completed
+
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+
+# Action Item Status:
+#   - open: Committed during a retrospective, not yet addressed
+#   - in-progress: Actively being worked on
+#   - done: Completed
+
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when its first story starts (via build's sprint sync)
+# - Stories can be worked in parallel if team capacity allows
+# - Developer typically creates the next story after the previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+# - Retrospective appends its action items to action_items; the status view surfaces open ones
+generated: 08-25-2026 09:00
+last_updated: 08-25-2026 09:01
+project: kado
+project_key: NOKEY
+tracking_system: file-system
+story_location: _bmad-output/implementation-artifacts
+development_status:
+  epic-1: done
+  1-1-ratification-jouer-et-gagner-via-qr: done
+  epic-1-retrospective: optional
+
+  epic-2: done
+  2-1-ratification-carte-de-fidélité-à-tampons: done
+  epic-2-retrospective: optional
+
+  epic-3: done
+  3-1-ratification-commander-et-suivre-le-retrait: done
+  epic-3-retrospective: optional
+
+  epic-4: done
+  4-1-ratification-campagnes-tirage-et-récaps: done
+  epic-4-retrospective: optional
+
+  epic-5: done
+  5-1-ratification-parcours-vendeur: done
+  epic-5-retrospective: optional
+
+  epic-6: done
+  6-1-ratification-comptes-administration: done
+  epic-6-retrospective: optional
+
+  epic-7: done
+  7-1-ratification-abonnement-stripe-self-service: done
+  epic-7-retrospective: optional
+
+  epic-8: done
+  8-1-ratification-vitrine-blog-seo: done
+  epic-8-retrospective: optional
+
+  epic-9: backlog
+  9-1-configurer-les-actions-déclenchantes-non-avis: backlog
+  9-2-débloquer-les-tours-par-des-actions-non-avis: backlog
+  9-3-avis-google-en-cta-neutre-non-récompensé: backlog
+  9-4-migrer-les-configurations-avis-existantes: backlog
+  epic-9-retrospective: optional
+
+  epic-10: backlog
+  10-1-demander-une-confirmation-de-ré-abonnement: backlog
+  10-2-confirmer-le-ré-abonnement-via-le-lien: backlog
+  epic-10-retrospective: optional
+
+  epic-11: backlog
+  11-1-rembourser-une-commande-payée-en-ligne: backlog
+  11-2-annuler-une-commande: backlog
+  epic-11-retrospective: optional
