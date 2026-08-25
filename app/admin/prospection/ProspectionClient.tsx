@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   PROSPECT_SEGMENTS,
@@ -90,6 +90,12 @@ export default function ProspectionClient({
   const [fStatus, setFStatus] = useState<string>("");
   const [maxReviews, setMaxReviews] = useState<string>("");
   const [sort, setSort] = useState<SortKey>("score");
+
+  // --- Pagination (côté client) ---
+  const PAGE_SIZE = 50;
+  const [page, setPage] = useState(0);
+  // Revenir à la 1ʳᵉ page quand un filtre/tri change.
+  useEffect(() => setPage(0), [fSegment, fStatus, maxReviews, sort]);
 
   function toggleSegment(s: ProspectSegment) {
     setSegments((cur) =>
@@ -345,6 +351,10 @@ export default function ProspectionClient({
     return rows;
   }, [prospects, fSegment, fStatus, maxReviews, sort]);
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const clampedPage = Math.min(page, totalPages - 1);
+  const paged = filtered.slice(clampedPage * PAGE_SIZE, clampedPage * PAGE_SIZE + PAGE_SIZE);
+
   return (
     <div className="dash-card">
       <h2>🔎 Prospection</h2>
@@ -547,6 +557,16 @@ export default function ProspectionClient({
           {filtered.length} prospect(s)
         </span>
         <button
+          onClick={() => {
+            window.location.href = "/api/admin/prospection/export";
+          }}
+          className="dash-signout"
+          style={{ fontSize: 13 }}
+          title="Télécharger tous les prospects au format CSV (Excel)"
+        >
+          ⬇️ Exporter (CSV)
+        </button>
+        <button
           onClick={() => clearProspects("demo")}
           className="dash-signout"
           style={{ fontSize: 13 }}
@@ -594,7 +614,7 @@ export default function ProspectionClient({
               </tr>
             </thead>
             <tbody>
-              {filtered.map((p) => (
+              {paged.map((p) => (
                 <tr key={p.id} style={{ borderBottom: "1px solid #f0f0f0" }}>
                   <td style={td}>
                     <b>{p.score ?? "—"}</b>
@@ -666,6 +686,29 @@ export default function ProspectionClient({
               ))}
             </tbody>
           </table>
+          {totalPages > 1 && (
+            <div style={{ display: "flex", gap: 10, alignItems: "center", justifyContent: "center", marginTop: 12 }}>
+              <button
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+                disabled={clampedPage <= 0}
+                className="dash-signout"
+                style={{ fontSize: 13, opacity: clampedPage <= 0 ? 0.5 : 1 }}
+              >
+                ← Précédent
+              </button>
+              <span style={{ fontSize: 13, color: "#666" }}>
+                Page {clampedPage + 1} / {totalPages}
+              </span>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                disabled={clampedPage >= totalPages - 1}
+                className="dash-signout"
+                style={{ fontSize: 13, opacity: clampedPage >= totalPages - 1 ? 0.5 : 1 }}
+              >
+                Suivant →
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
