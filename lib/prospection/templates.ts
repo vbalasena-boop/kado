@@ -129,17 +129,17 @@ export function renderEmail(ctx: TemplateContext): GeneratedEmail {
   const booking = resolveBooking(ctx);
   const cta = booking
     ? pick(seed, "cta_book", [
-        `Le plus simple : un court échange téléphonique de 10 min. ` +
+        `Le plus simple : un court échange téléphonique de 15 min. ` +
           `Réservez le créneau qui vous arrange → ${booking}`,
-        `Ça vous dirait d'en parler 10 min au téléphone ? ` +
+        `Ça vous dirait d'en parler 15 min au téléphone ? ` +
           `Choisissez votre horaire ici → ${booking}`,
-        `Je vous propose un appel rapide de 10 min — ` +
+        `Je vous propose un appel rapide de 15 min — ` +
           `réservez quand vous voulez → ${booking}`,
       ])
     : pick(seed, "cta", [
-        `Ça vous dirait qu'on en parle 10 min au téléphone ? ` +
+        `Ça vous dirait qu'on en parle 15 min au téléphone ? ` +
           `Répondez-moi avec un créneau et je vous rappelle.`,
-        `Un rapide appel de 10 min vous intéresse ? ` +
+        `Un rapide appel de 15 min vous intéresse ? ` +
           `Dites-moi vos dispos, je m'adapte.`,
         `Je peux vous montrer en 5 min ce que ça donnerait pour votre ${noun} — ` +
           `dites-moi quand vous êtes joignable.`,
@@ -201,15 +201,15 @@ export function renderFollowupEmail(ctx: TemplateContext): GeneratedEmail {
   const booking = resolveBooking(ctx);
   const cta = booking
     ? pick(seed, "fu_cta_book", [
-        `Si le sujet vous parle, réservez un appel de 10 min quand vous ` +
+        `Si le sujet vous parle, réservez un appel de 15 min quand vous ` +
           `voulez → ${booking}`,
         `Le plus rapide : choisissez un créneau pour un court échange ` +
           `téléphonique → ${booking}`,
-        `Un appel de 10 min pour en parler ? Réservez ici → ${booking}`,
+        `Un appel de 15 min pour en parler ? Réservez ici → ${booking}`,
       ])
     : pick(seed, "fu_cta", [
         `Un simple « oui » et je vous rappelle quand vous voulez.`,
-        `Dites-moi si un court appel de 10 min vous intéresse.`,
+        `Dites-moi si un court appel de 15 min vous intéresse.`,
         `Répondez-moi avec un créneau et je vous appelle.`,
       ]);
 
@@ -255,9 +255,9 @@ export function renderDm(ctx: TemplateContext): string {
   // de blocage du compte) : on propose l'appel « par réponse ». Mettez plutôt
   // votre lien de réservation dans la BIO du compte.
   const cta = pick(seed, "dm_cta", [
-    `Ça vous dit un échange rapide de 10 min ? Répondez-moi et on cale un créneau 🙂 (14 jours offerts pour tester)`,
-    `On peut en parler 10 min par téléphone ? Dites-moi vos dispos 😉`,
-    `Envie d'en discuter 10 min ? Répondez et on trouve un créneau (14 jours offerts) ✨`,
+    `Ça vous dit un échange rapide de 15 min ? Répondez-moi et on cale un créneau 🙂 (14 jours offerts pour tester)`,
+    `On peut en parler 15 min par téléphone ? Dites-moi vos dispos 😉`,
+    `Envie d'en discuter 15 min ? Répondez et on trouve un créneau (14 jours offerts) ✨`,
   ]);
 
   return [opener, body, cta].join("\n\n");
