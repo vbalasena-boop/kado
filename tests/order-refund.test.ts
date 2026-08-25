@@ -87,6 +87,8 @@ describe("performOrderRefund", () => {
       payment_intent: "pi_9",
       reverse_transfer: true,
       refund_application_fee: true,
+      // Lien fiable événement→commande pour la réconciliation par webhook (F2).
+      metadata: { order_id: "ord-9" },
     });
     expect(opts).toEqual({ idempotencyKey: "order-refund-ord-9" });
     // écriture : drapeau distinct (status non touché), filtres isolation +
@@ -293,6 +295,8 @@ describe("POST /api/dashboard/orders/refund", () => {
       payment_intent: "pi_123",
       reverse_transfer: true,
       refund_application_fee: true,
+      // Lien fiable événement→commande pour la réconciliation par webhook (F2).
+      metadata: { order_id: "ord-1" },
     });
     expect(opts).toEqual({ idempotencyKey: "order-refund-ord-1" });
 

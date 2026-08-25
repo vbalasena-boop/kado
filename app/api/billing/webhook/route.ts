@@ -4,6 +4,7 @@ import { getStripe } from "@/lib/stripe";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { sendEmail, emailLayout, getOwnerContact } from "@/lib/email";
 import { reportError } from "@/lib/report";
+import { reconcileRefundEvent } from "@/lib/refund-reconcile";
 
 /** Retrouve l'établissement lié à une facture (via metadata ou customer). */
 async function resolveBusinessId(
@@ -509,6 +510,20 @@ export async function POST(req: NextRequest) {
         } catch {
           /* la reprise ne doit jamais bloquer le webhook */
         }
+        break;
+      }
+      case "refund.updated":
+      case "refund.failed":
+      case "charge.refund.updated": {
+        // Réconciliation « chemin argent » (F2) : l'objet de l'événement EST un
+        // Refund dans les deux cas. On confirme (`succeeded`) ou on annule
+        // (`failed`/`canceled`) le drapeau optimiste `refunded` de la commande.
+        // NE PAS confondre avec `charge.refunded` (l.442, clawback parrainage).
+        // Helper tolérant (ne jette pas) → on renvoie toujours 200.
+        await reconcileRefundEvent(
+          getAdminClient(),
+          event.data.object as Stripe.Refund
+        );
         break;
       }
       default:

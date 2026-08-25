@@ -77,6 +77,11 @@ export async function performOrderRefund(
         payment_intent: paymentIntent,
         reverse_transfer: true,
         refund_application_fee: true,
+        // Lien fiable événement→commande pour la réconciliation par webhook
+        // (`reconcileRefundEvent`) : dans le cas record_failed, `stripe_refund_id`
+        // n'est jamais écrit côté commande, donc `refund.metadata.order_id` est
+        // le seul moyen de retrouver la commande. `order.id` (UUID PK) suffit.
+        metadata: { order_id: order.id },
       },
       { idempotencyKey: `order-refund-${order.id}` }
     );
