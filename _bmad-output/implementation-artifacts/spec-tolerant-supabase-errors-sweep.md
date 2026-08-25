@@ -2,7 +2,7 @@
 title: 'Durcissement erreurs Supabase — sweep observabilité (push / onboarding / connect)'
 type: 'bugfix'
 created: '2026-08-25'
-status: 'draft'
+status: 'done'
 review_loop_iteration: 0
 baseline_commit: '3029e6b6f5a7525dfe6f12ef440f83ff2cc32290'
 context: []
@@ -47,10 +47,10 @@ context: []
 ## Tasks & Acceptance
 
 **Execution:**
-- [ ] `app/api/dashboard/push/route.ts` -- delete remove : inspecter `{ error }` (missing→ignore, autre→reportError+500)
-- [ ] `app/api/onboarding/route.ts` -- 2 blocs : reportError sur vraie erreur, inscription non interrompue
-- [ ] `app/api/billing/connect/route.ts` -- clear stripe acct : reportError sur vraie erreur, recovery préservée
-- [ ] `tests/db-sweep.test.ts` -- push remove (missing→ok, vraie→500) + spy reportError
+- [x] `app/api/dashboard/push/route.ts` -- delete remove : inspecter `{ error }` (missing→ignore, autre→reportError+500)
+- [x] `app/api/onboarding/route.ts` -- 2 blocs : reportError sur vraie erreur, inscription non interrompue
+- [x] `app/api/billing/connect/route.ts` -- clear stripe acct : reportError sur vraie erreur, recovery préservée
+- [x] `tests/db-sweep.test.ts` -- push remove (missing→ok, vraie→500) + spy reportError
 
 **Acceptance Criteria:**
 - Given une vraie erreur DB sur une écriture secondaire (onboarding, connect), when la route s'exécute, then l'erreur part à `reportError` **et** le flux principal aboutit quand même (aucun 500 introduit).
@@ -61,6 +61,10 @@ context: []
 
 - **Pourquoi pas de 500 partout :** contrairement au wheel route (le write EST la sauvegarde), ces écritures sont secondaires ; un 500 casserait une inscription ou une recovery Stripe. L'objectif ici est de **ne plus avaler en silence** (→ Sentry via `reportError`), pas de bloquer.
 - Reste reporté (Story 3) : `order.ts`, `dashboard/orders`, `webhook`/`cron` (reportError-only), replis message-regex.
+
+## Suffix — Post-Review
+
+Auto-revue adversariale des 3 fichiers (changement à faible risque, mirroir exact du pattern wheel de la Story 1 déjà revu à 3 relecteurs). Vérifié : onboarding et connect logguent la vraie erreur SANS `return` (flux d'inscription / recovery Stripe inchangés) ; push renvoie 500 `remove_failed` sur vraie erreur (seul changement de comportement, couvert par 3 tests) ; tolérance « migration absente » préservée partout. Reste **reporté en Story 3** (`deferred-work.md`) : order.ts, dashboard/orders, webhook/cron (reportError-only), replis message-regex, bare-awaits onboarding.
 
 ## Verification
 
