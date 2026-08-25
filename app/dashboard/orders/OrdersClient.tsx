@@ -610,7 +610,7 @@ export default function OrdersClient({
     }
   }
 
-  async function setStatus(id: string, status: string) {
+  async function setStatus(id: string, status: string, paid?: boolean | null) {
     setBusy(true);
     try {
       const res = await fetch("/api/dashboard/orders", {
@@ -652,6 +652,13 @@ export default function OrdersClient({
           bits.push("remboursement impossible (paiement Stripe introuvable)");
         else if (r?.status === "skipped" && r.code === "already_refunded")
           bits.push("déjà remboursée");
+        // Payée en ligne mais AUCUN refund tenté (ex. colonnes 0047 illisibles) :
+        // ne pas laisser croire que le client a été remboursé — l'inviter à
+        // vérifier via le bouton « Rembourser ».
+        else if (!r && paid)
+          bits.push(
+            "⚠️ remboursement non tenté — vérifiez via « ↩️ Rembourser »"
+          );
         if (d?.notified?.email === "sent") bits.push("e-mail envoyé");
         if (d?.notified?.push === "sent") bits.push("notification envoyée 📲");
         else if (d?.notified?.push === "failed")
@@ -936,7 +943,7 @@ export default function OrdersClient({
                         o.total_cents
                       )} €).`
                     : `Annuler la commande ${o.code} ?`;
-                if (confirm(question)) setStatus(o.id, "cancelled");
+                if (confirm(question)) setStatus(o.id, "cancelled", o.paid);
               }}
             >
               Annuler
