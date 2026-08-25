@@ -18,6 +18,18 @@ export interface TemplateContext {
   google_reviews_count: number | null;
   /** Graine de variation (ex. id du prospect). Défaut : nom + ville. */
   seed?: string;
+  /**
+   * Lien de réservation d'un RDV téléphonique (ex. Cal.com). Si absent, on
+   * lit `PROSPECT_BOOKING_URL`. Sans lien, l'appel à l'action bascule sur une
+   * prise de RDV « par réponse » (le prospect répond avec ses créneaux).
+   */
+  bookingUrl?: string;
+}
+
+/** Lien de réservation effectif (contexte > variable d'env > aucun). */
+function resolveBooking(ctx: TemplateContext): string | null {
+  const url = (ctx.bookingUrl ?? process.env.PROSPECT_BOOKING_URL ?? "").trim();
+  return url ? url : null;
 }
 
 export interface GeneratedEmail {
@@ -114,12 +126,24 @@ export function renderEmail(ctx: TemplateContext): GeneratedEmail {
       `vos clients jouent, gagnent un cadeau, vous laissent un avis. 14 jours offerts.`,
   ]);
 
-  const cta = pick(seed, "cta", [
-    `Ça vous dirait d'en voir un aperçu en 5 minutes ?`,
-    `Je vous montre en 5 minutes, ou je vous crée directement votre essai ?`,
-    `Un rapide aperçu vous intéresserait ?`,
-    `Je peux vous montrer ce que ça donnerait pour votre ${noun} — dites-moi.`,
-  ]);
+  const booking = resolveBooking(ctx);
+  const cta = booking
+    ? pick(seed, "cta_book", [
+        `Le plus simple : un court échange téléphonique de 10 min. ` +
+          `Réservez le créneau qui vous arrange → ${booking}`,
+        `Ça vous dirait d'en parler 10 min au téléphone ? ` +
+          `Choisissez votre horaire ici → ${booking}`,
+        `Je vous propose un appel rapide de 10 min — ` +
+          `réservez quand vous voulez → ${booking}`,
+      ])
+    : pick(seed, "cta", [
+        `Ça vous dirait qu'on en parle 10 min au téléphone ? ` +
+          `Répondez-moi avec un créneau et je vous rappelle.`,
+        `Un rapide appel de 10 min vous intéresse ? ` +
+          `Dites-moi vos dispos, je m'adapte.`,
+        `Je peux vous montrer en 5 min ce que ça donnerait pour votre ${noun} — ` +
+          `dites-moi quand vous êtes joignable.`,
+      ]);
 
   const signoff = pick(seed, "signoff", [
     `Belle journée,`,
@@ -174,11 +198,20 @@ export function renderFollowupEmail(ctx: TemplateContext): GeneratedEmail {
       `et vous laissent un avis ou un suivi. Testable 14 jours, offerts.`,
   ]);
 
-  const cta = pick(seed, "fu_cta", [
-    `Un simple « oui » et je vous crée votre accès d'essai.`,
-    `Dites-moi si une démo de 5 minutes vous intéresse.`,
-    `Répondez-moi juste « ok » et je vous envoie un aperçu.`,
-  ]);
+  const booking = resolveBooking(ctx);
+  const cta = booking
+    ? pick(seed, "fu_cta_book", [
+        `Si le sujet vous parle, réservez un appel de 10 min quand vous ` +
+          `voulez → ${booking}`,
+        `Le plus rapide : choisissez un créneau pour un court échange ` +
+          `téléphonique → ${booking}`,
+        `Un appel de 10 min pour en parler ? Réservez ici → ${booking}`,
+      ])
+    : pick(seed, "fu_cta", [
+        `Un simple « oui » et je vous rappelle quand vous voulez.`,
+        `Dites-moi si un court appel de 10 min vous intéresse.`,
+        `Répondez-moi avec un créneau et je vous appelle.`,
+      ]);
 
   const body = [
     `Bonjour ${ctx.name},`,
@@ -218,10 +251,13 @@ export function renderDm(ctx: TemplateContext): string {
       `et vous laissent un avis ou un suivi, en échange d'un cadeau 🎡`,
   ]);
 
+  // Sur Instagram, on évite de coller un lien brut dans un DM à froid (risque
+  // de blocage du compte) : on propose l'appel « par réponse ». Mettez plutôt
+  // votre lien de réservation dans la BIO du compte.
   const cta = pick(seed, "dm_cta", [
-    `Ça vous dirait qu'on vous montre en 2 min ? (14 jours offerts, sans engagement)`,
-    `On vous fait une démo rapide ? 14 jours offerts pour tester 😉`,
-    `Envie d'essayer pendant 14 jours offerts ?`,
+    `Ça vous dit un échange rapide de 10 min ? Répondez-moi et on cale un créneau 🙂 (14 jours offerts pour tester)`,
+    `On peut en parler 10 min par téléphone ? Dites-moi vos dispos 😉`,
+    `Envie d'en discuter 10 min ? Répondez et on trouve un créneau (14 jours offerts) ✨`,
   ]);
 
   return [opener, body, cta].join("\n\n");
