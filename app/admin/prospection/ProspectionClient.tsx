@@ -53,6 +53,7 @@ export type Stats = {
   emailsToday: number;
   dmToday: number;
   emailCap: number;
+  pendingEmails: number;
 };
 
 export default function ProspectionClient({
@@ -191,6 +192,21 @@ export default function ProspectionClient({
       } else setMessage("Erreur à l'ajout du prospect.");
     } catch {
       setMessage("Erreur réseau (ajout).");
+    }
+  }
+
+  async function regenerateAll() {
+    if (!window.confirm("Régénérer les messages (brouillons) de tous les prospects ?")) return;
+    setMessage(null);
+    try {
+      const res = await fetch("/api/admin/prospection/regenerate-all", { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        setMessage(`${data.regenerated} prospect(s) régénéré(s).`);
+        router.refresh();
+      } else setMessage(`Erreur : ${data.error ?? "inconnue"}`);
+    } catch {
+      setMessage("Erreur réseau (régénération).");
     }
   }
 
@@ -394,6 +410,13 @@ export default function ProspectionClient({
             title="Lit ta boîte email et marque 'A répondu' les prospects qui ont répondu"
           >
             📥 Vérifier les réponses
+          </button>
+          <button
+            onClick={regenerateAll}
+            className="dash-signout"
+            title="Régénère les messages (brouillons) de tous les prospects avec la dernière version"
+          >
+            🔄 Régénérer tous les messages
           </button>
         </div>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 10 }}>
@@ -615,6 +638,7 @@ function StatsBand({ stats }: { stats: Stats }) {
     { label: "Avec email", value: String(stats.withEmail) },
     { label: "Avec Insta", value: String(stats.withInstagram) },
     { label: "Emails aujourd'hui", value: `${stats.emailsToday}/${stats.emailCap}` },
+    { label: "À envoyer (approuvés)", value: String(stats.pendingEmails), color: "#8b6cff" },
     { label: "DM aujourd'hui", value: String(stats.dmToday) },
   ];
 
