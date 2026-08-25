@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { unsubToken } from "@/lib/unsub";
+import { reportError } from "@/lib/report";
 
 export const dynamic = "force-dynamic";
 
@@ -32,11 +33,33 @@ export async function GET(req: NextRequest) {
       /* ignore */
     }
     try {
-      await db
+      // Idempotent : on ne (re-)désinscrit QUE si la carte est encore inscrite
+      // (`unsubscribed_at IS NULL`). Un re-hit (scanner/prefetch/re-clic) ne
+      // ré-écrit donc pas `unsubscribed_at` — il ne casse pas un lien de
+      // ré-abonnement en vol — et n'insère pas de `consent_events` en double.
+      const { data: cards } = await db
         .from("loyalty_cards")
         .update({ unsubscribed_at: now, marketing_ok: false })
         .eq("business_id", b)
-        .eq("email", email);
+        .eq("email", email)
+        .is("unsubscribed_at", null)
+        .select("id");
+      // Audit RGPD (best-effort, périmètre fidélité) : trace horodatée de la
+      // désinscription. Uniquement si une carte a réellement été mise à jour.
+      const cardId = Array.isArray(cards) ? cards[0]?.id ?? null : null;
+      if (Array.isArray(cards) && cards.length > 0) {
+        try {
+          await db.from("consent_events").insert({
+            type: "unsubscribed",
+            source: "unsubscribe_route",
+            business_id: b,
+            email,
+            card_id: cardId,
+          });
+        } catch (err) {
+          reportError(err, { where: "unsubscribe.audit" });
+        }
+      }
     } catch {
       /* ignore */
     }

@@ -2,6 +2,8 @@ import { NextRequest } from "next/server";
 import { getMyBusiness } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { getStripe } from "@/lib/stripe";
+import { isMissingColumnError } from "@/lib/db-errors";
+import { reportError } from "@/lib/report";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -116,13 +118,19 @@ export async function GET(req: NextRequest) {
       // Compte introuvable dans ce mode (bascule test↔live) → on l'oublie
       // pour qu'un prochain « Connecter Stripe » en crée un propre.
       if (e?.code === "resource_missing" || e?.statusCode === 404) {
+        // Écriture secondaire de recovery : on oublie le compte introuvable.
+        // Colonnes absentes → ignoré ; vraie erreur → reportError, mais la
+        // recovery poursuit ({ connected:false }), aucun 500 introduit.
         try {
-          await db
+          const { error } = await db
             .from("businesses")
             .update({ stripe_account_id: null, stripe_account_ready: false })
             .eq("id", business.id);
-        } catch {
-          /* colonnes absentes */
+          if (error && !isMissingColumnError(error)) {
+            reportError(error, { where: "billing/connect.clear" });
+          }
+        } catch (clearErr) {
+          reportError(clearErr, { where: "billing/connect.clear" });
         }
         return Response.json({ connected: false, ready: false });
       }

@@ -54,7 +54,11 @@ export const POST = publicRoute({
 
         // On n'envoie l'e-mail que si la carte existe ET est désinscrite.
         if (card && (card as any).unsubscribed_at) {
-          const { url } = buildResubConfirmUrl(biz.id, email);
+          const { url } = buildResubConfirmUrl(
+            biz.id,
+            email,
+            (card as any).unsubscribed_at
+          );
           const name = biz.name || "ce commerce";
           // Envoi jamais bloquant : on ignore le résultat.
           await sendEmail({
@@ -78,7 +82,7 @@ export const POST = publicRoute({
                 `border-radius:12px;">Confirmer mon ré-abonnement</a>` +
                 `<br><br>Si vous n'êtes pas à l'origine de cette demande, ` +
                 `ignorez simplement cet e-mail : rien ne changera.`,
-              footnote: `Ce lien est valable 7 jours.`,
+              footnote: `Ce lien est valable 48 heures.`,
             }),
           });
         }

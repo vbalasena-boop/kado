@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { merchantRoute } from "@/lib/api";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { isMissingColumnError } from "@/lib/db-errors";
+import { reportError } from "@/lib/report";
 
 export const dynamic = "force-dynamic";
 
@@ -34,14 +36,22 @@ export const POST = merchantRoute({
     const db = getAdminClient();
 
     if (body.remove) {
+      // Le delete EST le but de la requête : une vraie erreur (RLS, contrainte,
+      // connectivité) doit remonter au client (500) — plus de faux { ok:true }.
+      // Seule la table absente (migration non appliquée) reste tolérée.
       try {
-        await db
+        const { error } = await db
           .from("push_subscriptions")
           .delete()
           .eq("endpoint", endpoint)
           .eq("business_id", business.id);
-      } catch {
-        /* table absente */
+        if (error && !isMissingColumnError(error)) {
+          reportError(error, { where: "dashboard/push.remove" });
+          return Response.json({ error: "remove_failed" }, { status: 500 });
+        }
+      } catch (e) {
+        reportError(e, { where: "dashboard/push.remove" });
+        return Response.json({ error: "remove_failed" }, { status: 500 });
       }
       return Response.json({ ok: true });
     }

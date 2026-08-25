@@ -5,6 +5,8 @@ import { getAdminClient } from "@/lib/supabase/admin";
 import { slugify } from "@/lib/defaults";
 import { prizesForCategory } from "@/lib/categories";
 import { insertPrizes } from "@/lib/prizes";
+import { isMissingColumnError } from "@/lib/db-errors";
+import { reportError } from "@/lib/report";
 
 export const dynamic = "force-dynamic";
 
@@ -109,14 +111,19 @@ export const POST = publicRoute({
         // parrain : un utilisateur ne possède qu'un seul commerce.)
         const samePhone = !!phone && !!sponsor.phone && phone === sponsor.phone;
         if (samePhone) {
+          // Écriture secondaire : ne doit jamais interrompre l'inscription.
+          // Table absente (migration 0042) → ignorée ; vraie erreur → reportError.
           try {
-            await db.from("referral_blocks").insert({
+            const { error } = await db.from("referral_blocks").insert({
               filleul_business_id: biz.id,
               parrain_slug: parrainSlug,
               reason: "same_phone",
             });
-          } catch {
-            /* table absente (migration 0042 non appliquée) : on ignore */
+            if (error && !isMissingColumnError(error)) {
+              reportError(error, { where: "onboarding.referral_blocks" });
+            }
+          } catch (e) {
+            reportError(e, { where: "onboarding.referral_blocks" });
           }
         } else {
           await db
@@ -162,13 +169,19 @@ export const POST = publicRoute({
     // Le plan « Comptoir » n'a pas de jeu : on active directement le suivi au
     // comptoir et on ne crée aucun cadeau (pas de roue).
     if (plan === "comptoir") {
+      // Écriture secondaire : colonne order_tracking absente → ignorée
+      // (hasComptoir couvre le plan) ; vraie erreur → reportError, inscription
+      // poursuivie (aucun 500 introduit).
       try {
-        await db
+        const { error } = await db
           .from("businesses")
           .update({ order_tracking: true })
           .eq("id", biz.id);
-      } catch {
-        /* colonne order_tracking absente : ignoré (hasComptoir couvre le plan) */
+        if (error && !isMissingColumnError(error)) {
+          reportError(error, { where: "onboarding.order_tracking" });
+        }
+      } catch (e) {
+        reportError(e, { where: "onboarding.order_tracking" });
       }
     } else {
       const prizes = prizesForCategory(body.category);

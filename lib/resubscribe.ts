@@ -38,33 +38,54 @@ export function decodeEmail(e64: string): string {
 
 /**
  * Jeton signé « re-consent » : HMAC-SHA256 sur (purpose + business + email +
- * exp). `exp` étant DANS la signature, impossible de prolonger la validité
- * sans invalider le jeton.
+ * unsubAt + exp). `exp` étant DANS la signature, impossible de prolonger la
+ * validité sans invalider le jeton.
+ *
+ * `unsubAt` = `loyalty_cards.unsubscribed_at` COURANT (chaîne, `""` si null).
+ * Le lier à la signature rend le lien à USAGE UNIQUE : dès que l'état change
+ * (ré-abonnement → null, ou nouvelle désinscription → autre timestamp), un
+ * ancien jeton ne re-dérive plus la même signature.
+ *
+ * `unsubAt` est CANONISÉ en epoch-ms (`Date.parse`) avant d'entrer dans la
+ * signature : deux représentations du même instant (ex. `...T00:00:00Z` vs
+ * `...T00:00:00.000Z`) produisent la même chaîne signée. Cela élimine tout
+ * risque de drift de sérialisation du `timestamptz` entre la lecture à la
+ * demande et à la confirmation. `null`/`undefined`/parse invalide → `""`.
  */
 export function signResubToken(
   businessId: string,
   email: string,
-  exp: number
+  exp: number,
+  unsubAt: string | null | undefined
 ): string {
+  let u = "";
+  if (unsubAt) {
+    const ms = Date.parse(String(unsubAt));
+    u = Number.isNaN(ms) ? "" : String(ms);
+  }
   return createHmac("sha256", secret())
-    .update(`${PURPOSE}:${businessId}:${email.toLowerCase()}:${exp}`)
+    .update(`${PURPOSE}:${businessId}:${email.toLowerCase()}:${u}:${exp}`)
     .digest("hex");
 }
 
 /**
  * Vérifie un jeton de ré-abonnement : signature (comparaison à temps
  * constant) ET non-expiration (`exp > nowMs`). Ne lève jamais.
+ *
+ * `unsubAt` est re-dérivé côté serveur depuis l'état COURANT de la carte : un
+ * jeton signé pour un ancien `unsubscribed_at` ne valide plus (usage unique).
  */
 export function verifyResubToken(
   businessId: string,
   email: string,
   exp: number,
+  unsubAt: string | null | undefined,
   token: string,
   nowMs: number = Date.now()
 ): boolean {
   if (!businessId || !email || !token || !Number.isFinite(exp)) return false;
   if (!(exp > nowMs)) return false;
-  const expected = signResubToken(businessId, email, exp);
+  const expected = signResubToken(businessId, email, exp, unsubAt);
   const a = Buffer.from(expected, "utf8");
   const b = Buffer.from(token, "utf8");
   if (a.length !== b.length) return false;
@@ -82,11 +103,12 @@ export function verifyResubToken(
 export function buildResubConfirmUrl(
   businessId: string,
   email: string,
+  unsubAt: string | null | undefined,
   ttlMs: number = RESUB_TTL_MS
 ): { exp: number; url: string } {
   const mail = email.toLowerCase();
   const exp = Date.now() + ttlMs;
-  const t = signResubToken(businessId, mail, exp);
+  const t = signResubToken(businessId, mail, exp, unsubAt);
   const url =
     `${SITE}/api/loyalty/resubscribe/confirm` +
     `?b=${encodeURIComponent(businessId)}` +
