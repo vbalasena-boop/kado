@@ -70,3 +70,11 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-11-2-annuler-une-commande.md`
   summary: Le remboursement déclenché à l'annulation (comme le refund manuel 11.1) n'est pas réconcilié : statut commande + drapeau `refunded` écrits séparément, sans handler webhook `charge.refund.updated` pour rattraper un refund `pending→failed`. Pas non plus d'horodatage `notified_cancelled_at` de la notif d'annulation (le `ready` a `notified_ready_at`).
   evidence: Constats revue (Blind/Edge/Verif) sur 11.2. Mutualiser avec le defer réconciliation/audit de 11.1 : un webhook de réconciliation + une colonne `notified_cancelled_at` (migration) couvriraient les deux. Non bloquant.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-f2-reconciliation-webhook-refunds.md`
+  summary: La réconciliation webhook (F2) marque `refunded=true` sur un booléen sans vérifier que le refund couvre le TOTAL de la commande : un remboursement PARTIEL (émis manuellement depuis le dashboard Stripe, ou un futur flux partiel) marquerait la commande « entièrement remboursée ». Notre flux n'émet que des refunds totaux, donc inerte aujourd'hui.
+  evidence: Constats revue F2 (Blind/Edge). À traiter si un flux de remboursement partiel est introduit : comparer `refund.amount` au total commande, ou ajouter une colonne `refunded_amount_cents`. Ask-First (hors périmètre F2).
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-f2-reconciliation-webhook-refunds.md`
+  summary: Pas de déduplication d'événements au niveau Stripe event.id (pas de table `processed_events`). L'idempotence repose sur les filtres par chemin (`refunded=false` en confirmation, `stripe_refund_id`+`refunded=true` en révocation) — suffisant pour ces events, mais une infra de dédup générale bénéficierait à tous les handlers du webhook. Également : sur un `succeeded` à 0 ligne on ne distingue pas « déjà réconcilié » de « commande introuvable » (nécessiterait une lecture préalable) pour une alerte plus fine.
+  evidence: Constats revue F2 (les 3 relecteurs). Améliorations d'observabilité/robustesse non bloquantes ; l'idempotence par filtres couvre le risque argent immédiat.
