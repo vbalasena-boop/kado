@@ -60,6 +60,7 @@ export default function ProspectionClient({
   const [limit, setLimit] = useState(30);
   const [sourcing, setSourcing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [enriching, setEnriching] = useState(false);
 
   // --- Filtres/tri (côté client) ---
   const [fSegment, setFSegment] = useState<string>("");
@@ -101,6 +102,31 @@ export default function ProspectionClient({
       setMessage("Erreur réseau pendant le sourcing.");
     } finally {
       setSourcing(false);
+    }
+  }
+
+  async function runEnrich() {
+    setEnriching(true);
+    setMessage(null);
+    try {
+      const res = await fetch("/api/admin/prospection/enrich", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setMessage(`Erreur : ${data.error ?? "inconnue"}`);
+      } else {
+        setMessage(
+          `${data.enriched} fiche(s) enrichie(s) sur ${data.scanned} analysée(s) (email / Instagram).`
+        );
+        router.refresh();
+      }
+    } catch {
+      setMessage("Erreur réseau pendant l'enrichissement.");
+    } finally {
+      setEnriching(false);
     }
   }
 
@@ -189,6 +215,15 @@ export default function ProspectionClient({
           >
             {sourcing ? "Sourcing…" : "Lancer le sourcing"}
           </button>
+          <button
+            onClick={runEnrich}
+            disabled={enriching}
+            className="dash-signout"
+            style={{ opacity: enriching ? 0.6 : 1 }}
+            title="Devine les emails et comptes Instagram depuis les sites web"
+          >
+            {enriching ? "Enrichissement…" : "Enrichir (email / Insta)"}
+          </button>
         </div>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 10 }}>
           {PROSPECT_SEGMENTS.map((s) => (
@@ -259,6 +294,7 @@ export default function ProspectionClient({
                 <th style={th}>Segment</th>
                 <th style={th}>Note</th>
                 <th style={th}>Avis</th>
+                <th style={th}>Contact</th>
                 <th style={th}>Statut</th>
               </tr>
             </thead>
@@ -285,6 +321,20 @@ export default function ProspectionClient({
                   </td>
                   <td style={td}>{p.google_rating ?? "—"}</td>
                   <td style={td}>{p.google_reviews_count ?? "—"}</td>
+                  <td style={td}>
+                    {p.email && <span title={p.email}>✉️</span>}{" "}
+                    {p.instagram_handle && (
+                      <a
+                        href={`https://instagram.com/${p.instagram_handle}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        title={`@${p.instagram_handle}`}
+                      >
+                        📸
+                      </a>
+                    )}
+                    {!p.email && !p.instagram_handle && "—"}
+                  </td>
                   <td style={td}>{STATUS_LABEL[p.status] ?? p.status}</td>
                 </tr>
               ))}
