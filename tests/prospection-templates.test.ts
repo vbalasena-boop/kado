@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   reviewHook,
   renderEmail,
+  renderFollowupEmail,
   renderDm,
   UNSUBSCRIBE_MARKER,
   type TemplateContext,
@@ -65,6 +66,37 @@ describe("renderDm", () => {
     const dm = renderDm(ctx({ name: "La Tanière", google_reviews_count: 74 }));
     expect(dm).toContain("La Tanière");
     expect(dm).toContain("74");
+  });
+
+  it("ne colle JAMAIS le lien de réservation dans le DM (protection compte)", () => {
+    const url = "https://cal.com/kado/10min";
+    const dm = renderDm(ctx({ name: "La Tanière", bookingUrl: url }));
+    expect(dm).not.toContain(url);
+    expect(dm).not.toMatch(/https?:\/\//);
+  });
+});
+
+describe("RDV téléphonique (lien de réservation)", () => {
+  it("insère le lien de réservation dans l'email quand il est fourni", () => {
+    const url = "https://cal.com/kado/10min";
+    const { body } = renderEmail(ctx({ bookingUrl: url }));
+    expect(body).toContain(url);
+    // spamCheck : un seul lien cliquable + désinscription → non risqué.
+    const { subject, body: b2 } = renderEmail(ctx({ bookingUrl: url }));
+    expect(spamCheck(`${subject}\n${b2}`).risky).toBe(false);
+  });
+
+  it("propose un rappel « par réponse » sans lien quand aucun lien n'est fourni", () => {
+    const { body } = renderEmail(ctx({ bookingUrl: "" }));
+    // Aucun lien http (hors marqueur de désinscription {{unsubscribe_url}}).
+    expect(body).not.toMatch(/https?:\/\//);
+    expect(body).toContain(UNSUBSCRIBE_MARKER);
+  });
+
+  it("insère le lien dans la relance quand il est fourni", () => {
+    const url = "https://cal.com/kado/10min";
+    const { body } = renderFollowupEmail(ctx({ bookingUrl: url }));
+    expect(body).toContain(url);
   });
 });
 
