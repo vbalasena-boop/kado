@@ -7,7 +7,7 @@
 import { getAdminClient } from "@/lib/supabase/admin";
 import { sendProspectEmail, finalizeBody } from "@/lib/prospection/sender";
 import { unsubUrl } from "@/lib/prospection/unsub";
-import { renderFollowupEmail } from "@/lib/prospection/templates";
+import { renderFollowupEmail, renderLastEmail } from "@/lib/prospection/templates";
 import { verifyEmail, type EmailVerdict } from "@/lib/prospection/verify-email";
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://kado-app.fr";
@@ -245,6 +245,92 @@ export async function runProspectionSend(): Promise<SendSummary> {
       .from("prospect_events")
       .insert({ prospect_id: f.prospect_id, type: "email_followup_sent", meta: { simulated: res.simulated ?? false } });
     alreadyRelanced.add(f.prospect_id);
+    out.sent++;
+    out.followups++;
+  }
+
+  // --- Dernière relance (3ᵉ email, « break-up ») : relancés depuis N jours,
+  // toujours sans réponse ---
+  const delay2 = Number(process.env.PROSPECT_FOLLOWUP2_DELAY_DAYS || 6);
+  const cutoff2 = new Date(Date.now() - delay2 * 86_400_000).toISOString();
+
+  const { data: secondsData } = await db
+    .from("prospect_messages")
+    .select(
+      "prospect_id, sent_at, prospects!inner(name, city, category, google_reviews_count, email, status)"
+    )
+    .eq("channel", "email")
+    .eq("step", 2)
+    .eq("status", "sent")
+    .lt("sent_at", cutoff2)
+    .limit(cap * 3);
+
+  const seconds = (secondsData ?? []) as unknown as {
+    prospect_id: string;
+    prospects: {
+      name: string;
+      city: string | null;
+      category: string | null;
+      google_reviews_count: number | null;
+      email: string | null;
+      status: string;
+    };
+  }[];
+
+  // Prospects ayant déjà reçu le dernier email (step 3) → à ne pas re-contacter.
+  const secondIds = seconds.map((f) => f.prospect_id);
+  const alreadyLast = new Set<string>();
+  if (secondIds.length > 0) {
+    const { data: thirds } = await db
+      .from("prospect_messages")
+      .select("prospect_id")
+      .eq("channel", "email")
+      .eq("step", 3)
+      .in("prospect_id", secondIds);
+    for (const t of thirds ?? []) alreadyLast.add(t.prospect_id as string);
+  }
+
+  for (const f of seconds) {
+    if (out.sent >= cap) break;
+    const p = f.prospects;
+    const email = p.email?.toLowerCase();
+    if (!email || p.status !== "emailed" || suppressed.has(email) || alreadyLast.has(f.prospect_id)) {
+      continue;
+    }
+
+    const last = renderLastEmail({
+      name: p.name,
+      city: p.city,
+      category: p.category,
+      google_reviews_count: p.google_reviews_count,
+      seed: f.prospect_id,
+    });
+    const body = finalizeBody(last.body, email, SITE);
+    const res = await sendProspectEmail({
+      to: email,
+      subject: last.subject,
+      text: body,
+      unsubscribeUrl: unsubUrl(email, SITE),
+    });
+    if (!res.ok) {
+      out.failed++;
+      continue;
+    }
+    if (res.simulated) out.simulated = true;
+
+    await db.from("prospect_messages").insert({
+      prospect_id: f.prospect_id,
+      channel: "email",
+      step: 3,
+      subject: last.subject,
+      body: last.body,
+      status: "sent",
+      sent_at: new Date().toISOString(),
+    });
+    await db
+      .from("prospect_events")
+      .insert({ prospect_id: f.prospect_id, type: "email_followup_sent", meta: { simulated: res.simulated ?? false, step: 3 } });
+    alreadyLast.add(f.prospect_id);
     out.sent++;
     out.followups++;
   }
