@@ -2,7 +2,7 @@
 title: 'Durcissement — ne plus avaler les erreurs Supabase (helper + cluster wheel)'
 type: 'bugfix'
 created: '2026-08-25'
-status: 'draft'
+status: 'done'
 review_loop_iteration: 0
 baseline_commit: 'a50b3bf97571426b6508854b68292a776c2c1600'
 context: []
@@ -70,10 +70,10 @@ Bloc tolérant (wheel route), par champ :
 ## Tasks & Acceptance
 
 **Execution:**
-- [ ] `lib/db-errors.ts` -- `isMissingColumnError` (codes 42703 / 42P01 / PGRST204, défensif)
-- [ ] `app/api/dashboard/wheel/route.ts` -- 4 blocs : inspecter `{ error }` + throw → `reportError` + 500 ; colonne absente → ignoré
-- [ ] `tests/db-errors.test.ts` -- matrice du helper
-- [ ] `tests/wheel-route.test.ts` -- colonne absente → ok ; vraie erreur → 500
+- [x] `lib/db-errors.ts` -- `isMissingColumnError` (codes 42703 / 42P01 / PGRST204, défensif)
+- [x] `app/api/dashboard/wheel/route.ts` -- 4 blocs : inspecter `{ error }` + throw → `reportError` + 500 ; colonne absente → ignoré
+- [x] `tests/db-errors.test.ts` -- matrice du helper
+- [x] `tests/wheel-route.test.ts` -- colonne absente → ok ; vraie erreur → 500
 
 **Acceptance Criteria:**
 - Given une colonne récente absente (migration non appliquée), when le commerçant enregistre, then le bloc est ignoré et l'enregistrement réussit (`{ ok: true }`) — comportement préservé.
@@ -85,6 +85,19 @@ Bloc tolérant (wheel route), par champ :
 - **Pourquoi `error.code` et pas le message :** le message est localisé/versionné (fragile) ; le code PostgREST/Postgres est stable. On remplace la logique `catch {}` inopérante par une inspection du code.
 - **Échec partiel assumé :** ces 4 updates portent sur des colonnes de la MÊME ligne, après l'upsert principal. Une vraie erreur est quasi toujours systémique (RLS/connectivité) → tous les blocs échoueraient pareil ; surfacer un 500 au premier est honnête (le commerçant réessaie ; les updates sont idempotents). L'ancien silence était le vrai danger.
 - **Story 2 (reportée) :** ≈16 autres sites (onboarding, unsubscribe, orders, connect, webhook/cron…) — pour webhook/cron le fix sera `reportError` sans 500 (200 by-design).
+
+## Suffix — Post-Review Fix
+
+Revue adversariale : **aucun défaut fix-now** (correctness/sécurité). Confirmé : le silent-lost-save est fermé, la tolérance migration est préservée par le **bon** code (`PGRST204` couvre la fenêtre « cache de schéma PostgREST périmé » ; `42703` le « pas encore migré »), aucun code réel (RLS `42501`, contraintes `23xxx`) ne collisionne avec l'ensemble toléré. Échec partiel jugé acceptable (updates idempotents par `business_id` → le ré-enregistrement converge). **Polish appliqué (tests)** : ajout des cas `PGRST204` (toléré), `42501` RLS → 500, **exception jetée → capturée → 500** (le chemin `catch`, non couvert auparavant), et clarification que la « vraie erreur » 500 se déclenche au 1er bloc (blocs structurellement identiques). `detail: error.message` conservé (cohérent avec le `config_error` existant ; route commerçant authentifiée, message = métadonnée de schéma). **Reporté (Story 2)** : appliquer le helper aux ~16 autres sites + convertir les replis message-regex.
+
+## Suggested Review Order
+
+- Helper pur : lit `error.code`, ensemble des codes « absent », défensif.
+  [`db-errors.ts:18`](../../lib/db-errors.ts#L18)
+- Motif appliqué aux 4 blocs tolérants (colonne absente ignorée ; sinon reportError + 500).
+  [`wheel/route.ts:155`](../../app/api/dashboard/wheel/route.ts#L155)
+- Tests : matrice helper + tolérance/vraie erreur/RLS/throw au niveau route.
+  [`wheel-route.test.ts:81`](../../tests/wheel-route.test.ts#L81)
 
 ## Verification
 

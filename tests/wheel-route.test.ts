@@ -7,6 +7,12 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // On espionne le payload passé à `.update(...)` sur wheel_configs.
 
 const updateCalls: Record<string, any>[] = [];
+// Erreur simulée sur les chaînes update().eq() (les 4 blocs tolérants) : null par
+// défaut ; un test peut y injecter `{ code }` pour vérifier le tri absente/vraie.
+let updateError: any = null;
+// Si true, la chaîne update().eq() REJETTE (simulte un throw réseau) au lieu de
+// résoudre `{ error }` → doit passer par le `catch` du bloc tolérant.
+let updateReject = false;
 
 function makeBuilder() {
   const b: any = {};
@@ -20,7 +26,8 @@ function makeBuilder() {
   };
   b.delete = () => b;
   // rend le builder « awaitable » pour les chaînes update().eq() / delete().eq()
-  b.then = (resolve: any) => resolve({ error: null });
+  b.then = (resolve: any, reject: any) =>
+    updateReject ? reject(new Error("network down")) : resolve({ error: updateError });
   return b;
 }
 
@@ -56,6 +63,7 @@ function persistedTriggerActions(): string[] | undefined {
 describe("POST /api/dashboard/wheel — persistance trigger_actions", () => {
   beforeEach(() => {
     updateCalls.length = 0;
+    updateError = null;
   });
 
   it("assainit une action interdite (avis) → instagram", async () => {
@@ -71,5 +79,51 @@ describe("POST /api/dashboard/wheel — persistance trigger_actions", () => {
   it("liste valide persistée telle quelle", async () => {
     await POST(post({ trigger_actions: ["loyalty", "optin"] }));
     expect(persistedTriggerActions()).toEqual(["loyalty", "optin"]);
+  });
+});
+
+describe("POST /api/dashboard/wheel — tolérance des erreurs Supabase", () => {
+  beforeEach(() => {
+    updateCalls.length = 0;
+    updateError = null;
+    updateReject = false;
+  });
+
+  it("colonne absente (42703) sur les blocs tolérants → tous ignorés, route { ok: true }", async () => {
+    // L'erreur simulée s'applique aux 4 blocs : « colonne absente » est tolérée
+    // partout → la migration non appliquée ne casse pas l'enregistrement.
+    updateError = { code: "42703", message: 'column "x" does not exist' };
+    const res = await POST(post({ trigger_actions: ["loyalty"] }));
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true });
+  });
+
+  it("PGRST204 (cache de schéma) → toléré comme colonne absente, route { ok: true }", async () => {
+    updateError = { code: "PGRST204", message: "column not found in schema cache" };
+    const res = await POST(post({ trigger_actions: ["loyalty"] }));
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true });
+  });
+
+  it("vraie erreur (23505) → 500 save_failed dès le premier bloc tolérant (play_alerts)", async () => {
+    // `updateError` est partagé par les 4 blocs : le 1er (play_alerts) déclenche
+    // déjà le 500 — les blocs sont structurellement identiques.
+    updateError = { code: "23505", message: "duplicate key" };
+    const res = await POST(post({ play_alerts: true, trigger_actions: ["loyalty"] }));
+    expect(res.status).toBe(500);
+    expect(await res.json()).toMatchObject({ error: "save_failed" });
+  });
+
+  it("erreur RLS (42501) → 500 (plus jamais de faux { ok: true })", async () => {
+    updateError = { code: "42501", message: "permission denied" };
+    const res = await POST(post({ trigger_actions: ["loyalty"] }));
+    expect(res.status).toBe(500);
+  });
+
+  it("exception jetée (throw réseau) sur un bloc tolérant → capturée → 500 save_failed", async () => {
+    updateReject = true;
+    const res = await POST(post({ trigger_actions: ["loyalty"] }));
+    expect(res.status).toBe(500);
+    expect(await res.json()).toMatchObject({ error: "save_failed" });
   });
 });

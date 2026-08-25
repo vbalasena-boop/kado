@@ -4,6 +4,8 @@ import { getMyBusiness } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { insertPrizes } from "@/lib/prizes";
 import { sanitizeTriggerActions } from "@/lib/wheel";
+import { isMissingColumnError } from "@/lib/db-errors";
+import { reportError } from "@/lib/report";
 
 export const dynamic = "force-dynamic";
 
@@ -151,17 +153,25 @@ export async function POST(req: NextRequest) {
   // Alerte « cadeau gagné » : colonne récente (0029), mise à jour isolée et
   // tolérante (si la colonne manque, on ignore sans casser l'enregistrement).
   try {
-    await admin
+    const { error } = await admin
       .from("wheel_configs")
       .update({ play_alerts: !!cfg.play_alerts })
       .eq("business_id", business.id);
-  } catch {
-    /* colonne absente : ignoré */
+    if (error && !isMissingColumnError(error)) {
+      reportError(error, { where: "dashboard/wheel", field: "play_alerts" });
+      return Response.json(
+        { error: "save_failed", detail: error.message },
+        { status: 500 }
+      );
+    }
+  } catch (e) {
+    reportError(e, { where: "dashboard/wheel", field: "play_alerts" });
+    return Response.json({ error: "save_failed" }, { status: 500 });
   }
 
   // Tirage au sort : colonnes récentes (0030/0031), mise à jour isolée.
   try {
-    await admin
+    const { error } = await admin
       .from("wheel_configs")
       .update({
         monthly_draw: !!cfg.monthly_draw,
@@ -169,8 +179,16 @@ export async function POST(req: NextRequest) {
           (cfg.monthly_draw_prize || "").trim().slice(0, 80) || null,
       })
       .eq("business_id", business.id);
-  } catch {
-    /* colonnes absentes : ignoré */
+    if (error && !isMissingColumnError(error)) {
+      reportError(error, { where: "dashboard/wheel", field: "monthly_draw" });
+      return Response.json(
+        { error: "save_failed", detail: error.message },
+        { status: 500 }
+      );
+    }
+  } catch (e) {
+    reportError(e, { where: "dashboard/wheel", field: "monthly_draw" });
+    return Response.json({ error: "save_failed" }, { status: 500 });
   }
   try {
     const period = [7, 14, 30, 90].includes(Number(cfg.draw_period_days))
@@ -181,24 +199,40 @@ export async function POST(req: NextRequest) {
       cfg.draw_next_at && /^\d{4}-\d{2}-\d{2}$/.test(cfg.draw_next_at)
         ? new Date(cfg.draw_next_at + "T00:00:00Z").toISOString()
         : null;
-    await admin
+    const { error } = await admin
       .from("wheel_configs")
       .update({ draw_period_days: period, draw_next_at: nextDate })
       .eq("business_id", business.id);
-  } catch {
-    /* colonnes absentes : ignoré */
+    if (error && !isMissingColumnError(error)) {
+      reportError(error, { where: "dashboard/wheel", field: "draw" });
+      return Response.json(
+        { error: "save_failed", detail: error.message },
+        { status: 500 }
+      );
+    }
+  } catch (e) {
+    reportError(e, { where: "dashboard/wheel", field: "draw" });
+    return Response.json({ error: "save_failed" }, { status: 500 });
   }
 
   // Actions déclenchantes (non-avis) : colonne récente (0045), mise à jour
   // isolée et tolérante (si la colonne manque, on ignore sans casser le reste).
   // 9.1 ne fait que persister la config ; le jeu n'est pas modifié.
   try {
-    await admin
+    const { error } = await admin
       .from("wheel_configs")
       .update({ trigger_actions: sanitizeTriggerActions(cfg.trigger_actions) })
       .eq("business_id", business.id);
-  } catch {
-    /* colonne absente : ignoré */
+    if (error && !isMissingColumnError(error)) {
+      reportError(error, { where: "dashboard/wheel", field: "trigger_actions" });
+      return Response.json(
+        { error: "save_failed", detail: error.message },
+        { status: 500 }
+      );
+    }
+  } catch (e) {
+    reportError(e, { where: "dashboard/wheel", field: "trigger_actions" });
+    return Response.json({ error: "save_failed" }, { status: 500 });
   }
 
   // remplace la liste des cadeaux
