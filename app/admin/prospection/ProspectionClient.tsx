@@ -58,6 +58,10 @@ export type Stats = {
   dmToday: number;
   emailCap: number;
   pendingEmails: number;
+  /** Emails de prospection réellement envoyés (initiaux + relances), tout temps. */
+  sentTotal: number;
+  /** Bounces durs détectés (adresses invalides), tout temps. */
+  bouncedTotal: number;
 };
 
 export default function ProspectionClient({
@@ -716,6 +720,14 @@ function StatsBand({ stats }: { stats: Stats }) {
   const replied = (s.replied ?? 0) + (s.interested ?? 0) + (s.client ?? 0);
   const rate = contacted > 0 ? Math.round((replied / contacted) * 100) : 0;
 
+  // Délivrabilité : taux de bounce (adresses invalides / emails envoyés).
+  // Seuils usuels : < 2 % sain · 2–5 % à surveiller · > 5 % danger réputation.
+  const bounceRate =
+    stats.sentTotal > 0 ? Math.round((stats.bouncedTotal / stats.sentTotal) * 100) : 0;
+  const bounceColor = bounceRate > 5 ? "#c0392b" : bounceRate > 2 ? "#a86b00" : "#2e7d32";
+  // Alerte seulement avec assez de volume pour être significatif.
+  const bounceWarn = stats.sentTotal >= 20 && bounceRate > 5;
+
   const tiles: { label: string; value: string; color?: string }[] = [
     { label: "Prospects", value: String(stats.total) },
     { label: "À contacter", value: String((s.new ?? 0) + (s.queued ?? 0)) },
@@ -729,18 +741,38 @@ function StatsBand({ stats }: { stats: Stats }) {
     { label: "Emails aujourd'hui", value: `${stats.emailsToday}/${stats.emailCap}` },
     { label: "À envoyer (approuvés)", value: String(stats.pendingEmails), color: "#8b6cff" },
     { label: "DM aujourd'hui", value: String(stats.dmToday) },
+    { label: "Taux de bounce", value: `${bounceRate}%`, color: bounceColor },
   ];
 
   return (
-    <div
-      style={{
-        display: "flex",
-        gap: 10,
-        flexWrap: "wrap",
-        margin: "10px 0 16px",
-      }}
-    >
-      {tiles.map((t) => (
+    <>
+      {bounceWarn && (
+        <div
+          style={{
+            background: "#fdecea",
+            border: "1px solid #f5c6cb",
+            borderRadius: 8,
+            padding: "10px 12px",
+            margin: "10px 0",
+            fontSize: 14,
+            color: "#a12b21",
+          }}
+        >
+          ⚠️ <b>Taux de bounce élevé ({bounceRate}%)</b> — au-delà de 5 %, ta
+          réputation d'expéditeur est en danger. Mets en pause les envois,
+          revérifie les contacts (bouton « Revérifier les contacts ») et vérifie
+          la configuration du domaine avant de continuer.
+        </div>
+      )}
+      <div
+        style={{
+          display: "flex",
+          gap: 10,
+          flexWrap: "wrap",
+          margin: "10px 0 16px",
+        }}
+      >
+        {tiles.map((t) => (
         <div
           key={t.label}
           style={{
@@ -756,9 +788,10 @@ function StatsBand({ stats }: { stats: Stats }) {
           <div style={{ fontSize: 22, fontWeight: 700, color: t.color ?? "#222" }}>
             {t.value}
           </div>
-        </div>
-      ))}
-    </div>
+          </div>
+        ))}
+      </div>
+    </>
   );
 }
 
