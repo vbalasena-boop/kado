@@ -153,6 +153,7 @@ export default function ProspectionClient({
           `${data.sent} email(s) envoyé(s)` +
             (data.followups ? ` (dont ${data.followups} relance(s))` : "") +
             `, ${data.skipped} ignoré(s), ${data.failed} échec(s)` +
+            (data.invalid ? `, ${data.invalid} adresse(s) invalide(s) écartée(s)` : "") +
             (data.simulated ? " — MODE SIMULATION (aucun SMTP configuré, rien n'est réellement parti)" : "") +
             `. Plafond du jour : ${data.dailyCap ?? data.cap}.`
         );
