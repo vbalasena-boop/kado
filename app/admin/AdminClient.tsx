@@ -518,7 +518,8 @@ export default function AdminClient({
       <p className="dash-sub">
         Créez des établissements, gérez leur abonnement et leurs accès. L'accès à
         la roue se coupe automatiquement quand l'abonnement expire.{" "}
-        <a href="/admin/vendeurs">🤝 Vendeurs &amp; commissions →</a>
+        <a href="/admin/vendeurs">🤝 Vendeurs &amp; commissions →</a>{" "}
+        <a href="/admin/prospection">🔎 Prospection →</a>
       </p>
 
       {/* ---- État du système (auto-surveillance) ---- */}
