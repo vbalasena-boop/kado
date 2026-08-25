@@ -1,5 +1,6 @@
 import { getMyBusiness, hasModule } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { sanitizeTriggerActions } from "@/lib/wheel";
 import WheelEditor from "./WheelEditor";
 
 export const dynamic = "force-dynamic";
@@ -74,6 +75,16 @@ export default async function WheelPage() {
     ? null
     : ((md as any)?.draw_next_at ?? null);
 
+  // Actions déclenchantes non-avis (lecture tolérante si migration 0045 absente)
+  const { data: ta, error: taErr } = await admin
+    .from("wheel_configs")
+    .select("trigger_actions")
+    .eq("business_id", business.id)
+    .maybeSingle();
+  const triggerActions: string[] = taErr
+    ? ["instagram"]
+    : sanitizeTriggerActions((ta as any)?.trigger_actions);
+
   return (
     <WheelEditor
       initialConfig={{
@@ -91,6 +102,7 @@ export default async function WheelPage() {
         monthly_draw_prize: monthlyDrawPrize,
         draw_period_days: drawPeriodDays,
         draw_next_at: drawNextAt,
+        trigger_actions: triggerActions,
       }}
       initialPrizes={prizes ?? []}
       initialLogoUrl={business.logo_url}

@@ -4,6 +4,11 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { labelIsLosing } from "@/lib/draw";
 import { deviceHash } from "@/lib/device-hash";
 import { buildTheme } from "@/lib/theme";
+import {
+  sanitizeTriggerActions,
+  reviewCtaHref,
+  type TriggerAction,
+} from "@/lib/wheel";
 
 type Prize = {
   id: string;
@@ -26,6 +31,7 @@ type Config = {
   review_enabled?: boolean | null;
   loyalty_enabled?: boolean | null;
   game_type?: string | null;
+  trigger_actions?: unknown;
 };
 
 type GameType = "wheel" | "scratch" | "slot";
@@ -181,7 +187,9 @@ function FloatingDecor({
 }
 
 type Played = Record<string, { label: string; code: string }>;
-type PlayType = "instagram" | "review";
+// Un tour = une action déclenchante non-avis. L'avis (`review`) n'apparaît
+// jamais ici : il ne débloque plus aucun tour.
+type PlayType = TriggerAction;
 type Screen = "rules" | "hub" | "spin" | "prize" | "done";
 
 const FONT =
@@ -227,28 +235,58 @@ function InstagramGlyph({ size = 26 }: { size?: number }) {
   );
 }
 
-function GoogleGlyph({ size = 24 }: { size?: number }) {
-  return (
-    <svg viewBox="0 0 48 48" width={size} height={size} aria-hidden="true">
-      <path
-        fill="#4285F4"
-        d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z"
-      />
-      <path
-        fill="#34A853"
-        d="M24 46c5.94 0 10.92-1.97 14.56-5.33l-7.11-5.52c-1.97 1.32-4.49 2.1-7.45 2.1-5.73 0-10.58-3.87-12.31-9.07H4.34v5.7C7.96 41.07 15.4 46 24 46z"
-      />
-      <path
-        fill="#FBBC05"
-        d="M11.69 28.18C11.25 26.86 11 25.45 11 24s.25-2.86.69-4.18v-5.7H4.34C2.85 17.09 2 20.45 2 24s.85 6.91 2.34 9.88l7.35-5.7z"
-      />
-      <path
-        fill="#EA4335"
-        d="M24 10.75c3.23 0 6.13 1.11 8.41 3.29l6.31-6.31C34.91 4.18 29.93 2 24 2 15.4 2 7.96 6.93 4.34 14.12l7.35 5.7c1.73-5.2 6.58-9.07 12.31-9.07z"
-      />
-    </svg>
-  );
-}
+/**
+ * Registre des actions déclenchantes (non-avis). Clés = `TRIGGER_ACTIONS` :
+ * unique source de vérité pour le HUB, le badge du tour et le récap final.
+ * Ajouter une action = ajouter une entrée ici (pas de bloc codé en dur ailleurs).
+ *  - `url(config, slug)` : lien ouvert au clic (confiance « au clic ») ;
+ *    `instagram` → `config.instagram_url`, `loyalty` → `/${slug}/fidelite`,
+ *    `optin` → aucun lien.
+ *  - `glyph(size)` : icône (HUB ~26px, badge 15px).
+ */
+type ActionMeta = {
+  cls: string;
+  hubTitle: string;
+  badge: string;
+  recap: string;
+  glyph: (size?: number) => React.ReactNode;
+  url: (config: Config, slug: string) => string | null;
+};
+
+const ACTIONS: Record<TriggerAction, ActionMeta> = {
+  instagram: {
+    cls: "insta",
+    hubTitle: "Suivre sur Instagram",
+    badge: "Tour Instagram",
+    recap: "📸 Suivi Instagram",
+    glyph: (size) => <InstagramGlyph size={size ?? 26} />,
+    url: (config) => config.instagram_url,
+  },
+  loyalty: {
+    cls: "loyalty",
+    hubTitle: "Prendre la carte de fidélité",
+    badge: "Tour Fidélité",
+    recap: "🎟️ Carte de fidélité",
+    glyph: (size) => (
+      <span style={{ fontSize: size ?? 26, lineHeight: 1 }} aria-hidden="true">
+        🎟️
+      </span>
+    ),
+    url: (_config, slug) => `/${slug}/fidelite`,
+  },
+  optin: {
+    cls: "optin",
+    hubTitle: "Recevoir les offres par e-mail",
+    badge: "Tour Offres",
+    recap: "📧 Offres par e-mail",
+    glyph: (size) => (
+      <span style={{ fontSize: size ?? 26, lineHeight: 1 }} aria-hidden="true">
+        📧
+      </span>
+    ),
+    url: () => null,
+  },
+};
 
 /** Carte à gratter : un voile métallisé que l'on efface au doigt. */
 function ScratchCard({
@@ -398,15 +436,15 @@ export default function Game({
   decorEmojis?: string;
   drawPrize?: string;
 }) {
-  // Canaux proposés par le commerçant (au moins un). Rétro-compatible :
-  // une valeur absente/vraie = canal actif.
-  const channels = (["instagram", "review"] as PlayType[]).filter((k) =>
-    k === "instagram"
-      ? config.instagram_enabled !== false
-      : config.review_enabled !== false
-  );
-  const enabledChannels = channels.length > 0 ? channels : (["instagram", "review"] as PlayType[]);
-  const totalTurns = enabledChannels.length;
+  // Tours du jeu = actions déclenchantes non-avis configurées par le commerçant
+  // (⊆ {instagram, loyalty, optin}). Lecture tolérante : `sanitizeTriggerActions`
+  // filtre/replie sur `["instagram"]` si absent, vide ou invalide. L'avis n'est
+  // jamais une action déclenchante.
+  const enabledActions = sanitizeTriggerActions(config.trigger_actions);
+  const totalTurns = enabledActions.length;
+
+  // CTA avis Google neutre (facultatif, non récompensé) : URL sûre ou null.
+  const reviewHref = reviewCtaHref(config);
 
   // Jeu choisi par le commerçant (roue par défaut)
   const gameType: GameType =
@@ -414,9 +452,13 @@ export default function Game({
       ? config.game_type
       : "wheel";
   const T = GAME_TEXTS[gameType];
+  // Nom du tour au pluriel dérivé de GAME_TEXTS (« tours de roue », « cartes à
+  // gratter », « parties ») pour libeller un nombre quelconque de chances.
+  const turnNoun = T.two.replace(/^\d+\s*/, "");
+  const turnsLabel = totalTurns === 1 ? T.one : `${totalTurns} ${turnNoun}`;
 
   const allDone =
-    !preview && enabledChannels.every((k) => initialPlayed[k] != null);
+    !preview && enabledActions.every((k) => initialPlayed[k] != null);
   const [screen, setScreen] = useState<Screen>(allDone ? "done" : "rules");
   const [played, setPlayed] = useState<Played>(initialPlayed);
   const [current, setCurrent] = useState<PlayType | null>(null);
@@ -510,7 +552,7 @@ export default function Game({
         // Le cookie (initialPlayed) reste prioritaire sur l'empreinte.
         setPlayed((prev) => ({ ...recovered, ...prev }));
         if (
-          enabledChannels.every(
+          enabledActions.every(
             (k) => recovered[k] != null || initialPlayed[k] != null
           )
         ) {
@@ -548,7 +590,7 @@ export default function Game({
   const confettiRef = useRef<HTMLCanvasElement | null>(null);
   const rotRef = useRef(0);
 
-  const usedCount = enabledChannels.filter((k) => played[k]).length;
+  const usedCount = enabledActions.filter((k) => played[k]).length;
 
   // ---------- Wheel drawing ----------
   const draw = useCallback(
@@ -672,9 +714,9 @@ export default function Game({
     if (!preview && played[kind]) return;
     setError(null);
     setCurrent(kind);
-    // en mode test, on n'ouvre pas les liens (Instagram/Google)
+    // en mode test, on n'ouvre pas les liens de l'action
     if (!preview) {
-      const url = kind === "instagram" ? config.instagram_url : config.review_url;
+      const url = ACTIONS[kind].url(config, slug);
       if (url) {
         try {
           window.open(url, "_blank", "noopener");
@@ -938,19 +980,15 @@ export default function Game({
                 <span className="accent">régalez-vous&nbsp;!</span>
               </h1>
               <p className="sub">
-                {totalTurns === 2 ? (
+                {totalTurns > 1 ? (
                   <>
-                    Vous avez droit à <b>{T.two}</b> : une chance pour un suivi
-                    Instagram, une pour un avis Google. À chaque fois, un cadeau
-                    à gagner.
+                    Vous avez droit à <b>{turnsLabel}</b> : une chance par action
+                    réalisée. À chaque fois, un cadeau à gagner.
                   </>
                 ) : (
                   <>
-                    Vous avez droit à <b>{T.one}</b>{" "}
-                    {enabledChannels[0] === "instagram"
-                      ? "pour un suivi Instagram"
-                      : "pour un avis Google"}
-                    . Un cadeau à gagner&nbsp;!
+                    Vous avez droit à <b>{T.one}</b> pour l'action proposée. Un
+                    cadeau à gagner&nbsp;!
                   </>
                 )}
               </p>
@@ -958,14 +996,10 @@ export default function Game({
                 <div className="rule">
                   <div className="num">1</div>
                   <div className="txt">
-                    {totalTurns === 2 ? (
-                      <>
-                        <b>Suivez-nous</b> <span>ou laissez un avis</span>
-                      </>
-                    ) : enabledChannels[0] === "instagram" ? (
-                      <b>Suivez-nous sur Instagram</b>
+                    {totalTurns > 1 ? (
+                      <b>Réalisez les actions proposées</b>
                     ) : (
-                      <b>Laissez un avis Google</b>
+                      <b>Réalisez l'action proposée</b>
                     )}
                   </div>
                 </div>
@@ -1003,9 +1037,9 @@ export default function Game({
           {screen === "hub" && (
             <section className="screen active">
               <h1>
-                {totalTurns === 2 ? (
+                {totalTurns > 1 ? (
                   <>
-                    Vos <span className="accent">2 chances</span>
+                    Vos <span className="accent">{totalTurns} chances</span>
                   </>
                 ) : (
                   <>
@@ -1014,7 +1048,7 @@ export default function Game({
                 )}
               </h1>
               <p className="sub">
-                {totalTurns === 2
+                {totalTurns > 1
                   ? "Débloquez chaque chance en réalisant l'action. Chacune ne peut être jouée qu'une fois."
                   : `Réalisez l'action pour débloquer ${T.one}.`}
               </p>
@@ -1023,42 +1057,27 @@ export default function Game({
                 &nbsp;/&nbsp;{totalTurns}
               </div>
               <div className="chances">
-                {enabledChannels.includes("instagram") && (
-                  <button
-                    className={`chance insta${played.instagram ? " used" : ""}`}
-                    onClick={() => startPlay("instagram")}
-                    disabled={!!played.instagram}
-                  >
-                    <div className="ic">
-                      <InstagramGlyph />
-                    </div>
-                    <div className="body">
-                      <div className="t">Suivre sur Instagram</div>
-                      <div className="d">{T.offered}</div>
-                    </div>
-                    <div className={`state ${played.instagram ? "done" : "todo"}`}>
-                      {played.instagram ? "✓ Fait" : "Jouer"}
-                    </div>
-                  </button>
-                )}
-                {enabledChannels.includes("review") && (
-                  <button
-                    className={`chance review${played.review ? " used" : ""}`}
-                    onClick={() => startPlay("review")}
-                    disabled={!!played.review}
-                  >
-                    <div className="ic google">
-                      <GoogleGlyph />
-                    </div>
-                    <div className="body">
-                      <div className="t">Laisser un avis Google</div>
-                      <div className="d">{T.offered}</div>
-                    </div>
-                    <div className={`state ${played.review ? "done" : "todo"}`}>
-                      {played.review ? "✓ Fait" : "Jouer"}
-                    </div>
-                  </button>
-                )}
+                {enabledActions.map((k) => {
+                  const a = ACTIONS[k];
+                  const done = !!played[k];
+                  return (
+                    <button
+                      key={k}
+                      className={`chance ${a.cls}${done ? " used" : ""}`}
+                      onClick={() => startPlay(k)}
+                      disabled={done}
+                    >
+                      <div className="ic">{a.glyph()}</div>
+                      <div className="body">
+                        <div className="t">{a.hubTitle}</div>
+                        <div className="d">{T.offered}</div>
+                      </div>
+                      <div className={`state ${done ? "done" : "todo"}`}>
+                        {done ? "✓ Fait" : "Jouer"}
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </section>
           )}
@@ -1067,14 +1086,10 @@ export default function Game({
           {screen === "spin" && (
             <section className="screen active">
               <div className="center">
-                <span className={`badge ${current}`}>
-                  {current === "instagram" ? (
+                <span className={`badge ${current ?? ""}`}>
+                  {current && (
                     <>
-                      <InstagramGlyph size={15} /> Tour Instagram
-                    </>
-                  ) : (
-                    <>
-                      <GoogleGlyph size={15} /> Tour Avis Google
+                      {ACTIONS[current].glyph(15)} {ACTIONS[current].badge}
                     </>
                   )}
                 </span>
@@ -1254,7 +1269,7 @@ export default function Game({
                     "Le cadeau n'est pas conditionné à la note laissée."}
                 </p>
                 <button className="btn" onClick={afterPrize}>
-                  {usedCount >= 2 ? "Voir mes gains" : "Continuer"}
+                  {usedCount >= totalTurns ? "Voir mes gains" : "Continuer"}
                 </button>
               </div>
             </section>
@@ -1267,18 +1282,13 @@ export default function Game({
                 <div className="big">🎉</div>
                 <h2>Vous avez tout joué&nbsp;!</h2>
                 <p>
-                  {totalTurns === 2
-                    ? "Vos 2 chances ont été utilisées."
+                  {totalTurns > 1
+                    ? `Vos ${totalTurns} chances ont été utilisées.`
                     : "Votre chance a été utilisée."}{" "}
                   Merci de votre soutien&nbsp;❤️
                 </p>
                 <div className="recap">
-                  {(
-                    [
-                      ["instagram", "📸 Suivi Instagram"],
-                      ["review", "★ Avis Google"],
-                    ] as [PlayType, string][]
-                  ).map(([k, label]) =>
+                  {enabledActions.map((k) =>
                     played[k] ? (
                       <div className="row" key={k}>
                         <div className="e">
@@ -1287,7 +1297,7 @@ export default function Game({
                         <div className="l">
                           <b>{played[k].label}</b>
                           <small>
-                            {label}
+                            {ACTIONS[k].recap}
                             {played[k].code ? ` · code ${played[k].code}` : ""}
                           </small>
                         </div>
@@ -1316,6 +1326,22 @@ export default function Game({
         {config.loyalty_enabled && (
           <a className="fid-link" href={`/${slug}/fidelite`}>
             🎟️ Ma carte de fidélité
+          </a>
+        )}
+        {reviewHref && (
+          <a
+            className="review-cta"
+            href={reviewHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Laisser un avis Google — facultatif, sans incidence sur vos cadeaux"
+          >
+            <span className="rc-main">
+              <span aria-hidden="true">★ </span>Laisser un avis Google
+            </span>
+            <span className="rc-sub">
+              Facultatif — sans incidence sur vos cadeaux
+            </span>
           </a>
         )}
         {orderEnabled && (

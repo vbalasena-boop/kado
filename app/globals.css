@@ -364,6 +364,14 @@ h1 .accent {
   color: #fff;
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
 }
+.chance.loyalty .ic {
+  background: linear-gradient(135deg, #ffb347, #ff5d73);
+  color: #fff;
+}
+.chance.optin .ic {
+  background: linear-gradient(135deg, #4fc3f7, #8b6cff);
+  color: #fff;
+}
 .chance .ic svg {
   display: block;
 }
@@ -437,6 +445,14 @@ h1 .accent {
   background: #fff;
   color: #3c4043;
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+.badge.loyalty {
+  background: linear-gradient(135deg, #ffb347, #ff5d73);
+  color: #fff;
+}
+.badge.optin {
+  background: linear-gradient(135deg, #4fc3f7, #8b6cff);
+  color: #fff;
 }
 .badge svg {
   display: block;
@@ -840,6 +856,55 @@ canvas#confetti {
   font-size: 17px;
   margin-bottom: 14px;
   color: #241b3d;
+}
+/* Bandeau informatif ambré (ex : migration avis — Story 9.4) */
+.dash-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  color: #92400e;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.dash-notice-txt {
+  flex: 1 1 260px;
+}
+.dash-notice-txt b {
+  color: #78350f;
+}
+.dash-notice-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.dash-notice-cta {
+  font-weight: 700;
+  color: #b45309;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.dash-notice-cta:hover {
+  text-decoration: underline;
+}
+.dash-notice-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  padding: 4px;
+  color: #b45309;
+  border-radius: 8px;
+}
+.dash-notice-close:hover {
+  background: #fef3c7;
 }
 .muted {
   color: #8a7fa6;
@@ -3317,6 +3382,34 @@ canvas#confetti {
   transform: translateY(-1px);
 }
 .fid-link:active { transform: scale(0.98); }
+.review-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+  color: var(--cream);
+  text-decoration: none;
+  padding: 12px;
+  margin-top: 16px;
+  background: var(--surface-glass, rgba(255, 255, 255, 0.06));
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--stroke);
+  border-radius: 12px;
+  transition: transform 0.12s, background 0.2s;
+}
+.review-cta:hover {
+  background: var(--surface-glass-2, rgba(255, 255, 255, 0.1));
+  transform: translateY(-1px);
+}
+.review-cta:active { transform: scale(0.98); }
+.review-cta:focus-visible {
+  outline: 2px solid var(--cream);
+  outline-offset: 2px;
+}
+.review-cta .rc-main { font-weight: 700; font-size: 15px; }
+.review-cta .rc-sub { font-size: 12px; opacity: 0.75; font-weight: 500; }
 
 /* Boucle produit : CTA discret vers Kado pour les joueurs qui sont
    eux-mêmes commerçants. Volontairement en retrait (pointillés, opacité)

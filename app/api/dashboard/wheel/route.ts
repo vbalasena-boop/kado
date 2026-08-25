@@ -3,6 +3,7 @@ import { revalidateTag } from "next/cache";
 import { getMyBusiness } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { insertPrizes } from "@/lib/prizes";
+import { sanitizeTriggerActions } from "@/lib/wheel";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +42,7 @@ export async function POST(req: NextRequest) {
       monthly_draw_prize?: string;
       draw_period_days?: number;
       draw_next_at?: string | null;
+      trigger_actions?: unknown;
     };
     prizes?: {
       label: string;
@@ -185,6 +187,18 @@ export async function POST(req: NextRequest) {
       .eq("business_id", business.id);
   } catch {
     /* colonnes absentes : ignoré */
+  }
+
+  // Actions déclenchantes (non-avis) : colonne récente (0045), mise à jour
+  // isolée et tolérante (si la colonne manque, on ignore sans casser le reste).
+  // 9.1 ne fait que persister la config ; le jeu n'est pas modifié.
+  try {
+    await admin
+      .from("wheel_configs")
+      .update({ trigger_actions: sanitizeTriggerActions(cfg.trigger_actions) })
+      .eq("business_id", business.id);
+  } catch {
+    /* colonne absente : ignoré */
   }
 
   // remplace la liste des cadeaux

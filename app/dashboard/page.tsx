@@ -3,6 +3,8 @@ import { getMyBusiness, hasModule } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { Icon } from "@/components/icons";
 import { labelIsLosing } from "@/lib/draw";
+import { avisMigrationNoticeNeeded } from "@/lib/wheel";
+import AvisMigrationBanner from "./AvisMigrationBanner";
 import ReferralPanel from "@/components/ReferralPanel";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +26,7 @@ export default async function DashboardHome() {
       .eq("business_id", business.id),
     admin
       .from("wheel_configs")
-      .select("instagram_url, review_url, loyalty_enabled")
+      .select("instagram_url, review_url, review_enabled, loyalty_enabled")
       .eq("business_id", business.id)
       .maybeSingle(),
   ]);
@@ -155,6 +157,15 @@ export default async function DashboardHome() {
           {PLAN_LABEL[business.plan] || business.plan}
         </span>
       </p>
+
+      {/* Bannière migration avis : uniquement aux commerçants qui ont
+          RÉELLEMENT utilisé l'avis pour débloquer un tour (review > 0), qui ont
+          la roue, et dont l'avis était actif. Le gate `review > 0` cible la
+          cohorte pré-changement et s'auto-éteint (plus aucun tour `review`
+          n'est créé depuis 9.2) → les futurs commerçants ne le voient jamais. */}
+      {showRoue && cfg && review > 0 && avisMigrationNoticeNeeded(cfg) && (
+        <AvisMigrationBanner businessId={business.id} />
+      )}
 
       <ReferralPanel businessId={business.id} slug={business.slug} />
 

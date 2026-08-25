@@ -4,11 +4,14 @@ import { getAdminClient } from "@/lib/supabase/admin";
 import { getOrCreatePlayerId } from "@/lib/player";
 import { weightedIndex, generateCode, prizeIsLosing } from "@/lib/draw";
 import { sendPushToBusiness } from "@/lib/push";
+import { isTriggerActionAllowed } from "@/lib/wheel";
 import { isValidDeviceHash } from "@/lib/device-hash";
 
 export const dynamic = "force-dynamic";
 
-const VALID_TYPES = ["instagram", "review"] as const;
+// L'avis (`review`) ne débloque plus jamais de tour : il est retiré des types
+// acceptés. Les tours sont désormais pilotés par `trigger_actions`.
+const VALID_TYPES = ["instagram", "loyalty", "optin"] as const;
 
 // Schéma permissif : la validation de playType (VALID_TYPES) reste dans le handler.
 const Body = z.object({
@@ -76,7 +79,7 @@ export const POST = publicRoute({
       }
     }
 
-    const [{ data: prizes }, { data: cfg }] = await Promise.all([
+    const [{ data: prizes }, { data: cfg }, taRes] = await Promise.all([
       supa
         .from("prizes")
         .select("id, label, emoji, weight, color, position, is_losing")
@@ -84,7 +87,15 @@ export const POST = publicRoute({
         .order("position", { ascending: true }),
       supa
         .from("wheel_configs")
-        .select("daily_prize_limit, instagram_enabled, review_enabled")
+        .select("daily_prize_limit")
+        .eq("business_id", biz.id)
+        .maybeSingle(),
+      // `trigger_actions` (colonne récente 0045) lue À PART : si elle manque, son
+      // erreur reste isolée et ne fait jamais perdre `daily_prize_limit` (plafond
+      // quotidien). Lecture tolérante → repli `["instagram"]` via la garde.
+      supa
+        .from("wheel_configs")
+        .select("trigger_actions")
         .eq("business_id", biz.id)
         .maybeSingle(),
     ]);
@@ -93,13 +104,12 @@ export const POST = publicRoute({
       return Response.json({ error: "no_prizes" }, { status: 409 });
     }
 
-    // Canal désactivé par le commerçant → tour non autorisé
-    const channelEnabled =
-      playType === "instagram"
-        ? cfg?.instagram_enabled !== false
-        : cfg?.review_enabled !== false;
-    if (!channelEnabled) {
-      return Response.json({ error: "channel_disabled" }, { status: 403 });
+    // Action non déclenchante (non configurée, ou avis) → tour non autorisé.
+    const triggerActions = taRes.error
+      ? undefined
+      : (taRes.data as any)?.trigger_actions;
+    if (!isTriggerActionAllowed(playType, triggerActions)) {
+      return Response.json({ error: "action_not_allowed" }, { status: 403 });
     }
 
     const isWin = (p: { is_losing?: boolean | null; label: string }) =>
@@ -164,6 +174,11 @@ export const POST = publicRoute({
           },
           { status: 409 }
         );
+      }
+      // 23514 = violation du CHECK play_type (migration 0046 pas encore
+      // appliquée) : ce type de tour n'est pas accepté → refus propre, pas un 500.
+      if ((error as any).code === "23514") {
+        return Response.json({ error: "action_not_allowed" }, { status: 403 });
       }
       return Response.json({ error: "db_error" }, { status: 500 });
     }
