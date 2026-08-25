@@ -4,6 +4,7 @@ import { getAdminClient } from "@/lib/supabase/admin";
 import { getOrCreatePlayerId } from "@/lib/player";
 import { weightedIndex, generateCode, prizeIsLosing } from "@/lib/draw";
 import { sendPushToBusiness } from "@/lib/push";
+import { isValidDeviceHash } from "@/lib/device-hash";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,7 @@ const VALID_TYPES = ["instagram", "review"] as const;
 const Body = z.object({
   slug: z.string().optional(),
   playType: z.string().optional(),
+  deviceHash: z.string().nullish(),
 });
 
 /**
@@ -45,6 +47,34 @@ export const POST = publicRoute({
     }
 
     const playerId = getOrCreatePlayerId();
+
+    // Empreinte d'appareil (verrou secondaire). On n'accepte qu'un hex SHA-256
+    // bien formé ; toute autre valeur est ignorée (repli sur le cookie seul).
+    const deviceHash = isValidDeviceHash(body.deviceHash) ? body.deviceHash : null;
+
+    // Cet APPAREIL a-t-il déjà joué ce type ? Attrape le rejeu en navigation
+    // privée / cookies vidés, que le cookie laisse passer. Vérification SOUPLE
+    // (SELECT) ; repli si la colonne device_hash n'existe pas encore (42703).
+    if (deviceHash) {
+      const { data: dup, error: dupErr } = await supa
+        .from("plays")
+        .select("prize_label, prize_code")
+        .eq("business_id", biz.id)
+        .eq("play_type", playType)
+        .eq("device_hash", deviceHash)
+        .limit(1)
+        .maybeSingle();
+      if (!dupErr && dup) {
+        return Response.json(
+          {
+            alreadyPlayed: true,
+            label: dup.prize_label ?? null,
+            code: dup.prize_code ?? null,
+          },
+          { status: 409 }
+        );
+      }
+    }
 
     const [{ data: prizes }, { data: cfg }] = await Promise.all([
       supa
@@ -106,11 +136,15 @@ export const POST = publicRoute({
       prize_label: prize.label,
       prize_code: code,
     };
-    // Instantané du caractère perdant au moment du tour (robuste à un renommage
-    // ultérieur du lot).
-    const { error } = await supa
+    // Instantané du caractère perdant au moment du tour + empreinte d'appareil.
+    // Repli si une colonne optionnelle (is_losing / device_hash) n'existe pas
+    // encore (migration non appliquée).
+    let { error } = await supa
       .from("plays")
-      .insert({ ...baseRow, is_losing: prizeIsLosing(prize) });
+      .insert({ ...baseRow, is_losing: prizeIsLosing(prize), device_hash: deviceHash });
+    if (error && (error as { code?: string }).code === "42703") {
+      ({ error } = await supa.from("plays").insert(baseRow));
+    }
 
     if (error) {
       // 23505 = violation de contrainte unique => ce type de tour est déjà joué

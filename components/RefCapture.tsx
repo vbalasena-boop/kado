@@ -3,18 +3,34 @@
 import { useEffect } from "react";
 
 /**
- * Capture le code vendeur (?ref=paul) sur n'importe quelle page publique et
- * le mémorise 90 jours. L'inscription (API onboarding) lira ce cookie pour
- * attribuer le client au vendeur. Dernier lien cliqué = vendeur crédité.
+ * Capture deux attributions sur n'importe quelle page publique :
+ *  - `?ref=paul`  → cookie `kado-aff` (vendeur/affilié), 90 j, dernier lien gagne.
+ *  - `?parrain=cafe-lumiere` → cookie `kado-parrain` (parrainage commerçant),
+ *    30 j, PREMIER lien gagne (on n'écrase pas un parrain déjà mémorisé).
+ * L'inscription (API onboarding) lit ces cookies pour attribuer le client.
  */
 export default function RefCapture() {
   useEffect(() => {
     try {
-      const ref = new URLSearchParams(window.location.search).get("ref");
-      if (!ref) return;
-      const clean = ref.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "");
-      if (!clean || clean.length > 40) return;
-      document.cookie = `kado-aff=${clean}; path=/; max-age=${90 * 86400}; samesite=lax`;
+      const params = new URLSearchParams(window.location.search);
+
+      // Affilié / vendeur — dernier lien cliqué gagne.
+      const ref = params.get("ref");
+      if (ref) {
+        const clean = ref.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "");
+        if (clean && clean.length <= 40) {
+          document.cookie = `kado-aff=${clean}; path=/; max-age=${90 * 86400}; samesite=lax`;
+        }
+      }
+
+      // Parrainage commerçant — premier parrain mémorisé gagne.
+      const parrain = params.get("parrain");
+      if (parrain && !/(?:^|; )kado-parrain=/.test(document.cookie)) {
+        const cleanP = parrain.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "");
+        if (cleanP && cleanP.length <= 60) {
+          document.cookie = `kado-parrain=${cleanP}; path=/; max-age=${30 * 86400}; samesite=lax`;
+        }
+      }
     } catch {
       /* décoratif : ne doit jamais casser une page */
     }

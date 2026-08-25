@@ -3,6 +3,7 @@ import { getMyBusiness, hasModule } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { Icon } from "@/components/icons";
 import { labelIsLosing } from "@/lib/draw";
+import ReferralPanel from "@/components/ReferralPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -154,6 +155,8 @@ export default async function DashboardHome() {
           {PLAN_LABEL[business.plan] || business.plan}
         </span>
       </p>
+
+      <ReferralPanel businessId={business.id} slug={business.slug} />
 
       {isComptoir && (
         <>

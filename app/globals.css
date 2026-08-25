@@ -3318,6 +3318,26 @@ canvas#confetti {
 }
 .fid-link:active { transform: scale(0.98); }
 
+/* Boucle produit : CTA discret vers Kado pour les joueurs qui sont
+   eux-mêmes commerçants. Volontairement en retrait (pointillés, opacité)
+   pour se lire "propulsé par Kado", pas comme une pub du commerce hôte. */
+.merchant-loop-cta {
+  display: block;
+  text-align: center;
+  margin-top: 14px;
+  padding: 10px 12px;
+  color: var(--cream);
+  opacity: 0.72;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px dashed var(--stroke);
+  border-radius: 12px;
+  transition: opacity 0.2s, transform 0.12s;
+}
+.merchant-loop-cta:hover { opacity: 1; transform: translateY(-1px); }
+.merchant-loop-cta:active { transform: scale(0.98); }
+
 /* ===== Valider en caisse — onglets + panneau fidélité ===== */
 .val-tabs {
   display: flex;
