@@ -22,7 +22,32 @@ export default async function ProspectionPage() {
     .order("score", { ascending: false, nullsFirst: false })
     .limit(500);
 
-  const prospects: ProspectRow[] = error ? [] : ((data ?? []) as ProspectRow[]);
+  const base: ProspectRow[] = error ? [] : ((data ?? []) as ProspectRow[]);
+
+  // État d'envoi de l'email par prospect (sent > approved > draft), pour un
+  // suivi clair par canal dans la liste. Le DM est déduit du statut du prospect.
+  const emailStateById: Record<string, "sent" | "approved" | "draft"> = {};
+  if (!error && base.length > 0) {
+    const ids = base.map((p) => p.id);
+    const { data: emsgs } = await admin
+      .from("prospect_messages")
+      .select("prospect_id, status")
+      .eq("channel", "email")
+      .in("prospect_id", ids);
+    const rank: Record<string, number> = { sent: 3, approved: 2, draft: 1 };
+    for (const m of emsgs ?? []) {
+      const st = m.status as string;
+      if (!(st in rank)) continue;
+      const pid = m.prospect_id as string;
+      const cur = emailStateById[pid];
+      if (!cur || rank[st] > rank[cur]) emailStateById[pid] = st as "sent" | "approved" | "draft";
+    }
+  }
+
+  const prospects: ProspectRow[] = base.map((p) => ({
+    ...p,
+    emailState: emailStateById[p.id] ?? null,
+  }));
 
   // --- Indicateurs (E2) ---
   let stats: Stats | null = null;
