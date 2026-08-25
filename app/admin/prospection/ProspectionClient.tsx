@@ -195,6 +195,21 @@ export default function ProspectionClient({
     }
   }
 
+  async function approveAll() {
+    if (!window.confirm("Générer + approuver l'email de tous les prospects avec un contact ?")) return;
+    setMessage(null);
+    try {
+      const res = await fetch("/api/admin/prospection/approve-all", { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        setMessage(`${data.approved} email(s) approuvé(s) et ajoutés à la file d'envoi.`);
+        router.refresh();
+      } else setMessage(`Erreur : ${data.error ?? "inconnue"}`);
+    } catch {
+      setMessage("Erreur réseau (approbation).");
+    }
+  }
+
   async function regenerateAll() {
     if (!window.confirm("Régénérer les messages (brouillons) de tous les prospects ?")) return;
     setMessage(null);
@@ -218,7 +233,9 @@ export default function ProspectionClient({
       if (res.ok) {
         setMessage(
           data.configured
-            ? `${data.matched} réponse(s) détectée(s) (${data.scanned} expéditeurs analysés).`
+            ? `${data.matched} réponse(s) détectée(s)` +
+                (data.bounced ? `, ${data.bounced} bounce(s) supprimé(s)` : "") +
+                ` (${data.scanned} expéditeurs analysés).`
             : "IMAP non configuré : ajoute les variables PROSPECT_IMAP_* / SMTP dans Vercel."
         );
         router.refresh();
@@ -396,6 +413,14 @@ export default function ProspectionClient({
             title="Efface les emails/Instagram invalides déjà enregistrés (plateformes, exemples)"
           >
             Revérifier les contacts
+          </button>
+          <button
+            onClick={approveAll}
+            className="dash-signout"
+            style={{ color: "#2e7d32" }}
+            title="Génère + approuve l'email de tous les prospects avec un contact (remplit la file)"
+          >
+            ✅ Approuver tous les emails
           </button>
           <button
             onClick={sendNow}

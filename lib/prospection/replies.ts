@@ -16,6 +16,7 @@ import { NON_CONTACTABLE_STATUSES, type ProspectStatus } from "@/lib/prospection
 export interface ReplySummary {
   scanned: number;
   matched: number;
+  bounced: number;
   configured: boolean;
 }
 
@@ -27,10 +28,19 @@ function imapConfig() {
   return { host, user, pass, port };
 }
 
-/** Récupère les adresses expéditrices des emails reçus depuis N jours. */
-async function recentSenders(sinceDays: number): Promise<Set<string>> {
+const EMAIL_RE = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/gi;
+const DAEMON_RE = /(mailer-daemon|postmaster|mail delivery|delivery status|no-?reply)/i;
+
+interface ScanResult {
+  senders: Set<string>; // expéditeurs "normaux" (réponses potentielles)
+  bounced: Set<string>; // adresses en échec (extraites des rapports de bounce)
+}
+
+/** Scanne l'INBOX : expéditeurs de réponses + adresses en échec (bounces). */
+async function scanInbox(sinceDays: number): Promise<ScanResult> {
   const { host, user, pass, port } = imapConfig();
   const senders = new Set<string>();
+  const bounced = new Set<string>();
   const client = new ImapFlow({
     host,
     port,
@@ -42,15 +52,28 @@ async function recentSenders(sinceDays: number): Promise<Set<string>> {
   const lock = await client.getMailboxLock("INBOX");
   try {
     const since = new Date(Date.now() - sinceDays * 86_400_000);
-    for await (const msg of client.fetch({ since }, { envelope: true })) {
-      const from = msg.envelope?.from?.[0]?.address;
-      if (from) senders.add(from.toLowerCase());
+    for await (const msg of client.fetch({ since }, { envelope: true, source: true })) {
+      const from = msg.envelope?.from?.[0]?.address?.toLowerCase() ?? "";
+      const subject = msg.envelope?.subject ?? "";
+      const isBounce = DAEMON_RE.test(from) || DAEMON_RE.test(subject);
+      if (isBounce) {
+        // Rapport de non-remise : on extrait les adresses en échec du corps.
+        const body = msg.source ? msg.source.toString("utf8") : "";
+        for (const m of body.matchAll(EMAIL_RE)) {
+          const e = m[0].toLowerCase();
+          // Ignore l'adresse d'envoi et les adresses techniques.
+          if (e === user.toLowerCase() || DAEMON_RE.test(e)) continue;
+          bounced.add(e);
+        }
+      } else if (from) {
+        senders.add(from);
+      }
     }
   } finally {
     lock.release();
     await client.logout().catch(() => {});
   }
-  return senders;
+  return { senders, bounced };
 }
 
 /**
@@ -60,41 +83,55 @@ async function recentSenders(sinceDays: number): Promise<Set<string>> {
 export async function runReplyDetection(sinceDays = 14): Promise<ReplySummary> {
   const { host, user, pass } = imapConfig();
   if (!host || !user || !pass) {
-    return { scanned: 0, matched: 0, configured: false };
+    return { scanned: 0, matched: 0, bounced: 0, configured: false };
   }
 
-  let senders: Set<string>;
+  let scan: ScanResult;
   try {
-    senders = await recentSenders(sinceDays);
+    scan = await scanInbox(sinceDays);
   } catch (err) {
     reportError(err, { where: "prospection.runReplyDetection" });
-    return { scanned: 0, matched: 0, configured: true };
+    return { scanned: 0, matched: 0, bounced: 0, configured: true };
   }
 
   const db = getAdminClient();
-  // Prospects déjà contactés (ont un email), pas encore marqués répondu/exclus.
   const { data } = await db
     .from("prospects")
     .select("id, email, status")
     .not("email", "is", null)
     .limit(5000);
+  const prospects = (data ?? []) as { id: string; email: string; status: ProspectStatus }[];
 
+  const now = new Date().toISOString();
   let matched = 0;
-  for (const p of data ?? []) {
-    const email = (p.email as string).toLowerCase();
-    if (!senders.has(email)) continue;
-    if (NON_CONTACTABLE_STATUSES.includes(p.status as ProspectStatus)) continue;
+  let bounced = 0;
 
-    const { error } = await db
-      .from("prospects")
-      .update({ status: "replied", updated_at: new Date().toISOString() })
-      .eq("id", p.id);
-    if (error) continue;
-    matched++;
-    await db
-      .from("prospect_events")
-      .insert({ prospect_id: p.id, type: "email_replied", meta: { auto: true } });
+  for (const p of prospects) {
+    const email = p.email.toLowerCase();
+
+    // 1) Bounce → suppression (ne plus jamais contacter) + statut exclu.
+    if (scan.bounced.has(email)) {
+      await db.from("suppression_list").upsert({ email, reason: "bounced" }, { onConflict: "email" });
+      await db
+        .from("prospects")
+        .update({ status: "excluded", exclude_reason: "email invalide (bounce)", updated_at: now })
+        .eq("id", p.id);
+      await db.from("prospect_events").insert({ prospect_id: p.id, type: "email_bounced", meta: { auto: true } });
+      bounced++;
+      continue;
+    }
+
+    // 2) Réponse → statut "A répondu".
+    if (scan.senders.has(email) && !NON_CONTACTABLE_STATUSES.includes(p.status)) {
+      const { error } = await db
+        .from("prospects")
+        .update({ status: "replied", updated_at: now })
+        .eq("id", p.id);
+      if (error) continue;
+      matched++;
+      await db.from("prospect_events").insert({ prospect_id: p.id, type: "email_replied", meta: { auto: true } });
+    }
   }
 
-  return { scanned: senders.size, matched, configured: true };
+  return { scanned: scan.senders.size, matched, bounced, configured: true };
 }
