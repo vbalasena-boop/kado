@@ -157,7 +157,8 @@ export default function ProspectionClient({
         setMessage(`Erreur : ${data.error ?? "inconnue"}`);
       } else {
         setMessage(
-          `${data.enriched} fiche(s) enrichie(s) sur ${data.scanned} analysée(s) (email / Instagram).`
+          `${data.enriched} fiche(s) enrichie(s) sur ${data.scanned} analysée(s) — ` +
+            `${data.emails_found ?? 0} email(s), ${data.instagram_found ?? 0} Instagram trouvé(s).`
         );
         router.refresh();
       }
