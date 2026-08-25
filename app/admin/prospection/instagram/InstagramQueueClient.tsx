@@ -13,13 +13,22 @@ export type DmItem = {
   dm: string;
 };
 
-export default function InstagramQueueClient({ items }: { items: DmItem[] }) {
+export default function InstagramQueueClient({
+  items,
+  dmToday,
+  dmCap,
+}: {
+  items: DmItem[];
+  dmToday: number;
+  dmCap: number;
+}) {
   const router = useRouter();
   const [copied, setCopied] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
   const pending = items.filter((i) => i.status !== "dm_sent");
   const sent = items.filter((i) => i.status === "dm_sent");
+  const quotaReached = dmToday >= dmCap;
 
   async function copy(item: DmItem) {
     try {
@@ -57,8 +66,29 @@ export default function InstagramQueueClient({ items }: { items: DmItem[] }) {
       </p>
 
       <p style={{ fontSize: 14, color: "#555" }}>
-        {pending.length} à envoyer · {sent.length} envoyé(s)
+        {pending.length} à envoyer · {sent.length} envoyé(s) ·{" "}
+        <b style={{ color: quotaReached ? "#c0392b" : "#2e7d32" }}>
+          {dmToday}/{dmCap} aujourd'hui
+        </b>
       </p>
+
+      {quotaReached && (
+        <div
+          style={{
+            background: "#fff4e5",
+            border: "1px solid #ffd8a8",
+            borderRadius: 8,
+            padding: "10px 12px",
+            margin: "10px 0",
+            fontSize: 14,
+            color: "#8a5a00",
+          }}
+        >
+          ✋ <b>Quota du jour atteint ({dmToday}/{dmCap}).</b> Mieux vaut s'arrêter
+          là aujourd'hui : envoyer trop de DM à froid d'un coup peut faire bloquer
+          ton compte Instagram. Reprends demain 🙂
+        </div>
+      )}
 
       {pending.length === 0 ? (
         <p style={{ color: "#666" }}>

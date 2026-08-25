@@ -56,5 +56,16 @@ export default async function InstagramQueuePage() {
         }),
     }));
 
-  return <InstagramQueueClient items={items} />;
+  // Quota DM du jour (story E1 / backlog AI-4) : envoi manuel, donc plafond
+  // « visible et guidé » — protège le compte Instagram d'un rythme trop élevé.
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+  const { count: dmToday } = await db
+    .from("prospect_events")
+    .select("*", { count: "exact", head: true })
+    .eq("type", "dm_sent")
+    .gte("created_at", startOfDay.toISOString());
+  const dmCap = Number(process.env.MAX_PROSPECT_DM_PER_DAY || 10);
+
+  return <InstagramQueueClient items={items} dmToday={dmToday ?? 0} dmCap={dmCap} />;
 }
