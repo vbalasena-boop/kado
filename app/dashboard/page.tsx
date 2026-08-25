@@ -5,6 +5,7 @@ import { Icon } from "@/components/icons";
 import { labelIsLosing } from "@/lib/draw";
 import { avisMigrationNoticeNeeded } from "@/lib/wheel";
 import AvisMigrationBanner from "./AvisMigrationBanner";
+import ReferralPanel from "@/components/ReferralPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -165,6 +166,8 @@ export default async function DashboardHome() {
       {showRoue && cfg && review > 0 && avisMigrationNoticeNeeded(cfg) && (
         <AvisMigrationBanner businessId={business.id} />
       )}
+
+      <ReferralPanel businessId={business.id} slug={business.slug} />
 
       {isComptoir && (
         <>

@@ -89,19 +89,41 @@ export const POST = publicRoute({
       await db.from("businesses").update({ phone }).eq("id", biz.id);
     }
 
-    // Parrainage commerçant : on relie le filleul à son parrain (tolérant)
-    const parrainSlug = (body.parrain || "").trim().toLowerCase();
+    // Parrainage commerçant : on relie le filleul à son parrain (tolérant).
+    // La source du parrain est le corps de la requête OU le cookie kado-parrain
+    // posé par RefCapture (lien /tarifs?parrain=<slug> depuis la roue).
+    const parrainSlug = (body.parrain || cookies().get("kado-parrain")?.value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]/g, "");
     if (parrainSlug && parrainSlug !== slug) {
       const { data: sponsor } = await db
         .from("businesses")
-        .select("id")
+        .select("id, phone")
         .eq("slug", parrainSlug)
         .maybeSingle();
       if (sponsor && sponsor.id !== biz.id) {
-        await db
-          .from("businesses")
-          .update({ referred_by: sponsor.id })
-          .eq("id", biz.id);
+        // Anti-fraude : on refuse l'attribution si parrain et filleul partagent
+        // le même téléphone. Le contrôle carte/client Stripe se fait plus tard,
+        // au versement (webhook). (Un même compte ne peut pas être son propre
+        // parrain : un utilisateur ne possède qu'un seul commerce.)
+        const samePhone = !!phone && !!sponsor.phone && phone === sponsor.phone;
+        if (samePhone) {
+          try {
+            await db.from("referral_blocks").insert({
+              filleul_business_id: biz.id,
+              parrain_slug: parrainSlug,
+              reason: "same_phone",
+            });
+          } catch {
+            /* table absente (migration 0042 non appliquée) : on ignore */
+          }
+        } else {
+          await db
+            .from("businesses")
+            .update({ referred_by: sponsor.id })
+            .eq("id", biz.id);
+        }
       }
     }
 

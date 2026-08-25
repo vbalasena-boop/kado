@@ -1,0 +1,24 @@
+{
+  "name": "kado-prospection",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Agent de prospection Kado : trouve des commerces, récupère leur e-mail, personnalise (Constat + Projection) et envoie 5 mails/jour.",
+  "scripts": {
+    "seed": "tsx src/cli.ts seed",
+    "send": "tsx src/cli.ts run",
+    "stats": "tsx src/cli.ts stats",
+    "list": "tsx src/cli.ts list",
+    "suppress": "tsx src/cli.ts suppress"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0",
+    "dotenv": "^16.4.5",
+    "resend": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.5.4"
+  }
+}

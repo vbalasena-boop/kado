@@ -1,0 +1,9 @@
+# ─── Cron d'exemple pour le VPS ─────────────────────────────────────────────
+# Édite ta crontab avec :   crontab -e
+# Adapte le chemin absolu et celui de npm (trouve-le avec :  which npm)
+#
+# Envoie les mails de prospection chaque jour ouvré (lun→ven) à 9h30 :
+30 9 * * 1-5 cd /chemin/vers/kado/tools/prospection && /usr/bin/npm run send >> prospection.log 2>&1
+#
+# (Le seeding reste manuel : lance `npm run seed -- "restaurant Lyon 6"`
+#  quand tu veux ajouter une ville / un secteur à la file d'attente.)

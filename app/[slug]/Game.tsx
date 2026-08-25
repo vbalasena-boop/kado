@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { labelIsLosing } from "@/lib/draw";
+import { deviceHash } from "@/lib/device-hash";
 import { buildTheme } from "@/lib/theme";
 import {
   sanitizeTriggerActions,
@@ -473,6 +474,9 @@ export default function Game({
   const [leadSent, setLeadSent] = useState(false);
   const [leadBusy, setLeadBusy] = useState(false);
   const [prizeQr, setPrizeQr] = useState<string | null>(null);
+  const [codeEmail, setCodeEmail] = useState("");
+  const [codeEmailSent, setCodeEmailSent] = useState(false);
+  const [codeEmailBusy, setCodeEmailBusy] = useState(false);
   // Machine à sous : contenu des 3 rouleaux
   const [reels, setReels] = useState<string[]>(["🎁", "⭐", "🍀"]);
   // Carte à gratter : lot en attente de révélation
@@ -484,6 +488,9 @@ export default function Game({
 
   useEffect(() => {
     let alive = true;
+    // Nouveau lot affiché → on réinitialise le formulaire "recevoir par e-mail".
+    setCodeEmailSent(false);
+    setCodeEmail("");
     if (prize && prize.code && !isNoWin(prize.label)) {
       import("qrcode")
         .then(({ default: QRCode }) =>
@@ -520,6 +527,62 @@ export default function Game({
       /* silencieux : la capture est facultative */
     } finally {
       setLeadBusy(false);
+    }
+  }
+
+  // Récupération par empreinte : si le cookie n'a pas révélé tous les tours
+  // (navigation privée / cookies vidés), on demande au serveur ce que CET
+  // appareil a déjà joué, et on réaffiche cadeaux + codes.
+  useEffect(() => {
+    if (preview || allDone) return;
+    let alive = true;
+    (async () => {
+      const fp = await deviceHash();
+      if (!fp || !alive) return;
+      try {
+        const res = await fetch("/api/my-plays", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ slug, deviceHash: fp }),
+        });
+        if (!res.ok || !alive) return;
+        const data = (await res.json()) as { played?: Played };
+        const recovered = data.played ?? {};
+        if (!alive || Object.keys(recovered).length === 0) return;
+        // Le cookie (initialPlayed) reste prioritaire sur l'empreinte.
+        setPlayed((prev) => ({ ...recovered, ...prev }));
+        if (
+          enabledActions.every(
+            (k) => recovered[k] != null || initialPlayed[k] != null
+          )
+        ) {
+          setScreen((s) => (s === "rules" ? "done" : s));
+        }
+      } catch {
+        /* silencieux : la récupération est un confort, pas un blocage */
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function emailMyCode(e: React.FormEvent) {
+    e.preventDefault();
+    if (!codeEmail.trim() || !prize?.code) return;
+    setCodeEmailBusy(true);
+    try {
+      const res = await fetch("/api/prize-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug, code: prize.code, email: codeEmail.trim() }),
+      });
+      if (res.ok) setCodeEmailSent(true);
+    } catch {
+      /* silencieux : l'envoi est facultatif */
+    } finally {
+      setCodeEmailBusy(false);
     }
   }
 
@@ -693,10 +756,13 @@ export default function Game({
     }
 
     try {
+      // Empreinte d'appareil : verrou secondaire qui survit à la navigation
+      // privée / au vidage des cookies (voir lib/device-hash.ts).
+      const fp = await deviceHash();
       const res = await fetch("/api/play", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug, playType: current }),
+        body: JSON.stringify({ slug, playType: current, deviceHash: fp }),
       });
       const data = await res.json();
 
@@ -1133,6 +1199,34 @@ export default function Game({
                         className="prize-qr"
                       />
                     )}
+                    {!preview &&
+                      (codeEmailSent ? (
+                        <p className="lead-ok">
+                          ✅ Code envoyé par e-mail&nbsp;!
+                        </p>
+                      ) : (
+                        <form className="lead-form" onSubmit={emailMyCode}>
+                          <label className="lead-label">
+                            📧 Recevoir mon code par e-mail (pour ne pas le
+                            perdre)
+                          </label>
+                          <div className="lead-row">
+                            <input
+                              type="email"
+                              placeholder="votre@email.fr"
+                              value={codeEmail}
+                              onChange={(e) => setCodeEmail(e.target.value)}
+                            />
+                            <button
+                              className="btn"
+                              type="submit"
+                              disabled={codeEmailBusy}
+                            >
+                              Envoyer
+                            </button>
+                          </div>
+                        </form>
+                      ))}
                   </>
                 )}
                 {config.collect_email &&
@@ -1214,6 +1308,17 @@ export default function Game({
                 <p className="fine">
                   Présentez vos codes en caisse. À très vite&nbsp;!
                 </p>
+                {!preview && (
+                  <a
+                    className="merchant-loop-cta"
+                    href={`/tarifs?parrain=${encodeURIComponent(slug)}`}
+                    target="_blank"
+                    rel="noopener"
+                  >
+                    🎁 Vous êtes commerçant&nbsp;? Offrez ça à vos clients —
+                    14&nbsp;jours offerts →
+                  </a>
+                )}
               </div>
             </section>
           )}

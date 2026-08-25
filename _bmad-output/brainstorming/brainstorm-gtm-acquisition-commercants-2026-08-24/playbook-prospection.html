@@ -1,0 +1,539 @@
+<title>Playbook Prospection Kado</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap">
+
+<style>
+  :root {
+    --bg: #f5f3fb;
+    --surface: #ffffff;
+    --surface-2: #efeaf8;
+    --text: #1c1230;
+    --muted: #6a6086;
+    --line: #e3ddf0;
+    --accent: #cf8712;
+    --accent-soft: #f7ecd4;
+    --accent-ink: #3a2907;
+    --indigo: #3a2470;
+    --danger: #b23a2c;
+    --danger-soft: #f7e6e2;
+    --good: #1c7a53;
+    --shadow: 0 18px 44px rgba(28, 18, 48, .12);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #120a26;
+      --surface: #1b1140;
+      --surface-2: #251655;
+      --text: #f1edfb;
+      --muted: #a89ec6;
+      --line: #322459;
+      --accent: #ffc24d;
+      --accent-soft: #2f2350;
+      --accent-ink: #2a1c04;
+      --indigo: #c9b6ff;
+      --danger: #ff9384;
+      --danger-soft: #3a1f26;
+      --good: #6fe0a8;
+      --shadow: 0 20px 50px rgba(0, 0, 0, .45);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #120a26;
+    --surface: #1b1140;
+    --surface-2: #251655;
+    --text: #f1edfb;
+    --muted: #a89ec6;
+    --line: #322459;
+    --accent: #ffc24d;
+    --accent-soft: #2f2350;
+    --accent-ink: #2a1c04;
+    --indigo: #c9b6ff;
+    --danger: #ff9384;
+    --danger-soft: #3a1f26;
+    --good: #6fe0a8;
+    --shadow: 0 20px 50px rgba(0, 0, 0, .45);
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Instrument Sans", system-ui, -apple-system, sans-serif;
+    font-size: 17px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 780px; margin: 0 auto; padding: 0 22px; }
+
+  h1, h2, h3 {
+    font-family: "Bricolage Grotesque", "Instrument Sans", sans-serif;
+    line-height: 1.05;
+    text-wrap: balance;
+    margin: 0;
+  }
+  .eyebrow {
+    font-family: "Space Mono", monospace;
+    font-size: .74rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 700;
+  }
+  p { margin: 0 0 1em; }
+  a { color: var(--accent); }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    background:
+      radial-gradient(120% 120% at 85% -10%, rgba(207,135,18,.16), transparent 55%),
+      linear-gradient(160deg, var(--indigo), color-mix(in srgb, var(--indigo) 62%, #000));
+    color: #f4eefe;
+    border-radius: 0 0 28px 28px;
+    padding: 62px 0 46px;
+    position: relative;
+    overflow: hidden;
+  }
+  :root[data-theme="dark"] .hero,
+  :root:not([data-theme="light"]) .hero { color: #f4eefe; }
+  .hero::after {
+    content: "🎁";
+    position: absolute;
+    right: -14px; top: 4px;
+    font-size: 190px;
+    opacity: .09;
+    transform: rotate(12deg);
+    pointer-events: none;
+  }
+  .hero .eyebrow { color: #ffc24d; }
+  .hero h1 {
+    font-size: clamp(2.5rem, 8vw, 4.1rem);
+    font-weight: 800;
+    letter-spacing: -.02em;
+    margin: 14px 0 0;
+  }
+  .hero h1 .g { color: #ffc24d; }
+  .hero .sub {
+    max-width: 30ch;
+    margin: 18px 0 0;
+    font-size: 1.12rem;
+    color: #d9cff2;
+  }
+  .hero .meta {
+    margin-top: 26px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .tag {
+    font-family: "Space Mono", monospace;
+    font-size: .72rem;
+    letter-spacing: .04em;
+    padding: 6px 11px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.1);
+    border: 1px solid rgba(255,255,255,.16);
+    color: #f0e9ff;
+  }
+
+  /* ---------- TOC ---------- */
+  nav.toc {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    margin: 30px 0 8px;
+  }
+  nav.toc a {
+    text-decoration: none;
+    font-size: .86rem;
+    font-weight: 600;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 8px 13px;
+    border-radius: 10px;
+    transition: border-color .15s, transform .15s;
+  }
+  nav.toc a:hover { border-color: var(--accent); transform: translateY(-1px); }
+  nav.toc a b { color: var(--accent); font-family: "Space Mono", monospace; margin-right: 6px; }
+
+  /* ---------- Sections ---------- */
+  section { padding: 46px 0 8px; }
+  .sec-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 8px; }
+  .sec-num {
+    font-family: "Space Mono", monospace;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--accent);
+    border: 1.5px solid var(--accent);
+    border-radius: 8px;
+    padding: 2px 9px;
+    flex: none;
+  }
+  h2 { font-size: clamp(1.55rem, 4.5vw, 2.05rem); font-weight: 700; letter-spacing: -.015em; }
+  .lead { color: var(--muted); font-size: 1.05rem; margin: 4px 0 22px; }
+
+  h3 { font-size: 1.16rem; font-weight: 700; margin: 26px 0 8px; letter-spacing: -.01em; }
+
+  /* ---------- Script blocks (verbatim) ---------- */
+  .say {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--accent);
+    border-radius: 6px 12px 12px 6px;
+    padding: 15px 18px 16px;
+    margin: 12px 0;
+    box-shadow: var(--shadow);
+  }
+  .say .lbl {
+    font-family: "Space Mono", monospace;
+    font-size: .68rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 7px;
+    font-weight: 700;
+  }
+  .say p {
+    font-family: "Space Mono", monospace;
+    font-size: .95rem;
+    line-height: 1.6;
+    margin: 0;
+    color: var(--text);
+  }
+  .say p + p { margin-top: .7em; }
+
+  /* ---------- Step list ---------- */
+  .steps { display: flex; flex-direction: column; gap: 4px; margin: 8px 0; }
+  .step { display: grid; grid-template-columns: auto 1fr; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .step:last-child { border-bottom: 0; }
+  .step .n {
+    font-family: "Bricolage Grotesque", sans-serif;
+    font-weight: 800;
+    font-size: 1.5rem;
+    color: var(--accent);
+    line-height: 1;
+    min-width: 1.4em;
+    font-variant-numeric: tabular-nums;
+  }
+  .step h4 { margin: 2px 0 3px; font-size: 1.04rem; font-weight: 700; font-family: "Bricolage Grotesque", sans-serif; }
+  .step p { margin: 0; color: var(--muted); font-size: .96rem; }
+
+  /* ---------- Objection cards ---------- */
+  .obj {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px 18px 6px;
+    margin: 16px 0;
+    box-shadow: var(--shadow);
+  }
+  .obj .says {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--danger-soft);
+    color: var(--danger);
+    font-weight: 600;
+    padding: 7px 13px;
+    border-radius: 10px;
+    font-size: 1.02rem;
+    margin-bottom: 6px;
+  }
+  .obj .says .q { font-family: "Space Mono", monospace; font-size: .68rem; letter-spacing: .1em; opacity: .8; }
+  .reply { display: flex; gap: 12px; padding: 12px 0; border-top: 1px dashed var(--line); }
+  .reply:first-of-type { border-top: 0; }
+  .reply .k {
+    font-family: "Space Mono", monospace;
+    font-size: .66rem; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--accent); font-weight: 700; flex: none; width: 78px; padding-top: 3px;
+  }
+  .reply p { margin: 0; font-size: .97rem; }
+  .reply .verbatim { font-family: "Space Mono", monospace; font-size: .9rem; color: var(--text); }
+
+  /* ---------- Pricing ---------- */
+  .price-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 12px; margin: 14px 0 6px; }
+  .price {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 13px; padding: 15px 16px;
+  }
+  .price.hot { border-color: var(--accent); background: var(--accent-soft); }
+  .price .name { font-family: "Space Mono", monospace; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .price .amt { font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-size: 1.9rem; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .price .amt small { font-size: .8rem; font-weight: 600; color: var(--muted); }
+  .price .desc { font-size: .82rem; color: var(--muted); margin-top: 2px; }
+
+  .mathbox {
+    background: var(--surface-2);
+    border-radius: 14px;
+    padding: 18px 20px;
+    margin: 16px 0;
+  }
+  .mathbox .row { display: flex; justify-content: space-between; gap: 14px; padding: 7px 0; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+  .mathbox .row:last-child { border-bottom: 0; }
+  .mathbox .row b { color: var(--accent); font-family: "Space Mono", monospace; }
+
+  /* ---------- Callout ---------- */
+  .callout {
+    display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: start;
+    background: linear-gradient(150deg, var(--accent-soft), transparent);
+    border: 1px solid var(--accent);
+    border-radius: 16px;
+    padding: 20px 22px;
+    margin: 22px 0;
+  }
+  .callout .ic { font-size: 1.7rem; line-height: 1; }
+  .callout h3 { margin: 0 0 4px; }
+  .callout p { margin: 0; font-size: .98rem; }
+
+  /* ---------- Engine diagram ---------- */
+  .engine { display: flex; flex-direction: column; gap: 0; margin: 18px 0; }
+  .node {
+    position: relative;
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 13px; padding: 15px 17px; box-shadow: var(--shadow);
+  }
+  .node .t { font-family: "Bricolage Grotesque", sans-serif; font-weight: 700; font-size: 1.02rem; }
+  .node .d { font-size: .92rem; color: var(--muted); margin-top: 2px; }
+  .node .badge {
+    font-family: "Space Mono", monospace; font-size: .64rem; letter-spacing: .08em;
+    color: var(--accent-ink); background: var(--accent); padding: 3px 8px; border-radius: 6px; font-weight: 700;
+  }
+  .arrow { text-align: center; color: var(--accent); font-size: 1.3rem; line-height: 1; padding: 7px 0; }
+
+  /* ---------- Checklist ---------- */
+  .check { list-style: none; padding: 0; margin: 10px 0; display: flex; flex-direction: column; gap: 9px; }
+  .check li { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start; }
+  .check .box { color: var(--accent); font-weight: 800; font-family: "Space Mono", monospace; }
+  .check li b { font-weight: 600; }
+
+  /* ---------- Footer ---------- */
+  footer { margin: 50px 0 34px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: .86rem; }
+  footer .k { font-family: "Space Mono", monospace; color: var(--accent); }
+
+  hr.soft { border: 0; border-top: 1px solid var(--line); margin: 30px 0; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal { opacity: 0; transform: translateY(14px); animation: rise .7s cubic-bezier(.2,.7,.3,1) forwards; }
+    @keyframes rise { to { opacity: 1; transform: none; } }
+  }
+  @media print {
+    .hero { color: #1c1230; background: none; }
+    .hero .eyebrow, .hero h1 .g { color: #cf8712; }
+    nav.toc { display: none; }
+    .say, .obj, .node, .price { box-shadow: none; }
+    body { font-size: 12px; }
+  }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+</style>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="eyebrow">Playbook de prospection · commerces locaux</span>
+    <h1>Fais signer<br>la <span class="g">rue entière</span>.</h1>
+    <p class="sub">Le manuel pour transformer un commerçant qui t'ignore en client Kado — sans budget pub.</p>
+    <div class="meta">
+      <span class="tag">🎯 Zéro budget</span>
+      <span class="tag">📧 Email + Instagram</span>
+      <span class="tag">🗣️ Script anti-objection</span>
+      <span class="tag">⚙️ Moteur auto-propagé</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <nav class="toc" aria-label="Sommaire">
+    <a href="#job"><b>00</b>L'angle</a>
+    <a href="#rituel"><b>01</b>Constat + Projection</a>
+    <a href="#script"><b>02</b>Le script Belfort</a>
+    <a href="#relance"><b>03</b>Relances</a>
+    <a href="#objections"><b>04</b>Objections</a>
+    <a href="#prix"><b>05</b>Le close par les maths</a>
+    <a href="#moteur"><b>06</b>Le moteur</a>
+    <a href="#jour"><b>07</b>Ta journée</a>
+  </nav>
+
+  <!-- 00 -->
+  <section id="job" class="reveal">
+    <div class="sec-head"><span class="sec-num">00</span><h2>L'angle : la notoriété locale</h2></div>
+    <p class="lead">Le commerçant n'achète pas « une roue ». Il achète le fait de <strong>passer devant le voisin</strong> sur Google.</p>
+    <p>Le vrai <em>job</em> de ton prospect, ce n'est pas « avoir plus d'avis » — c'est <strong>ne plus se faire distancer</strong> par le commerce d'en face qui en affiche 300. C'est émotionnel, c'est local, c'est une rivalité. Toute ta prospection tire ce fil : tu ne vends pas un logiciel, tu montres un <strong>écart</strong> et tu proposes de le combler.</p>
+    <div class="callout">
+      <span class="ic">🧭</span>
+      <div>
+        <h3>La règle d'or</h3>
+        <p>Une seule idée irrigue tous tes canaux : le <strong>Constat + Projection</strong>. C'est ton objet d'email, le cœur de ton script à l'oral, l'audit que ton agent envoie, et l'argument que tes affiliés répètent. Apprends-la par cœur.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 01 -->
+  <section id="rituel" class="reveal">
+    <div class="sec-head"><span class="sec-num">01</span><h2>Le rituel : Constat + Projection</h2></div>
+    <p class="lead">Douleur mesurée → espoir mesuré. En 60 secondes, zéro blabla.</p>
+    <div class="steps">
+      <div class="step"><span class="n">1</span><div><h4>Le Constat (la douleur, chiffrée)</h4><p>Tu lui montres où il est, et qui est juste au-dessus. Concret, pas vexant : ce sont des faits publics.</p></div></div>
+      <div class="step"><span class="n">2</span><div><h4>La Projection (l'espoir, chiffré)</h4><p>Ce que Kado lui rapporterait à son volume de clients. Un futur désirable et crédible.</p></div></div>
+    </div>
+    <div class="say">
+      <span class="lbl">📣 Dis ça — version de référence</span>
+      <p>« En cherchant <em>restaurant [quartier]</em> sur Google, vous ressortez avec 18 avis. Juste au-dessus, [Le Voisin] en a 312 — c'est lui qui capte les clients qui hésitent.</p>
+      <p>À votre affluence, vous pourriez récolter ~90 avis en 90 jours et repasser devant. »</p>
+    </div>
+    <p class="lead" style="margin-top:18px">💡 Prépare-le <strong>depuis ton canapé</strong> : un soir, tu googlises 30 commerces d'une rue, tu notes leur rang + celui du voisin. Le lendemain tu débarques déjà armé pour chacun. La prospection devient une chaîne de montage.</p>
+  </section>
+
+  <!-- 02 -->
+  <section id="script" class="reveal">
+    <div class="sec-head"><span class="sec-num">02</span><h2>Le script Belfort (la ligne droite)</h2></div>
+    <p class="lead">Une ligne droite de l'accroche au « oui ». Structure + certitude, jamais de pression gratuite — ta réputation d'expéditeur en dépend.</p>
+
+    <div class="steps">
+      <div class="step"><span class="n">1</span><div><h4>Ouverture = l'objet fait tout</h4><p><span style="font-family:'Space Mono',monospace;font-size:.85rem">Objet : « Vous êtes 9e sur Google, [Le Voisin] est 2e »</span></p></div></div>
+      <div class="step"><span class="n">2</span><div><h4>Le Constat</h4><p>La douleur chiffrée, à lui.</p></div></div>
+      <div class="step"><span class="n">3</span><div><h4>La Projection</h4><p>Le futur désirable, chiffré.</p></div></div>
+      <div class="step"><span class="n">4</span><div><h4>Le pont Kado</h4><p>La solution en une phrase, zéro jargon.</p></div></div>
+      <div class="step"><span class="n">5</span><div><h4>Le close micro-engagement</h4><p>Un « oui » facile — pas « achetez », mais « je vous montre ? ».</p></div></div>
+    </div>
+
+    <div class="say">
+      <span class="lbl">📣 Le pont + le close</span>
+      <p>« Kado fait ça tout seul : vos clients scannent un QR, jouent à une roue, laissent un avis pour gagner un cadeau.</p>
+      <p>Je vous montre en 2 minutes ce que ça donne sur votre établissement — mardi 14h ou jeudi 11h ? »</p>
+    </div>
+
+    <div class="callout">
+      <span class="ic">🎙️</span>
+      <div>
+        <h3>La tonalité (le vrai secret)</h3>
+        <p>Calme, certain, jamais pressé. Le prospect stressé qui a « pas le temps » se cogne à ta lenteur tranquille. Tu es celui qui n'a <strong>pas besoin</strong> de la vente — c'est ça qui vend.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 -->
+  <section id="relance" class="reveal">
+    <div class="sec-head"><span class="sec-num">03</span><h2>Les relances : le suivi &gt; le 1er contact</h2></div>
+    <p class="lead">La leçon de Joe Girard : la vente est dans la relance. Jamais 1 mail — une séquence.</p>
+    <div class="steps">
+      <div class="step"><span class="n">J+3</span><div><h4>La preuve</h4><p>« Le [commerce voisin] l'utilise, +40 avis en 3 semaines. »</p></div></div>
+      <div class="step"><span class="n">J+7</span><div><h4>La rareté</h4><p>« Je ne prends qu'un commerce par rue — je voulais vous proposer en premier. »</p></div></div>
+      <div class="step"><span class="n">J+12</span><div><h4>Le break-up</h4><p>« Je clos votre dossier, dites-moi juste si c'est un non définitif. » <em>— souvent le meilleur taux de réponse.</em></p></div></div>
+    </div>
+  </section>
+
+  <!-- 04 -->
+  <section id="objections" class="reveal">
+    <div class="sec-head"><span class="sec-num">04</span><h2>La banque d'objections</h2></div>
+    <p class="lead">Chaque objection est anticipée. Le principe Belfort : « pas le temps » et « c'est cher » sont presque toujours des écrans de fumée — on neutralise, puis on <strong>isole</strong> pour faire sortir la vraie.</p>
+
+    <div class="obj">
+      <div class="says"><span class="q">IL DIT</span> « J'ai pas le temps »</div>
+      <div class="reply"><span class="k">Judo</span><p class="verbatim">« Justement — Kado ne vous prend aucune minute. Vous posez le QR une fois, ce sont vos clients qui jouent. Le seul truc qui prend 2 min, c'est moi qui vous montre. »</p></div>
+      <div class="reply"><span class="k">Isolation</span><p class="verbatim">« Si je vous prouve que ça ne coûte pas 5 min par mois — c'est vraiment le temps, ou autre chose ? »</p></div>
+      <div class="reply"><span class="k">Rareté</span><p class="verbatim">« Pas de souci, je le propose à [Le Voisin]. Juste… le jour où il s'y met, l'écart se creuse tout seul. »</p></div>
+    </div>
+
+    <div class="obj">
+      <div class="says"><span class="q">IL DIT</span> « C'est cher / c'est combien ? »</div>
+      <div class="reply"><span class="k">Recadrage</span><p class="verbatim">« Cher par rapport à quoi ? Un seul nouveau client via Google, et le mois est remboursé. Kado ne vous coûte pas — il vous rapporte. »</p></div>
+      <div class="reply"><span class="k">Ancrage</span><p class="verbatim">« Vous mettez combien dans un flyer, un coup de pub Insta qui dure 24h ? Là c'est une machine à avis qui tourne tous les jours. »</p></div>
+      <div class="reply"><span class="k">Isolation</span><p class="verbatim">« Si le prix n'était pas un souci, vous le feriez ? … Donc c'est le montant, ou vous n'êtes pas encore sûr que ça marche ? »</p></div>
+    </div>
+
+    <div class="obj">
+      <div class="says"><span class="q">IL DIT</span> « Les avis, j'y crois pas / c'est de la triche »</div>
+      <div class="reply"><span class="k">Recadrage</span><p class="verbatim">« Ce ne sont PAS de faux avis. Ce sont vos vrais clients contents — la roue leur donne juste une raison de le faire. »</p></div>
+      <div class="reply"><span class="k">Conformité</span><p class="verbatim">« Le cadeau n'est pas conditionné à la note — c'est écrit. On récompense le geste, pas un 5 étoiles. C'est ça qui est carré vis-à-vis de Google. »</p></div>
+      <div class="reply"><span class="k">Certitude</span><p class="verbatim">« Votre voisin à 312 avis, vous croyez qu'ils sont tombés du ciel ? Il demande. Vous allez juste demander mieux. »</p></div>
+    </div>
+
+    <div class="obj">
+      <div class="says"><span class="q">IL DIT</span> « J'ai déjà essayé un truc comme ça »</div>
+      <div class="reply"><span class="k">Diagnostic</span><p class="verbatim">« Ah, lequel ? Et qu'est-ce qui a coincé ? » <span style="font-family:'Instrument Sans'">(fais-le parler, tu apprends tout)</span></p></div>
+      <div class="reply"><span class="k">Différence</span><p class="verbatim">« La plupart échouent : soit aucune récompense, soit trop compliqué. Ici c'est un jeu avec un cadeau — les gens jouent et oublient qu'ils laissent un avis. »</p></div>
+    </div>
+
+    <div class="obj">
+      <div class="says"><span class="q">IL DIT</span> « Envoyez-moi une doc » <span style="font-family:'Instrument Sans';font-weight:400;font-size:.8rem;opacity:.7">(le brush-off)</span></div>
+      <div class="reply"><span class="k">Réponse</span><p class="verbatim">« Mieux : 2 min en vrai sur VOTRE fiche Google, c'est plus parlant qu'un PDF. Mardi 14h ? »</p></div>
+    </div>
+  </section>
+
+  <!-- 05 -->
+  <section id="prix" class="reveal">
+    <div class="sec-head"><span class="sec-num">05</span><h2>Le close par les maths</h2></div>
+    <p class="lead">Le chiffre tue l'objection prix. Annonce le tarif sans hésiter, puis tais-toi.</p>
+    <div class="price-grid">
+      <div class="price hot"><div class="name">Jeux · la roue</div><div class="amt">29&nbsp;€<small>/mois</small></div><div class="desc">→ avis Google</div></div>
+      <div class="price"><div class="name">Fidélité</div><div class="amt">19&nbsp;€<small>/mois</small></div></div>
+      <div class="price"><div class="name">Complet</div><div class="amt">44&nbsp;€<small>/mois</small></div><div class="desc">meilleur rapport</div></div>
+      <div class="price"><div class="name">Comptoir</div><div class="amt">19&nbsp;€<small>/mois</small></div><div class="desc">bipeur digital</div></div>
+    </div>
+
+    <div class="mathbox">
+      <div class="row"><span>Formule Jeux</span><b>29 €/mois</b></div>
+      <div class="row"><span>Panier moyen 15 €</span><b>→ 2 clients/mois suffisent</b></div>
+      <div class="row"><span>Panier moyen 20 €</span><b>→ ~1,5 client/mois</b></div>
+      <div class="row"><span>Panier moyen 30 €</span><b>→ 1 client/mois</b></div>
+    </div>
+    <div class="say">
+      <span class="lbl">📣 Le close par les maths</span>
+      <p>« Kado c'est 29 € par mois. Votre panier moyen, c'est quoi, 20 € ? Il vous faut UN client et demi de plus dans le mois entier pour être rentable. Vos nouveaux avis vous en ramènent bien plus. Le calcul est vite fait. »</p>
+    </div>
+
+    <div class="callout">
+      <span class="ic">💣</span>
+      <div>
+        <h3>Le close ultime : le risk reversal</h3>
+        <p>« Pas le temps » ET « c'est cher » s'effondrent avec la même phrase : <strong>14 jours gratuits, sans engagement.</strong></p>
+        <div class="say" style="margin-top:12px;box-shadow:none">
+          <p>« On ne va même pas débattre : c'est 14 jours gratuits, sans engagement. Vous posez le QR, vous ne faites rien, et dans 2 semaines vous regardez vos nouveaux avis. Si ça vous apporte rien, vous arrêtez d'un clic. Vous risquez quoi ? »</p>
+        </div>
+      </div>
+    </div>
+    <p style="color:var(--muted);font-size:.9rem">Installation (option, si tu la proposes) : à distance <b>79 €</b> · sur place <b>129 €</b>.</p>
+  </section>
+
+  <!-- 06 -->
+  <section id="moteur" class="reveal">
+    <div class="sec-head"><span class="sec-num">06</span><h2>Le moteur auto-propagé</h2></div>
+    <p class="lead">Le vrai coup de génie : tu ne prospectes plus en solo, tu allumes une réaction en chaîne où le produit et les gens travaillent à ta place.</p>
+    <div class="engine">
+      <div class="node">
+        <span class="badge">GRATUIT · AUTO</span>
+        <div class="t">🔁 La boucle produit</div>
+        <div class="d">Sur l'écran de gain de la roue : « Vous êtes commerçant ? Obtenez la même chose — 14 j offerts. » Chaque joueur qui tient un commerce devient un lead, au pic d'enthousiasme.</div>
+      </div>
+      <div class="arrow">↓</div>
+      <div class="node">
+        <span class="badge">ZÉRO COÛT FIXE</span>
+        <div class="t">💰 Les affiliés</div>
+        <div class="d">Ton système <span style="font-family:'Space Mono',monospace;font-size:.82rem">/vendeur</span> existe déjà. Recrute ceux qui voient des dizaines de commerçants (comptables, graphistes, fournisseurs, imprimeurs) → commission récurrente, ils closent avec CE playbook.</div>
+      </div>
+      <div class="arrow">↓</div>
+      <div class="node">
+        <span class="badge">LES 250 DE GIRARD</span>
+        <div class="t">♟️ Chaque commerçant = un nouveau nœud</div>
+        <div class="d">Sa roue génère des leads, il peut devenir affilié et parrainer ses amis commerçants. La chaîne se propage toute seule.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 07 -->
+  <section id="jour" class="reveal">
+    <div class="sec-head"><span class="sec-num">07</span><h2>Ta journée de prospection</h2></div>
+    <ul class="check">
+      <li><span class="box">☐</span><div><b>La veille, depuis le canapé :</b> googlise une rue, note rang + voisin pour 20 commerces, pré-remplis le Constat+Projection.</div></li>
+      <li><span class="box">☐</span><div><b>L'agent email tourne :</b> 5 mails/jour personnalisés, automatiques (objet = le Constat).</div></li>
+      <li><span class="box">☐</span><div><b>Instagram :</b> like/commente 2 posts du commerce, puis DM avec le même angle.</div></li>
+      <li><span class="box">☐</span><div><b>Relances :</b> respecte la séquence J+3 / J+7 / J+12. Ne lâche rien.</div></li>
+      <li><span class="box">☐</span><div><b>Au rendez-vous :</b> fais-le jouer à la roue en vrai, montre sa fiche Google, close au risk reversal.</div></li>
+      <li><span class="box">☐</span><div><b>Après signature :</b> demande 3 intros à ton nouveau client, propose-lui de devenir affilié.</div></li>
+    </ul>
+  </section>
+
+  <footer>
+    <p><span class="k">Playbook Kado</span> · issu d'une session de brainstorming go-to-market · zéro budget pub.<br>
+    Modèles volés : Joe Girard (relance &amp; 250), Zig Ziglar (aide d'abord), Jordan Belfort (ligne droite), Ziad Abdelnour (positionnement de force).</p>
+  </footer>
+</div>
