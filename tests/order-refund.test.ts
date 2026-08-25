@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { refundEligibility } from "@/lib/orders";
+import { performOrderRefund } from "@/lib/order-refund";
 
 // ---------------------------------------------------------------------------
 // 1. Matrice d'éligibilité (logique pure) — pas de mock nécessaire.
@@ -30,6 +31,149 @@ describe("refundEligibility", () => {
     expect(
       refundEligibility({ paid: true, stripe_session_id: "cs_123", refunded: true })
     ).toEqual({ ok: false, code: "already_refunded" });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 1bis. Cœur d'effets partagé `performOrderRefund` (helper, ne jette jamais).
+//       On lui injecte un `db` et un `stripe` factices — pas de mock de module.
+// ---------------------------------------------------------------------------
+function fakeStripe(retrieve: any, create: any) {
+  return {
+    checkout: { sessions: { retrieve } },
+    refunds: { create },
+  } as any;
+}
+
+function fakeDb(updateError: any = null) {
+  const captured: { payload: any; filters: any } = { payload: null, filters: {} };
+  const builder: any = {
+    update: (p: any) => {
+      captured.payload = p;
+      return builder;
+    },
+    eq: (col: string, val: any) => {
+      captured.filters[col] = val;
+      return builder;
+    },
+    // awaiter de la chaîne update().eq().eq().eq()
+    then: (resolve: any) => resolve({ error: updateError }),
+  };
+  const db: any = { from: () => builder, __captured: captured };
+  return db;
+}
+
+const ELIGIBLE = {
+  id: "ord-9",
+  business_id: "biz-9",
+  paid: true,
+  stripe_session_id: "cs_9",
+  refunded: false,
+};
+
+describe("performOrderRefund", () => {
+  it("éligible : refund plateforme idempotent + drapeau écrit → { refunded }", async () => {
+    const retrieve = vi.fn().mockResolvedValue({ payment_intent: "pi_9" });
+    const create = vi.fn().mockResolvedValue({ id: "re_9" });
+    const db = fakeDb();
+
+    const out = await performOrderRefund(db, fakeStripe(retrieve, create), ELIGIBLE);
+
+    expect(out).toEqual({ status: "refunded", stripeRefundId: "re_9" });
+    // refund plateforme : jamais { stripeAccount }, reverse_transfer +
+    // refund_application_fee, clé d'idempotence dérivée de order.id.
+    const [params, opts] = create.mock.calls[0];
+    expect(params).toEqual({
+      payment_intent: "pi_9",
+      reverse_transfer: true,
+      refund_application_fee: true,
+    });
+    expect(opts).toEqual({ idempotencyKey: "order-refund-ord-9" });
+    // écriture : drapeau distinct (status non touché), filtres isolation +
+    // idempotence.
+    expect(db.__captured.payload).toMatchObject({
+      refunded: true,
+      stripe_refund_id: "re_9",
+    });
+    expect(db.__captured.payload.status).toBeUndefined();
+    expect(db.__captured.filters).toEqual({
+      id: "ord-9",
+      business_id: "biz-9",
+      refunded: false,
+    });
+  });
+
+  it("non éligible (payée sur place) → { skipped, not_online_paid }, aucun Stripe", async () => {
+    const retrieve = vi.fn();
+    const create = vi.fn();
+    const out = await performOrderRefund(
+      fakeDb(),
+      fakeStripe(retrieve, create),
+      { ...ELIGIBLE, paid: false, stripe_session_id: null }
+    );
+    expect(out).toEqual({ status: "skipped", code: "not_online_paid" });
+    expect(retrieve).not.toHaveBeenCalled();
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it("non éligible (déjà remboursée) → { skipped, already_refunded }, aucun Stripe", async () => {
+    const retrieve = vi.fn();
+    const create = vi.fn();
+    const out = await performOrderRefund(
+      fakeDb(),
+      fakeStripe(retrieve, create),
+      { ...ELIGIBLE, refunded: true }
+    );
+    expect(out).toEqual({ status: "skipped", code: "already_refunded" });
+    expect(retrieve).not.toHaveBeenCalled();
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it("pas de payment_intent sur la session → { no_payment_intent }, pas de refund", async () => {
+    const retrieve = vi.fn().mockResolvedValue({ payment_intent: null });
+    const create = vi.fn();
+    const out = await performOrderRefund(
+      fakeDb(),
+      fakeStripe(retrieve, create),
+      ELIGIBLE
+    );
+    expect(out).toEqual({ status: "no_payment_intent" });
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it("retrieve lève → { failed }, aucun refund", async () => {
+    const retrieve = vi.fn().mockRejectedValue(new Error("No such session"));
+    const create = vi.fn();
+    const out = await performOrderRefund(
+      fakeDb(),
+      fakeStripe(retrieve, create),
+      ELIGIBLE
+    );
+    expect(out.status).toBe("failed");
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it("refunds.create lève → { failed }", async () => {
+    const retrieve = vi.fn().mockResolvedValue({ payment_intent: "pi_9" });
+    const create = vi.fn().mockRejectedValue(new Error("card_declined"));
+    const out = await performOrderRefund(
+      fakeDb(),
+      fakeStripe(retrieve, create),
+      ELIGIBLE
+    );
+    expect(out.status).toBe("failed");
+  });
+
+  it("refund OK mais écriture KO → { record_failed } + stripeRefundId conservé", async () => {
+    const retrieve = vi.fn().mockResolvedValue({ payment_intent: "pi_9" });
+    const create = vi.fn().mockResolvedValue({ id: "re_9" });
+    const out = await performOrderRefund(
+      fakeDb({ message: "write failed" }),
+      fakeStripe(retrieve, create),
+      ELIGIBLE
+    );
+    expect(out).toEqual({ status: "record_failed", stripeRefundId: "re_9" });
+    expect(create).toHaveBeenCalledTimes(1);
   });
 });
 

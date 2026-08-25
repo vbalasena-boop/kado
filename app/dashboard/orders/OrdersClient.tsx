@@ -634,6 +634,34 @@ export default function OrdersClient({
           bits.push("client non abonné aux alertes");
         setMsg(bits.length ? "Client prévenu : " + bits.join(" · ") : null);
       }
+      // À l'annulation, on résume au commerçant le sort du remboursement (si la
+      // commande était payée en ligne) et la notification client. Un refund en
+      // échec n'a PAS empêché l'annulation : on invite à réessayer via le bouton
+      // « Rembourser » resté disponible.
+      if (status === "cancelled") {
+        const bits: string[] = [];
+        const r = d?.refund;
+        if (r?.status === "refunded") bits.push("remboursement déclenché ↩️");
+        else if (r?.status === "failed")
+          bits.push(
+            "remboursement échoué — réessayez via « ↩️ Rembourser »"
+          );
+        else if (r?.status === "record_failed")
+          bits.push("remboursement Stripe effectué (état non enregistré)");
+        else if (r?.status === "no_payment_intent")
+          bits.push("remboursement impossible (paiement Stripe introuvable)");
+        else if (r?.status === "skipped" && r.code === "already_refunded")
+          bits.push("déjà remboursée");
+        if (d?.notified?.email === "sent") bits.push("e-mail envoyé");
+        if (d?.notified?.push === "sent") bits.push("notification envoyée 📲");
+        else if (d?.notified?.push === "failed")
+          bits.push("notification impossible");
+        setMsg(
+          bits.length
+            ? "Commande annulée · " + bits.join(" · ")
+            : "Commande annulée."
+        );
+      }
       router.refresh();
     } finally {
       setBusy(false);
@@ -902,8 +930,13 @@ export default function OrdersClient({
               className="btn-mini danger"
               disabled={busy}
               onClick={() => {
-                if (confirm(`Annuler la commande ${o.code} ?`))
-                  setStatus(o.id, "cancelled");
+                const question =
+                  o.paid && !o.refunded
+                    ? `Annuler la commande ${o.code} ? Elle a été payée en ligne : le client sera remboursé (${euros(
+                        o.total_cents
+                      )} €).`
+                    : `Annuler la commande ${o.code} ?`;
+                if (confirm(question)) setStatus(o.id, "cancelled");
               }}
             >
               Annuler

@@ -66,3 +66,7 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-11-1-rembourser-commande-payee.md`
   summary: Aucune notification au client lors d'un remboursement (e-mail/reçu). Stripe peut envoyer un reçu selon la configuration du compte, mais l'app n'informe pas explicitement le client remboursé.
   evidence: Constat revue (Blind). Hors AC de 11.1 (la notif client est requise par 11.2 à l'annulation). À considérer comme amélioration UX, éventuellement mutualisée avec la notif d'annulation de 11.2.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-11-2-annuler-une-commande.md`
+  summary: Le remboursement déclenché à l'annulation (comme le refund manuel 11.1) n'est pas réconcilié : statut commande + drapeau `refunded` écrits séparément, sans handler webhook `charge.refund.updated` pour rattraper un refund `pending→failed`. Pas non plus d'horodatage `notified_cancelled_at` de la notif d'annulation (le `ready` a `notified_ready_at`).
+  evidence: Constats revue (Blind/Edge/Verif) sur 11.2. Mutualiser avec le defer réconciliation/audit de 11.1 : un webhook de réconciliation + une colonne `notified_cancelled_at` (migration) couvriraient les deux. Non bloquant.
