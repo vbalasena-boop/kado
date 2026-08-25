@@ -248,6 +248,61 @@ export function renderFollowupEmail(ctx: TemplateContext): GeneratedEmail {
   return { subject, body };
 }
 
+/**
+ * Génère le DERNIER email (3ᵉ contact, « break-up ») — court, sans pression,
+ * souvent le plus efficace pour déclencher une réponse. Varié.
+ */
+export function renderLastEmail(ctx: TemplateContext): GeneratedEmail {
+  const seed = seedOf(ctx);
+
+  const subject = pick(seed, "last_subject", [
+    `Dernier message pour ${ctx.name}`,
+    `Je vous laisse tranquille — ${ctx.name}`,
+    `On en reste là pour ${ctx.name} ?`,
+  ]);
+
+  const opener = pick(seed, "last_opener", [
+    `Je ne veux pas encombrer votre boîte, donc ce sera mon dernier message.`,
+    `Promis, je n'insiste plus après celui-ci.`,
+    `Un tout dernier mot, et je vous laisse tranquille.`,
+  ]);
+
+  const pitch = pick(seed, "last_pitch", [
+    `Si récolter plus d'avis Google et d'abonnés Instagram via un petit jeu à ` +
+      `scanner vous intéresse un jour, répondez simplement à cet email.`,
+    `Si l'idée d'un jeu à scanner qui vous ramène des avis Google et des abonnés ` +
+      `vous parle un jour, un mot suffit et je m'occupe du reste.`,
+  ]);
+
+  const booking = resolveBooking(ctx);
+  const cta = booking
+    ? pick(seed, "last_cta_book", [
+        `Sinon, je n'insiste plus — le lien reste ici si besoin : ${booking}`,
+        `Le créneau reste dispo au cas où → ${booking}. Belle continuation !`,
+      ])
+    : pick(seed, "last_cta", [
+        `Sinon, je n'insiste plus — belle continuation à ${ctx.name} !`,
+        `Sans réponse, je n'y reviendrai pas. Belle continuation !`,
+      ]);
+
+  const body = [
+    `Bonjour ${ctx.name},`,
+    ``,
+    opener,
+    ``,
+    pitch,
+    ``,
+    cta,
+    ``,
+    `Bien à vous,`,
+    `L'équipe Kado`,
+    ``,
+    FOOTER,
+  ].join("\n");
+
+  return { subject, body };
+}
+
 /** Génère un DM Instagram court, naturel et varié pour un prospect. */
 export function renderDm(ctx: TemplateContext): string {
   const seed = seedOf(ctx);

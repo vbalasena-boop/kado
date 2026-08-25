@@ -3,6 +3,7 @@ import {
   reviewHook,
   renderEmail,
   renderFollowupEmail,
+  renderLastEmail,
   renderDm,
   emailSubjectVariant,
   SUBJECT_VARIANTS,
@@ -117,6 +118,27 @@ describe("RDV téléphonique (lien de réservation)", () => {
     const url = "https://cal.com/kado/10min";
     const { body } = renderFollowupEmail(ctx({ bookingUrl: url }));
     expect(body).toContain(url);
+  });
+
+  it("insère le lien dans le dernier email quand il est fourni", () => {
+    const url = "https://cal.com/kado/10min";
+    const { body } = renderLastEmail(ctx({ bookingUrl: url }));
+    expect(body).toContain(url);
+  });
+});
+
+describe("renderLastEmail (dernier email / break-up)", () => {
+  it("personnalise, inclut la désinscription et reste varié", () => {
+    const a = renderLastEmail(ctx({ name: "Resto A", seed: "id-a" }));
+    const b = renderLastEmail(ctx({ name: "Resto B", seed: "id-b-xyz" }));
+    expect(a.body).toContain("Resto A");
+    expect(a.body).toContain(UNSUBSCRIBE_MARKER);
+    expect(a.body).not.toBe(b.body);
+  });
+
+  it("ne signale rien à l'anti-spam", () => {
+    const { subject, body } = renderLastEmail(ctx());
+    expect(spamCheck(`${subject}\n${body}`).risky).toBe(false);
   });
 });
 
