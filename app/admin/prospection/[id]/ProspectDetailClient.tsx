@@ -91,6 +91,12 @@ export default function ProspectDetailClient({
         />
       </div>
 
+      <ContactEditor
+        id={prospect.id}
+        email={prospect.email}
+        handle={prospect.instagram_handle}
+      />
+
       {factors.length > 0 && (
         <details style={{ marginBottom: 12 }}>
           <summary style={{ cursor: "pointer", color: "#555" }}>
@@ -140,6 +146,60 @@ export default function ProspectDetailClient({
         </div>
       )}
     </div>
+  );
+}
+
+function ContactEditor({
+  id,
+  email,
+  handle,
+}: {
+  id: string;
+  email: string | null;
+  handle: string | null;
+}) {
+  const router = useRouter();
+  const [em, setEm] = useState(email ?? "");
+  const [ig, setIg] = useState(handle ?? "");
+  const [saved, setSaved] = useState<string | null>(null);
+
+  async function save() {
+    setSaved(null);
+    const res = await fetch(`/api/admin/prospection/${id}/contact`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: em, instagram_handle: ig }),
+    });
+    if (res.ok) {
+      setSaved("Enregistré ✅");
+      router.refresh();
+    } else setSaved("Erreur");
+  }
+
+  return (
+    <details style={{ margin: "8px 0 12px" }}>
+      <summary style={{ cursor: "pointer", color: "#555" }}>
+        ✏️ Compléter le contact à la main
+      </summary>
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginTop: 8 }}>
+        <input
+          value={em}
+          onChange={(e) => setEm(e.target.value)}
+          placeholder="email@commerce.fr"
+          style={{ padding: 8, borderRadius: 8, border: "1px solid #ccc", minWidth: 220 }}
+        />
+        <input
+          value={ig}
+          onChange={(e) => setIg(e.target.value)}
+          placeholder="@instagram"
+          style={{ padding: 8, borderRadius: 8, border: "1px solid #ccc", minWidth: 160 }}
+        />
+        <button onClick={save} className="dash-signout" style={{ fontSize: 13 }}>
+          Enregistrer le contact
+        </button>
+        {saved && <span style={{ fontSize: 13, color: "#555" }}>{saved}</span>}
+      </div>
+    </details>
   );
 }
 
