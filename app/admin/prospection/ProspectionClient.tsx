@@ -45,12 +45,24 @@ const STATUS_LABEL: Record<ProspectStatus, string> = {
 
 type SortKey = "score" | "reviews" | "rating" | "name";
 
+export type Stats = {
+  total: number;
+  byStatus: Record<string, number>;
+  withEmail: number;
+  withInstagram: number;
+  emailsToday: number;
+  dmToday: number;
+  emailCap: number;
+};
+
 export default function ProspectionClient({
   prospects,
   migrationMissing,
+  stats,
 }: {
   prospects: ProspectRow[];
   migrationMissing: boolean;
+  stats: Stats | null;
 }) {
   const router = useRouter();
 
@@ -234,6 +246,8 @@ export default function ProspectionClient({
         Trouve des commerces à démarcher, classés par potentiel (peu d'avis
         Google = fort potentiel Kado). <a href="/admin/prospection/instagram">📸 File Instagram →</a>
       </p>
+
+      {stats && <StatsBand stats={stats} />}
 
       {migrationMissing && (
         <div
@@ -471,6 +485,58 @@ export default function ProspectionClient({
           </table>
         </div>
       )}
+    </div>
+  );
+}
+
+function StatsBand({ stats }: { stats: Stats }) {
+  const s = stats.byStatus;
+  const contacted =
+    (s.emailed ?? 0) + (s.dm_sent ?? 0) + (s.replied ?? 0) + (s.interested ?? 0) + (s.client ?? 0);
+  const replied = (s.replied ?? 0) + (s.interested ?? 0) + (s.client ?? 0);
+  const rate = contacted > 0 ? Math.round((replied / contacted) * 100) : 0;
+
+  const tiles: { label: string; value: string; color?: string }[] = [
+    { label: "Prospects", value: String(stats.total) },
+    { label: "À contacter", value: String((s.new ?? 0) + (s.queued ?? 0)) },
+    { label: "Contactés", value: String(contacted) },
+    { label: "Ont répondu", value: String(s.replied ?? 0), color: "#2e7d32" },
+    { label: "Intéressés", value: String(s.interested ?? 0), color: "#2e7d32" },
+    { label: "Clients", value: String(s.client ?? 0), color: "#2e7d32" },
+    { label: "Taux de réponse", value: `${rate}%` },
+    { label: "Avec email", value: String(stats.withEmail) },
+    { label: "Avec Insta", value: String(stats.withInstagram) },
+    { label: "Emails aujourd'hui", value: `${stats.emailsToday}/${stats.emailCap}` },
+    { label: "DM aujourd'hui", value: String(stats.dmToday) },
+  ];
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        gap: 10,
+        flexWrap: "wrap",
+        margin: "10px 0 16px",
+      }}
+    >
+      {tiles.map((t) => (
+        <div
+          key={t.label}
+          style={{
+            flex: "1 1 110px",
+            minWidth: 100,
+            border: "1px solid #eee",
+            borderRadius: 10,
+            padding: "10px 12px",
+            background: "#faf9fc",
+          }}
+        >
+          <div style={{ fontSize: 12, color: "#888" }}>{t.label}</div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: t.color ?? "#222" }}>
+            {t.value}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
