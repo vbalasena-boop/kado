@@ -5,6 +5,8 @@ import { sendEmail, emailLayout } from "@/lib/email";
 import { escapeHtml } from "@/lib/campaigns";
 import { pushToSubscriptionDetailed } from "@/lib/push";
 import { getStripe } from "@/lib/stripe";
+import { reportError } from "@/lib/report";
+import { isMissingColumnError } from "@/lib/db-errors";
 import { refundEligibility } from "@/lib/orders";
 import { performOrderRefund, type RefundOutcome } from "@/lib/order-refund";
 
@@ -245,13 +247,16 @@ export const POST = merchantRoute({
       // à la transition « ready » — pas pertinent pour une annulation.
       if (!isCancel) {
         try {
-          await db
+          const { error } = await db
             .from("orders")
             .update({ notified_ready_at: new Date().toISOString() })
             .eq("id", order.id)
             .eq("business_id", business.id);
-        } catch {
-          /* colonne absente */
+          if (error && !isMissingColumnError(error)) {
+            reportError(error, { where: "dashboard/orders.notified_ready" });
+          }
+        } catch (e) {
+          reportError(e, { where: "dashboard/orders.notified_ready" });
         }
       }
     }

@@ -42,7 +42,8 @@ vi.mock("@/lib/email", () => ({
   emailLayout: () => "",
   getOwnerContact: async () => ({ email: null, businessName: null }),
 }));
-vi.mock("@/lib/report", () => ({ reportError: () => {} }));
+const reportSpy = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/report", () => ({ reportError: reportSpy }));
 
 import { POST } from "@/app/api/billing/webhook/route";
 
@@ -186,5 +187,44 @@ describe("POST /api/billing/webhook — réconciliation refund (F2)", () => {
     const res = await POST(req("{}", { "stripe-signature": "good" }));
     expect(res.status).toBe(200);
     expect((await res.json()).received).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Story 3 — observabilité : un échec d'écriture DB (paid=true) ne doit plus
+// être avalé en silence (→ reportError), mais le webhook reste 200 (Stripe
+// rejouerait sinon).
+// ---------------------------------------------------------------------------
+describe("POST /api/billing/webhook — écriture paid=true (observabilité Story 3)", () => {
+  beforeEach(() => {
+    reportSpy.mockClear();
+  });
+
+  function orderPaidEvent() {
+    return {
+      type: "checkout.session.completed",
+      data: {
+        object: {
+          metadata: { kind: "order", order_code: "ABCDE", business_id: "biz1" },
+          payment_status: "paid",
+        },
+      },
+    };
+  }
+
+  it("vraie erreur DB sur paid=true → reportError appelé, webhook toujours 200", async () => {
+    cap.error = { code: "42501", message: "permission denied" }; // RLS, pas colonne absente
+    constructEvent.mockReturnValue(orderPaidEvent());
+    const res = await POST(req("{}", { "stripe-signature": "good" }));
+    expect(res.status).toBe(200);
+    expect(reportSpy).toHaveBeenCalled();
+  });
+
+  it("colonne absente (42703) → tolérée, aucun reportError, 200", async () => {
+    cap.error = { code: "42703", message: 'column "paid" does not exist' };
+    constructEvent.mockReturnValue(orderPaidEvent());
+    const res = await POST(req("{}", { "stripe-signature": "good" }));
+    expect(res.status).toBe(200);
+    expect(reportSpy).not.toHaveBeenCalled();
   });
 });

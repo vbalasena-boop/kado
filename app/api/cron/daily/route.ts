@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { reportError } from "@/lib/report";
+import { isMissingColumnError } from "@/lib/db-errors";
 import {
   sendEmail,
   sendBatch,
@@ -241,15 +242,19 @@ export async function GET(req: NextRequest) {
             : { sent_at: new Date().toISOString() }),
         })
         .eq("id", c.id);
-      // compteur push (tolérant si la colonne manque)
+      // compteur push (tolérant si la colonne manque ; sinon on ne gobe plus
+      // une vraie panne — le cron poursuit quoi qu'il arrive).
       if (pushed > 0) {
         try {
-          await db
+          const { error } = await db
             .from("campaigns")
             .update({ pushed_count: pushed })
             .eq("id", c.id);
-        } catch {
-          /* ignore */
+          if (error && !isMissingColumnError(error)) {
+            reportError(error, { where: "cron/daily.pushed_count", campaign: c.id });
+          }
+        } catch (e) {
+          reportError(e, { where: "cron/daily.pushed_count", campaign: c.id });
         }
       }
     }
