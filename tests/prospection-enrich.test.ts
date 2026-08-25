@@ -6,6 +6,8 @@ import {
   extractContact,
   extractInstagram,
   contactLinks,
+  isJunkEmail,
+  isJunkHandle,
 } from "@/lib/prospection/enrich";
 
 describe("deobfuscate", () => {
@@ -28,6 +30,28 @@ describe("extractEmails", () => {
 
   it("ignore images, domaines exclus", () => {
     expect(extractEmails("logo@2x.png a@example.com u@sentry.io")).toEqual([]);
+  });
+
+  it("rejette les plateformes et les emails d'exemple", () => {
+    expect(extractEmails("contact@privateaser.com")).toEqual([]);
+    expect(extractEmails("support@schedulista.com")).toEqual([]);
+    expect(extractEmails("utilisateur@domaine.com")).toEqual([]);
+  });
+});
+
+describe("isJunkEmail / isJunkHandle", () => {
+  it("détecte les emails poubelle", () => {
+    expect(isJunkEmail("contact@privateaser.com")).toBe(true);
+    expect(isJunkEmail("utilisateur@domaine.com")).toBe(true);
+    expect(isJunkEmail("noreply@resto.fr")).toBe(true);
+    expect(isJunkEmail("contact@leresto.fr")).toBe(false);
+  });
+
+  it("détecte les handles Instagram invalides", () => {
+    expect(isJunkHandle("https")).toBe(true);
+    expect(isJunkHandle("p")).toBe(true);
+    expect(isJunkHandle("123")).toBe(true);
+    expect(isJunkHandle("le.resto")).toBe(false);
   });
 });
 

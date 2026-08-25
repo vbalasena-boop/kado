@@ -37,8 +37,94 @@ const SERVICE_CLIENT = ["serviceclient", "sav", "support", "reclamations", "cont
 const FREEMAIL =
   /(gmail|googlemail|orange\.fr|wanadoo|yahoo|hotmail|outlook|live\.(fr|com)|laposte\.net|free\.fr|sfr\.fr|neuf\.fr|bbox\.fr|aol\.|icloud|gmx\.|protonmail|proton\.me)/i;
 
-// Domaines à exclure (jamais le contact du commerce).
-const DOMAIN_BLOCKLIST = ["example.com", "sentry.io", "wixpress.com", "domain.com", "email.com"];
+// Domaines à exclure (jamais le contact du commerce) : exemples/placeholders + techniques.
+const DOMAIN_BLOCKLIST = [
+  "example.com",
+  "example.fr",
+  "exemple.com",
+  "exemple.fr",
+  "domain.com",
+  "domaine.com",
+  "votredomaine.com",
+  "yourdomain.com",
+  "mydomain.com",
+  "email.com",
+  "email.fr",
+  "test.com",
+  "sentry.io",
+  "wixpress.com",
+];
+
+// Domaines de PLATEFORMES (réservation, sites, réseaux, outils) : un email sur
+// l'un d'eux n'est JAMAIS le contact propre du commerce (souvent embarqué sur
+// son site). Inspiré de `c1_domaines_plateformes` du workflow OndéOndé.
+const PLATFORM_DOMAINS = [
+  "privateaser.com",
+  "schedulista.com",
+  "zenchef.com",
+  "thefork.com",
+  "lafourchette.com",
+  "guestonline.io",
+  "opentable.com",
+  "resy.com",
+  "deliveroo.fr",
+  "ubereats.com",
+  "just-eat.fr",
+  "uber.com",
+  "tripadvisor.com",
+  "tripadvisor.fr",
+  "yelp.com",
+  "wixsite.com",
+  "wix.com",
+  "sitew.com",
+  "eatbu.com",
+  "business.site",
+  "google.com",
+  "facebook.com",
+  "instagram.com",
+  "linktr.ee",
+  "malou.io",
+  "doctolib.fr",
+  "planity.com",
+  "treatwell.fr",
+  "mailchimp.com",
+  "sendinblue.com",
+  "brevo.com",
+  "calendly.com",
+  "squarespace.com",
+  "shopify.com",
+  "godaddy.com",
+];
+
+// Parties locales "placeholder" (emails d'exemple).
+const PLACEHOLDER_LOCALS = ["utilisateur", "votreemail", "votremail", "nom", "prenom", "example", "exemple", "name", "user", "email"];
+
+// Handles Instagram réservés / cassés (jamais un vrai compte de commerce).
+const RESERVED_HANDLES = ["http", "https", "www", "home", "share", "sharer", "embed", "accounts", "tv", "reel", "reels", "explore", "stories", "p", "about"];
+
+function domainOf(email: string): string {
+  return (email.split("@")[1] || "").toLowerCase();
+}
+
+function isPlatformDomain(dom: string): boolean {
+  const d = dom.toLowerCase();
+  return PLATFORM_DOMAINS.some((p) => d === p || d.endsWith(`.${p}`));
+}
+
+/** Email "poubelle" quel que soit le contexte : plateforme, placeholder, technique. */
+export function isJunkEmail(email: string): boolean {
+  const e = email.toLowerCase();
+  return !isAcceptable(e);
+}
+
+/** Handle Instagram invalide (réservé, vide, purement numérique). */
+export function isJunkHandle(handle: string): boolean {
+  const h = handle.toLowerCase();
+  if (RESERVED_HANDLES.includes(h)) return true;
+  if (h.length < 2) return true;
+  if (!/[a-z]/.test(h)) return true; // pas une seule lettre → suspect
+  return false;
+}
 
 // Préfixes "de contact" à privilégier quand plusieurs emails sont sûrs.
 const PREFERRED_PREFIXES = ["contact", "bonjour", "hello", "info", "commercial", "reservation"];
@@ -65,7 +151,10 @@ function isAcceptable(email: string): boolean {
   if (RE_LOCAL_EXCLU.test(parts[0])) return false;
   const localKey = parts[0].replace(/[^a-z]/g, "");
   if (SERVICE_CLIENT.includes(localKey)) return false;
-  if (DOMAIN_BLOCKLIST.some((d) => email.includes(d))) return false;
+  if (PLACEHOLDER_LOCALS.includes(localKey)) return false;
+  const dom = parts[1].toLowerCase();
+  if (DOMAIN_BLOCKLIST.includes(dom)) return false;
+  if (isPlatformDomain(dom)) return false;
   return true;
 }
 
@@ -105,7 +194,7 @@ export function pickBestEmail(emails: string[], siteDomain: string | null): stri
 export function extractInstagram(html: string): string | null {
   for (const m of html.matchAll(INSTA_RE)) {
     const handle = m[1];
-    if (handle) return handle;
+    if (handle && !isJunkHandle(handle)) return handle;
   }
   return null;
 }

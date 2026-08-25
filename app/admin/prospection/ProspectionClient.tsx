@@ -119,6 +119,22 @@ export default function ProspectionClient({
     }
   }
 
+  async function revalidate() {
+    setMessage(null);
+    try {
+      const res = await fetch("/api/admin/prospection/revalidate", { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        setMessage(
+          `Contacts revérifiés : ${data.cleaned_emails ?? 0} email(s) et ${data.cleaned_handles ?? 0} Instagram invalides effacés.`
+        );
+        router.refresh();
+      } else setMessage(`Erreur : ${data.error ?? "inconnue"}`);
+    } catch {
+      setMessage("Erreur réseau (revérification).");
+    }
+  }
+
   async function clearProspects(mode: "demo" | "all") {
     const label =
       mode === "all"
@@ -262,6 +278,13 @@ export default function ProspectionClient({
             title="Devine les emails et comptes Instagram depuis les sites web"
           >
             {enriching ? "Enrichissement…" : "Enrichir (email / Insta)"}
+          </button>
+          <button
+            onClick={revalidate}
+            className="dash-signout"
+            title="Efface les emails/Instagram invalides déjà enregistrés (plateformes, exemples)"
+          >
+            Revérifier les contacts
           </button>
         </div>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 10 }}>
