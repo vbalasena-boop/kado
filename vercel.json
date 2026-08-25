@@ -10,7 +10,7 @@
     },
     {
       "path": "/api/cron/prospection",
-      "schedule": "0 9 * * *"
+      "schedule": "0 7 * * 1-5"
     }
   ]
 }
