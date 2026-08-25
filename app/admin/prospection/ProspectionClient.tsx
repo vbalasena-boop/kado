@@ -197,7 +197,7 @@ export default function ProspectionClient({
       <h2>🔎 Prospection</h2>
       <p style={{ color: "#666", marginTop: -4 }}>
         Trouve des commerces à démarcher, classés par potentiel (peu d'avis
-        Google = fort potentiel Kado).
+        Google = fort potentiel Kado). <a href="/admin/prospection/instagram">📸 File Instagram →</a>
       </p>
 
       {migrationMissing && (
