@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import {
   segmentKeywords,
   placeToProspect,
@@ -68,6 +68,60 @@ describe("mockProspects", () => {
     expect(ids.size).toBe(list.length);
     // au moins un prospect à faible nombre d'avis (bonne cible Kado)
     expect(list.some((p) => (p.google_reviews_count ?? 0) < 30)).toBe(true);
+  });
+});
+
+describe("searchProspects (pagination Places)", () => {
+  const prev = process.env.GOOGLE_PLACES_API_KEY;
+  afterEach(() => {
+    vi.restoreAllMocks();
+    if (prev) process.env.GOOGLE_PLACES_API_KEY = prev;
+    else delete process.env.GOOGLE_PLACES_API_KEY;
+  });
+
+  it("suit nextPageToken pour agréger plusieurs pages", async () => {
+    process.env.GOOGLE_PLACES_API_KEY = "test-key";
+    const page = (ids: string[], nextPageToken?: string) => ({
+      places: ids.map((id) => ({ id, displayName: { text: `Lieu ${id}` } })),
+      nextPageToken,
+    });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => page(["a", "b"], "TOK1") })
+      .mockResolvedValueOnce({ ok: true, json: async () => page(["c", "d"]) });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const res = await searchProspects({
+      city: "Lyon",
+      segments: ["autre"], // un seul mot-clé → pagination isolée
+      limit: 50,
+    });
+
+    expect(res.mock).toBe(false);
+    expect(res.prospects.map((p) => p.place_id)).toEqual(["a", "b", "c", "d"]);
+    // La 2ᵉ requête doit renvoyer le pageToken de la 1ʳᵉ page.
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const secondBody = JSON.parse(fetchMock.mock.calls[1][1].body as string);
+    expect(secondBody.pageToken).toBe("TOK1");
+  });
+
+  it("s'arrête quand la limite est atteinte, sans page superflue", async () => {
+    process.env.GOOGLE_PLACES_API_KEY = "test-key";
+    const fetchMock = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        places: [
+          { id: "a", displayName: { text: "A" } },
+          { id: "b", displayName: { text: "B" } },
+        ],
+        nextPageToken: "TOK1",
+      }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const res = await searchProspects({ city: "Lyon", segments: ["autre"], limit: 2 });
+    expect(res.prospects).toHaveLength(2);
+    expect(fetchMock).toHaveBeenCalledTimes(1); // pas de 2ᵉ page inutile
   });
 });
 

@@ -26,7 +26,19 @@ const FIELD_MASK = [
   "places.userRatingCount",
   "places.websiteUri",
   "places.primaryType",
+  // Jeton de page suivante (pagination) — au niveau racine de la réponse.
+  "nextPageToken",
 ].join(",");
+
+/**
+ * Nombre max de pages demandées par mot-clé (pagination Places).
+ * L'API renvoie jusqu'à 20 résultats/page ; ~3 pages max côté Google (≈60).
+ * Défaut : 3 (≈3× plus de prospects par ville sans exploser le quota).
+ */
+const MAX_PAGES = Math.min(
+  Math.max(Number(process.env.PROSPECT_SOURCE_PAGES || 3), 1),
+  3
+);
 
 /** Mots-clés de recherche Google par segment de prospection. */
 const SEGMENT_KEYWORDS: Record<ProspectSegment, string[]> = {
@@ -123,17 +135,26 @@ export async function searchProspects(
   for (const segment of segments) {
     for (const keyword of segmentKeywords(segment)) {
       if (out.length >= limit) return { prospects: out, mock: false };
-      const places = await fetchTextSearch(
-        `${keyword} à ${city}`,
-        perKeyword,
-        apiKey
-      );
-      for (const raw of places) {
-        const p = placeToProspect(raw, segment, city);
-        if (!p || seen.has(p.place_id)) continue;
-        seen.add(p.place_id);
-        out.push(p);
-        if (out.length >= limit) break;
+
+      // Pagination : on suit `nextPageToken` jusqu'à MAX_PAGES pour récupérer
+      // ~3× plus de commerces par mot-clé, sans dépasser le plafond `limit`.
+      let pageToken: string | undefined;
+      for (let page = 0; page < MAX_PAGES; page++) {
+        const { places, nextPageToken } = await fetchTextSearch(
+          `${keyword} à ${city}`,
+          perKeyword,
+          apiKey,
+          pageToken
+        );
+        for (const raw of places) {
+          const p = placeToProspect(raw, segment, city);
+          if (!p || seen.has(p.place_id)) continue;
+          seen.add(p.place_id);
+          out.push(p);
+          if (out.length >= limit) break;
+        }
+        if (out.length >= limit || !nextPageToken) break;
+        pageToken = nextPageToken;
       }
     }
   }
@@ -141,11 +162,17 @@ export async function searchProspects(
   return { prospects: out, mock: false };
 }
 
+interface TextSearchPage {
+  places: RawPlace[];
+  nextPageToken?: string;
+}
+
 async function fetchTextSearch(
   textQuery: string,
   maxResultCount: number,
-  apiKey: string
-): Promise<RawPlace[]> {
+  apiKey: string,
+  pageToken?: string
+): Promise<TextSearchPage> {
   try {
     const res = await fetch(PLACES_ENDPOINT, {
       method: "POST",
@@ -159,14 +186,19 @@ async function fetchTextSearch(
         languageCode: "fr",
         regionCode: "FR",
         maxResultCount,
+        // Sur une page suivante, les autres paramètres doivent rester identiques.
+        ...(pageToken ? { pageToken } : {}),
       }),
     });
     if (!res.ok) {
       const detail = await res.text().catch(() => "");
       throw new Error(`Places API ${res.status}: ${detail.slice(0, 200)}`);
     }
-    const data = (await res.json()) as { places?: RawPlace[] };
-    return data.places ?? [];
+    const data = (await res.json()) as {
+      places?: RawPlace[];
+      nextPageToken?: string;
+    };
+    return { places: data.places ?? [], nextPageToken: data.nextPageToken };
   } catch (err) {
     reportError(err, { where: "prospection.searchProspects", textQuery });
     throw err;

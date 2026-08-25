@@ -18,16 +18,50 @@ export interface SendSummary {
   followups: number;
   simulated: boolean;
   cap: number; // budget d'envoi de ce passage
-  dailyCap: number; // plafond quotidien configuré
+  dailyCap: number; // plafond quotidien effectif (après montée en charge)
+}
+
+/**
+ * Montée en charge progressive ("warm-up") : sur un domaine neuf, envoyer peu au
+ * début puis augmenter protège la réputation et évite le spam. Renvoie le plafond
+ * du jour selon l'ancienneté (jours depuis le 1ᵉ envoi), borné par `configuredCap`.
+ * Palier : J0–2 → 5, J3–6 → 10, J7–13 → 20, ensuite → plafond configuré.
+ */
+export function warmupCap(daysSinceStart: number, configuredCap: number): number {
+  let ramp: number;
+  if (daysSinceStart < 3) ramp = 5;
+  else if (daysSinceStart < 7) ramp = 10;
+  else if (daysSinceStart < 14) ramp = 20;
+  else ramp = configuredCap;
+  return Math.min(configuredCap, ramp);
 }
 
 export async function runProspectionSend(): Promise<SendSummary> {
-  const dailyCap = Number(process.env.MAX_PROSPECT_EMAILS_PER_DAY || 20);
+  const configuredCap = Number(process.env.MAX_PROSPECT_EMAILS_PER_DAY || 20);
+  const warmupOn = /^(1|true|on|yes)$/i.test(process.env.PROSPECT_WARMUP || "");
   // Débit par passage : par défaut = plafond quotidien (comportement actuel,
   // 1 envoi/jour). Pour un envoi espacé (ex. cron toutes les 30 min → 1 mail
   // par passage), mettre PROSPECT_SEND_BATCH=1 et un cron plus fréquent (Pro).
-  const batch = Number(process.env.PROSPECT_SEND_BATCH || dailyCap);
   const db = getAdminClient();
+
+  // Montée en charge (warm-up) : si activée, on démarre le plafond bas et on
+  // l'augmente selon l'ancienneté (jours depuis le 1ᵉ envoi enregistré).
+  let dailyCap = configuredCap;
+  if (warmupOn) {
+    const { data: firstEvent } = await db
+      .from("prospect_events")
+      .select("created_at")
+      .in("type", ["email_sent", "email_followup_sent"])
+      .order("created_at", { ascending: true })
+      .limit(1);
+    const firstAt = firstEvent?.[0]?.created_at as string | undefined;
+    const daysSinceStart = firstAt
+      ? Math.floor((Date.now() - new Date(firstAt).getTime()) / 86_400_000)
+      : 0;
+    dailyCap = warmupCap(daysSinceStart, configuredCap);
+  }
+
+  const batch = Number(process.env.PROSPECT_SEND_BATCH || dailyCap);
 
   // Compteur quotidien réel : ce qui a déjà été envoyé aujourd'hui (initiaux +
   // relances) — garantit qu'on ne dépasse jamais le plafond, même sur plusieurs
