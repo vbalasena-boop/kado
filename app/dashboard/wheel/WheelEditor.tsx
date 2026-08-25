@@ -4,6 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/icons";
 import { GAME_THEMES, matchTheme } from "@/lib/themes";
 import { EnableNotifications } from "@/components/EnableNotifications";
+import {
+  isTriggerActionSelectable,
+  resolveTriggerActions,
+  nextTriggerActions,
+} from "@/lib/wheel";
 
 type Prize = {
   label: string;
@@ -280,19 +285,14 @@ export default function WheelEditor({
   // Active/désactive une action déclenchante. Garde-fou : on ne peut jamais
   // désactiver la dernière action active (au moins une doit rester).
   function toggleTriggerAction(id: string) {
-    setConfig((c) => {
-      const current = c.trigger_actions?.length ? c.trigger_actions : ["instagram"];
-      const on = current.includes(id);
-      if (on) {
-        if (current.length <= 1) return c; // dernière action : on refuse
-        return { ...c, trigger_actions: current.filter((a) => a !== id) };
-      }
-      // conserve l'ordre canonique des options
-      const next = TRIGGER_ACTION_OPTIONS.map((o) => o.id).filter(
-        (o) => o === id || current.includes(o)
-      );
-      return { ...c, trigger_actions: next };
-    });
+    // Réducteur pur : purge les actions verrouillées, refuse la dernière action
+    // et une action non sélectionnable, conserve l'ordre canonique.
+    setConfig((c) => ({
+      ...c,
+      trigger_actions: nextTriggerActions(c.trigger_actions, id, {
+        fideliteAvailable: showFidelite,
+      }),
+    }));
   }
 
   async function save() {
@@ -300,10 +300,18 @@ export default function WheelEditor({
     setMsg(null);
     setIsErr(false);
     try {
+      // Persiste le set EFFECTIF : une action verrouillée (ex. Fidélité hors
+      // formule) est purgée à l'enregistrement, donc le jeu ne la propose plus.
+      const resolvedActions = resolveTriggerActions(config.trigger_actions, {
+        fideliteAvailable: showFidelite,
+      });
       const res = await fetch("/api/dashboard/wheel", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ config, prizes }),
+        body: JSON.stringify({
+          config: { ...config, trigger_actions: resolvedActions },
+          prizes,
+        }),
       });
       if (res.ok) {
         setIsErr(false);
@@ -331,12 +339,12 @@ export default function WheelEditor({
   const pvPrimary = config.primary_color || "#ffc24d";
   const pvDecor = splitDecor(config.decor_emojis || "");
   const totalWeight = prizes.reduce((s, p) => s + Math.max(0, Number(p.weight) || 0), 0);
-  const igEnabled = config.instagram_enabled !== false;
   const rvEnabled = config.review_enabled !== false;
-  const noChannel = showRoue && !igEnabled && !rvEnabled;
-  const triggerActions = config.trigger_actions?.length
-    ? config.trigger_actions
-    : ["instagram"];
+  // Set EFFECTIF (actions verrouillées purgées) : sert à l'affichage, au garde
+  // « au moins une active » et à ce qui est persisté.
+  const triggerActions = resolveTriggerActions(config.trigger_actions, {
+    fideliteAvailable: showFidelite,
+  });
 
   const stampEmoji = config.loyalty_stamp_emoji || "⭐";
   const rewardEmoji = config.loyalty_reward_emoji || "🎁";
@@ -546,31 +554,13 @@ export default function WheelEditor({
               <div className="dash-card">
                 <h2>Canaux &amp; liens</h2>
                 <p className="muted" style={{ marginBottom: 14 }}>
-                  Le tour Instagram récompense un suivi de votre compte. Le lien
-                  avis Google est <b>facultatif et non récompensé</b> : il
-                  n'offre ni tour ni cadeau.
+                  Renseignez les liens utilisés par vos actions. Ce sont les
+                  <b> actions qui débloquent un tour</b> (plus bas) qui décident
+                  des tours. Le lien avis Google est <b>facultatif et non
+                  récompensé</b> : il n'offre ni tour ni cadeau.
                 </p>
 
-                {igEnabled && (
-                  <p className="muted" style={{ marginBottom: 14 }}>
-                    Le suivi Instagram donne <b>1 tour</b>.
-                  </p>
-                )}
-
-                <label className="toggle-field">
-                  <input
-                    type="checkbox"
-                    checked={igEnabled}
-                    onChange={(e) =>
-                      setConfig({ ...config, instagram_enabled: e.target.checked })
-                    }
-                  />
-                  <span>
-                    <b>Proposer le tour Instagram</b> — un suivi de votre compte contre
-                    un tour de roue.
-                  </span>
-                </label>
-                {igEnabled && (
+                {triggerActions.includes("instagram") ? (
                   <label className="field">
                     <span>Lien Instagram</span>
                     <input
@@ -581,7 +571,18 @@ export default function WheelEditor({
                         setConfig({ ...config, instagram_url: e.target.value })
                       }
                     />
+                    {!config.instagram_url?.trim() && (
+                      <span className="onboarding-err" style={{ marginTop: 4 }}>
+                        L'action Instagram est active mais aucun lien n'est
+                        renseigné : le bouton n'ouvrira rien.
+                      </span>
+                    )}
                   </label>
+                ) : (
+                  <p className="muted" style={{ marginBottom: 14 }}>
+                    Activez l'action <b>Instagram</b> ci-dessous pour renseigner
+                    votre lien.
+                  </p>
                 )}
 
                 <label className="toggle-field" style={{ marginTop: 6 }}>
@@ -611,12 +612,6 @@ export default function WheelEditor({
                   </label>
                 )}
 
-                {!igEnabled && !rvEnabled && (
-                  <p className="onboarding-err" style={{ marginTop: 4 }}>
-                    Activez au moins un canal, sinon vos clients n'auront aucun tour.
-                  </p>
-                )}
-
                 <hr className="fid-sep" />
                 <h2 style={{ marginTop: 0 }}>Actions qui débloquent un tour</h2>
                 <p className="muted" style={{ marginBottom: 14 }}>
@@ -624,18 +619,22 @@ export default function WheelEditor({
                   moins une action doit rester active.
                 </p>
                 {TRIGGER_ACTION_OPTIONS.map((opt) => {
-                  const on = triggerActions.includes(opt.id);
+                  const on = triggerActions.some((a) => a === opt.id);
+                  const selectable = isTriggerActionSelectable(opt.id, {
+                    fideliteAvailable: showFidelite,
+                  });
                   const isLast = on && triggerActions.length <= 1;
+                  const disabled = isLast || !selectable;
                   return (
                     <label
                       key={opt.id}
-                      className={`toggle-field${isLast ? " is-disabled" : ""}`}
+                      className={`toggle-field${disabled ? " is-disabled" : ""}`}
                       style={{ marginTop: 6 }}
                     >
                       <input
                         type="checkbox"
                         checked={on}
-                        disabled={isLast}
+                        disabled={disabled}
                         onChange={() => toggleTriggerAction(opt.id)}
                       />
                       <span>
@@ -643,6 +642,14 @@ export default function WheelEditor({
                           {opt.emoji} {opt.label}
                         </b>{" "}
                         — {opt.desc}
+                        {!selectable && (
+                          <>
+                            {" "}
+                            <em>
+                              (incluse dans les formules Complet ou Fidélité)
+                            </em>
+                          </>
+                        )}
                       </span>
                     </label>
                   );
@@ -1102,7 +1109,7 @@ export default function WheelEditor({
           )}
 
           <div className="save-bar">
-            <button className="btn" onClick={save} disabled={saving || noChannel}>
+            <button className="btn" onClick={save} disabled={saving}>
               {saving ? "Enregistrement…" : "Enregistrer"}
             </button>
             {msg && (

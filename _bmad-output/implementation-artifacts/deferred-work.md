@@ -26,3 +26,15 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-9-4-banniere-migration-avis.md`
   summary: La fermeture de la bannière de migration avis n'est persistée que côté navigateur (`localStorage`, par établissement). Pour une communication de conformité, il n'y a ni accusé de réception côté serveur ni mesure de portée (le bandeau réapparaît sur un nouvel appareil/navigateur).
   evidence: Constat revue 9.4 (Blind Hunter / Edge Case). Choix assumé (spec 9.4 = dismiss localStorage, pas d'email/serveur). Enhancement possible si l'on veut prouver que les commerçants ont été informés : flag serveur `avis_notice_ack` + éventuelle analytics.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-editor-reconcile-trigger-actions.md`
+  summary: L'action déclenchante « Fidélité » est sélectionnable dès que le MODULE est dans la formule (`showFidelite`), sans vérifier que la carte de fidélité est réellement activée (`loyalty_enabled`). Un commerçant avec le module mais la carte désactivée peut offrir un tour « fidélité » renvoyant vers une carte non active.
+  evidence: Constat revue (Blind Hunter). Raffinement UX : gater aussi sur `loyalty_enabled`, ou prompter l'activation de la carte. Hors périmètre immédiat (le point demandé était le gating par formule).
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-editor-reconcile-trigger-actions.md`
+  summary: `app/api/dashboard/wheel/route.ts` (l.76-80) force encore `instagram_enabled/review_enabled` à true si les deux sont faux (« au moins un canal ») — remnant serveur du garde retiré de l'UI. Inerte aujourd'hui (l'UI n'envoie plus `instagram_enabled` → défaut true), mais incohérent avec le nettoyage.
+  evidence: Constat revue (Blind Hunter). Nettoyage serveur à faire (hors Code Map de cette story).
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-editor-reconcile-trigger-actions.md`
+  summary: Aucun backfill ne dérive `trigger_actions` des anciens `instagram_enabled=false` : un commerçant qui avait désactivé Instagram (ancien modèle) mais garde `trigger_actions=["instagram"]` (défaut 0045) débloque désormais des tours Instagram. Pré-existant à cette story (issu du découpage 9.1/9.2/9.4).
+  evidence: Constat revue (Blind Hunter). Migration data éventuelle, ou informer via la bannière 9.4.

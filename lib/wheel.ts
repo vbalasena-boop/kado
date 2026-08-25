@@ -26,6 +26,70 @@ export function sanitizeTriggerActions(input: unknown): TriggerAction[] {
 }
 
 /**
+ * Une action déclenchante est-elle sélectionnable dans l'éditeur (logique pure) ?
+ *
+ * Seule décision non triviale du gating : « Fidélité » (`loyalty`) n'est
+ * sélectionnable que si le module fidélité est disponible dans la formule
+ * (`fideliteAvailable`). Les autres actions autorisées (`instagram`, `optin`)
+ * sont toujours sélectionnables. Toute valeur hors `TRIGGER_ACTIONS` → `false`.
+ */
+export function isTriggerActionSelectable(
+  id: unknown,
+  { fideliteAvailable }: { fideliteAvailable: boolean }
+): boolean {
+  if (id === "loyalty") return fideliteAvailable;
+  if (id === "instagram" || id === "optin") return true;
+  return false;
+}
+
+/**
+ * Set EFFECTIF des actions déclenchantes compte tenu de la disponibilité du
+ * module fidélité (logique pure). Normalise (`sanitizeTriggerActions`) PUIS
+ * retire les actions non sélectionnables (ex. « loyalty » quand le module n'est
+ * pas dans la formule), avec repli `["instagram"]`.
+ *
+ * C'est ce set qui doit être AFFICHÉ **et PERSISTÉ** : une action verrouillée
+ * n'est jamais conservée dans la config, donc le jeu ne la propose plus après
+ * enregistrement (même après une rétrogradation de formule).
+ */
+export function resolveTriggerActions(
+  raw: unknown,
+  { fideliteAvailable }: { fideliteAvailable: boolean }
+): TriggerAction[] {
+  const eff = sanitizeTriggerActions(raw).filter((id) =>
+    isTriggerActionSelectable(id, { fideliteAvailable })
+  );
+  return eff.length > 0 ? eff : ["instagram"];
+}
+
+/**
+ * Réducteur pur du toggle d'une action déclenchante dans l'éditeur.
+ *  - part du set EFFECTIF (actions verrouillées déjà purgées) ;
+ *  - une action non sélectionnable (ou non-string) ne change rien ;
+ *  - on ne peut jamais retirer la dernière action active ;
+ *  - l'ajout conserve l'ordre canonique de `TRIGGER_ACTIONS`.
+ */
+export function nextTriggerActions(
+  current: unknown,
+  id: unknown,
+  { fideliteAvailable }: { fideliteAvailable: boolean }
+): TriggerAction[] {
+  const eff = resolveTriggerActions(current, { fideliteAvailable });
+  if (
+    typeof id !== "string" ||
+    !isTriggerActionSelectable(id, { fideliteAvailable })
+  ) {
+    return eff;
+  }
+  const tid = id as TriggerAction;
+  if (eff.includes(tid)) {
+    if (eff.length <= 1) return eff; // dernière action : on refuse
+    return eff.filter((a) => a !== tid);
+  }
+  return TRIGGER_ACTIONS.filter((o) => o === tid || eff.includes(o));
+}
+
+/**
  * Garde serveur (logique pure) : un `playType` est-il autorisé à débloquer un
  * tour compte tenu des actions déclenchantes configurées ?
  *  - `review` n'est JAMAIS autorisé (l'avis ne débloque plus rien) ;
