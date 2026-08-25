@@ -163,6 +163,7 @@ export type Order = {
   table_label?: string | null;
   buzzer_no?: number | null;
   paid?: boolean | null;
+  refunded?: boolean | null;
 };
 
 function euros(cents: number) {
@@ -639,6 +640,36 @@ export default function OrdersClient({
     }
   }
 
+  /** Rembourse une commande payée en ligne (refund Stripe + drapeau). */
+  async function refundOrder(id: string) {
+    setBusy(true);
+    setMsg(null);
+    try {
+      const res = await fetch("/api/dashboard/orders/refund", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (res.ok && d.ok) {
+        setMsg("✅ Commande remboursée — l'argent est repris au commerçant.");
+      } else if (d.error === "already_refunded") {
+        setMsg("Cette commande a déjà été remboursée.");
+      } else if (d.error === "not_online_paid") {
+        setMsg("Cette commande n'a pas été payée en ligne.");
+      } else if (d.error === "not_found") {
+        setMsg("Commande introuvable.");
+      } else {
+        setMsg("❌ " + (d.detail || "Remboursement impossible. Réessayez."));
+      }
+      router.refresh();
+    } catch {
+      setMsg("Erreur réseau. Réessayez.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   /** Enregistre les horaires de commande. */
   async function saveHours() {
     setBusy(true);
@@ -823,6 +854,27 @@ export default function OrdersClient({
                   <>Total à encaisser : <b>{euros(o.total_cents)} €</b></>
                 )}
               </div>
+              {o.paid && o.refunded && (
+                <span className="order-refunded">↩️ Remboursée</span>
+              )}
+              {o.paid && !o.refunded && (
+                <button
+                  className="btn-mini soft order-refund-btn"
+                  disabled={busy}
+                  onClick={() => {
+                    if (
+                      confirm(
+                        `Rembourser la commande ${o.code} (${euros(
+                          o.total_cents
+                        )} €) ? L'argent sera repris au commerçant.`
+                      )
+                    )
+                      refundOrder(o.id);
+                  }}
+                >
+                  ↩️ Rembourser
+                </button>
+              )}
             </>
           )}
         </div>
@@ -1098,6 +1150,27 @@ export default function OrdersClient({
                       {o.status === "cancelled" ? "✖ annulée" : "✔ retirée"} ·{" "}
                       {fmtTime(o.created_at)}
                     </span>
+                    {o.paid && o.refunded && (
+                      <span className="order-refunded">↩️ Remboursée</span>
+                    )}
+                    {o.paid && !o.refunded && (
+                      <button
+                        className="btn-mini soft order-refund-btn"
+                        disabled={busy}
+                        onClick={() => {
+                          if (
+                            confirm(
+                              `Rembourser la commande ${o.code} (${euros(
+                                o.total_cents
+                              )} €) ? L'argent sera repris au commerçant.`
+                            )
+                          )
+                            refundOrder(o.id);
+                        }}
+                      >
+                        ↩️ Rembourser
+                      </button>
+                    )}
                   </div>
                 </li>
               ))}

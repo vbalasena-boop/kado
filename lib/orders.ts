@@ -33,6 +33,27 @@ export function formatEuros(cents: number): string {
   });
 }
 
+/**
+ * Éligibilité d'une commande au remboursement en ligne (logique pure).
+ * Une commande est remboursable si elle a été payée en ligne
+ * (`paid=true` + `stripe_session_id` présent) et n'est pas déjà remboursée.
+ * Le `status` de fulfilment (new/ready/done/cancelled) n'entre PAS en compte :
+ * une commande « retirée » ou « annulée » reste remboursable.
+ */
+export function refundEligibility(order: {
+  paid?: boolean | null;
+  stripe_session_id?: string | null;
+  refunded?: boolean | null;
+}):
+  | { ok: true }
+  | { ok: false; code: "not_online_paid" | "already_refunded" } {
+  if (order.refunded) return { ok: false, code: "already_refunded" };
+  if (!order.paid || !String(order.stripe_session_id ?? "").trim()) {
+    return { ok: false, code: "not_online_paid" };
+  }
+  return { ok: true };
+}
+
 const BIZ_BASE =
   "id, name, slug, status, subscription_status, subscription_ends_at, click_collect, plan";
 
