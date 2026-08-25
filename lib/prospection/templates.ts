@@ -28,6 +28,15 @@ export interface GeneratedEmail {
 /** Marqueur remplacé par le vrai lien de désinscription à l'envoi. */
 export const UNSUBSCRIBE_MARKER = "{{unsubscribe_url}}";
 
+/** Pied de page commun : signature + mentions d'origine + désinscription (RGPD). */
+const FOOTER = [
+  `—`,
+  `Kado · la solution qui aide les commerces de proximité (avis Google, ` +
+    `Instagram, fidélité) · kado-app.fr`,
+  `Vous recevez ce message en tant que professionnel local. Pour ne plus être ` +
+    `contacté : ${UNSUBSCRIBE_MARKER}`,
+].join("\n");
+
 const SEGMENT_NOUN: Record<ProspectSegment, string> = {
   resto: "restaurant",
   beaute: "salon",
@@ -132,8 +141,7 @@ export function renderEmail(ctx: TemplateContext): GeneratedEmail {
     signoff,
     `L'équipe Kado`,
     ``,
-    `—`,
-    `Pour ne plus être contacté : ${UNSUBSCRIBE_MARKER}`,
+    FOOTER,
   ].join("\n");
 
   return { subject, body };
@@ -184,8 +192,7 @@ export function renderFollowupEmail(ctx: TemplateContext): GeneratedEmail {
     `Belle journée,`,
     `L'équipe Kado`,
     ``,
-    `—`,
-    `Pour ne plus être contacté : ${UNSUBSCRIBE_MARKER}`,
+    FOOTER,
   ].join("\n");
 
   return { subject, body };
