@@ -150,6 +150,24 @@ export default function ProspectionClient({
     }
   }
 
+  async function checkReplies() {
+    setMessage(null);
+    try {
+      const res = await fetch("/api/admin/prospection/check-replies", { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        setMessage(
+          data.configured
+            ? `${data.matched} réponse(s) détectée(s) (${data.scanned} expéditeurs analysés).`
+            : "IMAP non configuré : ajoute les variables PROSPECT_IMAP_* / SMTP dans Vercel."
+        );
+        router.refresh();
+      } else setMessage(`Erreur : ${data.error ?? "inconnue"}`);
+    } catch {
+      setMessage("Erreur réseau (vérification des réponses).");
+    }
+  }
+
   async function revalidate() {
     setMessage(null);
     try {
@@ -325,6 +343,13 @@ export default function ProspectionClient({
             title="Envoie maintenant les emails approuvés (sinon envoi automatique quotidien)"
           >
             ✉️ Envoyer les emails approuvés
+          </button>
+          <button
+            onClick={checkReplies}
+            className="dash-signout"
+            title="Lit ta boîte email et marque 'A répondu' les prospects qui ont répondu"
+          >
+            📥 Vérifier les réponses
           </button>
         </div>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 10 }}>
