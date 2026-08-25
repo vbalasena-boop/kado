@@ -83,6 +83,32 @@ export function renderEmail(ctx: TemplateContext): GeneratedEmail {
   return { subject, body };
 }
 
+/** Génère l'email de RELANCE (2ᵉ contact, si pas de réponse). */
+export function renderFollowupEmail(ctx: TemplateContext): GeneratedEmail {
+  const noun = segmentNoun(ctx.category ?? null);
+  const subject = `Re: pour ${ctx.name}`;
+  const body = [
+    `Bonjour ${ctx.name},`,
+    ``,
+    `Je me permets de revenir vers vous — mon précédent message est peut-être ` +
+      `passé inaperçu.`,
+    ``,
+    `En deux mots : Kado aide les ${noun}s comme le vôtre à récolter plus d'avis ` +
+      `Google et d'abonnés Instagram, via un petit jeu à scanner en boutique. Zéro ` +
+      `effort de votre côté.`,
+    ``,
+    `Une démo de 5 minutes vous intéresserait-elle ? Un simple « oui » et je vous ` +
+      `montre.`,
+    ``,
+    `Belle journée,`,
+    `L'équipe Kado`,
+    ``,
+    `—`,
+    `Pour ne plus être contacté : ${UNSUBSCRIBE_MARKER}`,
+  ].join("\n");
+  return { subject, body };
+}
+
 /** Génère un DM Instagram court et naturel pour un prospect. */
 export function renderDm(ctx: TemplateContext): string {
   const hook = reviewHook(ctx.google_reviews_count);

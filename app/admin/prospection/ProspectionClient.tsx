@@ -139,7 +139,9 @@ export default function ProspectionClient({
       const data = await res.json();
       if (res.ok) {
         setMessage(
-          `${data.sent} email(s) envoyé(s), ${data.skipped} ignoré(s), ${data.failed} échec(s)` +
+          `${data.sent} email(s) envoyé(s)` +
+            (data.followups ? ` (dont ${data.followups} relance(s))` : "") +
+            `, ${data.skipped} ignoré(s), ${data.failed} échec(s)` +
             (data.simulated ? " — MODE SIMULATION (aucun SMTP configuré, rien n'est réellement parti)" : "") +
             `. Plafond du jour : ${data.cap}.`
         );
@@ -147,6 +149,48 @@ export default function ProspectionClient({
       } else setMessage(`Erreur : ${data.error ?? "inconnue"}`);
     } catch {
       setMessage("Erreur réseau (envoi).");
+    }
+  }
+
+  // Ajout manuel d'un prospect
+  const [showAdd, setShowAdd] = useState(false);
+  const [addName, setAddName] = useState("");
+  const [addCity, setAddCity] = useState("");
+  const [addSegment, setAddSegment] = useState<ProspectSegment>("resto");
+  const [addEmail, setAddEmail] = useState("");
+  const [addInsta, setAddInsta] = useState("");
+  const [addReviews, setAddReviews] = useState("");
+
+  async function addProspect() {
+    if (!addName.trim()) {
+      setMessage("Renseigne au moins le nom du commerce.");
+      return;
+    }
+    try {
+      const res = await fetch("/api/admin/prospection/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: addName.trim(),
+          city: addCity.trim() || undefined,
+          category: addSegment,
+          email: addEmail.trim() || undefined,
+          instagram_handle: addInsta.trim() || undefined,
+          google_reviews_count: addReviews === "" ? undefined : Number(addReviews),
+        }),
+      });
+      if (res.ok) {
+        setMessage("Prospect ajouté ✅");
+        setAddName("");
+        setAddCity("");
+        setAddEmail("");
+        setAddInsta("");
+        setAddReviews("");
+        setShowAdd(false);
+        router.refresh();
+      } else setMessage("Erreur à l'ajout du prospect.");
+    } catch {
+      setMessage("Erreur réseau (ajout).");
     }
   }
 
@@ -369,6 +413,45 @@ export default function ProspectionClient({
         )}
       </div>
 
+      {/* --- Ajout manuel --- */}
+      <div style={{ marginBottom: 12 }}>
+        <button
+          onClick={() => setShowAdd((v) => !v)}
+          className="dash-signout"
+          style={{ fontSize: 13 }}
+        >
+          {showAdd ? "Annuler" : "➕ Ajouter un prospect à la main"}
+        </button>
+        {showAdd && (
+          <div
+            style={{
+              border: "1px solid #eee",
+              borderRadius: 10,
+              padding: 14,
+              marginTop: 8,
+              display: "flex",
+              gap: 10,
+              flexWrap: "wrap",
+              alignItems: "center",
+            }}
+          >
+            <input value={addName} onChange={(e) => setAddName(e.target.value)} placeholder="Nom du commerce *" style={addInput} />
+            <input value={addCity} onChange={(e) => setAddCity(e.target.value)} placeholder="Ville" style={addInput} />
+            <select value={addSegment} onChange={(e) => setAddSegment(e.target.value as ProspectSegment)} style={selectStyle}>
+              {PROSPECT_SEGMENTS.map((s) => (
+                <option key={s} value={s}>{SEGMENT_LABEL[s]}</option>
+              ))}
+            </select>
+            <input value={addEmail} onChange={(e) => setAddEmail(e.target.value)} placeholder="email@commerce.fr" style={addInput} />
+            <input value={addInsta} onChange={(e) => setAddInsta(e.target.value)} placeholder="@instagram" style={{ ...addInput, minWidth: 140 }} />
+            <input value={addReviews} onChange={(e) => setAddReviews(e.target.value)} placeholder="Nb avis Google" type="number" min={0} style={{ ...addInput, minWidth: 130 }} />
+            <button onClick={addProspect} className="dash-signout" style={{ fontSize: 13 }}>
+              Ajouter
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* --- Filtres --- */}
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 10 }}>
         <select value={fSegment} onChange={(e) => setFSegment(e.target.value)} style={selectStyle}>
@@ -565,6 +648,13 @@ function StatsBand({ stats }: { stats: Stats }) {
     </div>
   );
 }
+
+const addInput: React.CSSProperties = {
+  padding: 8,
+  borderRadius: 8,
+  border: "1px solid #ccc",
+  minWidth: 180,
+};
 
 const selectStyle: React.CSSProperties = {
   padding: "6px 10px",
