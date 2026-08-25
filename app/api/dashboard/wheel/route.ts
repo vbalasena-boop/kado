@@ -3,7 +3,7 @@ import { revalidateTag } from "next/cache";
 import { getMyBusiness } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { insertPrizes } from "@/lib/prizes";
-import { sanitizeTriggerActions } from "@/lib/wheel";
+import { unlockedSpinActions } from "@/lib/wheel";
 import { isMissingColumnError } from "@/lib/db-errors";
 import { reportError } from "@/lib/report";
 
@@ -222,7 +222,11 @@ export async function POST(req: NextRequest) {
   try {
     const { error } = await admin
       .from("wheel_configs")
-      .update({ trigger_actions: sanitizeTriggerActions(cfg.trigger_actions) })
+      .update({
+        trigger_actions: unlockedSpinActions(cfg.trigger_actions, {
+          loyaltyEnabled: !!cfg.loyalty_enabled,
+        }),
+      })
       .eq("business_id", business.id);
     if (error && !isMissingColumnError(error)) {
       reportError(error, { where: "dashboard/wheel", field: "trigger_actions" });

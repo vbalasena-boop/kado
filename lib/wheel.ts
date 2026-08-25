@@ -90,23 +90,53 @@ export function nextTriggerActions(
 }
 
 /**
+ * Set EFFECTIF des tours débloqués côté JEU compte tenu de l'activation réelle
+ * de la carte de fidélité (`loyaltyEnabled`), logique pure. Normalise
+ * (`sanitizeTriggerActions`) PUIS, si `opts.loyaltyEnabled === false`, retire
+ * « loyalty » (la carte est désactivée → un tour fidélité mènerait à une carte
+ * inaccessible), avec repli `["instagram"]`.
+ *
+ * Rétrocompatible : `opts` absent (ou `loyaltyEnabled` non passé) → comportement
+ * strictement identique à `sanitizeTriggerActions` (« loyalty » conservée).
+ */
+export function unlockedSpinActions(
+  triggerActions: unknown,
+  opts?: { loyaltyEnabled?: boolean }
+): TriggerAction[] {
+  const base = sanitizeTriggerActions(triggerActions);
+  if (opts?.loyaltyEnabled === false) {
+    const eff = base.filter((a) => a !== "loyalty");
+    return eff.length > 0 ? eff : ["instagram"];
+  }
+  return base;
+}
+
+/**
  * Garde serveur (logique pure) : un `playType` est-il autorisé à débloquer un
  * tour compte tenu des actions déclenchantes configurées ?
  *  - `review` n'est JAMAIS autorisé (l'avis ne débloque plus rien) ;
  *  - lecture tolérante : `triggerActions` est normalisé par
  *    `sanitizeTriggerActions` (repli `["instagram"]` si absent/vide/invalide) ;
- *  - autorisé ⟺ le type figure dans la liste normalisée.
+ *  - autorisé ⟺ le type figure dans la liste normalisée ;
+ *  - filet de sécurité fidélité : si `opts.loyaltyEnabled === false`, « loyalty »
+ *    est refusée (carte désactivée → tour impossible). Rétrocompatible : `opts`
+ *    absent (défaut `loyaltyEnabled = true`) → comportement inchangé.
  */
 export function isTriggerActionAllowed(
   playType: unknown,
-  triggerActions: unknown
+  triggerActions: unknown,
+  opts?: { loyaltyEnabled?: boolean }
 ): boolean {
   if (typeof playType !== "string") return false;
   // L'avis n'est jamais une action déclenchante (défense en profondeur : il
   // n'appartient de toute façon pas à TRIGGER_ACTIONS après sanitisation).
   if (playType === "review") return false;
   const allowed = sanitizeTriggerActions(triggerActions);
-  return allowed.includes(playType as TriggerAction);
+  if (!allowed.includes(playType as TriggerAction)) return false;
+  // Filet de sécurité : la carte désactivée interdit le tour fidélité même si
+  // « loyalty » figure encore dans la config (donnée existante / payload forgé).
+  if (playType === "loyalty" && opts?.loyaltyEnabled === false) return false;
+  return true;
 }
 
 /**

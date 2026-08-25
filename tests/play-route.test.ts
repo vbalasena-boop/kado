@@ -10,6 +10,8 @@ import { NextRequest } from "next/server";
 
 // Actions déclenchantes renvoyées par le mock `wheel_configs` (mutable par test).
 let TRIGGER: unknown = ["instagram"];
+// Carte de fidélité active ? (gate de l'action « loyalty », mutable par test).
+let LOYALTY_ENABLED = true;
 
 const PRIZES = [
   {
@@ -47,7 +49,7 @@ function makeClient() {
           if (table === "wheel_configs") {
             if (cols.includes("trigger_actions"))
               return Promise.resolve({
-                data: { trigger_actions: TRIGGER },
+                data: { trigger_actions: TRIGGER, loyalty_enabled: LOYALTY_ENABLED },
                 error: null,
               });
             if (cols.includes("play_alerts"))
@@ -90,6 +92,7 @@ function post(playType: string) {
 describe("POST /api/play — garde des actions déclenchantes", () => {
   beforeEach(() => {
     TRIGGER = ["instagram"];
+    LOYALTY_ENABLED = true;
   });
 
   it("action configurée → 200 + tirage serveur", async () => {
@@ -100,6 +103,14 @@ describe("POST /api/play — garde des actions déclenchantes", () => {
     expect(data.label).toBe("Café offert");
     expect(typeof data.code).toBe("string");
     expect(data.index).toBe(0);
+  });
+
+  it("loyalty configurée MAIS carte désactivée → 403 (impasse évitée)", async () => {
+    TRIGGER = ["loyalty"];
+    LOYALTY_ENABLED = false;
+    const res = await POST(post("loyalty"));
+    expect(res.status).toBe(403);
+    expect((await res.json()).error).toBe("action_not_allowed");
   });
 
   it("action non configurée → 403 action_not_allowed", async () => {

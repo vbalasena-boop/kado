@@ -290,7 +290,7 @@ export default function WheelEditor({
     setConfig((c) => ({
       ...c,
       trigger_actions: nextTriggerActions(c.trigger_actions, id, {
-        fideliteAvailable: showFidelite,
+        fideliteAvailable: showFidelite && !!c.loyalty_enabled,
       }),
     }));
   }
@@ -303,7 +303,7 @@ export default function WheelEditor({
       // Persiste le set EFFECTIF : une action verrouillée (ex. Fidélité hors
       // formule) est purgée à l'enregistrement, donc le jeu ne la propose plus.
       const resolvedActions = resolveTriggerActions(config.trigger_actions, {
-        fideliteAvailable: showFidelite,
+        fideliteAvailable: showFidelite && !!config.loyalty_enabled,
       });
       const res = await fetch("/api/dashboard/wheel", {
         method: "POST",
@@ -343,7 +343,7 @@ export default function WheelEditor({
   // Set EFFECTIF (actions verrouillées purgées) : sert à l'affichage, au garde
   // « au moins une active » et à ce qui est persisté.
   const triggerActions = resolveTriggerActions(config.trigger_actions, {
-    fideliteAvailable: showFidelite,
+    fideliteAvailable: showFidelite && !!config.loyalty_enabled,
   });
 
   const stampEmoji = config.loyalty_stamp_emoji || "⭐";
@@ -621,7 +621,7 @@ export default function WheelEditor({
                 {TRIGGER_ACTION_OPTIONS.map((opt) => {
                   const on = triggerActions.some((a) => a === opt.id);
                   const selectable = isTriggerActionSelectable(opt.id, {
-                    fideliteAvailable: showFidelite,
+                    fideliteAvailable: showFidelite && !!config.loyalty_enabled,
                   });
                   const isLast = on && triggerActions.length <= 1;
                   const disabled = isLast || !selectable;

@@ -112,9 +112,14 @@ describe("POST /api/dashboard/wheel — persistance trigger_actions", () => {
     expect(persistedTriggerActions()).toEqual(["instagram"]);
   });
 
-  it("liste valide persistée telle quelle", async () => {
-    await POST(post({ trigger_actions: ["loyalty", "optin"] }));
+  it("liste valide persistée telle quelle (carte fidélité active)", async () => {
+    await POST(post({ trigger_actions: ["loyalty", "optin"], loyalty_enabled: true }));
     expect(persistedTriggerActions()).toEqual(["loyalty", "optin"]);
+  });
+
+  it("carte fidélité désactivée → « loyalty » purgée à la persistance (défense serveur)", async () => {
+    await POST(post({ trigger_actions: ["loyalty", "optin"], loyalty_enabled: false }));
+    expect(persistedTriggerActions()).toEqual(["optin"]);
   });
 });
 
