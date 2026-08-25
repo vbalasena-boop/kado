@@ -8,6 +8,7 @@ import { getAdminClient } from "@/lib/supabase/admin";
 import { sendProspectEmail, finalizeBody } from "@/lib/prospection/sender";
 import { unsubUrl } from "@/lib/prospection/unsub";
 import { renderFollowupEmail } from "@/lib/prospection/templates";
+import { verifyEmail, type EmailVerdict } from "@/lib/prospection/verify-email";
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://kado-app.fr";
 
@@ -16,6 +17,8 @@ export interface SendSummary {
   skipped: number;
   failed: number;
   followups: number;
+  /** Adresses écartées car invalides (format ou domaine sans MX) avant envoi. */
+  invalid: number;
   simulated: boolean;
   cap: number; // budget d'envoi de ce passage
   dailyCap: number; // plafond quotidien effectif (après montée en charge)
@@ -77,7 +80,7 @@ export async function runProspectionSend(): Promise<SendSummary> {
   const remainingToday = Math.max(0, dailyCap - (sentToday ?? 0));
   const cap = Math.min(batch, remainingToday); // budget d'envoi de CE passage
 
-  const out: SendSummary = { sent: 0, skipped: 0, failed: 0, followups: 0, simulated: false, cap, dailyCap };
+  const out: SendSummary = { sent: 0, skipped: 0, failed: 0, followups: 0, invalid: 0, simulated: false, cap, dailyCap };
   if (cap <= 0) return out; // plafond du jour déjà atteint
 
   const { data, error } = await db
@@ -99,11 +102,37 @@ export async function runProspectionSend(): Promise<SendSummary> {
   const { data: supp } = await db.from("suppression_list").select("email");
   const suppressed = new Set((supp ?? []).map((s) => (s.email ?? "").toLowerCase()));
 
+  // Cache des verdicts de vérification (évite les lookups DNS répétés).
+  const verdictCache = new Map<string, EmailVerdict>();
+  const checkEmail = async (addr: string): Promise<EmailVerdict> => {
+    const cached = verdictCache.get(addr);
+    if (cached) return cached;
+    const v = await verifyEmail(addr);
+    verdictCache.set(addr, v);
+    return v;
+  };
+
   for (const m of rows) {
     if (out.sent >= cap) break;
     const email = m.prospects?.email?.toLowerCase();
     if (!email || m.prospects.status === "excluded" || suppressed.has(email)) {
       out.skipped++;
+      continue;
+    }
+
+    // Vérif AVANT envoi : évite les bounces (protège la réputation).
+    const verdict = await checkEmail(email);
+    if (verdict === "bad_format" || verdict === "no_mx") {
+      const reason = verdict === "no_mx" ? "domaine sans email (MX absent)" : "email invalide (format)";
+      await db.from("suppression_list").upsert({ email, reason: verdict }, { onConflict: "email" });
+      await db
+        .from("prospects")
+        .update({ status: "excluded", exclude_reason: reason, updated_at: new Date().toISOString() })
+        .eq("id", m.prospect_id);
+      await db
+        .from("prospect_events")
+        .insert({ prospect_id: m.prospect_id, type: "email_invalid", meta: { verdict } });
+      out.invalid++;
       continue;
     }
 
