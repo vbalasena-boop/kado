@@ -87,3 +87,25 @@ export function shouldShowReviewCta(cfg: {
 }): boolean {
   return reviewCtaHref(cfg) !== null;
 }
+
+/**
+ * Décision « établissement concerné par la migration avis » (logique pure).
+ *
+ * Vrai ⟺ l'avis était *utilisé* pour débloquer un tour avant sa neutralisation
+ * (9.2/9.3) : avis actif (`review_enabled !== false`, défaut tolérant) ET lien
+ * renseigné (`review_url` string non vide après trim). Sert uniquement à décider
+ * si la bannière d'information (Story 9.4) doit s'afficher au commerçant.
+ *
+ * Distinct de `shouldShowReviewCta` (intention différente : notice commerçant vs
+ * CTA joueur) même si la condition se recoupe aujourd'hui. AUCUN paramètre de
+ * note/satisfaction : la décision ne dépend jamais d'une note (garantie
+ * structurelle « pas de review gating »).
+ */
+export function avisMigrationNoticeNeeded(cfg: {
+  review_enabled?: unknown;
+  review_url?: unknown;
+}): boolean {
+  if (cfg.review_enabled === false) return false;
+  if (typeof cfg.review_url !== "string") return false;
+  return cfg.review_url.trim() !== "";
+}

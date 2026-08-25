@@ -4,6 +4,7 @@ import {
   isTriggerActionAllowed,
   shouldShowReviewCta,
   reviewCtaHref,
+  avisMigrationNoticeNeeded,
   TRIGGER_ACTIONS,
 } from "@/lib/wheel";
 
@@ -216,5 +217,62 @@ describe("reviewCtaHref", () => {
     expect(reviewCtaHref({ review_url: "" })).toBeNull();
     expect(reviewCtaHref({ review_url: "   " })).toBeNull();
     expect(reviewCtaHref({})).toBeNull();
+  });
+});
+
+describe("avisMigrationNoticeNeeded", () => {
+  it("concerné : avis actif + lien renseigné → true", () => {
+    expect(
+      avisMigrationNoticeNeeded({
+        review_enabled: true,
+        review_url: "https://g.page/r/x",
+      })
+    ).toBe(true);
+  });
+
+  it("avis désactivé (même avec un lien) → false", () => {
+    expect(
+      avisMigrationNoticeNeeded({
+        review_enabled: false,
+        review_url: "https://g.page/r/x",
+      })
+    ).toBe(false);
+  });
+
+  it("pas de lien avis (null / '' / espaces) → false", () => {
+    expect(
+      avisMigrationNoticeNeeded({ review_enabled: true, review_url: null })
+    ).toBe(false);
+    expect(
+      avisMigrationNoticeNeeded({ review_enabled: true, review_url: "" })
+    ).toBe(false);
+    expect(
+      avisMigrationNoticeNeeded({ review_enabled: true, review_url: "   " })
+    ).toBe(false);
+  });
+
+  it("défaut tolérant : enabled absent + lien → true (!== false)", () => {
+    expect(
+      avisMigrationNoticeNeeded({ review_url: "https://g.page/r/x" })
+    ).toBe(true);
+    expect(
+      avisMigrationNoticeNeeded({ review_enabled: null, review_url: "g.page/r/x" })
+    ).toBe(true);
+  });
+
+  it("enabled absent + lien absent → false", () => {
+    expect(avisMigrationNoticeNeeded({})).toBe(false);
+    expect(avisMigrationNoticeNeeded({ review_url: null })).toBe(false);
+  });
+
+  it("aucune entrée de note : la décision ne dépend d'aucune satisfaction", () => {
+    expect(
+      avisMigrationNoticeNeeded({
+        review_enabled: true,
+        review_url: "https://g.page/r/x",
+        // @ts-expect-error — aucun paramètre de note n'est accepté
+        rating: 1,
+      })
+    ).toBe(true);
   });
 });

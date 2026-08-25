@@ -22,3 +22,7 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-9-3-avis-google-cta-neutre.md`
   summary: La FAQ d'aide commerçant (`app/dashboard/aide/page.tsx`, ~l.88) est obsolète : « Est-ce légal d'offrir un cadeau contre un avis ? » — sous le modèle option A, le cadeau n'est plus lié à l'avis (CTA neutre non récompensé). Reformuler pour ne plus suggérer un cadeau conditionné à un avis.
   evidence: Constat revue 9.3 (Blind Hunter). Hors Code Map de 9.3 (fichier d'aide non touché). Mise à jour documentaire à planifier.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-9-4-banniere-migration-avis.md`
+  summary: La fermeture de la bannière de migration avis n'est persistée que côté navigateur (`localStorage`, par établissement). Pour une communication de conformité, il n'y a ni accusé de réception côté serveur ni mesure de portée (le bandeau réapparaît sur un nouvel appareil/navigateur).
+  evidence: Constat revue 9.4 (Blind Hunter / Edge Case). Choix assumé (spec 9.4 = dismiss localStorage, pas d'email/serveur). Enhancement possible si l'on veut prouver que les commerçants ont été informés : flag serveur `avis_notice_ack` + éventuelle analytics.
