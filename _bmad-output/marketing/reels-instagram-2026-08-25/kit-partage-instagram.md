@@ -32,8 +32,10 @@
 | Semaine | Lundi 12 h | Mercredi 19 h | Vendredi 12 h |
 |---|---|---|---|
 | 1 | Réel 1 — Le voisin | Réel 2 — 3→47 avis | Réel 5 — parcours 30 s |
-| 2 | Réel 3 — le calcul 29 € | Réel 4 — conformité | Réel 6 — 1 par rue |
+| 2 | Réel 3 — le calcul 29 € | Réel 4 — conformité | Réel 7 — Rentrée |
 | 3 | *Rediffuse le meilleur* | Nouveau angle | Témoignage / coulisses |
+
+> Le Réel 6 « 1 par rue » a été retiré de la rotation (voir section 7). Il reste dispo pour la vente directe.
 
 **Jours à éviter :** dimanche soir et lundi matin (faible attention pro). **Teste 2 semaines**, garde le créneau qui sort les meilleures « vues des non-followers ».
 
@@ -203,33 +205,35 @@ Trois étapes : scanner un QR code, jouer à une roue de la fortune, gagner un c
 
 ---
 
-## 7. RÉEL 6 — « 1 seul par rue » (rareté / FOMO)
+## 7. RÉEL 7 — « Rentrée » (saisonnier)
 
-**🎬 Texte de couverture :** `1 seul commerce par rue.`
+> ⚠️ Le Réel 6 « 1 seul par rue » est **retiré de la rotation publique** (fausse rareté peu crédible en diffusion). On garde ce levier pour la **vente directe** (DM/mail/terrain). Il est remplacé ici par le Réel 7 « Rentrée ». La vidéo `reel6-1-par-rue.mp4` reste dans `videos/` au cas où, mais n'est pas planifiée.
+
+**🎬 Texte de couverture :** `La rentrée = le moment d'exploser vos avis`
 
 **📋 Légende à coller**
 ```
-⚠️ 1 seul commerce par rue.
+La rentrée, vos clients reviennent. C'est LE moment pour vos avis Google. 🍂
 
-Kado, c'est une longueur d'avance sur Google. Le jour où votre voisin s'y met, l'écart d'avis se creuse tout seul — chaque jour un peu plus. Le premier de la rue qui dégaine prend la place. 🎡
+Chaque client de septembre = un avis en plus. Pendant que vos concurrents attendent, vous prenez de l'avance : vos clients scannent, jouent à la roue, gagnent un cadeau — et laissent un avis. 🎡
 
-C'est vous ?
+Septembre se joue maintenant.
 👉 Commentez DEMO — 14 jours offerts, sans carte bancaire.
 ```
 
 **💬 1er commentaire**
 ```
-Dans quelle rue / quartier êtes-vous ? 👇 Je vérifie si la place est encore libre.
+Votre objectif d'avis pour la rentrée, c'est combien ? 👇 Dites-moi votre commerce, je regarde votre fiche.
 ```
 
 **🔤 Texte alternatif**
 ```
-Message d'exclusivité : un seul commerce par rue, avec deux fiches Google dont l'écart d'avis se creuse.
+Message de rentrée : chaque client de septembre égale un avis en plus, avec une fiche Google qui grimpe et une roue Kado.
 ```
 
 **#️⃣ Hashtags**
 ```
-#commercedeproximité #concurrence #avisgoogle #commercelocal #restaurateur #marketinglocal #petitcommerce #stratégie #exclusivité #kado #kadoapp
+#rentrée #commercedeproximité #avisgoogle #commercelocal #restaurateur #marketinglocal #petitcommerce #septembre #boostmoncommerce #kado #kadoapp
 ```
 
 ---

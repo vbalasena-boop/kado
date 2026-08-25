@@ -144,7 +144,32 @@ def r6_first(t):
 REEL6=[(0,2.4,r6_hook),(2.4,5.8,r6_edge),(5.8,9.6,r6_gap),(9.6,12.7,r6_first),
        (12.7,15.0,lambda t: cta(t,"C'est vous ?"))]
 
-REELS={"reel2":REEL2,"reel3":REEL3,"reel4":REEL4,"reel5":REEL5,"reel6":REEL6}
+# =================== RÉEL 7 — Rentrée (saisonnier) ===================
+def r7_hook(t):
+    img=text_scene(t,[([("La rentrée,",WHITE)],BOLD(90),0.28,0.0),
+                      ([("vos clients reviennent.",WHITE)],BOLD(72),0.44,0.35),
+                      ([("Le moment parfait.",GOLD)],BOLD(80),0.60,0.7)])
+    emoji_pop(img,"🍂",W//2,int(H*0.80),130,t,0.8); return img
+def r7_each(t):
+    img=bg_violet()
+    para(img,[("Chaque client de septembre",WHITE)],BOLD(60),W//2,int(H*0.12),int(W*0.88))
+    para(img,[("= un avis en plus.",GOLD)],BOLD(64),W//2,int(H*0.20),int(W*0.88))
+    ws=560; ang=-(360*2.3*ease(clamp(t/0.7))+35); img.alpha_composite(wheel(ws,ang),((W-ws)//2,int(H*0.34)))
+    return img
+def r7_ahead(t):
+    img=bg_violet(int(H*0.40))
+    para(img,[("Pendant que vos concurrents attendent…",WHITE)],BOLD(54),W//2,int(H*0.16),int(W*0.86))
+    cw=int(W*0.82); cnt=int(12+48*ease(clamp((t-0.1)/0.55)))
+    img.alpha_composite(google_card(cw,"Votre commerce",5,f"{cnt} avis",GREEN),((W-cw)//2,int(H*0.34)))
+    pop(img,pill("vous prenez de l'avance",BOLD(50),NAVY,GOLD),W//2,int(H*0.60),t,0.55)
+    return img
+def r7_now(t):
+    return text_scene(t,[([("Septembre se joue",WHITE)],BOLD(80),0.34,0.0),
+                         ([("maintenant.",GOLD)],BOLD(96),0.50,0.4)])
+REEL7=[(0,2.4,r7_hook),(2.4,6.0,r7_each),(6.0,9.6,r7_ahead),(9.6,12.7,r7_now),
+       (12.7,15.0,lambda t: cta(t,"Lancez la rentrée avec Kado"))]
+
+REELS={"reel2":REEL2,"reel3":REEL3,"reel4":REEL4,"reel5":REEL5,"reel6":REEL6,"reel7":REEL7}
 
 if __name__=="__main__":
     which=sys.argv[1:] or list(REELS.keys())
