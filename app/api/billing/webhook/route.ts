@@ -4,6 +4,7 @@ import { getStripe } from "@/lib/stripe";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { sendEmail, emailLayout, getOwnerContact } from "@/lib/email";
 import { reportError } from "@/lib/report";
+import { isMissingColumnError } from "@/lib/db-errors";
 import { reconcileRefundEvent } from "@/lib/refund-reconcile";
 
 /** Retrouve l'établissement lié à une facture (via metadata ou customer). */
@@ -84,10 +85,14 @@ async function applySubscription(sub: Stripe.Subscription) {
   if (sub.status === "canceled") {
     try {
       const q2 = db.from("businesses").update({ order_tracking: false });
-      if (businessId) await q2.eq("id", businessId);
-      else await q2.eq("stripe_customer_id", customerId);
-    } catch {
-      /* colonne absente : ignoré */
+      const { error } = businessId
+        ? await q2.eq("id", businessId)
+        : await q2.eq("stripe_customer_id", customerId);
+      if (error && !isMissingColumnError(error)) {
+        reportError(error, { where: "webhook.order_tracking" });
+      }
+    } catch (e) {
+      reportError(e, { where: "webhook.order_tracking" });
     }
   }
 }
@@ -120,15 +125,21 @@ export async function POST(req: NextRequest) {
           const code = session.metadata.order_code;
           const bizId = session.metadata.business_id;
           if (code && bizId && session.payment_status === "paid") {
+            // Complétion de paiement : le webhook reste 200 quoi qu'il arrive
+            // (Stripe rejouera sinon), mais on ne gobe plus en silence un échec
+            // d'écriture de `paid=true` (colonne absente → ignoré ; sinon Sentry).
             try {
-              await getAdminClient()
+              const { error } = await getAdminClient()
                 .from("orders")
                 .update({ status: "new", paid: true })
                 .eq("business_id", bizId)
                 .eq("code", code)
                 .eq("status", "awaiting_payment");
-            } catch {
-              /* colonnes absentes : ignoré */
+              if (error && !isMissingColumnError(error)) {
+                reportError(error, { where: "webhook.order_paid", code });
+              }
+            } catch (e) {
+              reportError(e, { where: "webhook.order_paid", code });
             }
           }
           break;

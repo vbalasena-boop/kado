@@ -1,5 +1,7 @@
 import { NextRequest } from "next/server";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { reportError } from "@/lib/report";
+import { isMissingColumnError } from "@/lib/db-errors";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { hasAccess } from "@/lib/auth";
 import { sendEmail, getOwnerContact } from "@/lib/email";
@@ -170,15 +172,20 @@ export async function POST(req: NextRequest) {
         total,
         email: email || null,
       });
-      // Mémorise la session pour réconciliation (best effort).
+      // Mémorise la session pour réconciliation (best effort). Chemin client :
+      // on ne bloque JAMAIS le paiement pour ça, mais on ne gobe plus une vraie
+      // panne en silence (colonne absente → ignoré ; sinon reportError).
       try {
-        await db
+        const { error } = await db
           .from("orders")
           .update({ stripe_session_id: session.id })
           .eq("business_id", biz.id)
           .eq("code", code);
-      } catch {
-        /* colonne absente : ignoré */
+        if (error && !isMissingColumnError(error)) {
+          reportError(error, { where: "order.session", code });
+        }
+      } catch (e) {
+        reportError(e, { where: "order.session", code });
       }
       return Response.json({
         ok: true,
@@ -187,15 +194,20 @@ export async function POST(req: NextRequest) {
         checkoutUrl: session.url,
       });
     } catch (e: any) {
-      // Échec de création du paiement : on annule la commande en attente.
+      // Échec de création du paiement : on annule la commande en attente
+      // (best effort — on renvoie 500 payment_failed quoi qu'il arrive, mais on
+      // ne gobe plus une vraie panne de l'annulation en silence).
       try {
-        await db
+        const { error } = await db
           .from("orders")
           .update({ status: "cancelled" })
           .eq("business_id", biz.id)
           .eq("code", code);
-      } catch {
-        /* ignore */
+        if (error && !isMissingColumnError(error)) {
+          reportError(error, { where: "order.cancel", code });
+        }
+      } catch (err) {
+        reportError(err, { where: "order.cancel", code });
       }
       return Response.json(
         { error: "payment_failed", detail: e?.message ?? "stripe" },
