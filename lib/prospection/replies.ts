@@ -17,6 +17,8 @@ export interface ReplySummary {
   scanned: number;
   matched: number;
   bounced: number;
+  /** RDV Calendly détectés (prospects passés « Intéressé »). */
+  booked: number;
   configured: boolean;
 }
 
@@ -30,17 +32,20 @@ function imapConfig() {
 
 const EMAIL_RE = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/gi;
 const DAEMON_RE = /(mailer-daemon|postmaster|mail delivery|delivery status|no-?reply)/i;
+const CALENDLY_RE = /calendly\.com/i;
 
 interface ScanResult {
   senders: Set<string>; // expéditeurs "normaux" (réponses potentielles)
   bounced: Set<string>; // adresses en échec (extraites des rapports de bounce)
+  booked: Set<string>; // invités ayant réservé un RDV (emails Calendly)
 }
 
-/** Scanne l'INBOX : expéditeurs de réponses + adresses en échec (bounces). */
+/** Scanne l'INBOX : réponses + bounces + réservations Calendly. */
 async function scanInbox(sinceDays: number): Promise<ScanResult> {
   const { host, user, pass, port } = imapConfig();
   const senders = new Set<string>();
   const bounced = new Set<string>();
+  const booked = new Set<string>();
   const client = new ImapFlow({
     host,
     port,
@@ -56,6 +61,8 @@ async function scanInbox(sinceDays: number): Promise<ScanResult> {
       const from = msg.envelope?.from?.[0]?.address?.toLowerCase() ?? "";
       const subject = msg.envelope?.subject ?? "";
       const isBounce = DAEMON_RE.test(from) || DAEMON_RE.test(subject);
+      const isCalendly = CALENDLY_RE.test(from);
+
       if (isBounce) {
         // Rapport de non-remise : on extrait les adresses en échec du corps.
         const body = msg.source ? msg.source.toString("utf8") : "";
@@ -65,6 +72,14 @@ async function scanInbox(sinceDays: number): Promise<ScanResult> {
           if (e === user.toLowerCase() || DAEMON_RE.test(e)) continue;
           bounced.add(e);
         }
+      } else if (isCalendly) {
+        // Notification Calendly : on extrait l'email de l'invité (le prospect).
+        const body = msg.source ? msg.source.toString("utf8") : "";
+        for (const m of body.matchAll(EMAIL_RE)) {
+          const e = m[0].toLowerCase();
+          if (e === user.toLowerCase() || CALENDLY_RE.test(e) || DAEMON_RE.test(e)) continue;
+          booked.add(e);
+        }
       } else if (from) {
         senders.add(from);
       }
@@ -73,7 +88,7 @@ async function scanInbox(sinceDays: number): Promise<ScanResult> {
     lock.release();
     await client.logout().catch(() => {});
   }
-  return { senders, bounced };
+  return { senders, bounced, booked };
 }
 
 /**
@@ -83,7 +98,7 @@ async function scanInbox(sinceDays: number): Promise<ScanResult> {
 export async function runReplyDetection(sinceDays = 14): Promise<ReplySummary> {
   const { host, user, pass } = imapConfig();
   if (!host || !user || !pass) {
-    return { scanned: 0, matched: 0, bounced: 0, configured: false };
+    return { scanned: 0, matched: 0, bounced: 0, booked: 0, configured: false };
   }
 
   let scan: ScanResult;
@@ -91,7 +106,7 @@ export async function runReplyDetection(sinceDays = 14): Promise<ReplySummary> {
     scan = await scanInbox(sinceDays);
   } catch (err) {
     reportError(err, { where: "prospection.runReplyDetection" });
-    return { scanned: 0, matched: 0, bounced: 0, configured: true };
+    return { scanned: 0, matched: 0, bounced: 0, booked: 0, configured: true };
   }
 
   const db = getAdminClient();
@@ -105,6 +120,7 @@ export async function runReplyDetection(sinceDays = 14): Promise<ReplySummary> {
   const now = new Date().toISOString();
   let matched = 0;
   let bounced = 0;
+  let booked = 0;
 
   for (const p of prospects) {
     const email = p.email.toLowerCase();
@@ -121,7 +137,20 @@ export async function runReplyDetection(sinceDays = 14): Promise<ReplySummary> {
       continue;
     }
 
-    // 2) Réponse → statut "A répondu".
+    // 2) RDV Calendly réservé → statut "Intéressé" (signal le plus fort).
+    if (scan.booked.has(email) && p.status !== "client" && p.status !== "excluded") {
+      const { error } = await db
+        .from("prospects")
+        .update({ status: "interested", updated_at: now })
+        .eq("id", p.id);
+      if (!error) {
+        booked++;
+        await db.from("prospect_events").insert({ prospect_id: p.id, type: "meeting_booked", meta: { auto: true } });
+      }
+      continue;
+    }
+
+    // 3) Réponse → statut "A répondu".
     if (scan.senders.has(email) && !NON_CONTACTABLE_STATUSES.includes(p.status)) {
       const { error } = await db
         .from("prospects")
@@ -133,5 +162,5 @@ export async function runReplyDetection(sinceDays = 14): Promise<ReplySummary> {
     }
   }
 
-  return { scanned: scan.senders.size, matched, bounced, configured: true };
+  return { scanned: scan.senders.size, matched, bounced, booked, configured: true };
 }

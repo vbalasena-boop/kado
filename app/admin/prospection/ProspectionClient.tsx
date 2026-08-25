@@ -251,6 +251,7 @@ export default function ProspectionClient({
         setMessage(
           data.configured
             ? `${data.matched} réponse(s) détectée(s)` +
+                (data.booked ? `, ${data.booked} RDV Calendly (→ Intéressé)` : "") +
                 (data.bounced ? `, ${data.bounced} bounce(s) supprimé(s)` : "") +
                 ` (${data.scanned} expéditeurs analysés).`
             : "IMAP non configuré : ajoute les variables PROSPECT_IMAP_* / SMTP dans Vercel."
