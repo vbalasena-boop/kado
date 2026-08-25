@@ -60,6 +60,13 @@ export default async function ProspectionPage() {
     ]);
     const cap = Number(process.env.MAX_PROSPECT_EMAILS_PER_DAY || 20);
 
+    // Emails approuvés en attente d'envoi (file d'envoi).
+    const { count: pendingEmails } = await admin
+      .from("prospect_messages")
+      .select("*", { count: "exact", head: true })
+      .eq("channel", "email")
+      .eq("status", "approved");
+
     stats = {
       total: rows.length,
       byStatus,
@@ -68,6 +75,7 @@ export default async function ProspectionPage() {
       emailsToday,
       dmToday,
       emailCap: cap,
+      pendingEmails: pendingEmails ?? 0,
     };
   }
 
