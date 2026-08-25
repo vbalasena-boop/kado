@@ -2,8 +2,9 @@
 title: 'Story 9.1 — Configurer les actions déclenchantes (non-avis)'
 type: 'feature'
 created: '2026-08-25'
-status: 'draft'
+status: 'done'
 review_loop_iteration: 0
+baseline_commit: '8d242e3fb9011c6060382161385a08f21d8b0fa9'
 context: []
 ---
 
@@ -49,12 +50,12 @@ context: []
 ## Tasks & Acceptance
 
 **Execution:**
-- [ ] `supabase/migrations/0045_wheel_trigger_actions.sql` -- `add column if not exists trigger_actions ...` -- persistance de la config
-- [ ] `lib/wheel.ts` -- `TRIGGER_ACTIONS = ["instagram","loyalty","optin"]` + `sanitizeTriggerActions(input): string[]` (whitelist, dédup, repli `["instagram"]`)
-- [ ] `app/api/dashboard/wheel/route.ts` -- update tolérant `{ trigger_actions: sanitizeTriggerActions(cfg.trigger_actions) }`
-- [ ] `app/dashboard/wheel/page.tsx` -- lire `trigger_actions` (tolérant, défaut `["instagram"]`) → `initialConfig`
-- [ ] `app/dashboard/wheel/WheelEditor.tsx` -- `Config.trigger_actions?: string[]` ; section 3 interrupteurs (Instagram / Fidélité / Offres) ; empêcher de désactiver le dernier ; inclus dans le POST
-- [ ] `tests/wheel.test.ts` -- teste la matrice `sanitizeTriggerActions`
+- [x] `supabase/migrations/0045_wheel_trigger_actions.sql` -- `add column if not exists trigger_actions ...` -- persistance de la config
+- [x] `lib/wheel.ts` -- `TRIGGER_ACTIONS = ["instagram","loyalty","optin"]` + `sanitizeTriggerActions(input): string[]` (whitelist, dédup, repli `["instagram"]`)
+- [x] `app/api/dashboard/wheel/route.ts` -- update tolérant `{ trigger_actions: sanitizeTriggerActions(cfg.trigger_actions) }`
+- [x] `app/dashboard/wheel/page.tsx` -- lire `trigger_actions` (tolérant, défaut `["instagram"]`) → `initialConfig`
+- [x] `app/dashboard/wheel/WheelEditor.tsx` -- `Config.trigger_actions?: string[]` ; section 3 interrupteurs (Instagram / Fidélité / Offres) ; empêcher de désactiver le dernier ; inclus dans le POST
+- [x] `tests/wheel.test.ts` -- teste la matrice `sanitizeTriggerActions`
 
 **Acceptance Criteria:**
 - Given l'éditeur de roue, when le commerçant active/désactive les actions puis sauvegarde, then `trigger_actions` (⊆ `{instagram,loyalty,optin}`) est persisté dans `wheel_configs` et rechargé à la réouverture.
@@ -77,3 +78,35 @@ context: []
 
 **Manual checks:**
 - Ouvrir `/dashboard/wheel` → section « Actions qui débloquent un tour » : activer/désactiver, sauvegarder, recharger → l'état persiste ; impossible de tout désactiver.
+
+## Suggested Review Order
+
+**Logique de normalisation (cœur des invariants)**
+
+- Whitelist + dédup + repli `["instagram"]` : garantit « avis jamais déclencheur » et « jamais zéro action ».
+  [`wheel.ts:16`](../../lib/wheel.ts#L16)
+- Ensemble figé des actions autorisées (l'avis n'y figure pas).
+  [`wheel.ts:5`](../../lib/wheel.ts#L5)
+
+**Persistance (écriture / lecture tolérantes)**
+
+- Écriture assainie sur `wheel_configs`, bloc isolé et tolérant (colonne absente ne casse rien).
+  [`route.ts:198`](../../app/api/dashboard/wheel/route.ts#L198)
+- Lecture tolérante côté serveur → `initialConfig` (repli si migration 0045 absente).
+  [`page.tsx:86`](../../app/dashboard/wheel/page.tsx#L86)
+- Colonne `jsonb` idempotente, défaut = au moins une action active.
+  [`0045_wheel_trigger_actions.sql:6`](../../supabase/migrations/0045_wheel_trigger_actions.sql#L6)
+
+**UI éditeur (garde-fou ≥1 action)**
+
+- Bascule refusant de désactiver la dernière action ; repli robuste sur tableau vide.
+  [`WheelEditor.tsx:282`](../../app/dashboard/wheel/WheelEditor.tsx#L282)
+- Section « Actions qui débloquent un tour » : 3 interrupteurs, pas d'avis.
+  [`WheelEditor.tsx:625`](../../app/dashboard/wheel/WheelEditor.tsx#L625)
+
+**Tests (verrouillent les invariants)**
+
+- Test de route : avis→instagram, vide→instagram, liste valide inchangée, au point d'écriture.
+  [`wheel-route.test.ts:56`](../../tests/wheel-route.test.ts#L56)
+- Matrice I/O de la fonction pure (dont « l'avis n'est jamais déclencheur »).
+  [`wheel.test.ts:4`](../../tests/wheel.test.ts#L4)

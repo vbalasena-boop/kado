@@ -39,7 +39,16 @@ type Config = {
   monthly_draw_prize?: string | null;
   draw_period_days?: number | null;
   draw_next_at?: string | null;
+  trigger_actions?: string[];
 };
+
+// Actions déclenchantes (non-avis) proposées dans l'éditeur. L'avis Google
+// n'y figure jamais (jamais une action récompensée — story 9.3).
+const TRIGGER_ACTION_OPTIONS: { id: string; emoji: string; label: string; desc: string }[] = [
+  { id: "instagram", emoji: "📸", label: "Instagram", desc: "Un suivi de votre compte débloque un tour." },
+  { id: "loyalty", emoji: "🎟️", label: "Fidélité", desc: "S'inscrire à la carte de fidélité débloque un tour." },
+  { id: "optin", emoji: "✉️", label: "Offres", desc: "Accepter de recevoir vos offres débloque un tour." },
+];
 
 // Luminance d'une couleur hex (0 = noir, 1 = blanc) pour choisir un texte lisible.
 function hexLum(hex: string): number {
@@ -268,6 +277,24 @@ export default function WheelEditor({
     setPrizes((ps) => ps.filter((_, j) => j !== i));
   }
 
+  // Active/désactive une action déclenchante. Garde-fou : on ne peut jamais
+  // désactiver la dernière action active (au moins une doit rester).
+  function toggleTriggerAction(id: string) {
+    setConfig((c) => {
+      const current = c.trigger_actions?.length ? c.trigger_actions : ["instagram"];
+      const on = current.includes(id);
+      if (on) {
+        if (current.length <= 1) return c; // dernière action : on refuse
+        return { ...c, trigger_actions: current.filter((a) => a !== id) };
+      }
+      // conserve l'ordre canonique des options
+      const next = TRIGGER_ACTION_OPTIONS.map((o) => o.id).filter(
+        (o) => o === id || current.includes(o)
+      );
+      return { ...c, trigger_actions: next };
+    });
+  }
+
   async function save() {
     setSaving(true);
     setMsg(null);
@@ -307,6 +334,9 @@ export default function WheelEditor({
   const igEnabled = config.instagram_enabled !== false;
   const rvEnabled = config.review_enabled !== false;
   const noChannel = showRoue && !igEnabled && !rvEnabled;
+  const triggerActions = config.trigger_actions?.length
+    ? config.trigger_actions
+    : ["instagram"];
 
   const stampEmoji = config.loyalty_stamp_emoji || "⭐";
   const rewardEmoji = config.loyalty_reward_emoji || "🎁";
@@ -590,6 +620,37 @@ export default function WheelEditor({
                     Activez au moins un canal, sinon vos clients n'auront aucun tour.
                   </p>
                 )}
+
+                <hr className="fid-sep" />
+                <h2 style={{ marginTop: 0 }}>Actions qui débloquent un tour</h2>
+                <p className="muted" style={{ marginBottom: 14 }}>
+                  Choisissez les actions qui offrent un tour à vos clients. Au
+                  moins une action doit rester active.
+                </p>
+                {TRIGGER_ACTION_OPTIONS.map((opt) => {
+                  const on = triggerActions.includes(opt.id);
+                  const isLast = on && triggerActions.length <= 1;
+                  return (
+                    <label
+                      key={opt.id}
+                      className={`toggle-field${isLast ? " is-disabled" : ""}`}
+                      style={{ marginTop: 6 }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={on}
+                        disabled={isLast}
+                        onChange={() => toggleTriggerAction(opt.id)}
+                      />
+                      <span>
+                        <b>
+                          {opt.emoji} {opt.label}
+                        </b>{" "}
+                        — {opt.desc}
+                      </span>
+                    </label>
+                  );
+                })}
 
                 <label className="field">
                   <span>Mention légale (conformité)</span>

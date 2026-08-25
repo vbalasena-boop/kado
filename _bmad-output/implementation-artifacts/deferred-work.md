@@ -1,0 +1,4 @@
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-9-1-configurer-actions-declenchantes-non-avis.md`
+  summary: Les blocs `update` « tolérants » de `app/api/dashboard/wheel/route.ts` (play_alerts, monthly_draw, draw, trigger_actions) avalent les erreurs Supabase renvoyées via `{ error }` (le client ne « throw » pas), donc le `try/catch` ne les capte pas — un échec réel (RLS, contrainte, connectivité) est silencieusement ignoré et la route renvoie quand même `{ ok: true }`.
+  evidence: Pattern pré-existant (antérieur à la story 9.1, qui l'a seulement suivi pour trigger_actions). Réel : le client supabase-js résout la promesse avec `{ error }` au lieu de lever ; corriger en inspectant `error` et en n'ignorant que le code « colonne absente » (42703). À traiter globalement sur tous les blocs tolérants.
