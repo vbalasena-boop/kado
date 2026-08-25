@@ -4,6 +4,7 @@ import { getStripe } from "@/lib/stripe";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { sendEmail, emailLayout, getOwnerContact } from "@/lib/email";
 import { reportError } from "@/lib/report";
+import { shouldReverseReferral } from "@/lib/referral";
 
 /** Retrouve l'établissement lié à une facture (via metadata ou customer). */
 async function resolveBusinessId(
@@ -448,22 +449,27 @@ export async function POST(req: NextRequest) {
         // (exclut les remboursements de commande / installation / partiels).
         try {
           const ch = event.data.object as Stripe.Charge;
+          const hasInvoice = !!(ch as { invoice?: unknown }).invoice;
           const fullRefund = ch.amount > 0 && ch.amount_refunded >= ch.amount;
-          const isSubscription = !!(ch as { invoice?: unknown }).invoice;
           const customerId =
             typeof ch.customer === "string" ? ch.customer : ch.customer?.id ?? null;
-          if (fullRefund && isSubscription && customerId) {
+          // Garde bon marché avant d'interroger la base.
+          if (fullRefund && hasInvoice && customerId) {
             const db = getAdminClient();
             const { data: filleul } = await db
               .from("businesses")
               .select("id, name, referred_by, referral_rewarded_at")
               .eq("stripe_customer_id", customerId)
               .maybeSingle();
-            const rewardedAt = filleul?.referral_rewarded_at
-              ? new Date(filleul.referral_rewarded_at).getTime()
-              : 0;
-            const within14 = rewardedAt > 0 && Date.now() - rewardedAt < 14 * 864e5;
-            if (filleul?.referred_by && within14) {
+            const reverse = shouldReverseReferral({
+              amount: ch.amount,
+              amountRefunded: ch.amount_refunded,
+              hasInvoice,
+              referredBy: filleul?.referred_by,
+              rewardedAt: filleul?.referral_rewarded_at,
+              nowMs: Date.now(),
+            });
+            if (filleul && reverse) {
               // Journal (on NE remet PAS referral_rewarded_at à null : éviterait
               // un 2ᵉ versement si le filleul se réabonne plus tard).
               try {
