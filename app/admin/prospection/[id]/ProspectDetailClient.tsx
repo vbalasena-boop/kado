@@ -222,6 +222,7 @@ const EVENT_LABEL: Record<string, string> = {
   contact_edited: "Contact modifié à la main",
   messages_generated: "Messages générés",
   email_sent: "Email envoyé",
+  email_followup_sent: "Relance envoyée",
   email_bounced: "Email rejeté (bounce)",
   email_replied: "A répondu par email",
   dm_sent: "DM Instagram envoyé",
