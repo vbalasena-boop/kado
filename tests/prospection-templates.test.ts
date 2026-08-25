@@ -4,6 +4,8 @@ import {
   renderEmail,
   renderFollowupEmail,
   renderDm,
+  emailSubjectVariant,
+  SUBJECT_VARIANTS,
   UNSUBSCRIBE_MARKER,
   type TemplateContext,
 } from "@/lib/prospection/templates";
@@ -58,6 +60,24 @@ describe("renderEmail", () => {
     const b = renderEmail(ctx({ seed: "stable-1" }));
     expect(a.subject).toBe(b.subject);
     expect(a.body).toBe(b.body);
+  });
+});
+
+describe("emailSubjectVariant (mesure par objet)", () => {
+  it("renvoie un index stable dans la plage des variantes", () => {
+    for (const seed of ["id-a", "id-b", "prospect-123"]) {
+      const idx = emailSubjectVariant(seed);
+      expect(idx).toBeGreaterThanOrEqual(0);
+      expect(idx).toBeLessThan(SUBJECT_VARIANTS.length);
+      expect(emailSubjectVariant(seed)).toBe(idx); // déterministe
+    }
+  });
+
+  it("correspond à l'objet réellement rendu (attribution correcte)", () => {
+    const seed = "prospect-xyz";
+    const expected = SUBJECT_VARIANTS[emailSubjectVariant(seed)].replace("{name}", "BONNIE");
+    const { subject } = renderEmail(ctx({ name: "BONNIE", seed }));
+    expect(subject).toBe(expected);
   });
 });
 

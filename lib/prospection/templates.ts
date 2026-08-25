@@ -83,9 +83,32 @@ function hash(s: string): number {
   return h;
 }
 
+/** Index stable choisi pour (seed, salt) dans une liste de `len` éléments. */
+function pickIndex(seed: string, salt: string, len: number): number {
+  return hash(`${seed}|${salt}`) % len;
+}
+
 /** Choisit un élément d'une liste, de façon stable pour (seed, salt). */
 function pick<T>(seed: string, salt: string, arr: T[]): T {
-  return arr[hash(`${seed}|${salt}`) % arr.length];
+  return arr[pickIndex(seed, salt, arr.length)];
+}
+
+/**
+ * Gabarits d'objet (le `{name}` est remplacé par le nom du prospect). Exposés
+ * pour permettre de mesurer le taux de réponse PAR objet (le choix étant
+ * déterministe par prospect, on peut le recalculer sans le stocker).
+ */
+export const SUBJECT_VARIANTS = [
+  "Plus d'avis Google pour {name} ?",
+  "Une idée pour {name}",
+  "{name} : plus d'avis, sans effort",
+  "Booster la visibilité de {name} ?",
+  "Un mot rapide pour {name}",
+] as const;
+
+/** Index (0..N-1) de la variante d'objet reçue par un prospect (seed = son id). */
+export function emailSubjectVariant(seed: string): number {
+  return pickIndex(seed, "subject", SUBJECT_VARIANTS.length);
 }
 
 function seedOf(ctx: TemplateContext): string {
@@ -99,13 +122,7 @@ export function renderEmail(ctx: TemplateContext): GeneratedEmail {
   const hook = reviewHook(ctx.google_reviews_count);
   const city = ctx.city ? ` à ${ctx.city}` : "";
 
-  const subject = pick(seed, "subject", [
-    `Plus d'avis Google pour ${ctx.name} ?`,
-    `Une idée pour ${ctx.name}`,
-    `${ctx.name} : plus d'avis, sans effort`,
-    `Booster la visibilité de ${ctx.name} ?`,
-    `Un mot rapide pour ${ctx.name}`,
-  ]);
+  const subject = SUBJECT_VARIANTS[emailSubjectVariant(seed)].replace("{name}", ctx.name);
 
   const opener = pick(seed, "opener", [
     `J'ai repéré votre ${noun}${city} et j'ai remarqué que ${hook}.`,
