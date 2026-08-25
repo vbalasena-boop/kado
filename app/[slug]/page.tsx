@@ -17,7 +17,7 @@ const BIZ_BASE =
   "id, slug, name, logo_url, status, subscription_ends_at, owner_user_id, plan, subscription_status";
 const CFG_BASE =
   "primary_color, accent_color, bg_color, bg_image_url, collect_email, instagram_url, review_url, compliance_note, instagram_enabled, review_enabled, loyalty_enabled, game_type";
-const CFG_WIDE = `${CFG_BASE}, prize_validity_days, decor_emojis, monthly_draw, monthly_draw_prize`;
+const CFG_WIDE = `${CFG_BASE}, prize_validity_days, decor_emojis, monthly_draw, monthly_draw_prize, trigger_actions`;
 
 type PublicData = {
   biz: any | null;
@@ -209,6 +209,7 @@ export default async function Page({
           review_enabled: true,
           loyalty_enabled: false,
           game_type: "wheel",
+          trigger_actions: ["instagram"],
         }
       }
       played={played}

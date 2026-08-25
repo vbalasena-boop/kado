@@ -24,3 +24,23 @@ export function sanitizeTriggerActions(input: unknown): TriggerAction[] {
   }
   return out.length > 0 ? out : ["instagram"];
 }
+
+/**
+ * Garde serveur (logique pure) : un `playType` est-il autorisé à débloquer un
+ * tour compte tenu des actions déclenchantes configurées ?
+ *  - `review` n'est JAMAIS autorisé (l'avis ne débloque plus rien) ;
+ *  - lecture tolérante : `triggerActions` est normalisé par
+ *    `sanitizeTriggerActions` (repli `["instagram"]` si absent/vide/invalide) ;
+ *  - autorisé ⟺ le type figure dans la liste normalisée.
+ */
+export function isTriggerActionAllowed(
+  playType: unknown,
+  triggerActions: unknown
+): boolean {
+  if (typeof playType !== "string") return false;
+  // L'avis n'est jamais une action déclenchante (défense en profondeur : il
+  // n'appartient de toute façon pas à TRIGGER_ACTIONS après sanitisation).
+  if (playType === "review") return false;
+  const allowed = sanitizeTriggerActions(triggerActions);
+  return allowed.includes(playType as TriggerAction);
+}
