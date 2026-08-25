@@ -4,6 +4,7 @@ import { getAdminClient } from "@/lib/supabase/admin";
 import { PROSPECT_SEGMENTS } from "@/lib/prospection/types";
 import { searchProspects } from "@/lib/prospection/places";
 import { toRow, partitionNew } from "@/lib/prospection/source";
+import { scoreProspect } from "@/lib/prospection/score";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -47,9 +48,20 @@ export const POST = adminRoute({
 
     let inserted = 0;
     if (toInsert.length > 0) {
+      const rows = toInsert.map((p) => {
+        // Signaux non encore enrichis au sourcing (email/Insta/fraîcheur → A4).
+        const { score, factors } = scoreProspect({
+          google_reviews_count: p.google_reviews_count,
+          google_rating: p.google_rating,
+          google_last_review_at: null,
+          instagram_active: null,
+          email: null,
+        });
+        return { ...toRow(p), score, score_factors: { factors } };
+      });
       const { data: ins, error: insErr } = await db
         .from("prospects")
-        .insert(toInsert.map(toRow))
+        .insert(rows)
         .select("id");
       if (insErr) return Response.json({ error: "insert_failed" }, { status: 500 });
       inserted = ins?.length ?? 0;
