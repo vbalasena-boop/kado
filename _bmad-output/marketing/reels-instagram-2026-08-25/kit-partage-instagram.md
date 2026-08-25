@@ -244,3 +244,29 @@ Voici la démo en 2 min sur une roue : [lien]
 Dis-moi le nom de ton commerce, je regarde ta fiche Google et je te montre ce que Kado te rapporterait. 14 jours offerts, sans carte bancaire 🎡
 ```
 - **Story de rappel** : reposte chaque réel en story le lendemain avec un sticker « question » (« Combien d'avis Google avez-vous ? »).
+
+---
+
+## 9. Réponses « exemple illustratif » (à garder sous le coude)
+
+À coller en commentaire/DM si on te demande si les chiffres/fiches sont réels :
+
+**Version courte (neutre)**
+```
+Bonne question 🙌 Ce sont des exemples illustratifs pour montrer le principe. Les résultats varient selon le commerce — je te montre ce que ça donnerait sur TA fiche si tu veux : commente DEMO.
+```
+
+**Version qui rassure sur la méthode**
+```
+Ce sont des exemples pour illustrer 🙂 Kado ne fabrique pas de faux avis : ce sont tes vrais clients qui jouent et laissent un avis, le cadeau n'est jamais lié à la note (100 % conforme Google).
+```
+
+**Version « transparence IA »** (si on demande si c'est fait par IA)
+```
+Oui, le visuel est un motion-design que j'ai créé avec des outils IA 👍 comme un montage Canva. Le produit, lui, est bien réel : commente DEMO et je te fais une démo en 2 min.
+```
+
+**Version pivot vers l'offre**
+```
+Exemple illustratif 😉 Envie de voir de vrais chiffres ? Dis-moi ton commerce + ta ville, je regarde ta fiche Google et je te montre ton potentiel. Essai 14 j offert, sans carte bancaire.
+```
