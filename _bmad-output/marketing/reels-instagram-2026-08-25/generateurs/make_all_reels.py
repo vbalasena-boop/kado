@@ -173,9 +173,10 @@ REELS={"reel2":REEL2,"reel3":REEL3,"reel4":REEL4,"reel5":REEL5,"reel6":REEL6,"re
 
 if __name__=="__main__":
     which=sys.argv[1:] or list(REELS.keys())
+    SCALE=1.5   # laisse le temps de lire : ~15 s -> ~22,5 s
     for name in which:
-        TL=REELS[name]
+        TL=[(a*SCALE,b*SCALE,fn) for a,b,fn in REELS[name]]
         print(f"→ {name} …", flush=True)
-        n=render(TL,15.0,f"/tmp/claude-0/-home-user-kado/1bdcc5dd-53b3-5031-82ec-c2fcac50f53b/scratchpad/frames_{name}")
+        n=render(TL,15.0*SCALE,f"/tmp/claude-0/-home-user-kado/1bdcc5dd-53b3-5031-82ec-c2fcac50f53b/scratchpad/frames_{name}")
         print(f"   {n} frames OK")
     print("Terminé.")

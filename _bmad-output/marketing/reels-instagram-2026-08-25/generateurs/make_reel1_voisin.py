@@ -278,9 +278,11 @@ def scene_cta(t):
     return img
 
 # ---- timeline (secondes) ----
-TL=[(0.0,2.2,scene_hook),(2.2,6.4,scene_cards),(6.4,9.3,scene_point),
-    (9.3,12.7,scene_kado),(12.7,15.0,scene_cta)]
-TOTAL=15.0; N=int(TOTAL*FPS)
+SCALE=1.5  # laisse le temps de lire : ~15 s -> ~22,5 s
+TL=[(a*SCALE,b*SCALE,fn) for a,b,fn in
+    [(0.0,2.2,scene_hook),(2.2,6.4,scene_cards),(6.4,9.3,scene_point),
+     (9.3,12.7,scene_kado),(12.7,15.0,scene_cta)]]
+TOTAL=15.0*SCALE; N=int(TOTAL*FPS)
 
 def frame_at(sec):
     for a,b,fn in TL:
