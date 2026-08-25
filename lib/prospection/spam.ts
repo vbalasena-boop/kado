@@ -23,7 +23,6 @@ const TRIGGER_WORDS = [
   "urgent",
   "cliquez ici",
   "félicitations",
-  "sans engagement",
   "meilleur prix",
 ];
 
