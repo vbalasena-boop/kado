@@ -95,7 +95,7 @@ export const POST = publicRoute({
       // quotidien). Lecture tolérante → repli `["instagram"]` via la garde.
       supa
         .from("wheel_configs")
-        .select("trigger_actions")
+        .select("trigger_actions, loyalty_enabled")
         .eq("business_id", biz.id)
         .maybeSingle(),
     ]);
@@ -105,10 +105,16 @@ export const POST = publicRoute({
     }
 
     // Action non déclenchante (non configurée, ou avis) → tour non autorisé.
+    // Filet de sécurité fidélité : si la carte est désactivée (`loyalty_enabled`
+    // falsy), « loyalty » est refusée même si elle figure encore dans la config.
     const triggerActions = taRes.error
       ? undefined
       : (taRes.data as any)?.trigger_actions;
-    if (!isTriggerActionAllowed(playType, triggerActions)) {
+    if (
+      !isTriggerActionAllowed(playType, triggerActions, {
+        loyaltyEnabled: !!(taRes.data as any)?.loyalty_enabled,
+      })
+    ) {
       return Response.json({ error: "action_not_allowed" }, { status: 403 });
     }
 

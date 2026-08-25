@@ -2,7 +2,7 @@
 title: 'Gater l''action déclenchante « Fidélité » sur loyalty_enabled'
 type: 'bugfix'
 created: '2026-08-25'
-status: 'draft'
+status: 'done'
 review_loop_iteration: 0
 baseline_commit: '84249cf10c504639a00d2810c7e0d7dd50b44dfa'
 context: []
@@ -59,12 +59,12 @@ context: []
 ## Tasks & Acceptance
 
 **Execution:**
-- [ ] `lib/wheel.ts` -- `unlockedSpinActions` + `isTriggerActionAllowed` étendu (rétrocompatible)
-- [ ] `app/[slug]/Game.tsx` -- tours débloqués via `unlockedSpinActions`
-- [ ] `app/api/play/route.ts` -- lire `loyalty_enabled` + le passer à la garde
-- [ ] `app/dashboard/wheel/WheelEditor.tsx` -- `fideliteAvailable = showFidelite && !!loyalty_enabled`
-- [ ] `app/api/dashboard/wheel/route.ts` -- persister via `unlockedSpinActions` (défense serveur)
-- [ ] `tests/wheel.test.ts` -- matrices helper + garde
+- [x] `lib/wheel.ts` -- `unlockedSpinActions` + `isTriggerActionAllowed` étendu (rétrocompatible)
+- [x] `app/[slug]/Game.tsx` -- tours débloqués via `unlockedSpinActions`
+- [x] `app/api/play/route.ts` -- lire `loyalty_enabled` + le passer à la garde
+- [x] `app/dashboard/wheel/WheelEditor.tsx` -- `fideliteAvailable = showFidelite && !!loyalty_enabled`
+- [x] `app/api/dashboard/wheel/route.ts` -- persister via `unlockedSpinActions` (défense serveur)
+- [x] `tests/wheel.test.ts` -- matrices helper + garde
 
 **Acceptance Criteria:**
 - Given le module fidélité présent mais `loyalty_enabled=false`, when le commerçant édite la roue, then la case « Fidélité » est **non sélectionnable** (grisée) et « loyalty » est purgée de la config persistée.
@@ -75,6 +75,10 @@ context: []
 
 - **Pas de churn de signature côté éditeur :** les helpers `{ fideliteAvailable }` restent inchangés ; on change seulement le booléen calculé par l'appelant (`showFidelite && !!loyalty_enabled`). L'invariant « au moins une action » (repli `["instagram"]`) est préservé par `resolveTriggerActions`/`unlockedSpinActions`.
 - **Cohérence du gate :** `!!loyalty_enabled` (truthy) s'aligne exactement sur `if (!cfg?.loyalty_enabled)` déjà utilisé par la page carte et l'API carte → un tour fidélité n'est offert que si la carte est réellement accessible.
+
+## Suffix — Post-Review
+
+Auto-revue (changement pur-logique, filet de sécurité serveur ajouté). Deux tests pré-existants reflétaient l'ANCIENNE sémantique (« loyalty » configurée sans `loyalty_enabled`) et cassaient sous le nouveau gating — corrigés pour passer `loyalty_enabled` là où « loyalty » doit survivre, **et** complétés par les tests du nouveau comportement : `/api/play` renvoie 403 pour un tour fidélité quand la carte est désactivée ; la route de sauvegarde purge « loyalty » de `trigger_actions` si `loyalty_enabled` faux. Signature de `isTriggerActionAllowed` étendue de façon **rétrocompatible** (seul appelant : `/api/play`, mis à jour ; tsc confirme aucun autre appelant cassé). 282 tests verts.
 
 ## Verification
 

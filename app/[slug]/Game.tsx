@@ -6,7 +6,7 @@ import { deviceHash } from "@/lib/device-hash";
 import { buildTheme } from "@/lib/theme";
 import { isValidEmail, autoSendCodeTarget, needsCollectStep } from "@/lib/optin";
 import {
-  sanitizeTriggerActions,
+  unlockedSpinActions,
   reviewCtaHref,
   type TriggerAction,
 } from "@/lib/wheel";
@@ -438,10 +438,14 @@ export default function Game({
   drawPrize?: string;
 }) {
   // Tours du jeu = actions déclenchantes non-avis configurées par le commerçant
-  // (⊆ {instagram, loyalty, optin}). Lecture tolérante : `sanitizeTriggerActions`
+  // (⊆ {instagram, loyalty, optin}). Lecture tolérante : `unlockedSpinActions`
   // filtre/replie sur `["instagram"]` si absent, vide ou invalide. L'avis n'est
-  // jamais une action déclenchante.
-  const enabledActions = sanitizeTriggerActions(config.trigger_actions);
+  // jamais une action déclenchante. Gate fidélité : « loyalty » est retirée si
+  // la carte est désactivée (`loyalty_enabled` falsy) → jamais de tour vers une
+  // carte inaccessible.
+  const enabledActions = unlockedSpinActions(config.trigger_actions, {
+    loyaltyEnabled: !!config.loyalty_enabled,
+  });
   const totalTurns = enabledActions.length;
 
   // CTA avis Google neutre (facultatif, non récompensé) : URL sûre ou null.

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   sanitizeTriggerActions,
+  unlockedSpinActions,
   isTriggerActionAllowed,
   isTriggerActionSelectable,
   resolveTriggerActions,
@@ -70,6 +71,53 @@ describe("sanitizeTriggerActions", () => {
   });
 });
 
+describe("unlockedSpinActions", () => {
+  it("carte active → « loyalty » conservée", () => {
+    expect(
+      unlockedSpinActions(["instagram", "loyalty"], { loyaltyEnabled: true })
+    ).toEqual(["instagram", "loyalty"]);
+  });
+
+  it("carte désactivée → « loyalty » retirée", () => {
+    expect(
+      unlockedSpinActions(["instagram", "loyalty"], { loyaltyEnabled: false })
+    ).toEqual(["instagram"]);
+  });
+
+  it("seulement loyalty + carte désactivée → repli instagram", () => {
+    expect(unlockedSpinActions(["loyalty"], { loyaltyEnabled: false })).toEqual([
+      "instagram",
+    ]);
+  });
+
+  it("défaut (opts absent) → identique à sanitize (rétrocompat)", () => {
+    expect(unlockedSpinActions(["loyalty"])).toEqual(["loyalty"]);
+    expect(unlockedSpinActions(["instagram", "loyalty"])).toEqual([
+      "instagram",
+      "loyalty",
+    ]);
+  });
+
+  it("loyaltyEnabled non passé dans opts → carte considérée active (rétrocompat)", () => {
+    expect(unlockedSpinActions(["loyalty"], {})).toEqual(["loyalty"]);
+  });
+
+  it("normalise (avis filtré, non-tableau) comme sanitize", () => {
+    expect(unlockedSpinActions(["review"], { loyaltyEnabled: false })).toEqual([
+      "instagram",
+    ]);
+    expect(unlockedSpinActions(null, { loyaltyEnabled: true })).toEqual([
+      "instagram",
+    ]);
+  });
+
+  it("carte désactivée conserve les autres actions", () => {
+    expect(
+      unlockedSpinActions(["loyalty", "optin"], { loyaltyEnabled: false })
+    ).toEqual(["optin"]);
+  });
+});
+
 describe("isTriggerActionAllowed", () => {
   it("action configurée → true", () => {
     expect(isTriggerActionAllowed("instagram", ["instagram", "loyalty"])).toBe(
@@ -111,6 +159,44 @@ describe("isTriggerActionAllowed", () => {
     expect(isTriggerActionAllowed("banana", ["instagram", "loyalty"])).toBe(
       false
     );
+  });
+
+  it("loyalty + carte désactivée → false (filet de sécurité)", () => {
+    expect(
+      isTriggerActionAllowed("loyalty", ["loyalty"], { loyaltyEnabled: false })
+    ).toBe(false);
+    expect(
+      isTriggerActionAllowed("loyalty", ["instagram", "loyalty"], {
+        loyaltyEnabled: false,
+      })
+    ).toBe(false);
+  });
+
+  it("loyalty + carte active → true", () => {
+    expect(
+      isTriggerActionAllowed("loyalty", ["loyalty"], { loyaltyEnabled: true })
+    ).toBe(true);
+  });
+
+  it("loyalty sans opts → true (rétrocompat, défaut activé)", () => {
+    expect(isTriggerActionAllowed("loyalty", ["loyalty"])).toBe(true);
+    expect(isTriggerActionAllowed("loyalty", ["loyalty"], {})).toBe(true);
+  });
+
+  it("instagram inchangé même si carte désactivée", () => {
+    expect(
+      isTriggerActionAllowed("instagram", ["instagram"], {
+        loyaltyEnabled: false,
+      })
+    ).toBe(true);
+  });
+
+  it("review reste refusé quel que soit loyaltyEnabled", () => {
+    expect(
+      isTriggerActionAllowed("review", ["instagram", "loyalty"], {
+        loyaltyEnabled: true,
+      })
+    ).toBe(false);
   });
 });
 
