@@ -28,6 +28,9 @@ const PostBody = z.object({
  *   limites d'envoi — la suite part automatiquement via le cron quotidien.
  */
 export const POST = merchantRoute({
+  // Un commerce inactif (suspendu / abonnement expiré) ne doit pas pouvoir
+  // diffuser d'e-mails marketing (réputation d'envoi, coût, abus).
+  requireActive: true,
   schema: PostBody,
   handler: async ({ body: rawBody, business, user }) => {
     const body = rawBody as {

@@ -9,6 +9,8 @@ const Body = z.object({ hours: z.unknown().optional() });
 
 /** Enregistre les horaires de commande du commerçant connecté. */
 export const POST = merchantRoute({
+  // Configuration des horaires de retrait : réservée à un commerce actif.
+  requireActive: true,
   schema: Body,
   handler: async ({ body, business }) => {
     const hours = sanitizeHours(body.hours);
