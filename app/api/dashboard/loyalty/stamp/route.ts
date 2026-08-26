@@ -98,6 +98,10 @@ const Body = z.object({
  * action = 'stamp' (ajoute un tampon) | 'collect' (récompense remise).
  */
 export const POST = merchantRoute({
+  // La fidélité (tampons/récompenses) est réservée aux formules qui l'incluent.
+  // L'UI le masque déjà ; on ferme aussi l'accès direct à l'API (défense en
+  // profondeur). Sûr : un commerce sans fidélité n'a pas de carte à tamponner.
+  requireModule: "fidelite",
   schema: Body,
   handler: async ({ body: rawBody, business }) => {
     const body = rawBody as { query?: string; action?: string };
