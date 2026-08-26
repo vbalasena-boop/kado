@@ -4,8 +4,59 @@ import { merchantRoute } from "@/lib/api";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { generateCode } from "@/lib/draw";
 import { sendEmail, emailLayout } from "@/lib/email";
+import { escapeHtml, SITE } from "@/lib/campaigns";
+import { unsubToken } from "@/lib/unsub";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * E-mail « récompense débloquée » (transactionnel, best-effort, jamais bloquant).
+ * Envoyé quand une carte se complète, SI le commerçant a activé la relance
+ * (`reengage_reward`, lu de façon tolérante) et si le client n'est pas
+ * désinscrit. Contient le code de récompense à présenter en caisse.
+ */
+async function maybeSendRewardEmail(
+  db: SupabaseClient,
+  business: { id: string; name: string },
+  cfg: { loyalty_reward?: string | null; loyalty_reward_emoji?: string | null },
+  card: { email: string; unsubscribed_at?: string | null },
+  rewardCode: string
+) {
+  try {
+    if (!card.email || card.unsubscribed_at) return;
+    // Toggle commerçant (colonne 0058 absente → désactivé par défaut).
+    const { data: rr, error } = await db
+      .from("wheel_configs")
+      .select("reengage_reward")
+      .eq("business_id", business.id)
+      .maybeSingle();
+    if (error || !(rr as any)?.reengage_reward) return;
+
+    const shop = escapeHtml(business.name || "votre commerce");
+    const reward = escapeHtml((cfg.loyalty_reward || "votre récompense").toString());
+    const emoji = cfg.loyalty_reward_emoji || "🎁";
+    const code = escapeHtml(rewardCode);
+    const unsub = `${SITE}/api/unsubscribe?b=${business.id}&e=${encodeURIComponent(
+      Buffer.from(card.email).toString("base64url")
+    )}&t=${unsubToken(business.id, card.email)}`;
+
+    await sendEmail({
+      to: card.email,
+      subject: `Bravo ! Votre récompense est débloquée chez ${business.name} ${emoji}`,
+      fromName: `${business.name} via Kado`,
+      marketing: false,
+      html: emailLayout({
+        preview: "Votre carte de fidélité est complète 🎉",
+        heading: "Récompense débloquée ! 🎉",
+        emoji,
+        bodyHtml: `Félicitations, votre carte de fidélité chez <b>${shop}</b> est complète&nbsp;! Vous avez débloqué&nbsp;: <b>${emoji} ${reward}</b>.<br><br>Présentez ce code en caisse lors de votre prochaine visite&nbsp;:<br><br><span style="display:inline-block;font-family:monospace;font-size:26px;font-weight:800;letter-spacing:2px;background:#f4f0ff;border-radius:12px;padding:12px 18px;color:#1b1035;">${code}</span>`,
+        footnote: `Message lié à votre carte de fidélité. <a href="${unsub}" style="color:#9a94b4;">Ne plus recevoir ces e-mails</a>`,
+      }),
+    });
+  } catch {
+    /* best-effort : ne doit jamais faire échouer le tampon */
+  }
+}
 
 /**
  * Bonus de parrainage : au PREMIER achat du filleul (premier tampon validé
@@ -135,7 +186,9 @@ export const POST = merchantRoute({
     const isCode = /^fid-/i.test(query);
     let cardQ = db
       .from("loyalty_cards")
-      .select("id, email, code, stamps, rewards_earned, reward_ready, reward_code")
+      .select(
+        "id, email, code, stamps, rewards_earned, reward_ready, reward_code, unsubscribed_at"
+      )
       .eq("business_id", business.id);
     cardQ = isCode
       ? cardQ.eq("code", query.toUpperCase())
@@ -197,6 +250,8 @@ export const POST = merchantRoute({
         .eq("id", card.id);
       if (error) return Response.json({ error: "update_failed" }, { status: 500 });
       await grantReferralBonus(db, business.id, business.name, goal, card.id);
+      // Relance positive « récompense débloquée » (best-effort, non bloquant).
+      await maybeSendRewardEmail(db, business, cfg, card, rewardCode);
       return Response.json({
         status: "completed",
         card: view({

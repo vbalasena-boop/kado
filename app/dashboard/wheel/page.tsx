@@ -108,6 +108,16 @@ export default async function WheelPage() {
     ? 30
     : ((ri as any)?.reengage_inactive_days ?? 30);
 
+  // Relance « récompense débloquée » (lecture tolérante si migration 0058 absente)
+  const { data: rw, error: rwErr } = await admin
+    .from("wheel_configs")
+    .select("reengage_reward")
+    .eq("business_id", business.id)
+    .maybeSingle();
+  const reengageReward: boolean = rwErr
+    ? false
+    : !!(rw as any)?.reengage_reward;
+
   // « À la une » (lecture tolérante si migration 0055 absente)
   const { data: hl, error: hlErr } = await admin
     .from("wheel_configs")
@@ -144,6 +154,7 @@ export default async function WheelPage() {
         reengage_almost: reengageAlmost,
         reengage_inactive: reengageInactive,
         reengage_inactive_days: reengageInactiveDays,
+        reengage_reward: reengageReward,
         ...highlight,
       }}
       initialPrizes={prizes ?? []}

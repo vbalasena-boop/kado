@@ -42,6 +42,7 @@ export async function POST(req: NextRequest) {
       reengage_almost?: boolean;
       reengage_inactive?: boolean;
       reengage_inactive_days?: number;
+      reengage_reward?: boolean;
       play_alerts?: boolean;
       monthly_draw?: boolean;
       monthly_draw_prize?: string;
@@ -289,6 +290,24 @@ export async function POST(req: NextRequest) {
     }
   } catch (e) {
     reportError(e, { where: "dashboard/wheel", field: "reengage_inactive" });
+    return Response.json({ error: "save_failed" }, { status: 500 });
+  }
+
+  // Relance « récompense débloquée » (0058) : mise à jour isolée et tolérante.
+  try {
+    const { error } = await admin
+      .from("wheel_configs")
+      .update({ reengage_reward: !!cfg.reengage_reward })
+      .eq("business_id", business.id);
+    if (error && !isMissingColumnError(error)) {
+      reportError(error, { where: "dashboard/wheel", field: "reengage_reward" });
+      return Response.json(
+        { error: "save_failed", detail: error.message },
+        { status: 500 }
+      );
+    }
+  } catch (e) {
+    reportError(e, { where: "dashboard/wheel", field: "reengage_reward" });
     return Response.json({ error: "save_failed" }, { status: 500 });
   }
 
