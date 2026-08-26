@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { getAdminClient } from "@/lib/supabase/admin";
-import { unsubToken } from "@/lib/unsub";
+import { verifyUnsubToken } from "@/lib/unsub";
 import { reportError } from "@/lib/report";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
     /* invalide */
   }
 
-  const ok = b && email && t && unsubToken(b, email) === t;
+  const ok = verifyUnsubToken(b, email, t);
   if (ok) {
     const db = getAdminClient();
     const now = new Date().toISOString();

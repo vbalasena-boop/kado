@@ -4,12 +4,9 @@ import { getAdminClient } from "@/lib/supabase/admin";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { prizeIsLosing } from "@/lib/draw";
 import { sendEmail, emailLayout } from "@/lib/email";
+import { escapeHtml } from "@/lib/campaigns";
 
 export const dynamic = "force-dynamic";
-
-function escapeHtml(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
 
 /**
  * Envoie par e-mail le code cadeau gagné, pour que le client ne le perde pas
@@ -99,7 +96,7 @@ export async function POST(req: NextRequest) {
 
   const html = emailLayout({
     preview: `Votre code cadeau ${code}`,
-    heading: `Votre cadeau : ${label}`,
+    heading: `Votre cadeau : ${escapeHtml(label)}`,
     bodyHtml: `<p>Voici votre code à présenter chez <b>${escapeHtml(shopName)}</b> :</p>
       <p style="font-size:28px;font-weight:800;letter-spacing:3px;color:#1b1035;background:#f4f0ff;border-radius:12px;padding:14px 10px;text-align:center;">${escapeHtml(code)}</p>
       ${qrHtml}
