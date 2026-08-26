@@ -25,10 +25,14 @@
   margin: 0;
   padding: 0;
 }
-html,
-body {
+html {
   height: 100%;
 }
+/* NB : le `body` n'a volontairement PAS `height:100%`. Avec le centrage flex
+   (align-items:center), une hauteur fixe rognait le HAUT du contenu plus grand
+   que l'écran (roue + CTA, carte fidélité) sur les petits téléphones — le haut
+   devenait inatteignable. `min-height:100dvh` seul laisse le body grandir avec
+   le contenu : centré quand c'est court, entièrement défilable quand c'est long. */
 body {
   font-family: var(--font);
   background: radial-gradient(
@@ -803,6 +807,22 @@ canvas#confetti {
   font-family: inherit;
   font-size: 13px;
   cursor: pointer;
+}
+/* Barre du haut sur mobile : l'e-mail (long) débordait et provoquait un scroll
+   horizontal. On le masque, on resserre et on autorise le retour à la ligne. */
+@media (max-width: 560px) {
+  .dash-top {
+    padding: 12px 14px;
+  }
+  .dash-user {
+    gap: 8px;
+    min-width: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .dash-user > span {
+    display: none;
+  }
 }
 .dash-banner {
   background: #ffe6ea;
@@ -5146,10 +5166,12 @@ html { scroll-behavior: smooth; }
 /* Numéro de suivi (bipeur digital) — page client */
 .track-number {
   display: flex; flex-direction: column; align-items: center; gap: 2px;
-  background: #17092e; color: #fff; border-radius: 20px; padding: 18px 40px; margin: 6px 0;
+  background: #17092e; color: #fff; border-radius: 20px;
+  padding: 18px min(40px, 6vw); margin: 6px 0; max-width: 100%;
 }
 .track-number span { font-size: 15px; opacity: 0.85; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
-.track-number b { font-size: 84px; line-height: 1; font-weight: 800; }
+/* Taille fluide : un numéro à 3 chiffres à 84px débordait sous ~340px. */
+.track-number b { font-size: clamp(52px, 20vw, 84px); line-height: 1; font-weight: 800; }
 /* Carte commande « bipeur » côté commerçant */
 .order-buzznum {
   background: #17092e; color: #fff; font-weight: 800; font-size: 15px;
@@ -5273,9 +5295,11 @@ html { scroll-behavior: smooth; }
 .uber-done h1 { font-family: var(--font-display, inherit); font-size: 24px; margin: 0 0 10px; }
 .uber-done-code {
   font-family: ui-monospace, monospace;
-  font-size: 40px;
+  /* Taille fluide + retour à la ligne : un code long à 40px débordait sous ~340px. */
+  font-size: clamp(28px, 9vw, 40px);
   font-weight: 800;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.12em;
+  overflow-wrap: anywhere;
   background: #f7f5fb;
   border: 2px dashed #cfc5e5;
   border-radius: 16px;
