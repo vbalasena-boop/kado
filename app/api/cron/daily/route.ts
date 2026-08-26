@@ -49,6 +49,7 @@ export async function GET(req: NextRequest) {
     campaigns: 0,
     recaps: 0,
     draws: 0,
+    consentPurged: 0,
     errors: [] as string[],
   };
 
@@ -520,6 +521,24 @@ export async function GET(req: NextRequest) {
     }
   } catch (e: any) {
     out.errors.push(`draws: ${e?.message ?? "error"}`);
+  }
+
+  // ── 6. Purge RGPD du journal de consentement (rétention ~3 ans) ─────────
+  // Supprime les événements anciens DÉJÀ remplacés par un plus récent ; le
+  // dernier état de chaque sujet est toujours conservé (cf. migration 0052).
+  // Tolérant : si la fonction n'est pas encore déployée, on ignore sans casser.
+  try {
+    const { data, error } = await db.rpc("purge_old_consent_events");
+    if (error) {
+      // Fonction absente (migration 0052 non appliquée) → on ignore en silence.
+      if (!/function .*purge_old_consent_events.* does not exist/i.test(error.message)) {
+        out.errors.push(`consent_purge: ${error.message}`);
+      }
+    } else if (typeof data === "number") {
+      out.consentPurged = data;
+    }
+  } catch (e: any) {
+    out.errors.push(`consent_purge: ${e?.message ?? "error"}`);
   }
 
   // Heartbeat : prouve au contrôle de santé que le cron a bien tourné
