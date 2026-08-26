@@ -95,6 +95,19 @@ export default async function WheelPage() {
     ? false
     : !!(re as any)?.reengage_almost;
 
+  // Relance « client inactif » (lecture tolérante si migration 0057 absente)
+  const { data: ri, error: riErr } = await admin
+    .from("wheel_configs")
+    .select("reengage_inactive, reengage_inactive_days")
+    .eq("business_id", business.id)
+    .maybeSingle();
+  const reengageInactive: boolean = riErr
+    ? false
+    : !!(ri as any)?.reengage_inactive;
+  const reengageInactiveDays: number = riErr
+    ? 30
+    : ((ri as any)?.reengage_inactive_days ?? 30);
+
   // « À la une » (lecture tolérante si migration 0055 absente)
   const { data: hl, error: hlErr } = await admin
     .from("wheel_configs")
@@ -129,6 +142,8 @@ export default async function WheelPage() {
         draw_next_at: drawNextAt,
         trigger_actions: triggerActions,
         reengage_almost: reengageAlmost,
+        reengage_inactive: reengageInactive,
+        reengage_inactive_days: reengageInactiveDays,
         ...highlight,
       }}
       initialPrizes={prizes ?? []}

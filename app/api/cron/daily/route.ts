@@ -15,7 +15,7 @@ import {
   DAILY_CHUNK,
 } from "@/lib/campaigns";
 import { unsubToken } from "@/lib/unsub";
-import { isAlmostNudgeEligible } from "@/lib/reengage";
+import { isAlmostNudgeEligible, isInactiveNudgeEligible } from "@/lib/reengage";
 import { mapLimit } from "@/lib/async";
 import { setSystemState } from "@/lib/health";
 import { sendPushToClients } from "@/lib/push";
@@ -53,6 +53,7 @@ export async function GET(req: NextRequest) {
     draws: 0,
     consentPurged: 0,
     reengageAlmost: 0,
+    reengageInactive: 0,
     errors: [] as string[],
   };
 
@@ -250,6 +251,87 @@ export async function GET(req: NextRequest) {
     }
   } catch (e: any) {
     out.errors.push(`reengage_almost: ${e?.message ?? "error"}`);
+  }
+
+  // ── 2c. Relance fidélité « client inactif » ─────────────────────
+  // Commerces ayant activé la relance : cartes dont le dernier tampon est plus
+  // ancien que le délai configuré → un rappel « revenez ! » (une fois par
+  // période d'inactivité, cf. isInactiveNudgeEligible).
+  const REENGAGE_MAX_PER_RUN = 200; // garde-fou anti-rafale (le reste part J+1)
+  try {
+    const { data: icfgs, error: icErr } = await db
+      .from("wheel_configs")
+      .select("business_id, reengage_inactive_days")
+      .eq("reengage_inactive", true)
+      .eq("loyalty_enabled", true);
+    if (icErr) {
+      if (!isMissingColumnError(icErr)) {
+        out.errors.push(`reengage_inactive: ${icErr.message}`);
+      }
+    } else if ((icfgs ?? []).length) {
+      const ids = [...new Set((icfgs as any[]).map((c) => c.business_id))];
+      const { data: bizs } = await db
+        .from("businesses")
+        .select("id, name, status")
+        .in("id", ids);
+      const bizBy = new Map((bizs ?? []).map((b: any) => [b.id, b]));
+      const now = Date.now();
+
+      for (const cfg of icfgs as any[]) {
+        const biz: any = bizBy.get(cfg.business_id);
+        if (!biz || biz.status !== "active") continue;
+        const days = Math.min(
+          180,
+          Math.max(7, Number(cfg.reengage_inactive_days) || 30)
+        );
+        const cutoffMs = now - days * 864e5;
+        const cutoffIso = new Date(cutoffMs).toISOString();
+
+        const { data: cards } = await db
+          .from("loyalty_cards")
+          .select(
+            "id, email, stamps, marketing_ok, unsubscribed_at, last_stamp_at, nudge_inactive_at"
+          )
+          .eq("business_id", cfg.business_id)
+          .eq("marketing_ok", true)
+          .is("unsubscribed_at", null)
+          .gt("stamps", 0)
+          .lt("last_stamp_at", cutoffIso);
+
+        const eligible = (cards ?? [])
+          .filter((c: any) => isInactiveNudgeEligible(c, cutoffMs))
+          .slice(0, REENGAGE_MAX_PER_RUN);
+        const shop = escapeHtml(biz.name || "votre commerce");
+
+        await mapLimit(eligible, 5, async (c: any) => {
+          const unsub = `${SITE}/api/unsubscribe?b=${cfg.business_id}&e=${encodeURIComponent(
+            Buffer.from(c.email).toString("base64url")
+          )}&t=${unsubToken(cfg.business_id, c.email)}`;
+          const res = await sendEmail({
+            to: c.email,
+            subject: `On ne vous a pas vu·e chez ${biz.name} !`,
+            fromName: `${biz.name} via Kado`,
+            marketing: true,
+            html: emailLayout({
+              preview: "Votre carte de fidélité vous attend.",
+              heading: "Vous nous manquez ! 👋",
+              emoji: "🎟️",
+              bodyHtml: `Cela fait un moment qu'on ne vous a pas vu·e chez <b>${shop}</b>. Votre carte de fidélité vous attend&nbsp;: repassez quand vous voulez pour continuer à cumuler des tampons et débloquer votre récompense&nbsp;!`,
+              footnote: `Message lié à votre carte de fidélité. <a href="${unsub}" style="color:#9a94b4;">Ne plus recevoir ces e-mails</a>`,
+            }),
+          });
+          if (res.ok) {
+            await db
+              .from("loyalty_cards")
+              .update({ nudge_inactive_at: new Date().toISOString() })
+              .eq("id", c.id);
+            out.reengageInactive++;
+          }
+        });
+      }
+    }
+  } catch (e: any) {
+    out.errors.push(`reengage_inactive: ${e?.message ?? "error"}`);
   }
 
   // ── 3a. Campagnes programmées arrivées à échéance ───────────────

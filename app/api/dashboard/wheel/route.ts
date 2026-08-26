@@ -40,6 +40,8 @@ export async function POST(req: NextRequest) {
       birthday_reward?: string;
       referral_enabled?: boolean;
       reengage_almost?: boolean;
+      reengage_inactive?: boolean;
+      reengage_inactive_days?: number;
       play_alerts?: boolean;
       monthly_draw?: boolean;
       monthly_draw_prize?: string;
@@ -262,6 +264,31 @@ export async function POST(req: NextRequest) {
     }
   } catch (e) {
     reportError(e, { where: "dashboard/wheel", field: "reengage_almost" });
+    return Response.json({ error: "save_failed" }, { status: 500 });
+  }
+
+  // Relance « client inactif » (0057) : délai borné 7–180 j. Isolée et tolérante.
+  try {
+    const days = Math.min(
+      180,
+      Math.max(7, Math.round(Number(cfg.reengage_inactive_days) || 30))
+    );
+    const { error } = await admin
+      .from("wheel_configs")
+      .update({
+        reengage_inactive: !!cfg.reengage_inactive,
+        reengage_inactive_days: days,
+      })
+      .eq("business_id", business.id);
+    if (error && !isMissingColumnError(error)) {
+      reportError(error, { where: "dashboard/wheel", field: "reengage_inactive" });
+      return Response.json(
+        { error: "save_failed", detail: error.message },
+        { status: 500 }
+      );
+    }
+  } catch (e) {
+    reportError(e, { where: "dashboard/wheel", field: "reengage_inactive" });
     return Response.json({ error: "save_failed" }, { status: 500 });
   }
 
