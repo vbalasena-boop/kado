@@ -1,6 +1,13 @@
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { createSSRClient } from "@/lib/supabase/ssr";
 import { getAdminClient } from "@/lib/supabase/admin";
+
+// Mémoïsation par requête. `cache` n'existe que dans le runtime React/Next ;
+// hors de ce contexte (tests unitaires en environnement node), on retombe sur
+// l'identité — même comportement, simplement sans déduplication.
+const perRequest: <T extends (...args: never[]) => unknown>(fn: T) => T =
+  typeof cache === "function" ? (cache as never) : (fn) => fn;
 
 // Cookie mémorisant l'établissement actif (multi-établissements).
 export const ACTIVE_BIZ_COOKIE = "kado-biz";
@@ -63,14 +70,19 @@ export function hasAccess(b: {
   return true;
 }
 
-/** Utilisateur connecté (ou null). */
-export async function getSessionUser() {
+/**
+ * Utilisateur connecté (ou null).
+ * Mémoïsé par requête (`cache`) : layout + page + routes appellent tous la
+ * résolution d'auth ; sans cela, `auth.getUser()` partait plusieurs fois par
+ * rendu. Le cache est vidé entre chaque requête (pas de fuite inter-requêtes).
+ */
+export const getSessionUser = perRequest(async () => {
   const supa = createSSRClient();
   const {
     data: { user },
   } = await supa.auth.getUser();
   return user;
-}
+});
 
 /**
  * L'établissement rattaché au commerçant connecté.
@@ -83,10 +95,10 @@ const BIZ_COLUMNS =
  * Tous les établissements rattachés au commerçant connecté (multi-établissements).
  * Triés par date de création (le plus ancien d'abord).
  */
-export async function getMyBusinesses(): Promise<{
+export const getMyBusinesses = perRequest(async (): Promise<{
   user: Awaited<ReturnType<typeof getSessionUser>>;
   businesses: Business[];
-}> {
+}> => {
   const user = await getSessionUser();
   if (!user) return { user: null, businesses: [] };
   const admin = getAdminClient();
@@ -96,17 +108,17 @@ export async function getMyBusinesses(): Promise<{
     .eq("owner_user_id", user.id)
     .order("created_at", { ascending: true });
   return { user, businesses: (data as Business[]) ?? [] };
-}
+});
 
 /**
  * L'établissement ACTIF du commerçant connecté.
  * S'il en a plusieurs, celui mémorisé dans le cookie ; sinon le premier.
  * Rétro-compatible : avec un seul établissement, renvoie toujours celui-ci.
  */
-export async function getMyBusiness(): Promise<{
+export const getMyBusiness = perRequest(async (): Promise<{
   user: Awaited<ReturnType<typeof getSessionUser>>;
   business: Business | null;
-}> {
+}> => {
   const { user, businesses } = await getMyBusinesses();
   if (!user || businesses.length === 0) return { user, business: null };
   let active: Business | undefined;
@@ -117,4 +129,4 @@ export async function getMyBusiness(): Promise<{
     /* hors contexte requête : on prend le premier */
   }
   return { user, business: active ?? businesses[0] };
-}
+});
