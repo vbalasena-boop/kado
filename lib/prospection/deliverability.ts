@@ -35,7 +35,11 @@ export type DnsResolvers = {
 
 // Sélecteurs DKIM courants à sonder (OVH + génériques). Le sélecteur réel est
 // propre à chaque config ; on tente les plus répandus.
+// NB : OVH Zimbra publie le DKIM sous « ovhmo-selector-1/2 » (enregistrements
+// CNAME) — placés en tête car c'est notre hébergeur mail de prospection.
 const DKIM_SELECTORS = [
+  "ovhmo-selector-1",
+  "ovhmo-selector-2",
   "ovhmx1",
   "ovhmx2",
   "ovhmx3",
