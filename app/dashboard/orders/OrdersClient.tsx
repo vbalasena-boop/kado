@@ -397,9 +397,13 @@ export default function OrdersClient({
   const lastIdRef = useRef<string | null>(null);
   const pollInitRef = useRef(false);
 
-  // Rafraîchit la liste toutes les 60 s pour voir arriver les commandes
+  // Refresh périodique (sync multi-appareils des changements de statut), mais
+  // UNIQUEMENT quand l'onglet est visible : un onglet en arrière-plan ne
+  // rechargeait la page serveur (requête stats lourde) pour rien. (Perf P2)
   useEffect(() => {
-    const t = setInterval(() => router.refresh(), 60000);
+    const t = setInterval(() => {
+      if (typeof document === "undefined" || !document.hidden) router.refresh();
+    }, 60000);
     return () => clearInterval(t);
   }, [router]);
 
@@ -499,6 +503,8 @@ export default function OrdersClient({
   useEffect(() => {
     let stop = false;
     async function poll() {
+      // Onglet en arrière-plan : on ne sonde pas (économie serveur, Perf P2).
+      if (typeof document !== "undefined" && document.hidden) return;
       try {
         const res = await fetch("/api/dashboard/orders", { cache: "no-store" });
         if (!res.ok) return;

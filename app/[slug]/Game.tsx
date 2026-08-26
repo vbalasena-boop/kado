@@ -8,6 +8,7 @@ import { isValidEmail, autoSendCodeTarget, needsCollectStep } from "@/lib/optin"
 import {
   unlockedSpinActions,
   reviewCtaHref,
+  instagramHref,
   type TriggerAction,
 } from "@/lib/wheel";
 
@@ -261,7 +262,7 @@ const ACTIONS: Record<TriggerAction, ActionMeta> = {
     badge: "Tour Instagram",
     recap: "📸 Suivi Instagram",
     glyph: (size) => <InstagramGlyph size={size ?? 26} />,
-    url: (config) => config.instagram_url,
+    url: (config) => instagramHref(config),
   },
   loyalty: {
     cls: "loyalty",
