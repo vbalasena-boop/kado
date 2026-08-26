@@ -135,8 +135,10 @@ export default function ProspectionClient({
       if (!res.ok) {
         setMessage(`Erreur : ${data.error ?? "inconnue"}`);
       } else {
+        const nbVilles = Array.isArray(data.cities) ? data.cities.length : 1;
         setMessage(
           `${data.inserted} nouveau(x) prospect(s) ajouté(s)` +
+            (nbVilles > 1 ? ` sur ${nbVilles} villes` : "") +
             (data.duplicates ? `, ${data.duplicates} doublon(s) ignoré(s)` : "") +
             (data.mock ? " — mode démo (pas de clé Google Places)" : "")
         );
@@ -427,10 +429,11 @@ export default function ProspectionClient({
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
           <input
             type="text"
-            placeholder="Ville (ex. Lyon)"
+            placeholder="Ville(s) — ex. Versailles, Le Chesnay"
             value={city}
             onChange={(e) => setCity(e.target.value)}
-            style={{ padding: "8px 10px", borderRadius: 8, border: "1px solid #ccc" }}
+            title="Une ou plusieurs villes séparées par des virgules (5 max par passage)"
+            style={{ padding: "8px 10px", borderRadius: 8, border: "1px solid #ccc", minWidth: 240 }}
           />
           <label style={{ fontSize: 14 }}>
             Limite&nbsp;
