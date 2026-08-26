@@ -388,6 +388,41 @@ export default function ProspectionClient({
     }
   }
 
+  // --- Rédaction IA ---
+  const [aiWriting, setAiWriting] = useState(false);
+
+  async function runAiWrite() {
+    setAiWriting(true);
+    setMessage(null);
+    try {
+      const res = await fetch("/api/admin/prospection/ai-write", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setMessage(`Erreur : ${data.error ?? "inconnue"}`);
+      } else if (!data.configured) {
+        setMessage(
+          "IA non configurée : ajoute la variable ANTHROPIC_API_KEY dans Vercel pour activer la rédaction par IA."
+        );
+      } else {
+        setMessage(
+          `✨ ${data.written} prospect(s) rédigé(s) par IA` +
+            (data.failed ? `, ${data.failed} échec(s)` : "") +
+            (data.remaining ? ` — ${data.remaining} restant(s), reclique pour continuer` : "") +
+            ". Messages en brouillon : relis-les puis approuve."
+        );
+        router.refresh();
+      }
+    } catch {
+      setMessage("Erreur réseau pendant la rédaction IA.");
+    } finally {
+      setAiWriting(false);
+    }
+  }
+
   // --- Import CSV ---
   const [importing, setImporting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -568,6 +603,15 @@ export default function ProspectionClient({
             title="Devine les emails et comptes Instagram depuis les sites web"
           >
             {enriching ? "Enrichissement…" : "Enrichir (email / Insta)"}
+          </button>
+          <button
+            onClick={runAiWrite}
+            disabled={aiWriting}
+            className="dash-signout"
+            style={{ opacity: aiWriting ? 0.6 : 1, color: "#8b6cff" }}
+            title="Rédige des messages email + DM personnalisés par IA (brouillons à valider). Nécessite ANTHROPIC_API_KEY."
+          >
+            {aiWriting ? "Rédaction IA…" : "✨ Rédiger avec l'IA"}
           </button>
           <button
             onClick={revalidate}
