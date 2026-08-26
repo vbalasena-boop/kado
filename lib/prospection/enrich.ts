@@ -106,8 +106,9 @@ function domainOf(email: string): string {
   return (email.split("@")[1] || "").toLowerCase();
 }
 
-function isPlatformDomain(dom: string): boolean {
-  const d = dom.toLowerCase();
+/** Vrai si le domaine est une plateforme/réseau (jamais le site propre du commerce). */
+export function isPlatformDomain(dom: string): boolean {
+  const d = dom.toLowerCase().replace(/^www\./, "");
   return PLATFORM_DOMAINS.some((p) => d === p || d.endsWith(`.${p}`));
 }
 
@@ -211,6 +212,10 @@ export function extractContact(html: string, siteDomain: string | null = null): 
 const RE_CONTACT_LINK =
   /(contact|mentions[-_]?legales|nous[-_]?joindre|a[-_]?propos|apropos|infos?[-_]?pratiques?)/i;
 
+// Chemins de pages de contact fréquents à ESSAYER si l'accueil ne les cite pas
+// (on n'extrait que des emails réellement présents → toujours zéro devinette).
+const COMMON_CONTACT_PATHS = ["/contact", "/nous-contacter", "/mentions-legales"];
+
 /** Trouve les URLs de pages de contact citées dans le HTML (même hôte). */
 export function contactLinks(html: string, origin: string): string[] {
   const out = new Set<string>();
@@ -241,6 +246,8 @@ export async function enrichWebsite(website: string | null): Promise<Contact> {
   const homeHtml = await fetchHtml(origin);
   const acc: Contact = { email: null, instagram: null };
   const allEmails = new Set<string>();
+  const visited = new Set<string>([origin]);
+  const stillNeed = () => !acc.instagram || allEmails.size === 0;
 
   if (homeHtml) {
     extractEmails(homeHtml).forEach((e) => allEmails.add(e));
@@ -248,12 +255,25 @@ export async function enrichWebsite(website: string | null): Promise<Contact> {
 
     // Suit les pages de contact citées sur l'accueil (au lieu de deviner /contact).
     for (const link of contactLinks(homeHtml, origin)) {
-      if (acc.instagram && allEmails.size > 0) break;
+      if (!stillNeed()) break;
+      visited.add(link);
       const html = await fetchHtml(link);
       if (!html) continue;
       extractEmails(html).forEach((e) => allEmails.add(e));
       acc.instagram = acc.instagram ?? extractInstagram(html);
     }
+  }
+
+  // Repli : pages de contact fréquentes non citées sur l'accueil.
+  for (const path of COMMON_CONTACT_PATHS) {
+    if (!stillNeed()) break;
+    const url = origin + path;
+    if (visited.has(url)) continue;
+    visited.add(url);
+    const html = await fetchHtml(url);
+    if (!html) continue;
+    extractEmails(html).forEach((e) => allEmails.add(e));
+    acc.instagram = acc.instagram ?? extractInstagram(html);
   }
 
   acc.email = pickBestEmail([...allEmails], siteDomain);
