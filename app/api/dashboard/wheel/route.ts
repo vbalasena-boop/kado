@@ -3,7 +3,7 @@ import { revalidateTag } from "next/cache";
 import { getMyBusiness } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { insertPrizes } from "@/lib/prizes";
-import { unlockedSpinActions } from "@/lib/wheel";
+import { unlockedSpinActions, hardenExternalUrl } from "@/lib/wheel";
 import { isMissingColumnError } from "@/lib/db-errors";
 import { reportError } from "@/lib/report";
 
@@ -90,8 +90,10 @@ export async function POST(req: NextRequest) {
   // upsert config (1-1 avec business)
   const basePayload = {
       business_id: business.id,
-      instagram_url: cfg.instagram_url || null,
-      review_url: cfg.review_url || null,
+      // Durci à l'écriture (anti-XSS) : jamais de `javascript:`/`data:` persisté
+      // pour une URL ouverte via window.open côté joueur (cf. lib/wheel).
+      instagram_url: hardenExternalUrl(cfg.instagram_url),
+      review_url: hardenExternalUrl(cfg.review_url),
       compliance_note:
         cfg.compliance_note || "Le cadeau n'est pas conditionné à la note laissée.",
       daily_prize_limit:

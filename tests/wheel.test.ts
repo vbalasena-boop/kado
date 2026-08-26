@@ -8,6 +8,7 @@ import {
   nextTriggerActions,
   shouldShowReviewCta,
   reviewCtaHref,
+  instagramHref,
   avisMigrationNoticeNeeded,
   TRIGGER_ACTIONS,
 } from "@/lib/wheel";
@@ -411,6 +412,29 @@ describe("reviewCtaHref", () => {
     expect(reviewCtaHref({ review_url: "" })).toBeNull();
     expect(reviewCtaHref({ review_url: "   " })).toBeNull();
     expect(reviewCtaHref({})).toBeNull();
+  });
+});
+
+describe("instagramHref (anti-XSS, ouvert via window.open côté joueur)", () => {
+  it("URL http(s) conservée ; schéma nu → https://", () => {
+    expect(instagramHref({ instagram_url: "https://instagram.com/cafe" })).toBe(
+      "https://instagram.com/cafe"
+    );
+    expect(instagramHref({ instagram_url: "instagram.com/cafe" })).toBe(
+      "https://instagram.com/cafe"
+    );
+  });
+
+  it("schéma hostile → null (le cœur du correctif S1)", () => {
+    expect(instagramHref({ instagram_url: "javascript:alert(document.cookie)" })).toBeNull();
+    expect(instagramHref({ instagram_url: "data:text/html,<script>1</script>" })).toBeNull();
+    expect(instagramHref({ instagram_url: "  JavaScript:alert(1)" })).toBeNull();
+  });
+
+  it("absent / vide / non-string → null", () => {
+    expect(instagramHref({})).toBeNull();
+    expect(instagramHref({ instagram_url: "" })).toBeNull();
+    expect(instagramHref({ instagram_url: 42 as any })).toBeNull();
   });
 });
 

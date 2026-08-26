@@ -410,21 +410,32 @@ export async function GET(req: NextRequest) {
   try {
     const now = new Date();
     const nowIso = now.toISOString();
-    const { data: actives } = await db
-      .from("businesses")
-      .select("id, name")
-      .eq("status", "active");
+    // Inversion N+1 (Perf P4) : au lieu de scanner TOUS les commerces actifs
+    // avec une requête wheel_configs chacun, on récupère directement les configs
+    // « tirage activé » (ensemble bien plus petit) puis leurs commerces en un
+    // seul `.in()`. Lecture tolérante : colonnes 0030/0031 absentes → bloc sauté.
+    const { data: drawConfigs, error: dcErr } = await db
+      .from("wheel_configs")
+      .select(
+        "business_id, monthly_draw, monthly_draw_prize, draw_period_days, draw_next_at"
+      )
+      .eq("monthly_draw", true);
+    const drawList = dcErr ? [] : ((drawConfigs as any[]) ?? []);
+    let drawBizById = new Map<string, any>();
+    if (drawList.length) {
+      const ids = Array.from(new Set(drawList.map((c) => c.business_id)));
+      const { data: bizRows } = await db
+        .from("businesses")
+        .select("id, name, status")
+        .in("id", ids)
+        .eq("status", "active");
+      drawBizById = new Map((bizRows ?? []).map((b: any) => [b.id, b]));
+    }
 
-    for (const biz of actives ?? []) {
-      // Config du tirage (lecture tolérante si migrations 0030/0031 absentes)
-      const { data: dc, error: dcErr } = await db
-        .from("wheel_configs")
-        .select("monthly_draw, monthly_draw_prize, draw_period_days, draw_next_at")
-        .eq("business_id", biz.id)
-        .maybeSingle();
-      if (dcErr) break; // colonnes absentes → on arrête ce bloc
-      const cfg2 = dc as any;
-      if (!cfg2?.monthly_draw) continue;
+    for (const cfg2 of drawList) {
+      // Commerce inactif/supprimé (ou hors du set actif) → on ignore ce tirage.
+      const biz = drawBizById.get(cfg2.business_id);
+      if (!biz) continue;
 
       const period = Math.min(365, Math.max(1, Number(cfg2.draw_period_days) || 30));
 

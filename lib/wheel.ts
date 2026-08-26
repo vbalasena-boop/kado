@@ -161,14 +161,35 @@ export function reviewCtaHref(cfg: {
   review_url?: unknown;
 }): string | null {
   if (cfg.review_enabled === false) return null;
-  if (typeof cfg.review_url !== "string") return null;
-  const raw = cfg.review_url.trim();
-  if (raw === "") return null;
-  if (/^https?:\/\//i.test(raw)) return raw;
-  // Un schéma explicite autre que http(s) est rejeté.
-  if (/^[a-z][a-z0-9+.-]*:/i.test(raw)) return null;
+  return hardenExternalUrl(cfg.review_url);
+}
+
+/**
+ * Durcit une URL externe saisie par le commerçant et rendue dans un `href` /
+ * ouverte via `window.open` côté joueur (logique pure, anti-XSS) :
+ *  - `null` si absente/vide ou de type non-string ;
+ *  - schéma `http(s)` conservé ; sans schéma → normalisé en `https://` ;
+ *  - tout autre schéma explicite (`javascript:`, `data:`, `mailto:`, …) → `null`.
+ * Mutualisé par `reviewCtaHref` et `instagramHref`.
+ */
+export function hardenExternalUrl(raw: unknown): string | null {
+  if (typeof raw !== "string") return null;
+  const s = raw.trim();
+  if (s === "") return null;
+  if (/^https?:\/\//i.test(s)) return s;
+  // Un schéma explicite autre que http(s) est rejeté (anti-XSS).
+  if (/^[a-z][a-z0-9+.-]*:/i.test(s)) return null;
   // Domaine/chemin nu (sans schéma) → https://
-  return `https://${raw}`;
+  return `https://${s}`;
+}
+
+/**
+ * URL Instagram sûre (ou `null`) pour l'action « Suivre sur Instagram ».
+ * Même durcissement anti-XSS que `reviewCtaHref` : `instagram_url` est saisi par
+ * le commerçant puis ouvert via `window.open` chez chaque joueur.
+ */
+export function instagramHref(cfg: { instagram_url?: unknown }): string | null {
+  return hardenExternalUrl(cfg.instagram_url);
 }
 
 /**
