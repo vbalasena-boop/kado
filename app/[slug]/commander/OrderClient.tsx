@@ -430,7 +430,12 @@ export default function OrderClient({
               <div className="uber-item-media">
                 {p.image_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={p.image_url} alt={p.name} loading="lazy" />
+                  <img
+                    src={p.image_url}
+                    alt={p.name}
+                    loading="lazy"
+                    decoding="async"
+                  />
                 ) : (
                   <div className="uber-noimg">🍽️</div>
                 )}

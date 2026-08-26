@@ -1564,7 +1564,13 @@ export default function OrdersClient({
               <li key={p.id} className={p.active ? "" : "is-off"}>
                 {p.image_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={p.image_url} alt="" className="product-thumb" />
+                  <img
+                  src={p.image_url}
+                  alt=""
+                  className="product-thumb"
+                  loading="lazy"
+                  decoding="async"
+                />
                 ) : (
                   <span className="product-thumb product-thumb-empty">🍽️</span>
                 )}
