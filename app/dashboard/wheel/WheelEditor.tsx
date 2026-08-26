@@ -45,6 +45,11 @@ type Config = {
   draw_period_days?: number | null;
   draw_next_at?: string | null;
   trigger_actions?: string[];
+  // « À la une » : message éditable montré aux clients (jeu + fidélité).
+  highlight_title?: string | null;
+  highlight_text?: string | null;
+  highlight_url?: string | null;
+  highlight_until?: string | null;
 };
 
 // Actions déclenchantes (non-avis) proposées dans l'éditeur. L'avis Google
@@ -677,6 +682,64 @@ export default function WheelEditor({
                     <b>Collecter les e-mails des gagnants</b> (facultatif, avec
                     consentement) — pour te constituer une base clients.
                   </span>
+                </label>
+
+                {/* « À la une » : message montré aux clients (jeu + fidélité). */}
+                <div className="field" style={{ gap: 4 }}>
+                  <span>📣 À la une (facultatif)</span>
+                  <p className="muted" style={{ margin: "0 0 6px" }}>
+                    Un petit message pour tes clients (menu du jour, événement à
+                    venir, actu…), affiché sur la page de jeu et la carte de
+                    fidélité. Laisse vide pour ne rien afficher.
+                  </p>
+                </div>
+                <label className="field">
+                  <span>Titre</span>
+                  <input
+                    type="text"
+                    maxLength={60}
+                    placeholder="Ex : Menu du jour"
+                    value={config.highlight_title ?? ""}
+                    onChange={(e) =>
+                      setConfig({ ...config, highlight_title: e.target.value })
+                    }
+                  />
+                </label>
+                <label className="field">
+                  <span>Message</span>
+                  <input
+                    type="text"
+                    maxLength={160}
+                    placeholder="Ex : Aujourd'hui, tarte aux pommes maison 🍎"
+                    value={config.highlight_text ?? ""}
+                    onChange={(e) =>
+                      setConfig({ ...config, highlight_text: e.target.value })
+                    }
+                  />
+                </label>
+                <label className="field">
+                  <span>Lien (facultatif)</span>
+                  <input
+                    type="text"
+                    placeholder="https://…"
+                    value={config.highlight_url ?? ""}
+                    onChange={(e) =>
+                      setConfig({ ...config, highlight_url: e.target.value })
+                    }
+                  />
+                </label>
+                <label className="field">
+                  <span>Masquer automatiquement après le (facultatif)</span>
+                  <input
+                    type="date"
+                    value={(config.highlight_until ?? "").slice(0, 10)}
+                    onChange={(e) =>
+                      setConfig({
+                        ...config,
+                        highlight_until: e.target.value || null,
+                      })
+                    }
+                  />
                 </label>
               </div>
             </>
