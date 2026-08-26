@@ -491,6 +491,8 @@ export default function Game({
   const [codeEmail, setCodeEmail] = useState("");
   const [codeEmailSent, setCodeEmailSent] = useState(false);
   const [codeEmailBusy, setCodeEmailBusy] = useState(false);
+  // Message d'erreur inline du formulaire e-mail post-victoire (validation/envoi).
+  const [prizeEmailError, setPrizeEmailError] = useState("");
   // Machine à sous : contenu des 3 rouleaux
   const [reels, setReels] = useState<string[]>(["🎁", "⭐", "🍀"]);
   // Carte à gratter : lot en attente de révélation
@@ -551,21 +553,65 @@ export default function Game({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prize]);
 
-  async function submitLead(e: React.FormEvent) {
+  /**
+   * Formulaire e-mail UNIQUE de l'écran de gain : une seule saisie sert à
+   * l'envoi du code cadeau ET (si consentement coché) à la capture du lead —
+   * au lieu de deux champs e-mail empilés. Valide l'adresse et affiche une
+   * erreur inline (au lieu d'échouer en silence).
+   */
+  async function handlePrizeEmail(e: React.FormEvent) {
     e.preventDefault();
-    if (!leadEmail.trim() || !leadConsent) return;
-    setLeadBusy(true);
-    try {
-      const res = await fetch("/api/lead", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug, email: leadEmail.trim() }),
-      });
-      if (res.ok) setLeadSent(true);
-    } catch {
-      /* silencieux : la capture est facultative */
-    } finally {
-      setLeadBusy(false);
+    const email = codeEmail.trim();
+    if (!isValidEmail(email)) {
+      setPrizeEmailError("Adresse e-mail invalide.");
+      return;
+    }
+    setPrizeEmailError("");
+
+    const wantCode = !!prize?.code && !codeEmailSent;
+    const wantLead =
+      config.collect_email &&
+      !!prize &&
+      !isNoWin(prize.label) &&
+      !capturedEmail &&
+      !leadSent &&
+      leadConsent;
+
+    let failed = false;
+    if (wantCode) {
+      setCodeEmailBusy(true);
+      try {
+        const res = await fetch("/api/prize-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ slug, code: prize.code, email }),
+        });
+        if (res.ok) setCodeEmailSent(true);
+        else failed = true;
+      } catch {
+        failed = true;
+      } finally {
+        setCodeEmailBusy(false);
+      }
+    }
+    // Capture lead UNIQUEMENT avec consentement (RGPD). Best-effort, silencieux.
+    if (wantLead) {
+      setLeadBusy(true);
+      try {
+        const res = await fetch("/api/lead", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ slug, email }),
+        });
+        if (res.ok) setLeadSent(true);
+      } catch {
+        /* capture facultative */
+      } finally {
+        setLeadBusy(false);
+      }
+    }
+    if (failed) {
+      setPrizeEmailError("Envoi impossible pour le moment. Réessayez.");
     }
   }
 
@@ -606,24 +652,6 @@ export default function Game({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  async function emailMyCode(e: React.FormEvent) {
-    e.preventDefault();
-    if (!codeEmail.trim() || !prize?.code) return;
-    setCodeEmailBusy(true);
-    try {
-      const res = await fetch("/api/prize-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug, code: prize.code, email: codeEmail.trim() }),
-      });
-      if (res.ok) setCodeEmailSent(true);
-    } catch {
-      /* silencieux : l'envoi est facultatif */
-    } finally {
-      setCodeEmailBusy(false);
-    }
-  }
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const confettiRef = useRef<HTMLCanvasElement | null>(null);
@@ -1352,72 +1380,82 @@ export default function Game({
                         className="prize-qr"
                       />
                     )}
-                    {!preview &&
-                      (codeEmailSent ? (
-                        <p className="lead-ok">
-                          ✅ Code envoyé par e-mail&nbsp;!
-                        </p>
-                      ) : (
-                        <form className="lead-form" onSubmit={emailMyCode}>
-                          <label className="lead-label">
-                            📧 Recevoir mon code par e-mail (pour ne pas le
-                            perdre)
-                          </label>
-                          <div className="lead-row">
-                            <input
-                              type="email"
-                              placeholder="votre@email.fr"
-                              value={codeEmail}
-                              onChange={(e) => setCodeEmail(e.target.value)}
-                            />
-                            <button
-                              className="btn"
-                              type="submit"
-                              disabled={codeEmailBusy}
-                            >
-                              Envoyer
-                            </button>
-                          </div>
-                        </form>
-                      ))}
                   </>
                 )}
-                {config.collect_email &&
-                  !preview &&
-                  !isNoWin(prize.label) &&
-                  !capturedEmail &&
-                  (leadSent ? (
-                    <p className="lead-ok">✅ Merci, à bientôt&nbsp;!</p>
-                  ) : (
-                    <form className="lead-form" onSubmit={submitLead}>
-                      <label className="lead-label">
-                        {drawPrize
-                          ? `🎲 Laissez votre e-mail et participez au tirage : ${drawPrize} à gagner !`
-                          : "📧 Recevez nos offres par e-mail (facultatif)"}
-                      </label>
-                      <div className="lead-row">
-                        <input
-                          type="email"
-                          placeholder="votre@email.fr"
-                          value={leadEmail}
-                          onChange={(e) => setLeadEmail(e.target.value)}
-                        />
-                        <button className="btn" type="submit" disabled={leadBusy}>
-                          OK
-                        </button>
-                      </div>
-                      <label className="lead-consent">
-                        <input
-                          type="checkbox"
-                          checked={leadConsent}
-                          onChange={(e) => setLeadConsent(e.target.checked)}
-                        />
-                        <span>
-                          J'accepte de recevoir des offres de ce commerce.
-                        </span>
-                      </label>
-                    </form>
-                  ))}
+                {/* Formulaire e-mail UNIQUE (fusion « recevoir mon code » +
+                    « recevez nos offres ») : un seul champ, pas de double saisie.
+                    S'affiche tant qu'il reste quelque chose à faire (envoyer le
+                    code et/ou capturer le lead), sinon confirmations. */}
+                {!preview &&
+                  (() => {
+                    const wantCode = !!prize?.code && !codeEmailSent;
+                    const wantLead =
+                      config.collect_email &&
+                      !isNoWin(prize.label) &&
+                      !capturedEmail &&
+                      !leadSent;
+                    if (!wantCode && !wantLead) {
+                      return (
+                        <>
+                          {codeEmailSent && (
+                            <p className="lead-ok">
+                              ✅ Code envoyé par e-mail&nbsp;!
+                            </p>
+                          )}
+                          {leadSent && (
+                            <p className="lead-ok">✅ Merci, à bientôt&nbsp;!</p>
+                          )}
+                        </>
+                      );
+                    }
+                    return (
+                      <form className="lead-form" onSubmit={handlePrizeEmail}>
+                        <label className="lead-label">
+                          {wantCode && wantLead
+                            ? "📧 Recevez votre code + nos offres par e-mail"
+                            : wantCode
+                              ? "📧 Recevoir mon code par e-mail (pour ne pas le perdre)"
+                              : drawPrize
+                                ? `🎲 Laissez votre e-mail et participez au tirage : ${drawPrize} à gagner !`
+                                : "📧 Recevez nos offres par e-mail (facultatif)"}
+                        </label>
+                        <div className="lead-row">
+                          <input
+                            type="email"
+                            inputMode="email"
+                            placeholder="votre@email.fr"
+                            value={codeEmail}
+                            onChange={(e) => {
+                              setCodeEmail(e.target.value);
+                              if (prizeEmailError) setPrizeEmailError("");
+                            }}
+                          />
+                          <button
+                            className="btn"
+                            type="submit"
+                            disabled={codeEmailBusy || leadBusy}
+                          >
+                            Envoyer
+                          </button>
+                        </div>
+                        {wantLead && (
+                          <label className="lead-consent">
+                            <input
+                              type="checkbox"
+                              checked={leadConsent}
+                              onChange={(e) => setLeadConsent(e.target.checked)}
+                            />
+                            <span>
+                              J'accepte de recevoir des offres de ce commerce.
+                            </span>
+                          </label>
+                        )}
+                        {prizeEmailError && (
+                          <p className="onboarding-err">{prizeEmailError}</p>
+                        )}
+                      </form>
+                    );
+                  })()}
                 <p className="fine">
                   {config.compliance_note ||
                     "Le cadeau n'est pas conditionné à la note laissée."}
