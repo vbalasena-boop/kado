@@ -5019,7 +5019,9 @@ html { scroll-behavior: smooth; }
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  background: var(--sunset, linear-gradient(135deg, #ff6b4a, #f5b841 55%, #ff4e87));
+  /* Accent de marque : suit le thème du commerçant (--gold/--coral, injectés
+     par buildTheme), comme le gros bouton du jeu. Défaut = palette Kado. */
+  background: linear-gradient(135deg, var(--gold), var(--coral));
   color: #fff;
   border: none;
   border-radius: 999px;
@@ -5150,15 +5152,15 @@ html { scroll-behavior: smooth; }
   background: #e6dff0; z-index: 0;
 }
 .track li:first-child::before { display: none; }
-.track li.done::before, .track li.active::before { background: #f5b841; }
+.track li.done::before, .track li.active::before { background: var(--gold); }
 .track-dot {
   position: relative; z-index: 1; width: 32px; height: 32px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center; font-weight: 800;
   font-size: 14px; background: #ece6f5; color: #9a8fb0; border: 2px solid #ece6f5;
 }
-.track li.done .track-dot { background: #f5b841; color: #fff; border-color: #f5b841; }
+.track li.done .track-dot { background: var(--gold); color: #fff; border-color: var(--gold); }
 .track li.active .track-dot {
-  background: #fff; color: #c2306a; border-color: #f5b841;
+  background: #fff; color: #c2306a; border-color: var(--gold);
   box-shadow: 0 0 0 4px #f5b84133; animation: trackpulse 1.4s ease-in-out infinite;
 }
 @keyframes trackpulse { 50% { box-shadow: 0 0 0 8px #f5b84122; } }
@@ -5176,7 +5178,7 @@ html { scroll-behavior: smooth; }
   font-family: inherit; cursor: pointer; transition: all 0.12s;
 }
 .uber-mode button.on {
-  border-color: #f5b841; background: #fff8ec; color: #17092e;
+  border-color: var(--gold); background: #fff8ec; color: #17092e;
   box-shadow: 0 0 0 3px #f5b84122;
 }
 .order-mode.onsite {
@@ -5342,7 +5344,8 @@ html { scroll-behavior: smooth; }
   font-size: 16px;
   font-weight: 800;
   color: #fff;
-  background: var(--sunset, linear-gradient(135deg, #ff6b4a, #f5b841 55%, #ff4e87));
+  /* Accent de marque (thème commerçant), comme le gros bouton du jeu. */
+  background: linear-gradient(135deg, var(--gold), var(--coral));
   cursor: pointer;
   box-shadow: 0 6px 18px rgba(255, 78, 135, 0.35);
 }
