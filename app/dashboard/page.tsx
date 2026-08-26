@@ -2,7 +2,12 @@ import Link from "next/link";
 import { getMyBusiness, hasModule } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { Icon } from "@/components/icons";
-import { labelIsLosing } from "@/lib/draw";
+import {
+  computePlayStats,
+  computeLoyaltyStats,
+  playStatsFromRpc,
+  loyaltyStatsFromRpc,
+} from "@/lib/dashboard-stats";
 import { avisMigrationNoticeNeeded } from "@/lib/wheel";
 import AvisMigrationBanner from "./AvisMigrationBanner";
 import ReferralPanel from "@/components/ReferralPanel";
@@ -19,53 +24,55 @@ export default async function DashboardHome() {
   const showRoue = hasModule(business, "roue");
   const showFid = hasModule(business, "fidelite");
 
-  const [{ data: plays }, { data: cfg }] = await Promise.all([
-    admin
-      .from("plays")
-      .select("play_type, prize_label, created_at, redeemed_at")
-      .eq("business_id", business.id),
+  // Chemin normal : agrégats calculés côté SQL (RPC 0051), en parallèle. Un
+  // REPLI JS (fonctions pures, chiffres identiques) prend le relais si la
+  // migration 0051 n'est pas encore appliquée (rpc en erreur).
+  const [cfgRes, playRpc, leadsRes, loyRpc] = await Promise.all([
     admin
       .from("wheel_configs")
       .select("instagram_url, review_url, review_enabled, loyalty_enabled")
       .eq("business_id", business.id)
       .maybeSingle(),
+    admin.rpc("dashboard_play_stats", { biz: business.id, since }),
+    admin
+      .from("leads")
+      .select("*", { count: "exact", head: true })
+      .eq("business_id", business.id),
+    showFid
+      ? admin.rpc("dashboard_loyalty_stats", { biz: business.id })
+      : Promise.resolve({ data: null, error: null }),
   ]);
 
-  const rows = plays ?? [];
-  const total = rows.length;
-  const insta = rows.filter((r) => r.play_type === "instagram").length;
-  const review = rows.filter((r) => r.play_type === "review").length;
-  const last30 = rows.filter((r) => r.created_at >= since).length;
-  const won = rows.filter((r) => !labelIsLosing(r.prize_label)).length;
-  const redeemed = rows.filter((r) => (r as any).redeemed_at).length;
-  const redemptionRate = won > 0 ? Math.round((redeemed / won) * 100) : 0;
+  const cfg = cfgRes.data;
+  const leadsCount = leadsRes.count;
 
-  const { count: leadsCount } = await admin
-    .from("leads")
-    .select("*", { count: "exact", head: true })
-    .eq("business_id", business.id);
-
-  const dist = new Map<string, number>();
-  for (const r of rows) {
-    if (!r.prize_label) continue;
-    dist.set(r.prize_label, (dist.get(r.prize_label) ?? 0) + 1);
-  }
-  const distribution = [...dist.entries()].sort((a, b) => b[1] - a[1]);
-
-  // Stats fidélité
-  let fidStats = { cards: 0, stamps: 0, rewards: 0 };
-  if (showFid) {
-    const { data: fidRows } = await admin
-      .from("loyalty_cards")
-      .select("stamps, rewards_earned")
+  let stats = playRpc.error ? null : playStatsFromRpc(playRpc.data);
+  if (!stats) {
+    const { data: plays } = await admin
+      .from("plays")
+      .select("play_type, prize_label, created_at, redeemed_at")
       .eq("business_id", business.id);
-    if (fidRows) {
-      fidStats.cards = fidRows.length;
-      fidStats.stamps = fidRows.reduce((s, r) => s + (r.stamps || 0), 0);
-      fidStats.rewards = fidRows.reduce(
-        (s, r) => s + (r.rewards_earned || 0),
-        0
-      );
+    stats = computePlayStats(plays ?? [], since);
+  }
+  const { total, insta, review, last30, won, redeemed, redemptionRate, distribution } =
+    stats;
+
+  // Stats fidélité (même schéma RPC-puis-repli).
+  let fidStats: { cards: number; stamps: number; rewards: number } = {
+    cards: 0,
+    stamps: 0,
+    rewards: 0,
+  };
+  if (showFid) {
+    const fromRpc = loyRpc.error ? null : loyaltyStatsFromRpc(loyRpc.data);
+    if (fromRpc) {
+      fidStats = fromRpc;
+    } else {
+      const { data: fidRows } = await admin
+        .from("loyalty_cards")
+        .select("stamps, rewards_earned")
+        .eq("business_id", business.id);
+      fidStats = computeLoyaltyStats(fidRows ?? []);
     }
   }
 
