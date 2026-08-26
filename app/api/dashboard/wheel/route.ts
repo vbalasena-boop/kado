@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
       // Durci à l'écriture (anti-XSS) : jamais de `javascript:`/`data:` persisté
       // pour une URL ouverte via window.open côté joueur (cf. lib/wheel).
       instagram_url: hardenExternalUrl(cfg.instagram_url),
-      review_url: cfg.review_url || null,
+      review_url: hardenExternalUrl(cfg.review_url),
       compliance_note:
         cfg.compliance_note || "Le cadeau n'est pas conditionné à la note laissée.",
       daily_prize_limit:
