@@ -102,6 +102,18 @@ export default async function DashboardLayout({
         </main>
       ) : (
         <>
+          {/* Menu mobile : sous 640px, la nav (jusqu'à 11 liens) s'empilait sur
+              5-6 rangées. Hamburger pur CSS (case à cocher) — pas de JS ; comme
+              chaque lien recharge la page (Server Component), le menu se referme
+              tout seul à la navigation. */}
+          <input
+            type="checkbox"
+            id="dash-nav-toggle"
+            className="dash-nav-toggle"
+          />
+          <label htmlFor="dash-nav-toggle" className="dash-nav-burger">
+            ☰ Menu
+          </label>
           <nav className="dash-nav">
             <Link href="/dashboard">
               <Icon name="dashboard" /> Vue d'ensemble

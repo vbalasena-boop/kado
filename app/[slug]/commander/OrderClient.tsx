@@ -439,34 +439,38 @@ export default function OrderClient({
                 ) : (
                   <div className="uber-noimg">🍽️</div>
                 )}
-                {n === 0 ? (
-                  <button
-                    type="button"
-                    className="uber-add"
-                    aria-label={`Ajouter ${p.name}`}
-                    onClick={() => bump(p.id, 1)}
-                  >
-                    +
-                  </button>
-                ) : (
-                  <div className="uber-stepper">
+                {/* Commerce fermé : menu en consultation seule (pas de +/- qui
+                    menaient à une impasse — la barre panier est masquée quand
+                    c'est fermé, le client ne pouvait pas commander). */}
+                {open &&
+                  (n === 0 ? (
                     <button
                       type="button"
-                      aria-label="Retirer"
-                      onClick={() => bump(p.id, -1)}
-                    >
-                      −
-                    </button>
-                    <span>{n}</span>
-                    <button
-                      type="button"
-                      aria-label="Ajouter"
+                      className="uber-add"
+                      aria-label={`Ajouter ${p.name}`}
                       onClick={() => bump(p.id, 1)}
                     >
                       +
                     </button>
-                  </div>
-                )}
+                  ) : (
+                    <div className="uber-stepper">
+                      <button
+                        type="button"
+                        aria-label="Retirer"
+                        onClick={() => bump(p.id, -1)}
+                      >
+                        −
+                      </button>
+                      <span>{n}</span>
+                      <button
+                        type="button"
+                        aria-label="Ajouter"
+                        onClick={() => bump(p.id, 1)}
+                      >
+                        +
+                      </button>
+                    </div>
+                  ))}
               </div>
             </article>
           );
