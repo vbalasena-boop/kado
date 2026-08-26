@@ -34,6 +34,14 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "bad_email" }, { status: 400 });
   }
 
+  // Plafond PAR CODE (au-delà du plafond par IP) : le destinataire n'est pas
+  // lié au tour, donc quiconque connaît un code gagnant pourrait faire envoyer
+  // l'e-mail cadeau vers des adresses arbitraires. On borne l'amplification
+  // (un code ne peut déclencher que quelques envois/heure, IP confondues).
+  if (!(await rateLimit(`prizemail:code:${code}`, 3, 3600))) {
+    return Response.json({ error: "rate_limited" }, { status: 429 });
+  }
+
   const db = getAdminClient();
   const { data: biz } = await db
     .from("businesses")
