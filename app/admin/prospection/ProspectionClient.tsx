@@ -8,6 +8,10 @@ import {
   type ProspectStatus,
 } from "@/lib/prospection/types";
 import { mapCsv } from "@/lib/prospection/csv";
+import type {
+  DeliverabilityReport,
+  DeliverabilityCheck,
+} from "@/lib/prospection/deliverability";
 
 export type EmailState = "sent" | "approved" | "draft" | null;
 
@@ -388,6 +392,28 @@ export default function ProspectionClient({
   const [importing, setImporting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  // --- Test de délivrabilité (SPF/DKIM/DMARC/MX) ---
+  const [deliv, setDeliv] = useState<DeliverabilityReport | null>(null);
+  const [delivLoading, setDelivLoading] = useState(false);
+
+  async function testDeliverability() {
+    setDelivLoading(true);
+    setMessage(null);
+    try {
+      const res = await fetch("/api/admin/prospection/deliverability");
+      const data = await res.json();
+      if (!res.ok) {
+        setMessage(`Erreur : ${data.error ?? "inconnue"}`);
+      } else {
+        setDeliv(data as DeliverabilityReport);
+      }
+    } catch {
+      setMessage("Erreur réseau (test de délivrabilité).");
+    } finally {
+      setDelivLoading(false);
+    }
+  }
+
   async function importCsv(file: File) {
     setImporting(true);
     setMessage(null);
@@ -579,7 +605,18 @@ export default function ProspectionClient({
           >
             🔄 Régénérer tous les messages
           </button>
+          <button
+            onClick={testDeliverability}
+            disabled={delivLoading}
+            className="dash-signout"
+            style={{ opacity: delivLoading ? 0.6 : 1 }}
+            title="Vérifie SPF / DKIM / DMARC / MX de ton domaine d'envoi (anti-spam)"
+          >
+            {delivLoading ? "Test…" : "🛡️ Test délivrabilité"}
+          </button>
         </div>
+
+        {deliv && <DeliverabilityPanel report={deliv} onClose={() => setDeliv(null)} />}
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 10 }}>
           {PROSPECT_SEGMENTS.map((s) => (
             <label key={s} style={{ fontSize: 14, display: "flex", gap: 4, alignItems: "center" }}>
@@ -1067,6 +1104,104 @@ function ProspectCard({
         <DmBadge p={p} />
       </div>
       <StatusSelect p={p} onStatus={onStatus} full />
+    </div>
+  );
+}
+
+/** Panneau de résultat du test de délivrabilité (SPF/DKIM/DMARC/MX). */
+function DeliverabilityPanel({
+  report,
+  onClose,
+}: {
+  report: DeliverabilityReport;
+  onClose: () => void;
+}) {
+  const scoreColor =
+    report.score >= 85 ? "#1e7d34" : report.score >= 60 ? "#a86b00" : "#c0392b";
+  const badge: Record<DeliverabilityCheck["status"], { txt: string; bg: string; color: string }> = {
+    ok: { txt: "✓ OK", bg: "#e6f4ea", color: "#1e7d34" },
+    warn: { txt: "⚠ À surveiller", bg: "#fff4e0", color: "#a86b00" },
+    fail: { txt: "✗ Problème", bg: "#fdecea", color: "#c0392b" },
+  };
+  return (
+    <div
+      style={{
+        border: "1px solid #eee",
+        borderRadius: 12,
+        padding: 14,
+        marginTop: 12,
+        background: "#fff",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        <h3 style={{ margin: 0 }}>🛡️ Délivrabilité</h3>
+        {report.domain && (
+          <code style={{ fontSize: 13, color: "#555" }}>{report.domain}</code>
+        )}
+        <span
+          style={{
+            marginLeft: "auto",
+            fontWeight: 800,
+            fontSize: 20,
+            color: scoreColor,
+          }}
+          title="Score de configuration (0-100)"
+        >
+          {report.score}/100
+        </span>
+        <button onClick={onClose} className="dash-signout" style={{ fontSize: 12 }}>
+          Fermer
+        </button>
+      </div>
+      <p style={{ color: "#444", fontSize: 14, margin: "6px 0 10px" }}>{report.summary}</p>
+      {report.configured ? (
+        <div style={{ display: "grid", gap: 8 }}>
+          {report.checks.map((c) => (
+            <div
+              key={c.key}
+              style={{
+                display: "flex",
+                gap: 10,
+                alignItems: "flex-start",
+                border: "1px solid #f0f0f0",
+                borderRadius: 8,
+                padding: "8px 10px",
+              }}
+            >
+              <span
+                style={{
+                  flex: "0 0 auto",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  padding: "2px 8px",
+                  borderRadius: 999,
+                  background: badge[c.status].bg,
+                  color: badge[c.status].color,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {badge[c.status].txt}
+              </span>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontWeight: 600, fontSize: 14 }}>{c.label}</div>
+                <div style={{ fontSize: 13, color: "#555", wordBreak: "break-word" }}>{c.detail}</div>
+                {c.help && (
+                  <div style={{ fontSize: 12, color: "#a86b00", marginTop: 2 }}>💡 {c.help}</div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p style={{ fontSize: 13, color: "#c0392b" }}>
+          Configure d&apos;abord l&apos;expéditeur de prospection (variable{" "}
+          <code>PROSPECT_EMAIL_FROM</code>) puis relance le test.
+        </p>
+      )}
+      <p style={{ fontSize: 12, color: "#999", marginBottom: 0, marginTop: 10 }}>
+        Contrôle DNS gratuit (aucun email envoyé). Pour un score anti-spam complet
+        (contenu, blacklists), tu peux compléter avec un outil comme mail-tester.com.
+      </p>
     </div>
   );
 }
