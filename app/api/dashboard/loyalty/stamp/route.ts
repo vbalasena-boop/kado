@@ -44,6 +44,19 @@ async function grantReferralBonus(
     if (!sponsor || sponsor.reward_ready) return;
 
     const nowIso = new Date().toISOString();
+
+    // Réservation ATOMIQUE du bonus : on bascule referred_reward_granted_at de
+    // NULL → maintenant, et on ne poursuit QUE si CET appel a fait la bascule.
+    // Deux tampons concurrents du même filleul ne peuvent donc pas créditer le
+    // parrain deux fois (course « lecture null puis écriture »).
+    const { data: claimed } = await db
+      .from("loyalty_cards")
+      .update({ referred_reward_granted_at: nowIso })
+      .eq("id", stampedCardId)
+      .is("referred_reward_granted_at", null)
+      .select("id");
+    if (!claimed || claimed.length === 0) return; // déjà réservé ailleurs
+
     const ns = (sponsor.stamps || 0) + 1;
     const completes = ns >= goal;
     await db
@@ -60,10 +73,6 @@ async function grantReferralBonus(
           : { stamps: ns, last_stamp_at: nowIso }
       )
       .eq("id", sponsor.id);
-    await db
-      .from("loyalty_cards")
-      .update({ referred_reward_granted_at: nowIso })
-      .eq("id", stampedCardId);
 
     await sendEmail({
       to: sponsor.email,

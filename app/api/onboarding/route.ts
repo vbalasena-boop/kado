@@ -26,10 +26,15 @@ export const POST = publicRoute({
     const db = getAdminClient();
 
     // Déjà un établissement rattaché à ce compte ? on ne recrée pas.
+    // `.limit(1)` : un compte peut en posséder plusieurs (multi-établissements)
+    // — sans borne, `maybeSingle()` lèverait sur >1 ligne, l'erreur serait
+    // avalée et un doublon serait créé. On prend le plus ancien.
     const { data: existing } = await db
       .from("businesses")
       .select("id, slug")
       .eq("owner_user_id", user.id)
+      .order("created_at", { ascending: true })
+      .limit(1)
       .maybeSingle();
     if (existing) return Response.json({ ok: true, slug: existing.slug });
 
