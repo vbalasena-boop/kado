@@ -9,10 +9,16 @@ const mocks = vi.hoisted(() => ({
   rateLimit: vi.fn(),
 }));
 
-vi.mock("@/lib/auth", () => ({
-  getMyBusiness: mocks.getMyBusiness,
-  getSessionUser: mocks.getSessionUser,
-}));
+// On garde les VRAIES `hasAccess`/`hasModule` (pures) et on ne remplace que
+// la résolution d'établissement, pour tester le gating réel du wrapper.
+vi.mock("@/lib/auth", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/auth")>();
+  return {
+    ...actual,
+    getMyBusiness: mocks.getMyBusiness,
+    getSessionUser: mocks.getSessionUser,
+  };
+});
 vi.mock("@/lib/admin-guard", () => ({ getAdminUser: mocks.getAdminUser }));
 vi.mock("@/lib/rate-limit", () => ({
   rateLimit: mocks.rateLimit,
@@ -82,6 +88,75 @@ describe("merchantRoute", () => {
       handler: ({ business }) => Response.json({ id: business.id }),
     });
     expect((await (await h(req())).json()).id).toBe("b");
+  });
+
+  const activeBiz = {
+    id: "b",
+    slug: "s",
+    status: "active",
+    subscription_status: "active",
+    subscription_ends_at: null,
+    plan: "complet",
+  };
+
+  it("requireActive : 403 si l'établissement est suspendu", async () => {
+    mocks.getMyBusiness.mockResolvedValue({
+      user: { id: "u" },
+      business: { ...activeBiz, status: "suspended" },
+    });
+    const h = merchantRoute({
+      requireActive: true,
+      handler: () => Response.json({ ok: true }),
+    });
+    const res = await h(req());
+    expect(res.status).toBe(403);
+    expect((await res.json()).reason).toBe("inactive");
+  });
+
+  it("requireActive : 403 si l'abonnement est expiré", async () => {
+    mocks.getMyBusiness.mockResolvedValue({
+      user: { id: "u" },
+      business: { ...activeBiz, subscription_ends_at: "2000-01-01T00:00:00Z" },
+    });
+    const h = merchantRoute({
+      requireActive: true,
+      handler: () => Response.json({ ok: true }),
+    });
+    expect((await h(req())).status).toBe(403);
+  });
+
+  it("requireActive : laisse passer un établissement actif", async () => {
+    mocks.getMyBusiness.mockResolvedValue({
+      user: { id: "u" },
+      business: activeBiz,
+    });
+    const h = merchantRoute({
+      requireActive: true,
+      handler: () => Response.json({ ok: true }),
+    });
+    expect((await h(req())).status).toBe(200);
+  });
+
+  it("requireModule : 403 quand le module manque, 200 sinon", async () => {
+    mocks.getMyBusiness.mockResolvedValue({
+      user: { id: "u" },
+      business: { ...activeBiz, plan: "comptoir" }, // aucun jeu
+    });
+    const gated = merchantRoute({
+      requireModule: "roue",
+      handler: () => Response.json({ ok: true }),
+    });
+    expect((await gated(req())).status).toBe(403);
+
+    mocks.getMyBusiness.mockResolvedValue({
+      user: { id: "u" },
+      business: { ...activeBiz, plan: "roue" },
+    });
+    const ok = merchantRoute({
+      requireModule: "roue",
+      handler: () => Response.json({ ok: true }),
+    });
+    expect((await ok(req())).status).toBe(200);
   });
 });
 

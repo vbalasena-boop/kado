@@ -1,7 +1,13 @@
 import { NextRequest } from "next/server";
 import type { ZodType } from "zod";
 import type { User } from "@supabase/supabase-js";
-import { getMyBusiness, getSessionUser, type Business } from "@/lib/auth";
+import {
+  getMyBusiness,
+  getSessionUser,
+  hasAccess,
+  hasModule,
+  type Business,
+} from "@/lib/auth";
 import { getAdminUser } from "@/lib/admin-guard";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { reportError } from "@/lib/report";
@@ -112,15 +118,40 @@ export function publicRoute<B = undefined>(
   };
 }
 
+/** Options de gating (droits) propres aux routes commerçant. */
+type MerchantGate = {
+  /**
+   * Refuse (403) si l'établissement n'a plus accès : suspendu par l'admin ou
+   * abonnement/essai expiré (cf. `hasAccess`). À poser sur les routes qui
+   * MODIFIENT des données métier — un commerce inactif ne doit pas écrire.
+   */
+  requireActive?: boolean;
+  /**
+   * Refuse (403) si l'établissement n'a pas le module jeu indiqué
+   * (cf. `hasModule`). À N'UTILISER que sur une route servant un seul module :
+   * l'éditeur de roue, p.ex., sert À LA FOIS « roue » et « fidélité », donc
+   * NE PAS y poser de garde de module.
+   */
+  requireModule?: "roue" | "fidelite";
+};
+
 /** Route commerçant : exige un établissement rattaché au compte connecté. */
 export function merchantRoute<B = undefined>(
-  opts: BaseOpts<B> & { handler: Handler<MerchantCtx<B>> }
+  opts: BaseOpts<B> & MerchantGate & { handler: Handler<MerchantCtx<B>> }
 ): NextHandler {
   return async (req, ctx) => {
     const params = ctx?.params ?? {};
     const { user, business } = await getMyBusiness();
     if (!user || !business) {
       return json({ error: "not_authenticated" }, 401);
+    }
+    // Gating des droits AVANT tout traitement : un commerce inactif ou sans le
+    // module requis est refusé sans exécuter le handler (fail-closed).
+    if (opts.requireActive && !hasAccess(business)) {
+      return json({ error: "forbidden", reason: "inactive" }, 403);
+    }
+    if (opts.requireModule && !hasModule(business, opts.requireModule)) {
+      return json({ error: "forbidden", reason: "module" }, 403);
     }
     const rl = await checkRateLimit(req, params, opts.rateLimit);
     if (rl) return rl;

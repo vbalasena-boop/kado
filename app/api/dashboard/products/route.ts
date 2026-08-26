@@ -20,6 +20,8 @@ const Body = z.object({
  *        | 'delete' { id }
  */
 export const POST = merchantRoute({
+  // Configuration catalogue : réservée à un commerce actif.
+  requireActive: true,
   schema: Body,
   handler: async ({ body: rawBody, business }) => {
     const body = rawBody as {
