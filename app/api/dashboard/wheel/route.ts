@@ -45,6 +45,10 @@ export async function POST(req: NextRequest) {
       draw_period_days?: number;
       draw_next_at?: string | null;
       trigger_actions?: unknown;
+      highlight_title?: string;
+      highlight_text?: string;
+      highlight_url?: string;
+      highlight_until?: string | null;
     };
     prizes?: {
       label: string;
@@ -239,6 +243,34 @@ export async function POST(req: NextRequest) {
     }
   } catch (e) {
     reportError(e, { where: "dashboard/wheel", field: "trigger_actions" });
+    return Response.json({ error: "save_failed" }, { status: 500 });
+  }
+
+  // « À la une » : colonnes récentes (0055), mise à jour isolée et tolérante.
+  // URL durcie (anti-XSS) ; date au format AAAA-MM-JJ, sinon null (pas d'expiration).
+  try {
+    const hlUntil =
+      cfg.highlight_until && /^\d{4}-\d{2}-\d{2}$/.test(cfg.highlight_until)
+        ? cfg.highlight_until
+        : null;
+    const { error } = await admin
+      .from("wheel_configs")
+      .update({
+        highlight_title: (cfg.highlight_title || "").trim().slice(0, 60) || null,
+        highlight_text: (cfg.highlight_text || "").trim().slice(0, 160) || null,
+        highlight_url: hardenExternalUrl(cfg.highlight_url),
+        highlight_until: hlUntil,
+      })
+      .eq("business_id", business.id);
+    if (error && !isMissingColumnError(error)) {
+      reportError(error, { where: "dashboard/wheel", field: "highlight" });
+      return Response.json(
+        { error: "save_failed", detail: error.message },
+        { status: 500 }
+      );
+    }
+  } catch (e) {
+    reportError(e, { where: "dashboard/wheel", field: "highlight" });
     return Response.json({ error: "save_failed" }, { status: 500 });
   }
 
