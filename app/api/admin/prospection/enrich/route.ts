@@ -2,6 +2,11 @@ import { z } from "zod";
 import { adminRoute } from "@/lib/api";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { enrichWebsite } from "@/lib/prospection/enrich";
+import {
+  serperConfigured,
+  findInstagramViaSearch,
+  findWebsiteViaSearch,
+} from "@/lib/prospection/enrich-serper";
 import { scoreProspect } from "@/lib/prospection/score";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +19,8 @@ const schema = z
 
 type Row = {
   id: string;
+  name: string;
+  city: string | null;
   website: string | null;
   email: string | null;
   instagram_handle: string | null;
@@ -36,14 +43,18 @@ export const POST = adminRoute({
     const db = getAdminClient();
 
     // Prospects avec un site, à qui il manque l'email OU l'Instagram.
-    const { data, error } = await db
+    // Avec l'étage payant (Serper), on peut aussi enrichir des prospects SANS
+    // site (recherche du compte/du site). Sinon, on se limite à ceux qui ont un site.
+    const useSerper = serperConfigured();
+    let q = db
       .from("prospects")
       .select(
-        "id, website, email, instagram_handle, google_rating, google_reviews_count, google_last_review_at"
+        "id, name, city, website, email, instagram_handle, google_rating, google_reviews_count, google_last_review_at"
       )
-      .not("website", "is", null)
       .or("email.is.null,instagram_handle.is.null")
       .limit(limit);
+    if (!useSerper) q = q.not("website", "is", null);
+    const { data, error } = await q;
     if (error) return Response.json({ error: "db_error" }, { status: 500 });
 
     const rows = (data ?? []) as Row[];
@@ -53,6 +64,32 @@ export const POST = adminRoute({
 
     for (const r of rows) {
       const contact = await enrichWebsite(r.website);
+      let source = "site_web";
+
+      // --- Étage payant optionnel (Serper) : uniquement si activé + manquant ---
+      if (useSerper) {
+        if (!r.instagram_handle && !contact.instagram) {
+          const ig = await findInstagramViaSearch(r.name, r.city);
+          if (ig) {
+            contact.instagram = ig;
+            source = "recherche";
+          }
+        }
+        if (!r.email && !contact.email) {
+          const site = await findWebsiteViaSearch(r.name, r.city);
+          if (site) {
+            const c2 = await enrichWebsite(site);
+            if (c2.email && !contact.email) {
+              contact.email = c2.email;
+              source = "recherche";
+            }
+            if (c2.instagram && !contact.instagram) {
+              contact.instagram = c2.instagram;
+              source = "recherche";
+            }
+          }
+        }
+      }
 
       // On ne remplit que ce qui manque (jamais d'écrasement).
       const newEmail = !r.email && contact.email ? contact.email : null;
@@ -96,7 +133,7 @@ export const POST = adminRoute({
         meta: {
           email_found: Boolean(newEmail),
           instagram_found: Boolean(newInsta),
-          source: "site_web",
+          source,
         },
       });
     }
