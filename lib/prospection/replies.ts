@@ -31,7 +31,10 @@ function imapConfig() {
 }
 
 const EMAIL_RE = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/gi;
-const DAEMON_RE = /(mailer-daemon|postmaster|mail delivery|delivery status|no-?reply)/i;
+// Vrais indicateurs de non-remise. On NE met PAS « no-reply » ici : trop
+// d'expéditeurs légitimes (Calendly, notifications…) émettent depuis no-reply,
+// et les classer en bounce excluait leurs contacts à tort.
+const DAEMON_RE = /(mailer-daemon|postmaster|mail delivery|delivery status|delivery failure|undeliverable|failure notice|non[-\s]?remis|échec de (?:remise|distribution))/i;
 const CALENDLY_RE = /calendly\.com/i;
 // Mots-clés d'une confirmation de réservation (multilingue) — pour distinguer un
 // vrai RDV d'un simple email qui mentionne calendly.com (ex. signature).
@@ -71,21 +74,23 @@ async function scanInbox(sinceDays: number): Promise<ScanResult> {
         CALENDLY_RE.test(from) ||
         (CALENDLY_RE.test(body) && BOOKING_RE.test(`${subject} ${body}`));
 
-      if (isBounce) {
-        // Rapport de non-remise : on extrait les adresses en échec du corps.
-        for (const m of body.matchAll(EMAIL_RE)) {
-          const e = m[0].toLowerCase();
-          // Ignore l'adresse d'envoi et les adresses techniques.
-          if (e === user.toLowerCase() || DAEMON_RE.test(e)) continue;
-          bounced.add(e);
-        }
-      } else if (isCalendly) {
+      // Calendly d'ABORD : une notif de réservation peut venir d'un no-reply@,
+      // mais ne doit jamais être prise pour un bounce.
+      if (isCalendly) {
         // Notification Calendly : on extrait l'email de l'invité (le prospect).
         // Seules les adresses présentes dans la table prospects seront agies.
         for (const m of body.matchAll(EMAIL_RE)) {
           const e = m[0].toLowerCase();
           if (e === user.toLowerCase() || CALENDLY_RE.test(e) || DAEMON_RE.test(e)) continue;
           booked.add(e);
+        }
+      } else if (isBounce) {
+        // Rapport de non-remise : on extrait les adresses en échec du corps.
+        for (const m of body.matchAll(EMAIL_RE)) {
+          const e = m[0].toLowerCase();
+          // Ignore l'adresse d'envoi et les adresses techniques.
+          if (e === user.toLowerCase() || DAEMON_RE.test(e)) continue;
+          bounced.add(e);
         }
       } else if (from) {
         senders.add(from);
