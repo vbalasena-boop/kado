@@ -85,6 +85,16 @@ export default async function WheelPage() {
     ? ["instagram"]
     : sanitizeTriggerActions((ta as any)?.trigger_actions);
 
+  // Relance « plus qu'un tampon » (lecture tolérante si migration 0056 absente)
+  const { data: re, error: reErr } = await admin
+    .from("wheel_configs")
+    .select("reengage_almost")
+    .eq("business_id", business.id)
+    .maybeSingle();
+  const reengageAlmost: boolean = reErr
+    ? false
+    : !!(re as any)?.reengage_almost;
+
   // « À la une » (lecture tolérante si migration 0055 absente)
   const { data: hl, error: hlErr } = await admin
     .from("wheel_configs")
@@ -118,6 +128,7 @@ export default async function WheelPage() {
         draw_period_days: drawPeriodDays,
         draw_next_at: drawNextAt,
         trigger_actions: triggerActions,
+        reengage_almost: reengageAlmost,
         ...highlight,
       }}
       initialPrizes={prizes ?? []}

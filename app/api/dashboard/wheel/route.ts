@@ -39,6 +39,7 @@ export async function POST(req: NextRequest) {
       birthday_enabled?: boolean;
       birthday_reward?: string;
       referral_enabled?: boolean;
+      reengage_almost?: boolean;
       play_alerts?: boolean;
       monthly_draw?: boolean;
       monthly_draw_prize?: string;
@@ -243,6 +244,24 @@ export async function POST(req: NextRequest) {
     }
   } catch (e) {
     reportError(e, { where: "dashboard/wheel", field: "trigger_actions" });
+    return Response.json({ error: "save_failed" }, { status: 500 });
+  }
+
+  // Relance « plus qu'un tampon » (0056) : mise à jour isolée et tolérante.
+  try {
+    const { error } = await admin
+      .from("wheel_configs")
+      .update({ reengage_almost: !!cfg.reengage_almost })
+      .eq("business_id", business.id);
+    if (error && !isMissingColumnError(error)) {
+      reportError(error, { where: "dashboard/wheel", field: "reengage_almost" });
+      return Response.json(
+        { error: "save_failed", detail: error.message },
+        { status: 500 }
+      );
+    }
+  } catch (e) {
+    reportError(e, { where: "dashboard/wheel", field: "reengage_almost" });
     return Response.json({ error: "save_failed" }, { status: 500 });
   }
 

@@ -11,9 +11,11 @@ import {
 import {
   buildCampaignAudience,
   buildCampaignPayloads,
+  escapeHtml,
   DAILY_CHUNK,
 } from "@/lib/campaigns";
 import { unsubToken } from "@/lib/unsub";
+import { isAlmostNudgeEligible } from "@/lib/reengage";
 import { mapLimit } from "@/lib/async";
 import { setSystemState } from "@/lib/health";
 import { sendPushToClients } from "@/lib/push";
@@ -50,6 +52,7 @@ export async function GET(req: NextRequest) {
     recaps: 0,
     draws: 0,
     consentPurged: 0,
+    reengageAlmost: 0,
     errors: [] as string[],
   };
 
@@ -168,6 +171,85 @@ export async function GET(req: NextRequest) {
     }
   } catch (e: any) {
     out.errors.push(`birthdays: ${e?.message ?? "error"}`);
+  }
+
+  // ── 2b. Relance fidélité « plus qu'un tampon » ──────────────────
+  // Commerces AYANT ACTIVÉ la relance : on repère les cartes à `objectif - 1`
+  // et on envoie un rappel (une fois par cycle, cf. isAlmostNudgeEligible).
+  try {
+    const { data: rcfgs, error: rcErr } = await db
+      .from("wheel_configs")
+      .select("business_id, loyalty_goal, loyalty_reward, loyalty_reward_emoji")
+      .eq("reengage_almost", true)
+      .eq("loyalty_enabled", true);
+    if (rcErr) {
+      // Colonne 0056 absente → fonctionnalité pas encore déployée : on ignore.
+      if (!isMissingColumnError(rcErr)) {
+        out.errors.push(`reengage_almost: ${rcErr.message}`);
+      }
+    } else if ((rcfgs ?? []).length) {
+      const ids = [...new Set((rcfgs as any[]).map((c) => c.business_id))];
+      const { data: bizs } = await db
+        .from("businesses")
+        .select("id, name, status")
+        .in("id", ids);
+      const bizBy = new Map((bizs ?? []).map((b: any) => [b.id, b]));
+
+      for (const cfg of rcfgs as any[]) {
+        const biz: any = bizBy.get(cfg.business_id);
+        if (!biz || biz.status !== "active") continue;
+        const goal = Number(cfg.loyalty_goal) || 0;
+        if (goal < 2) continue;
+
+        const { data: cards } = await db
+          .from("loyalty_cards")
+          .select(
+            "id, email, stamps, reward_ready, marketing_ok, unsubscribed_at, last_stamp_at, nudge_almost_at"
+          )
+          .eq("business_id", cfg.business_id)
+          .eq("stamps", goal - 1)
+          .eq("reward_ready", false)
+          .eq("marketing_ok", true)
+          .is("unsubscribed_at", null);
+
+        const eligible = (cards ?? []).filter((c: any) =>
+          isAlmostNudgeEligible(c, goal)
+        );
+        const reward = escapeHtml(
+          (cfg.loyalty_reward || "votre récompense").toString()
+        );
+        const emoji = escapeHtml((cfg.loyalty_reward_emoji || "🎁").toString());
+        const shop = escapeHtml(biz.name || "votre commerce");
+
+        await mapLimit(eligible, 5, async (c: any) => {
+          const unsub = `${SITE}/api/unsubscribe?b=${cfg.business_id}&e=${encodeURIComponent(
+            Buffer.from(c.email).toString("base64url")
+          )}&t=${unsubToken(cfg.business_id, c.email)}`;
+          const res = await sendEmail({
+            to: c.email,
+            subject: `Plus qu'un tampon chez ${biz.name} ! ${cfg.loyalty_reward_emoji || "🎁"}`,
+            fromName: `${biz.name} via Kado`,
+            marketing: true,
+            html: emailLayout({
+              preview: "Il ne vous manque qu'un seul tampon !",
+              heading: "Plus qu'un tampon ! 🎯",
+              emoji: cfg.loyalty_reward_emoji || "🎁",
+              bodyHtml: `Bonne nouvelle : il ne vous manque plus qu'<b>un seul tampon</b> chez <b>${shop}</b> pour débloquer <b>${emoji} ${reward}</b>.<br><br>Passez nous voir lors de votre prochaine visite pour compléter votre carte&nbsp;!`,
+              footnote: `Message lié à votre carte de fidélité. <a href="${unsub}" style="color:#9a94b4;">Ne plus recevoir ces e-mails</a>`,
+            }),
+          });
+          if (res.ok) {
+            await db
+              .from("loyalty_cards")
+              .update({ nudge_almost_at: new Date().toISOString() })
+              .eq("id", c.id);
+            out.reengageAlmost++;
+          }
+        });
+      }
+    }
+  } catch (e: any) {
+    out.errors.push(`reengage_almost: ${e?.message ?? "error"}`);
   }
 
   // ── 3a. Campagnes programmées arrivées à échéance ───────────────

@@ -39,6 +39,7 @@ type Config = {
   birthday_enabled?: boolean | null;
   birthday_reward?: string | null;
   referral_enabled?: boolean | null;
+  reengage_almost?: boolean | null;
   play_alerts?: boolean | null;
   monthly_draw?: boolean | null;
   monthly_draw_prize?: string | null;
@@ -951,6 +952,25 @@ export default function WheelEditor({
                       />
                     </label>
                   )}
+
+                  <label className="toggle-field" style={{ marginTop: 6 }}>
+                    <input
+                      type="checkbox"
+                      checked={!!config.reengage_almost}
+                      onChange={(e) =>
+                        setConfig({
+                          ...config,
+                          reengage_almost: e.target.checked,
+                        })
+                      }
+                    />
+                    <span>
+                      <b>🎯 Relance « plus qu'un tampon »</b> — quand un client
+                      est à un tampon de sa récompense, il reçoit
+                      automatiquement un e-mail pour l'inviter à revenir
+                      (uniquement s'il a accepté vos offres).
+                    </span>
+                  </label>
 
                   <label className="toggle-field" style={{ marginTop: 6 }}>
                     <input
