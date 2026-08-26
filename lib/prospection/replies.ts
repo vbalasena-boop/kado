@@ -12,6 +12,7 @@ import { ImapFlow } from "imapflow";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { reportError } from "@/lib/report";
 import { NON_CONTACTABLE_STATUSES, type ProspectStatus } from "@/lib/prospection/types";
+import { notifyProspectActivity } from "@/lib/prospection/notify";
 
 export interface ReplySummary {
   scanned: number;
@@ -107,7 +108,10 @@ async function scanInbox(sinceDays: number): Promise<ScanResult> {
  * Détecte les réponses et marque les prospects correspondants "replied".
  * Ne lève pas : renvoie un résumé exploitable (cron/admin).
  */
-export async function runReplyDetection(sinceDays = 14): Promise<ReplySummary> {
+export async function runReplyDetection(
+  sinceDays = 14,
+  opts?: { notify?: boolean }
+): Promise<ReplySummary> {
   const { host, user, pass } = imapConfig();
   if (!host || !user || !pass) {
     return { scanned: 0, matched: 0, bounced: 0, booked: 0, configured: false };
@@ -124,15 +128,17 @@ export async function runReplyDetection(sinceDays = 14): Promise<ReplySummary> {
   const db = getAdminClient();
   const { data } = await db
     .from("prospects")
-    .select("id, email, status")
+    .select("id, name, email, status")
     .not("email", "is", null)
     .limit(5000);
-  const prospects = (data ?? []) as { id: string; email: string; status: ProspectStatus }[];
+  const prospects = (data ?? []) as { id: string; name: string; email: string; status: ProspectStatus }[];
 
   const now = new Date().toISOString();
   let matched = 0;
   let bounced = 0;
   let booked = 0;
+  const repliedNames: string[] = [];
+  const bookedNames: string[] = [];
 
   for (const p of prospects) {
     const email = p.email.toLowerCase();
@@ -157,6 +163,7 @@ export async function runReplyDetection(sinceDays = 14): Promise<ReplySummary> {
         .eq("id", p.id);
       if (!error) {
         booked++;
+        bookedNames.push(p.name);
         await db.from("prospect_events").insert({ prospect_id: p.id, type: "meeting_booked", meta: { auto: true } });
       }
       continue;
@@ -170,8 +177,14 @@ export async function runReplyDetection(sinceDays = 14): Promise<ReplySummary> {
         .eq("id", p.id);
       if (error) continue;
       matched++;
+      repliedNames.push(p.name);
       await db.from("prospect_events").insert({ prospect_id: p.id, type: "email_replied", meta: { auto: true } });
     }
+  }
+
+  // Notifie l'opérateur (sauf si désactivé — ex. clic manuel dans l'admin).
+  if (opts?.notify !== false) {
+    await notifyProspectActivity({ replied: repliedNames, booked: bookedNames });
   }
 
   return { scanned: scan.senders.size, matched, bounced, booked, configured: true };

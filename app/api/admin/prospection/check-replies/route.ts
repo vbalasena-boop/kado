@@ -11,7 +11,8 @@ export const maxDuration = 60;
  */
 export const POST = adminRoute({
   handler: async () => {
-    const summary = await runReplyDetection();
+    // Clic manuel : pas de notification email (l'opérateur est déjà dans l'admin).
+    const summary = await runReplyDetection(14, { notify: false });
     return Response.json({ ok: true, ...summary });
   },
 });
