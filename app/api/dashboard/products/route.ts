@@ -20,8 +20,9 @@ const Body = z.object({
  *        | 'delete' { id }
  */
 export const POST = merchantRoute({
-  // Configuration catalogue : réservée à un commerce actif.
+  // Configuration catalogue C&C : réservée à un commerce actif AVEC le Click & Collect.
   requireActive: true,
+  requireClickCollect: true,
   schema: Body,
   handler: async ({ body: rawBody, business }) => {
     const body = rawBody as {

@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   getMyBusiness: vi.fn(),
   getSessionUser: vi.fn(),
   getAdminUser: vi.fn(),
+  getAdminClient: vi.fn(),
   rateLimit: vi.fn(),
 }));
 
@@ -20,6 +21,7 @@ vi.mock("@/lib/auth", async (importOriginal) => {
   };
 });
 vi.mock("@/lib/admin-guard", () => ({ getAdminUser: mocks.getAdminUser }));
+vi.mock("@/lib/supabase/admin", () => ({ getAdminClient: mocks.getAdminClient }));
 vi.mock("@/lib/rate-limit", () => ({
   rateLimit: mocks.rateLimit,
   clientIp: () => "ip",
@@ -42,6 +44,7 @@ beforeEach(() => {
   mocks.rateLimit.mockResolvedValue(true);
   mocks.getMyBusiness.mockReset();
   mocks.getAdminUser.mockReset();
+  mocks.getAdminClient.mockReset();
 });
 
 describe("publicRoute", () => {
@@ -157,6 +160,63 @@ describe("merchantRoute", () => {
       handler: () => Response.json({ ok: true }),
     });
     expect((await ok(req())).status).toBe(200);
+  });
+
+  it("requireClickCollect : plan Comptoir passe sans lecture DB", async () => {
+    mocks.getMyBusiness.mockResolvedValue({
+      user: { id: "u" },
+      business: { ...activeBiz, plan: "comptoir", subscription_status: "active" },
+    });
+    const h = merchantRoute({
+      requireClickCollect: true,
+      handler: () => Response.json({ ok: true }),
+    });
+    expect((await h(req())).status).toBe(200);
+  });
+
+  it("requireClickCollect : plan roue sans addon → 403", async () => {
+    mocks.getMyBusiness.mockResolvedValue({
+      user: { id: "u" },
+      business: { ...activeBiz, plan: "roue", subscription_status: "active" },
+    });
+    // admin.from(...).select().eq().maybeSingle() → click_collect absent
+    mocks.getAdminClient.mockReturnValue({
+      from: () => ({
+        select: () => ({
+          eq: () => ({
+            maybeSingle: async () => ({ data: { click_collect: false } }),
+          }),
+        }),
+      }),
+    });
+    const h = merchantRoute({
+      requireClickCollect: true,
+      handler: () => Response.json({ ok: true }),
+    });
+    const res = await h(req());
+    expect(res.status).toBe(403);
+    expect((await res.json()).reason).toBe("click_collect");
+  });
+
+  it("requireClickCollect : plan roue AVEC addon → 200", async () => {
+    mocks.getMyBusiness.mockResolvedValue({
+      user: { id: "u" },
+      business: { ...activeBiz, plan: "roue", subscription_status: "active" },
+    });
+    mocks.getAdminClient.mockReturnValue({
+      from: () => ({
+        select: () => ({
+          eq: () => ({
+            maybeSingle: async () => ({ data: { click_collect: true } }),
+          }),
+        }),
+      }),
+    });
+    const h = merchantRoute({
+      requireClickCollect: true,
+      handler: () => Response.json({ ok: true }),
+    });
+    expect((await h(req())).status).toBe(200);
   });
 });
 

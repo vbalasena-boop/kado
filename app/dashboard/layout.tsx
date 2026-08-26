@@ -1,6 +1,11 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getMyBusiness, getMyBusinesses, hasModule } from "@/lib/auth";
+import {
+  getMyBusiness,
+  getMyBusinesses,
+  hasModule,
+  hasClickCollect,
+} from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail } from "@/lib/admin-guard";
 import { Icon } from "@/components/icons";
@@ -22,27 +27,23 @@ export default async function DashboardLayout({
   // Liste des établissements du commerçant (pour le sélecteur multi-établissements)
   const { businesses } = await getMyBusinesses();
 
-  // Click & collect activé par l'admin ? (lecture tolérante)
+  // Click & collect : essai + plans Comptoir/Complet inclus, sinon option
+  // `click_collect` (lue de façon tolérante). Même règle que le garde serveur
+  // (hasClickCollect / requireClickCollect) → UI et API restent alignées.
   let clickCollect = false;
   if (business) {
+    let addon = false;
     try {
       const { data } = await getAdminClient()
         .from("businesses")
         .select("click_collect")
         .eq("id", business.id)
         .maybeSingle();
-      clickCollect = !!(data as any)?.click_collect;
+      addon = !!(data as any)?.click_collect;
     } catch {
-      clickCollect = false;
+      addon = false;
     }
-    // Essai gratuit : toutes les options sont ouvertes, commande incluse.
-    if (business.subscription_status === "trial") clickCollect = true;
-    // Plans « Comptoir » et « Complet » (tout Kado) : commandes incluses.
-    if (
-      (business as any).plan === "comptoir" ||
-      (business as any).plan === "complet"
-    )
-      clickCollect = true;
+    clickCollect = hasClickCollect({ ...business, click_collect: addon });
   }
 
   return (

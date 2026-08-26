@@ -57,6 +57,23 @@ export function hasComptoir(b: {
 }
 
 /**
+ * Le commerce a-t-il le Click & Collect (menu + commandes) ?
+ * Miroir EXACT de la règle d'affichage du menu « Commandes » (dashboard/layout) :
+ * inclus pendant l'essai et dans les formules « Comptoir »/« Complet », sinon
+ * activable en option (drapeau businesses.click_collect). `click_collect` peut
+ * être absent (colonne récente) : traité comme `false`.
+ */
+export function hasClickCollect(b: {
+  plan: string;
+  subscription_status: string;
+  click_collect?: boolean | null;
+}): boolean {
+  if (b.subscription_status === "trial") return true;
+  if (b.plan === "comptoir" || b.plan === "complet") return true;
+  return !!b.click_collect;
+}
+
+/**
  * L'établissement a-t-il accès (page de jeu + espace) ?
  * Refusé si suspendu manuellement, ou si l'abonnement est expiré.
  */
