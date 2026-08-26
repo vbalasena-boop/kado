@@ -49,6 +49,19 @@ const STATUS_LABEL: Record<ProspectStatus, string> = {
 
 type SortKey = "score" | "reviews" | "rating" | "name";
 
+/** Vrai sur petit écran (mobile) — pour basculer tableau ↔ cartes. */
+function useIsMobile(breakpoint = 720): boolean {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia(`(max-width: ${breakpoint}px)`);
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, [breakpoint]);
+  return isMobile;
+}
+
 export type Stats = {
   total: number;
   byStatus: Record<string, number>;
@@ -96,6 +109,8 @@ export default function ProspectionClient({
   const [page, setPage] = useState(0);
   // Revenir à la 1ʳᵉ page quand un filtre/tri change.
   useEffect(() => setPage(0), [fSegment, fStatus, maxReviews, sort]);
+
+  const isMobile = useIsMobile();
 
   function toggleSegment(s: ProspectSegment) {
     setSegments((cur) =>
@@ -614,102 +629,99 @@ export default function ProspectionClient({
           Aucun prospect. Lance un sourcing ci-dessus pour commencer.
         </p>
       ) : (
-        <div style={{ overflowX: "auto" }}>
+        <div>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", margin: "2px 0 10px", fontSize: 12, color: "#666" }}>
-            <span>Colonnes Email / DM :</span>
+            <span>États Email / DM :</span>
             <Pill {...PILL.sent} />
             <Pill {...PILL.approved} />
             <Pill {...PILL.draft} />
             <Pill {...PILL.none} />
           </div>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
-            <thead>
-              <tr style={{ textAlign: "left", borderBottom: "2px solid #eee" }}>
-                <th style={th}>Score</th>
-                <th style={th}>Nom</th>
-                <th style={th}>Ville</th>
-                <th style={th}>Segment</th>
-                <th style={th}>Note</th>
-                <th style={th}>Avis</th>
-                <th style={th}>Contact</th>
-                <th style={th}>Email</th>
-                <th style={th}>DM</th>
-                <th style={th}>Statut</th>
-              </tr>
-            </thead>
-            <tbody>
+
+          {isMobile ? (
+            /* --- Mobile : cartes empilées --- */
+            <div style={{ display: "grid", gap: 10 }}>
               {paged.map((p) => (
-                <tr key={p.id} style={{ borderBottom: "1px solid #f0f0f0" }}>
-                  <td style={td}>
-                    <b>{p.score ?? "—"}</b>
-                  </td>
-                  <td style={td}>
-                    <a href={`/admin/prospection/${p.id}`}>{p.name}</a>
-                    {p.website && (
-                      <>
-                        {" "}
-                        <a href={p.website} target="_blank" rel="noreferrer" style={{ fontSize: 12 }}>
-                          site ↗
-                        </a>
-                      </>
-                    )}
-                  </td>
-                  <td style={td}>{p.city ?? "—"}</td>
-                  <td style={td}>
-                    {p.category ? SEGMENT_LABEL[p.category as ProspectSegment] ?? p.category : "—"}
-                  </td>
-                  <td style={td}>{p.google_rating ?? "—"}</td>
-                  <td style={td}>{p.google_reviews_count ?? "—"}</td>
-                  <td style={td}>
-                    {p.email && (
-                      <a href={`mailto:${p.email}`} title="Écrire un email" style={{ fontSize: 13 }}>
-                        ✉️ {p.email}
-                      </a>
-                    )}
-                    {p.email && p.instagram_handle && <br />}
-                    {p.instagram_handle && (
-                      <a
-                        href={`https://instagram.com/${p.instagram_handle}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        title={`@${p.instagram_handle}`}
-                        style={{ fontSize: 13 }}
-                      >
-                        📸 @{p.instagram_handle}
-                      </a>
-                    )}
-                    {!p.email && !p.instagram_handle && "—"}
-                  </td>
-                  <td style={td}>
-                    <EmailBadge p={p} />
-                  </td>
-                  <td style={td}>
-                    <DmBadge p={p} />
-                  </td>
-                  <td style={td}>
-                    <select
-                      value={p.status}
-                      onChange={(e) =>
-                        changeStatus(p.id, e.target.value as ProspectStatus)
-                      }
-                      style={{
-                        padding: "4px 6px",
-                        borderRadius: 6,
-                        border: "1px solid #ccc",
-                        fontSize: 13,
-                      }}
-                    >
-                      {(Object.keys(STATUS_LABEL) as ProspectStatus[]).map((s) => (
-                        <option key={s} value={s}>
-                          {STATUS_LABEL[s]}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                </tr>
+                <ProspectCard key={p.id} p={p} onStatus={changeStatus} />
               ))}
-            </tbody>
-          </table>
+            </div>
+          ) : (
+            /* --- Bureau : tableau --- */
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
+                <thead>
+                  <tr style={{ textAlign: "left", borderBottom: "2px solid #eee" }}>
+                    <th style={th}>Score</th>
+                    <th style={th}>Nom</th>
+                    <th style={th}>Ville</th>
+                    <th style={th}>Segment</th>
+                    <th style={th}>Note</th>
+                    <th style={th}>Avis</th>
+                    <th style={th}>Contact</th>
+                    <th style={th}>Email</th>
+                    <th style={th}>DM</th>
+                    <th style={th}>Statut</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paged.map((p) => (
+                    <tr key={p.id} style={{ borderBottom: "1px solid #f0f0f0" }}>
+                      <td style={td}>
+                        <b>{p.score ?? "—"}</b>
+                      </td>
+                      <td style={td}>
+                        <a href={`/admin/prospection/${p.id}`}>{p.name}</a>
+                        {p.website && (
+                          <>
+                            {" "}
+                            <a href={p.website} target="_blank" rel="noreferrer" style={{ fontSize: 12 }}>
+                              site ↗
+                            </a>
+                          </>
+                        )}
+                      </td>
+                      <td style={td}>{p.city ?? "—"}</td>
+                      <td style={td}>
+                        {p.category ? SEGMENT_LABEL[p.category as ProspectSegment] ?? p.category : "—"}
+                      </td>
+                      <td style={td}>{p.google_rating ?? "—"}</td>
+                      <td style={td}>{p.google_reviews_count ?? "—"}</td>
+                      <td style={td}>
+                        {p.email && (
+                          <a href={`mailto:${p.email}`} title="Écrire un email" style={{ fontSize: 13 }}>
+                            ✉️ {p.email}
+                          </a>
+                        )}
+                        {p.email && p.instagram_handle && <br />}
+                        {p.instagram_handle && (
+                          <a
+                            href={`https://instagram.com/${p.instagram_handle}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            title={`@${p.instagram_handle}`}
+                            style={{ fontSize: 13 }}
+                          >
+                            📸 @{p.instagram_handle}
+                          </a>
+                        )}
+                        {!p.email && !p.instagram_handle && "—"}
+                      </td>
+                      <td style={td}>
+                        <EmailBadge p={p} />
+                      </td>
+                      <td style={td}>
+                        <DmBadge p={p} />
+                      </td>
+                      <td style={td}>
+                        <StatusSelect p={p} onStatus={changeStatus} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
           {totalPages > 1 && (
             <div style={{ display: "flex", gap: 10, alignItems: "center", justifyContent: "center", marginTop: 12 }}>
               <button
@@ -841,6 +853,90 @@ function SubjectPerf({ perf }: { perf: Stats["subjectPerf"] }) {
         Un taux n'est fiable qu'à partir de ~15–20 envois par objet. 🏆 = meilleure
         variante à ce stade.
       </p>
+    </div>
+  );
+}
+
+/** Menu déroulant de statut (réutilisé tableau + carte). */
+function StatusSelect({
+  p,
+  onStatus,
+  full,
+}: {
+  p: ProspectRow;
+  onStatus: (id: string, s: ProspectStatus) => void;
+  full?: boolean;
+}) {
+  return (
+    <select
+      value={p.status}
+      onChange={(e) => onStatus(p.id, e.target.value as ProspectStatus)}
+      style={{
+        padding: "6px 8px",
+        borderRadius: 6,
+        border: "1px solid #ccc",
+        fontSize: 13,
+        width: full ? "100%" : undefined,
+      }}
+    >
+      {(Object.keys(STATUS_LABEL) as ProspectStatus[]).map((s) => (
+        <option key={s} value={s}>
+          {STATUS_LABEL[s]}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+/** Carte d'un prospect (affichage mobile). */
+function ProspectCard({
+  p,
+  onStatus,
+}: {
+  p: ProspectRow;
+  onStatus: (id: string, s: ProspectStatus) => void;
+}) {
+  const meta = [
+    p.city,
+    p.category ? SEGMENT_LABEL[p.category as ProspectSegment] ?? p.category : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  return (
+    <div style={{ border: "1px solid #eee", borderRadius: 10, padding: 12, background: "#fff" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "baseline" }}>
+        <a href={`/admin/prospection/${p.id}`} style={{ fontWeight: 600, fontSize: 15 }}>
+          {p.name}
+        </a>
+        <span style={{ fontSize: 12, color: "#888", whiteSpace: "nowrap" }}>
+          Score {p.score ?? "—"}
+        </span>
+      </div>
+      <div style={{ fontSize: 13, color: "#666", margin: "3px 0 8px" }}>
+        {meta}
+        {meta && " · "}⭐ {p.google_rating ?? "—"} · {p.google_reviews_count ?? "—"} avis
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 3, fontSize: 13, marginBottom: 8 }}>
+        {p.email && <a href={`mailto:${p.email}`}>✉️ {p.email}</a>}
+        {p.instagram_handle && (
+          <a href={`https://instagram.com/${p.instagram_handle}`} target="_blank" rel="noreferrer">
+            📸 @{p.instagram_handle}
+          </a>
+        )}
+        {p.website && (
+          <a href={p.website} target="_blank" rel="noreferrer" style={{ fontSize: 12 }}>
+            site ↗
+          </a>
+        )}
+        {!p.email && !p.instagram_handle && <span style={{ color: "#999" }}>Pas de contact</span>}
+      </div>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginBottom: 10 }}>
+        <span style={{ fontSize: 12, color: "#888" }}>Email</span>
+        <EmailBadge p={p} />
+        <span style={{ fontSize: 12, color: "#888", marginLeft: 6 }}>DM</span>
+        <DmBadge p={p} />
+      </div>
+      <StatusSelect p={p} onStatus={onStatus} full />
     </div>
   );
 }
