@@ -385,7 +385,7 @@ export default function WheelEditor({
                   <div className="logo-preview">
                     {logoUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={logoUrl} alt="Logo" />
+                      <img src={logoUrl} alt="Logo" loading="lazy" decoding="async" />
                     ) : (
                       <span>Aucun logo</span>
                     )}
@@ -410,7 +410,7 @@ export default function WheelEditor({
                   <div className="bg-preview">
                     {bgUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={bgUrl} alt="Fond" />
+                      <img src={bgUrl} alt="Fond" loading="lazy" decoding="async" />
                     ) : (
                       <span>Aucune image</span>
                     )}
