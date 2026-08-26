@@ -40,6 +40,8 @@ type Config = {
   birthday_reward?: string | null;
   referral_enabled?: boolean | null;
   reengage_almost?: boolean | null;
+  reengage_inactive?: boolean | null;
+  reengage_inactive_days?: number | null;
   play_alerts?: boolean | null;
   monthly_draw?: boolean | null;
   monthly_draw_prize?: string | null;
@@ -971,6 +973,41 @@ export default function WheelEditor({
                       (uniquement s'il a accepté vos offres).
                     </span>
                   </label>
+
+                  <label className="toggle-field" style={{ marginTop: 6 }}>
+                    <input
+                      type="checkbox"
+                      checked={!!config.reengage_inactive}
+                      onChange={(e) =>
+                        setConfig({
+                          ...config,
+                          reengage_inactive: e.target.checked,
+                        })
+                      }
+                    />
+                    <span>
+                      <b>👋 Relance « client inactif »</b> — un client qui n'est
+                      pas repassé depuis un moment reçoit un e-mail pour l'inviter
+                      à revenir (uniquement s'il a accepté vos offres).
+                    </span>
+                  </label>
+                  {config.reengage_inactive && (
+                    <label className="field">
+                      <span>Après combien de jours sans visite ?</span>
+                      <input
+                        type="number"
+                        min={7}
+                        max={180}
+                        value={config.reengage_inactive_days ?? 30}
+                        onChange={(e) =>
+                          setConfig({
+                            ...config,
+                            reengage_inactive_days: Number(e.target.value) || 30,
+                          })
+                        }
+                      />
+                    </label>
+                  )}
 
                   <label className="toggle-field" style={{ marginTop: 6 }}>
                     <input

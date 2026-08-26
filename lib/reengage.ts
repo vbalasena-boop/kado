@@ -13,6 +13,7 @@ export type LoyaltyCardNudge = {
   unsubscribed_at?: string | null;
   last_stamp_at?: string | null;
   nudge_almost_at?: string | null;
+  nudge_inactive_at?: string | null;
 };
 
 /**
@@ -41,5 +42,30 @@ export function isAlmostNudgeEligible(
     // cycle déjà couvert → on ne relance pas.
     if (Number.isNaN(stamped) || nudged >= stamped) return false;
   }
+  return true;
+}
+
+/**
+ * Éligible à la relance « client inactif » ?
+ *  - a commencé à cumuler (stamps > 0), consentement OK, non désinscrit ;
+ *  - dernier tampon plus ancien que le seuil (`cutoffMs` = maintenant − délai) ;
+ *  - anti-doublon : une relance postérieure au dernier tampon = période déjà
+ *    couverte. Un nouveau passage (last_stamp_at plus récent) rouvre le droit.
+ */
+export function isInactiveNudgeEligible(
+  card: LoyaltyCardNudge,
+  cutoffMs: number
+): boolean {
+  if (!card.email) return false;
+  if (!card.marketing_ok) return false;
+  if (card.unsubscribed_at) return false;
+  if ((card.stamps ?? 0) <= 0) return false;
+
+  const stamped = card.last_stamp_at ? Date.parse(card.last_stamp_at) : NaN;
+  if (Number.isNaN(stamped)) return false; // dernier passage inconnu
+  if (stamped >= cutoffMs) return false; // encore actif
+
+  const nudged = card.nudge_inactive_at ? Date.parse(card.nudge_inactive_at) : NaN;
+  if (!Number.isNaN(nudged) && nudged >= stamped) return false;
   return true;
 }
