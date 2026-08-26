@@ -5,6 +5,8 @@ import { labelIsLosing } from "@/lib/draw";
 import { deviceHash } from "@/lib/device-hash";
 import { buildTheme } from "@/lib/theme";
 import { isValidEmail, autoSendCodeTarget, needsCollectStep } from "@/lib/optin";
+import type { Highlight } from "@/lib/highlight";
+import HighlightCard from "@/components/HighlightCard";
 import {
   unlockedSpinActions,
   reviewCtaHref,
@@ -425,6 +427,7 @@ export default function Game({
   prizeValidityDays = 30,
   decorEmojis = "",
   drawPrize = "",
+  highlight = null,
 }: {
   slug: string;
   name: string;
@@ -437,6 +440,7 @@ export default function Game({
   prizeValidityDays?: number | null;
   decorEmojis?: string;
   drawPrize?: string;
+  highlight?: Highlight | null;
 }) {
   // Tours du jeu = actions déclenchantes non-avis configurées par le commerçant
   // (⊆ {instagram, loyalty, optin}). Lecture tolérante : `unlockedSpinActions`
@@ -1460,6 +1464,7 @@ export default function Game({
                   {config.compliance_note ||
                     "Le cadeau n'est pas conditionné à la note laissée."}
                 </p>
+                {!preview && <HighlightCard highlight={highlight} />}
                 <button className="btn" onClick={afterPrize}>
                   {usedCount >= totalTurns ? "Voir mes gains" : "Continuer"}
                 </button>
@@ -1500,6 +1505,7 @@ export default function Game({
                 <p className="fine">
                   Présentez vos codes en caisse. À très vite&nbsp;!
                 </p>
+                {!preview && <HighlightCard highlight={highlight} />}
                 {!preview && (
                   <a
                     className="merchant-loop-cta"

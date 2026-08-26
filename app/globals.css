@@ -152,6 +152,38 @@ h4,
   font-size: 14px;
   margin: 16px 0 4px;
 }
+/* « À la une » — carte de contenu commerçant (page de jeu + fidélité). Suit le
+   thème du commerce via les variables ; lisible sur fond sombre comme clair. */
+.highlight-card {
+  margin: 16px 0;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--surface-glass, rgba(255, 255, 255, 0.08));
+  border: 1px solid var(--stroke, rgba(255, 255, 255, 0.14));
+  border-left: 4px solid var(--gold, #f5b841);
+  text-align: left;
+}
+.highlight-title {
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--cream, #fff);
+  margin-bottom: 4px;
+}
+.highlight-text {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--cream-dim, rgba(255, 255, 255, 0.75));
+  margin: 0;
+  white-space: pre-wrap;
+}
+.highlight-link {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gold, #f5b841);
+  text-decoration: none;
+}
 .card {
   background: linear-gradient(
     180deg,

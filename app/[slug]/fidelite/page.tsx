@@ -1,6 +1,7 @@
 import { getAdminClient } from "@/lib/supabase/admin";
 import { hasAccess, hasModule } from "@/lib/auth";
 import { buildTheme } from "@/lib/theme";
+import { visibleHighlight } from "@/lib/highlight";
 import LoyaltyCard from "./LoyaltyCard";
 
 export const dynamic = "force-dynamic";
@@ -66,6 +67,16 @@ export default async function FidelitePage({
     (cfg as any).bg_image_url || null
   );
 
+  // « À la une » : lecture SÉPARÉE et tolérante (une colonne 0055 manquante ne
+  // doit pas casser la carte de fidélité). Résolue avec la date du jour.
+  const { data: hlRow } = await db
+    .from("wheel_configs")
+    .select("highlight_title, highlight_text, highlight_url, highlight_until")
+    .eq("business_id", biz.id)
+    .maybeSingle();
+  const today = new Date().toISOString().slice(0, 10);
+  const highlight = visibleHighlight(hlRow, today);
+
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: themeCss }} />
@@ -78,6 +89,7 @@ export default async function FidelitePage({
         rewardEmoji={cfg.loyalty_reward_emoji}
         stampEmoji={cfg.loyalty_stamp_emoji || "⭐"}
         parrain={searchParams?.parrain?.trim() || null}
+        highlight={highlight}
       />
     </>
   );

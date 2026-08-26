@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { subscribeWithCurrentKey } from "@/lib/push-client";
+import type { Highlight } from "@/lib/highlight";
+import HighlightCard from "@/components/HighlightCard";
 
 type CardData = {
   code: string;
@@ -33,6 +35,7 @@ export default function LoyaltyCard({
   rewardEmoji,
   stampEmoji = "⭐",
   parrain = null,
+  highlight = null,
 }: {
   slug: string;
   name: string;
@@ -42,6 +45,7 @@ export default function LoyaltyCard({
   rewardEmoji: string;
   stampEmoji?: string;
   parrain?: string | null;
+  highlight?: Highlight | null;
 }) {
   const [email, setEmail] = useState("");
   const [card, setCard] = useState<CardData | null>(null);
@@ -318,6 +322,8 @@ export default function LoyaltyCard({
             <div className="tag">Carte de fidélité</div>
           </div>
         </div>
+
+        <HighlightCard highlight={highlight} />
 
         {!card ? (
           <section className="screen active">
