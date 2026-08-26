@@ -11,79 +11,96 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const schema = z.object({
-  city: z.string().min(1).max(100),
+  // Une ou plusieurs villes séparées par des virgules / points-virgules / retours.
+  city: z.string().min(1).max(300),
   segments: z.array(z.enum(PROSPECT_SEGMENTS)).min(1),
   limit: z.number().int().min(1).max(120).optional(),
 });
 
+type Db = ReturnType<typeof getAdminClient>;
+
+/** Source une seule ville : recherche → dédup → insertion. Best-effort. */
+async function sourceOneCity(
+  db: Db,
+  city: string,
+  segments: (typeof PROSPECT_SEGMENTS)[number][],
+  limit?: number
+): Promise<{ found: number; inserted: number; duplicates: number; mock: boolean }> {
+  const { prospects, mock } = await searchProspects({ city, segments, limit });
+  if (prospects.length === 0) return { found: 0, inserted: 0, duplicates: 0, mock };
+
+  const placeIds = prospects.map((p) => p.place_id);
+  const { data: existing } = await db.from("prospects").select("place_id").in("place_id", placeIds);
+  const existingIds = new Set((existing ?? []).map((r) => r.place_id as string));
+  const { toInsert, duplicates } = partitionNew(prospects, existingIds);
+
+  let inserted = 0;
+  if (toInsert.length > 0) {
+    const rows = toInsert.map((p) => {
+      const { score, factors } = scoreProspect({
+        google_reviews_count: p.google_reviews_count,
+        google_rating: p.google_rating,
+        google_last_review_at: null,
+        instagram_active: null,
+        email: null,
+      });
+      return { ...toRow(p), score, score_factors: { factors } };
+    });
+    const { data: ins } = await db.from("prospects").insert(rows).select("id");
+    inserted = ins?.length ?? 0;
+    if (ins && ins.length > 0) {
+      await db.from("prospect_events").insert(
+        ins.map((r) => ({ prospect_id: r.id as string, type: "sourced", meta: { city } }))
+      );
+    }
+  }
+  return { found: prospects.length, inserted, duplicates: duplicates.length, mock };
+}
+
+/** Découpe la saisie en villes uniques (virgule / point-virgule / retour ligne). */
+function parseCities(raw: string): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const part of raw.split(/[,;\n]/)) {
+    const c = part.trim();
+    const key = c.toLowerCase();
+    if (c && !seen.has(key)) {
+      seen.add(key);
+      out.push(c);
+    }
+  }
+  return out.slice(0, 5); // garde-fou : 5 villes max par passage
+}
+
 /**
- * Sourcing de prospects (admin uniquement).
- * Cherche les commerces d'une ville via Google Places (ou mode démo sans clé),
- * déduplique par `place_id`, insère les nouveaux et journalise l'événement.
+ * Sourcing de prospects (admin uniquement) — mono ou MULTI-villes.
+ * Cherche les commerces via Google Places (ou mode démo sans clé), déduplique
+ * par `place_id` (aussi entre villes), insère les nouveaux et journalise.
  */
 export const POST = adminRoute({
   schema,
   handler: async ({ body }) => {
-    const { prospects, mock } = await searchProspects({
-      city: body.city,
-      segments: body.segments,
-      limit: body.limit,
-    });
-
-    if (prospects.length === 0) {
-      return Response.json({ ok: true, mock, found: 0, inserted: 0, duplicates: 0 });
+    const cities = parseCities(body.city);
+    if (cities.length === 0) {
+      return Response.json({ ok: true, mock: false, found: 0, inserted: 0, duplicates: 0, cities: [] });
     }
 
     const db = getAdminClient();
-    const placeIds = prospects.map((p) => p.place_id);
-
-    const { data: existing, error: exErr } = await db
-      .from("prospects")
-      .select("place_id")
-      .in("place_id", placeIds);
-    if (exErr) return Response.json({ error: "db_error" }, { status: 500 });
-
-    const existingIds = new Set((existing ?? []).map((r) => r.place_id as string));
-    const { toInsert, duplicates } = partitionNew(prospects, existingIds);
-
+    let found = 0;
     let inserted = 0;
-    if (toInsert.length > 0) {
-      const rows = toInsert.map((p) => {
-        // Signaux non encore enrichis au sourcing (email/Insta/fraîcheur → A4).
-        const { score, factors } = scoreProspect({
-          google_reviews_count: p.google_reviews_count,
-          google_rating: p.google_rating,
-          google_last_review_at: null,
-          instagram_active: null,
-          email: null,
-        });
-        return { ...toRow(p), score, score_factors: { factors } };
-      });
-      const { data: ins, error: insErr } = await db
-        .from("prospects")
-        .insert(rows)
-        .select("id");
-      if (insErr) return Response.json({ error: "insert_failed" }, { status: 500 });
-      inserted = ins?.length ?? 0;
+    let duplicates = 0;
+    let mock = false;
+    const perCity: { city: string; inserted: number; duplicates: number }[] = [];
 
-      if (ins && ins.length > 0) {
-        // Journal d'audit (best-effort : n'échoue pas la requête si ça rate).
-        await db.from("prospect_events").insert(
-          ins.map((r) => ({
-            prospect_id: r.id as string,
-            type: "sourced",
-            meta: { city: body.city },
-          }))
-        );
-      }
+    for (const city of cities) {
+      const r = await sourceOneCity(db, city, body.segments, body.limit);
+      found += r.found;
+      inserted += r.inserted;
+      duplicates += r.duplicates;
+      mock = mock || r.mock;
+      perCity.push({ city, inserted: r.inserted, duplicates: r.duplicates });
     }
 
-    return Response.json({
-      ok: true,
-      mock,
-      found: prospects.length,
-      inserted,
-      duplicates: duplicates.length,
-    });
+    return Response.json({ ok: true, mock, found, inserted, duplicates, cities: perCity });
   },
 });
