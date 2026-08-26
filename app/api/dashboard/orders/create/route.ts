@@ -26,6 +26,8 @@ const Body = z.object({
  * c'est prêt (page /{slug}/suivi/{code}).
  */
 export const POST = merchantRoute({
+  // Création de commande au comptoir : réservée aux commerces ayant le C&C.
+  requireClickCollect: true,
   schema: Body,
   handler: async ({ body: rawBody, business }) => {
     const body = rawBody as {

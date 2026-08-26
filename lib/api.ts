@@ -6,8 +6,10 @@ import {
   getSessionUser,
   hasAccess,
   hasModule,
+  hasClickCollect,
   type Business,
 } from "@/lib/auth";
+import { getAdminClient } from "@/lib/supabase/admin";
 import { getAdminUser } from "@/lib/admin-guard";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { reportError } from "@/lib/report";
@@ -133,6 +135,13 @@ type MerchantGate = {
    * NE PAS y poser de garde de module.
    */
   requireModule?: "roue" | "fidelite";
+  /**
+   * Refuse (403) si l'établissement n'a pas le Click & Collect (cf.
+   * `hasClickCollect`). À poser sur les routes de CONFIG C&C (produits,
+   * horaires, création de commande). Le drapeau `click_collect` est lu de façon
+   * TOLÉRANTE (fail-open sur erreur de lecture) : l'UI reste le garde principal.
+   */
+  requireClickCollect?: boolean;
 };
 
 /** Route commerçant : exige un établissement rattaché au compte connecté. */
@@ -152,6 +161,25 @@ export function merchantRoute<B = undefined>(
     }
     if (opts.requireModule && !hasModule(business, opts.requireModule)) {
       return json({ error: "forbidden", reason: "module" }, 403);
+    }
+    if (opts.requireClickCollect) {
+      // Essai / plans Comptoir·Complet → accordé sans lecture. Sinon on lit le
+      // drapeau addon `click_collect` de façon tolérante (fail-open sur erreur :
+      // ne pas bloquer un légitime sur un hoquet DB — l'UI garde déjà l'accès).
+      let ok = hasClickCollect(business);
+      if (!ok) {
+        try {
+          const { data } = await getAdminClient()
+            .from("businesses")
+            .select("click_collect")
+            .eq("id", business.id)
+            .maybeSingle();
+          ok = !!(data as { click_collect?: boolean | null } | null)?.click_collect;
+        } catch {
+          ok = true;
+        }
+      }
+      if (!ok) return json({ error: "forbidden", reason: "click_collect" }, 403);
     }
     const rl = await checkRateLimit(req, params, opts.rateLimit);
     if (rl) return rl;
