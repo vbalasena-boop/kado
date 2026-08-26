@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   PROSPECT_SEGMENTS,
   type ProspectSegment,
   type ProspectStatus,
 } from "@/lib/prospection/types";
+import { mapCsv } from "@/lib/prospection/csv";
 
 export type EmailState = "sent" | "approved" | "draft" | null;
 
@@ -383,6 +384,50 @@ export default function ProspectionClient({
     }
   }
 
+  // --- Import CSV ---
+  const [importing, setImporting] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  async function importCsv(file: File) {
+    setImporting(true);
+    setMessage(null);
+    try {
+      const text = await file.text();
+      const { rows, unknownHeaders } = mapCsv(text);
+      if (rows.length === 0) {
+        setMessage(
+          "Aucune ligne exploitable. Vérifie que la 1ʳᵉ ligne contient des en-têtes (ex. nom, ville, email, instagram, site, avis)."
+        );
+        return;
+      }
+      const res = await fetch("/api/admin/prospection/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rows }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setMessage(`Erreur : ${data.error ?? "inconnue"}`);
+      } else {
+        setMessage(
+          `${data.inserted} prospect(s) importé(s)` +
+            (data.duplicates ? `, ${data.duplicates} doublon(s) ignoré(s)` : "") +
+            ` (sur ${data.received} ligne(s) lues)` +
+            (unknownHeaders.length > 0
+              ? ` — colonnes ignorées : ${unknownHeaders.join(", ")}`
+              : "") +
+            "."
+        );
+        router.refresh();
+      }
+    } catch {
+      setMessage("Erreur pendant l'import du fichier CSV.");
+    } finally {
+      setImporting(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
+
   const filtered = useMemo(() => {
     const max = maxReviews === "" ? null : Number(maxReviews);
     const rows = prospects.filter((p) => {
@@ -553,13 +598,33 @@ export default function ProspectionClient({
       </div>
 
       {/* --- Ajout manuel --- */}
-      <div style={{ marginBottom: 12 }}>
+      <div style={{ marginBottom: 12, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
         <button
           onClick={() => setShowAdd((v) => !v)}
           className="dash-signout"
           style={{ fontSize: 13 }}
         >
           {showAdd ? "Annuler" : "➕ Ajouter un prospect à la main"}
+        </button>
+        {/* Import CSV */}
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".csv,text/csv"
+          style={{ display: "none" }}
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) importCsv(f);
+          }}
+        />
+        <button
+          onClick={() => fileRef.current?.click()}
+          disabled={importing}
+          className="dash-signout"
+          style={{ fontSize: 13, opacity: importing ? 0.6 : 1 }}
+          title="Importer une liste de prospects depuis un fichier CSV (colonnes : nom, ville, email, instagram, site, avis…)"
+        >
+          {importing ? "Import…" : "📥 Importer un CSV"}
         </button>
         {showAdd && (
           <div
