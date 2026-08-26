@@ -47,6 +47,25 @@ const STATUS_LABEL: Record<ProspectStatus, string> = {
   excluded: "Exclu",
 };
 
+// Colonnes du pipeline (kanban) : regroupent les statuts dans un ordre de
+// progression commercial. Une carte apparaît dans la 1ʳᵉ colonne qui contient
+// son statut.
+const PIPELINE_COLUMNS: {
+  key: string;
+  label: string;
+  emoji: string;
+  statuses: ProspectStatus[];
+  accent: string;
+}[] = [
+  { key: "new", label: "Nouveaux", emoji: "🆕", statuses: ["new"], accent: "#8b6cff" },
+  { key: "queued", label: "En file", emoji: "⏳", statuses: ["queued"], accent: "#a86b00" },
+  { key: "contacted", label: "Contactés", emoji: "📤", statuses: ["emailed", "dm_pending", "dm_sent"], accent: "#0b7285" },
+  { key: "replied", label: "Ont répondu", emoji: "💬", statuses: ["replied"], accent: "#1e7d34" },
+  { key: "interested", label: "Intéressés", emoji: "⭐", statuses: ["interested"], accent: "#1e7d34" },
+  { key: "client", label: "Clients", emoji: "🏆", statuses: ["client"], accent: "#1e7d34" },
+  { key: "excluded", label: "Exclus", emoji: "🚫", statuses: ["excluded"], accent: "#999" },
+];
+
 type SortKey = "score" | "reviews" | "rating" | "name";
 
 /** Vrai sur petit écran (mobile) — pour basculer tableau ↔ cartes. */
@@ -103,6 +122,9 @@ export default function ProspectionClient({
   const [fStatus, setFStatus] = useState<string>("");
   const [maxReviews, setMaxReviews] = useState<string>("");
   const [sort, setSort] = useState<SortKey>("score");
+
+  // --- Affichage : liste détaillée ou pipeline (kanban par statut) ---
+  const [view, setView] = useState<"list" | "pipeline">("list");
 
   // --- Pagination (côté client) ---
   const PAGE_SIZE = 50;
@@ -384,6 +406,19 @@ export default function ProspectionClient({
     return rows;
   }, [prospects, fSegment, fStatus, maxReviews, sort]);
 
+  // Lignes pour la vue pipeline : mêmes filtres SAUF le statut (le board
+  // regroupe justement par statut), triées par score décroissant.
+  const boardRows = useMemo(() => {
+    const max = maxReviews === "" ? null : Number(maxReviews);
+    return prospects
+      .filter((p) => {
+        if (fSegment && p.category !== fSegment) return false;
+        if (max != null && (p.google_reviews_count ?? Infinity) > max) return false;
+        return true;
+      })
+      .sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+  }, [prospects, fSegment, maxReviews]);
+
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const clampedPage = Math.min(page, totalPages - 1);
   const paged = filtered.slice(clampedPage * PAGE_SIZE, clampedPage * PAGE_SIZE + PAGE_SIZE);
@@ -581,14 +616,33 @@ export default function ProspectionClient({
             style={{ width: 70, padding: "6px 8px", borderRadius: 8, border: "1px solid #ccc" }}
           />
         </label>
-        <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)} style={selectStyle}>
+        <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)} style={selectStyle} disabled={view === "pipeline"} title={view === "pipeline" ? "Tri par score dans la vue pipeline" : undefined}>
           <option value="score">Tri : score</option>
           <option value="reviews">Tri : moins d'avis</option>
           <option value="rating">Tri : meilleure note</option>
           <option value="name">Tri : nom</option>
         </select>
+        {/* Bascule Liste / Pipeline */}
+        <div style={{ display: "inline-flex", borderRadius: 8, overflow: "hidden", border: "1px solid #ccc" }}>
+          <button
+            onClick={() => setView("list")}
+            className="dash-signout"
+            style={{ fontSize: 13, border: "none", borderRadius: 0, background: view === "list" ? "#8b6cff" : "#fff", color: view === "list" ? "#fff" : "#555" }}
+            title="Vue liste détaillée"
+          >
+            ☰ Liste
+          </button>
+          <button
+            onClick={() => setView("pipeline")}
+            className="dash-signout"
+            style={{ fontSize: 13, border: "none", borderRadius: 0, background: view === "pipeline" ? "#8b6cff" : "#fff", color: view === "pipeline" ? "#fff" : "#555" }}
+            title="Vue pipeline (kanban par statut)"
+          >
+            ▦ Pipeline
+          </button>
+        </div>
         <span style={{ marginLeft: "auto", color: "#666", fontSize: 14 }}>
-          {filtered.length} prospect(s)
+          {(view === "pipeline" ? boardRows.length : filtered.length)} prospect(s)
         </span>
         <button
           onClick={() => {
@@ -626,8 +680,16 @@ export default function ProspectionClient({
         </button>
       </div>
 
-      {/* --- Liste --- */}
-      {filtered.length === 0 ? (
+      {/* --- Liste / Pipeline --- */}
+      {view === "pipeline" ? (
+        boardRows.length === 0 ? (
+          <p style={{ color: "#666" }}>
+            Aucun prospect. Lance un sourcing ci-dessus pour commencer.
+          </p>
+        ) : (
+          <PipelineBoard rows={boardRows} onStatus={changeStatus} />
+        )
+      ) : filtered.length === 0 ? (
         <p style={{ color: "#666" }}>
           Aucun prospect. Lance un sourcing ci-dessus pour commencer.
         </p>
@@ -938,6 +1000,116 @@ function ProspectCard({
         <EmailBadge p={p} />
         <span style={{ fontSize: 12, color: "#888", marginLeft: 6 }}>DM</span>
         <DmBadge p={p} />
+      </div>
+      <StatusSelect p={p} onStatus={onStatus} full />
+    </div>
+  );
+}
+
+/** Vue pipeline (kanban) : une colonne par étape, cartes déplaçables via le statut. */
+function PipelineBoard({
+  rows,
+  onStatus,
+}: {
+  rows: ProspectRow[];
+  onStatus: (id: string, s: ProspectStatus) => void;
+}) {
+  // Regroupe chaque prospect dans la 1ʳᵉ colonne contenant son statut.
+  const byColumn: Record<string, ProspectRow[]> = {};
+  for (const col of PIPELINE_COLUMNS) byColumn[col.key] = [];
+  for (const p of rows) {
+    const col = PIPELINE_COLUMNS.find((c) => c.statuses.includes(p.status));
+    if (col) byColumn[col.key].push(p);
+  }
+
+  return (
+    <div style={{ overflowX: "auto", paddingBottom: 6 }}>
+      <div style={{ display: "flex", gap: 12, alignItems: "flex-start", minWidth: "min-content" }}>
+        {PIPELINE_COLUMNS.map((col) => {
+          const items = byColumn[col.key];
+          return (
+            <div
+              key={col.key}
+              style={{
+                flex: "0 0 260px",
+                width: 260,
+                background: "#faf9fc",
+                border: "1px solid #eee",
+                borderRadius: 12,
+                padding: 10,
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  marginBottom: 8,
+                  paddingBottom: 6,
+                  borderBottom: `2px solid ${col.accent}`,
+                }}
+              >
+                <span style={{ fontSize: 15 }}>{col.emoji}</span>
+                <span style={{ fontWeight: 700, fontSize: 14, color: "#222" }}>{col.label}</span>
+                <span
+                  style={{
+                    marginLeft: "auto",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: col.accent,
+                    background: "#fff",
+                    border: `1px solid ${col.accent}33`,
+                    borderRadius: 999,
+                    padding: "1px 8px",
+                  }}
+                >
+                  {items.length}
+                </span>
+              </div>
+              <div style={{ display: "grid", gap: 8, maxHeight: 560, overflowY: "auto" }}>
+                {items.length === 0 ? (
+                  <p style={{ color: "#bbb", fontSize: 13, textAlign: "center", margin: "10px 0" }}>—</p>
+                ) : (
+                  items.map((p) => <PipelineCard key={p.id} p={p} onStatus={onStatus} />)
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/** Carte compacte dans une colonne de pipeline. */
+function PipelineCard({
+  p,
+  onStatus,
+}: {
+  p: ProspectRow;
+  onStatus: (id: string, s: ProspectStatus) => void;
+}) {
+  return (
+    <div style={{ border: "1px solid #eee", borderRadius: 10, padding: 10, background: "#fff" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 6, alignItems: "baseline" }}>
+        <a href={`/admin/prospection/${p.id}`} style={{ fontWeight: 600, fontSize: 14 }}>
+          {p.name}
+        </a>
+        <span style={{ fontSize: 11, color: "#888", whiteSpace: "nowrap" }}>{p.score ?? "—"}</span>
+      </div>
+      <div style={{ fontSize: 12, color: "#666", margin: "2px 0 6px" }}>
+        {[p.city, p.category ? SEGMENT_LABEL[p.category as ProspectSegment] ?? p.category : null]
+          .filter(Boolean)
+          .join(" · ") || "—"}
+      </div>
+      <div style={{ display: "flex", gap: 8, fontSize: 12, marginBottom: 8 }}>
+        {p.email && <span title={p.email}>✉️</span>}
+        {p.instagram_handle && (
+          <a href={`https://instagram.com/${p.instagram_handle}`} target="_blank" rel="noreferrer" title={`@${p.instagram_handle}`}>
+            📸
+          </a>
+        )}
+        {!p.email && !p.instagram_handle && <span style={{ color: "#bbb" }}>Pas de contact</span>}
       </div>
       <StatusSelect p={p} onStatus={onStatus} full />
     </div>
