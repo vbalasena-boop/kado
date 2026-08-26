@@ -123,20 +123,33 @@ export const POST = publicRoute({
 
     let idx = weightedIndex(prizes);
 
-    // Plafond de cadeaux par jour : au-delà, on force un "Rien" (si disponible)
+    // Plafond de cadeaux par jour : au-delà, on force un "Rien" (si disponible).
+    // Réservation ATOMIQUE (RPC 0054) pour éviter le dépassement sous forte
+    // affluence ; repli sur l'ancien comptage souple si la fonction n'est pas
+    // encore déployée.
     const limit = cfg?.daily_prize_limit;
     if (limit && limit > 0 && isWin(prizes[idx])) {
-      const start = new Date();
-      start.setHours(0, 0, 0, 0);
-      // Miroir SQL de labelIsLosing() (lib/draw.ts) : compte les tours GAGNANTS
-      // du jour. Garder les deux définitions alignées.
-      const { count } = await supa
-        .from("plays")
-        .select("*", { count: "exact", head: true })
-        .eq("business_id", biz.id)
-        .gte("created_at", start.toISOString())
-        .not("prize_label", "ilike", "%rien%");
-      if ((count ?? 0) >= limit) {
+      let allowed: boolean;
+      const { data: claimed, error: claimErr } = await supa.rpc(
+        "claim_daily_prize",
+        { biz: biz.id, lim: limit }
+      );
+      if (claimErr) {
+        // Migration 0054 absente → comptage direct (plafond souple, best effort).
+        const start = new Date();
+        start.setHours(0, 0, 0, 0);
+        // Miroir SQL de labelIsLosing() (lib/draw.ts) : tours GAGNANTS du jour.
+        const { count } = await supa
+          .from("plays")
+          .select("*", { count: "exact", head: true })
+          .eq("business_id", biz.id)
+          .gte("created_at", start.toISOString())
+          .not("prize_label", "ilike", "%rien%");
+        allowed = (count ?? 0) < limit;
+      } else {
+        allowed = claimed === true;
+      }
+      if (!allowed) {
         const noWin = prizes.findIndex((p) => !isWin(p));
         if (noWin >= 0) idx = noWin;
       }
