@@ -303,6 +303,21 @@ export default function ProspectionClient({
     }
   }
 
+  async function clearSuppression() {
+    if (!window.confirm("Vider la liste de suppression ? Les adresses écartées (bounces/désinscriptions) redeviendront contactables.")) return;
+    setMessage(null);
+    try {
+      const res = await fetch("/api/admin/prospection/clear-suppression", { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        setMessage(`${data.deleted} adresse(s) retirée(s) de la liste de suppression.`);
+        router.refresh();
+      } else setMessage(`Erreur : ${data.error ?? "inconnue"}`);
+    } catch {
+      setMessage("Erreur réseau (liste de suppression).");
+    }
+  }
+
   async function runEnrich() {
     setEnriching(true);
     setMessage(null);
@@ -582,6 +597,14 @@ export default function ProspectionClient({
           title="Supprime TOUS les prospects"
         >
           Tout vider
+        </button>
+        <button
+          onClick={clearSuppression}
+          className="dash-signout"
+          style={{ fontSize: 13 }}
+          title="Vide la liste des adresses écartées (bounces/désinscriptions). À utiliser avec précaution."
+        >
+          Vider la liste de suppression
         </button>
       </div>
 
