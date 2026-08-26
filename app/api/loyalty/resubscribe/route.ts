@@ -69,7 +69,9 @@ export const POST = publicRoute({
             // maximiser la délivrabilité auprès d'un destinataire désinscrit.
             marketing: false,
             html: emailLayout({
-              preview: `Confirmez votre ré-abonnement aux offres de ${name}`,
+              preview: `Confirmez votre ré-abonnement aux offres de ${escapeHtml(
+                name
+              )}`,
               heading: "Confirmez votre ré-abonnement",
               emoji: "💌",
               bodyHtml:

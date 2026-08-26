@@ -241,7 +241,7 @@ export function buildMerchantOrderEmail(o: {
       heading: `Nouvelle commande — code ${o.code}`,
       bodyHtml: `
         <p style="margin:0 0 12px;"><b>${escapeHtml(o.name)}</b> · <a href="tel:${o.phone.replace(
-          /\s/g,
+          /[^\d+]/g,
           ""
         )}" style="color:#f0a52e;">${escapeHtml(o.phone)}</a></p>
         <p style="margin:0 0 12px;">Retrait souhaité : <b>${

@@ -1,4 +1,4 @@
-import { createHmac } from "crypto";
+import { createHmac, timingSafeEqual } from "crypto";
 
 function secret() {
   const s =
@@ -20,4 +20,27 @@ export function unsubToken(businessId: string, email: string) {
     .update(`${businessId}:${email}`)
     .digest("hex")
     .slice(0, 24);
+}
+
+/**
+ * Vérifie un jeton de désinscription en temps CONSTANT (anti-timing).
+ * Une comparaison `===` court-circuite au premier octet différent et fuit,
+ * en théorie, de l'information sur le jeton attendu ; `timingSafeEqual`
+ * l'évite. Renvoie `false` sur toute entrée vide ou de mauvaise longueur.
+ */
+export function verifyUnsubToken(
+  businessId: string,
+  email: string,
+  token: string
+): boolean {
+  if (!businessId || !email || !token) return false;
+  const expected = unsubToken(businessId, email);
+  const a = Buffer.from(token, "utf8");
+  const b = Buffer.from(expected, "utf8");
+  if (a.length !== b.length) return false;
+  try {
+    return timingSafeEqual(a, b);
+  } catch {
+    return false;
+  }
 }

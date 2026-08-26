@@ -43,6 +43,8 @@ function makeClient() {
 // Token de désinscription déterministe (contrôle valide/invalide dans le test).
 vi.mock("@/lib/unsub", () => ({
   unsubToken: (b: string, e: string) => `valid:${b}:${e}`,
+  verifyUnsubToken: (b: string, e: string, t: string) =>
+    !!b && !!e && t === `valid:${b}:${e}`,
 }));
 vi.mock("@/lib/supabase/admin", () => ({ getAdminClient: () => makeClient() }));
 vi.mock("@/lib/report", () => ({ reportError: vi.fn() }));

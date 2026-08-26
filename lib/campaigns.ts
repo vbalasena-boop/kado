@@ -11,10 +11,15 @@ export const TRIAL_MAX_RECIPIENTS = 10;
 export const DAILY_CHUNK = 100;
 
 export function escapeHtml(s: string) {
+  // Échappe aussi les guillemets : le résultat est ainsi sûr dans un CONTEXTE
+  // D'ATTRIBUT (`href="..."`, `alt="..."`) autant qu'en contenu texte. Sans
+  // cela, une valeur non fiable contenant `"` pouvait sortir de l'attribut.
   return s
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 /** Audience opt-in dédupliquée d'un commerce (leads + fidélité). */
@@ -55,6 +60,10 @@ export function buildCampaignPayloads(
   recipients: string[]
 ) {
   const bodyHtml = escapeHtml(message).replace(/\n/g, "<br>");
+  // Le sujet (saisi par le commerçant) est réinjecté dans le HTML de l'e-mail
+  // (titre + aperçu). On l'échappe pour empêcher toute injection HTML ; le
+  // champ `subject` de l'en-tête reste brut (Resend l'encode, ce n'est pas du HTML).
+  const safeSubject = escapeHtml(subject);
   return recipients.map((to) => {
     const t = unsubToken(business.id, to);
     const unsub = `${SITE}/api/unsubscribe?b=${business.id}&e=${encodeURIComponent(
@@ -67,8 +76,8 @@ export function buildCampaignPayloads(
       replyTo,
       marketing: true,
       html: emailLayout({
-        preview: subject,
-        heading: subject,
+        preview: safeSubject,
+        heading: safeSubject,
         emoji: "💌",
         bodyHtml: `${bodyHtml}<br><br><a href="${SITE}/${business.slug}" style="display:inline-block;background:linear-gradient(135deg,#ff6b4a,#ff4e87);color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:12px;">Voir ${escapeHtml(business.name)}</a>`,
         footnote: `Vous recevez cet e-mail car vous avez accepté les offres de ${escapeHtml(
