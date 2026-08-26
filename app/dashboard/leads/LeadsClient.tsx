@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Icon } from "@/components/icons";
 
 export type Lead = {
@@ -8,26 +9,33 @@ export type Lead = {
   created_at: string;
 };
 
-export default function LeadsClient({ leads }: { leads: Lead[] }) {
-  function exportCsv() {
-    const rows = [
-      ["email", "telephone", "date"],
-      ...leads.map((l) => [
-        l.email ?? "",
-        l.phone ?? "",
-        new Date(l.created_at).toISOString(),
-      ]),
-    ];
-    const csv = rows
-      .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
-      .join("\n");
-    const blob = new Blob([`﻿${csv}`], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "clients-kado.csv";
-    a.click();
-    URL.revokeObjectURL(url);
+export default function LeadsClient({
+  initialLeads,
+  total,
+  pageSize,
+}: {
+  initialLeads: Lead[];
+  total: number;
+  pageSize: number;
+}) {
+  const [leads, setLeads] = useState<Lead[]>(initialLeads);
+  const [loading, setLoading] = useState(false);
+  const hasMore = leads.length < total;
+
+  async function loadMore() {
+    if (loading) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/dashboard/leads?offset=${leads.length}`);
+      if (res.ok) {
+        const json = (await res.json()) as { leads?: Lead[] };
+        setLeads((prev) => [...prev, ...(json.leads ?? [])]);
+      }
+    } catch {
+      /* réseau : on laisse l'utilisateur réessayer */
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -38,7 +46,7 @@ export default function LeadsClient({ leads }: { leads: Lead[] }) {
         collecte dans <b>Mon jeu</b> si ce n'est pas déjà fait.
       </p>
 
-      {leads.length === 0 ? (
+      {total === 0 ? (
         <div className="dash-card empty-state">
           <div className="empty-emoji">📭</div>
           <h2>Aucun client collecté pour l'instant</h2>
@@ -54,11 +62,16 @@ export default function LeadsClient({ leads }: { leads: Lead[] }) {
         <div className="dash-card" style={{ padding: 0, overflow: "hidden" }}>
           <div className="leads-head">
             <div>
-              <b>{leads.length}</b> contact{leads.length > 1 ? "s" : ""}
+              <b>{total}</b> contact{total > 1 ? "s" : ""}
             </div>
-            <button className="btn-secondary" onClick={exportCsv}>
+            {/* Export COMPLET (toute la base) servi par la route dédiée. */}
+            <a
+              className="btn-secondary"
+              href="/api/dashboard/leads/export"
+              style={{ textDecoration: "none" }}
+            >
               <Icon name="download" size={16} /> Exporter en CSV
-            </button>
+            </a>
           </div>
           <div className="admin-table-wrap">
             <table className="admin-table">
@@ -82,6 +95,19 @@ export default function LeadsClient({ leads }: { leads: Lead[] }) {
               </tbody>
             </table>
           </div>
+          {hasMore && (
+            <div style={{ padding: 16, textAlign: "center" }}>
+              <button
+                className="btn-secondary"
+                onClick={loadMore}
+                disabled={loading}
+              >
+                {loading
+                  ? "Chargement…"
+                  : `Charger plus (${leads.length} / ${total})`}
+              </button>
+            </div>
+          )}
         </div>
       )}
     </>
