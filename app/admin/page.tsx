@@ -2,11 +2,14 @@ import { getAdminUser } from "@/lib/admin-guard";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { runHealthChecks, type HealthCheck } from "@/lib/health";
 import AdminClient, { AdminBusiness, AdminStats } from "./AdminClient";
-import { labelIsLosing } from "@/lib/draw";
+import {
+  computeAdminPlayStats,
+  computeBusinessPlayCounts,
+  adminPlayStatsFromRpc,
+  businessPlayCountsFromRpc,
+} from "@/lib/admin-stats";
 
 export const dynamic = "force-dynamic";
-
-const isWin = (l: string | null) => !labelIsLosing(l);
 
 export default async function AdminPage() {
   const user = await getAdminUser();
@@ -25,18 +28,40 @@ export default async function AdminPage() {
     )
     .order("created_at", { ascending: false });
 
-  const { data: playRows } = await admin
-    .from("plays")
-    .select("business_id, play_type, prize_label, redeemed_at, created_at");
+  // Bornes temporelles (fuseau serveur), calculées AVANT les agrégats SQL.
+  const startMonth = new Date();
+  startMonth.setDate(1);
+  startMonth.setHours(0, 0, 0, 0);
+  const startDay = new Date();
+  startDay.setHours(0, 0, 0, 0);
+  const monthIso = startMonth.toISOString();
+  const dayIso = startDay.toISOString();
 
-  const { count: leadsCount } = await admin
-    .from("leads")
-    .select("*", { count: "exact", head: true });
+  // Agrégats plateforme + tours/commerce : délégués à SQL (RPC 0053), en
+  // parallèle. Repli JS (chiffres identiques) si la migration n'est pas là.
+  const [statsRpc, countsRpc, leadsRes] = await Promise.all([
+    admin.rpc("admin_play_stats", { month_start: monthIso, day_start: dayIso }),
+    admin.rpc("admin_business_play_counts"),
+    admin.from("leads").select("*", { count: "exact", head: true }),
+  ]);
+  const leadsCount = leadsRes.count;
 
-  const rowsPlays = playRows ?? [];
-  const counts = new Map<string, number>();
-  for (const r of rowsPlays)
-    counts.set(r.business_id, (counts.get(r.business_id) ?? 0) + 1);
+  let playStats = statsRpc.error ? null : adminPlayStatsFromRpc(statsRpc.data);
+  let counts = countsRpc.error
+    ? null
+    : businessPlayCountsFromRpc(countsRpc.data);
+  if (!playStats || !counts) {
+    // Repli : une seule lecture de `plays`, on calcule ce qui manque.
+    const { data: playRows } = await admin
+      .from("plays")
+      .select("business_id, play_type, prize_label, redeemed_at, created_at");
+    const rowsPlays = playRows ?? [];
+    playStats = playStats ?? computeAdminPlayStats(rowsPlays, monthIso, dayIso);
+    counts = counts ?? computeBusinessPlayCounts(rowsPlays);
+  }
+  // Garantis non-null (RPC OU repli les a renseignés).
+  const playStatsResolved = playStats!;
+  const playCounts = counts!;
 
   // e-mails des propriétaires
   const emailById = new Map<string, string>();
@@ -81,7 +106,7 @@ export default async function AdminPage() {
       status: b.status,
       subscription_status: b.subscription_status,
       subscription_ends_at: b.subscription_ends_at,
-      plays: counts.get(b.id) ?? 0,
+      plays: playCounts.get(b.id) ?? 0,
       owner_email: b.owner_user_id
         ? emailById.get(b.owner_user_id) ?? "(compte non trouvé)"
         : "(non lié)",
@@ -100,12 +125,6 @@ export default async function AdminPage() {
 
   // ---- Statistiques plateforme ----
   const now = Date.now();
-  const startMonth = new Date();
-  startMonth.setDate(1);
-  startMonth.setHours(0, 0, 0, 0);
-  const startDay = new Date();
-  startDay.setHours(0, 0, 0, 0);
-
   const bizList = businesses ?? [];
   const stats: AdminStats = {
     bizTotal: bizList.length,
@@ -117,16 +136,13 @@ export default async function AdminPage() {
     ).length,
     bizTrial: bizList.filter((b) => b.subscription_status === "trial").length,
     bizSuspended: bizList.filter((b) => b.status === "suspended").length,
-    playsTotal: rowsPlays.length,
-    playsMonth: rowsPlays.filter(
-      (p) => new Date(p.created_at) >= startMonth
-    ).length,
-    playsToday: rowsPlays.filter((p) => new Date(p.created_at) >= startDay)
-      .length,
-    insta: rowsPlays.filter((p) => p.play_type === "instagram").length,
-    review: rowsPlays.filter((p) => p.play_type === "review").length,
-    won: rowsPlays.filter((p) => isWin(p.prize_label)).length,
-    redeemed: rowsPlays.filter((p) => p.redeemed_at).length,
+    playsTotal: playStatsResolved.playsTotal,
+    playsMonth: playStatsResolved.playsMonth,
+    playsToday: playStatsResolved.playsToday,
+    insta: playStatsResolved.insta,
+    review: playStatsResolved.review,
+    won: playStatsResolved.won,
+    redeemed: playStatsResolved.redeemed,
     leads: leadsCount ?? 0,
   };
 
