@@ -16,7 +16,7 @@ import {
 } from "@/lib/campaigns";
 import { unsubToken } from "@/lib/unsub";
 import { isAlmostNudgeEligible, isInactiveNudgeEligible } from "@/lib/reengage";
-import { recapDeltaLabel } from "@/lib/recap";
+import { recapDeltaLabel, parseRecapRows } from "@/lib/recap";
 import { isReviewInviteEligible } from "@/lib/review-invite";
 import { hardenExternalUrl } from "@/lib/wheel";
 import { mapLimit } from "@/lib/async";
@@ -579,96 +579,44 @@ export async function GET(req: NextRequest) {
       const weekAgo = new Date(Date.now() - 7 * 864e5).toISOString();
       const twoWeeksAgo = new Date(Date.now() - 14 * 864e5).toISOString();
       const fiveDaysAgo = new Date(Date.now() - 5 * 864e5).toISOString();
-      const { data: actives, error } = await db
-        .from("businesses")
-        .select("id, name, slug, recap_sent_at")
-        .eq("status", "active");
-      if (error) throw new Error(error.message);
-
-      await mapLimit(actives ?? [], 5, async (biz) => {
+      // Envoi d'un récap à un commerce (partagé entre le chemin agrégé et le
+      // repli). `name`/`recap_sent_at` viennent de la table businesses.
+      const sendRecap = async (r: {
+        business_id: string;
+        name: string;
+        recap_sent_at?: string | null;
+        tours: number;
+        gagnes: number;
+        echanges: number;
+        emails: number;
+        fid: number;
+        prev_tours: number;
+        prev_emails: number;
+        prev_fid: number;
+      }) => {
         // anti-doublon si le cron se déclenche deux fois
-        if (biz.recap_sent_at && biz.recap_sent_at > fiveDaysAgo) return;
+        if (r.recap_sent_at && r.recap_sent_at > fiveDaysAgo) return;
+        if (r.tours + r.emails + r.fid === 0) return; // rien à raconter
 
-        const [
-          { data: plays },
-          { count: leads },
-          { count: fidNew },
-          { count: redeemed },
-          { count: prevTours },
-          { count: prevLeads },
-          { count: prevFid },
-        ] = await Promise.all([
-          db
-            .from("plays")
-            .select("prize_label")
-            .eq("business_id", biz.id)
-            .gte("created_at", weekAgo),
-          db
-            .from("leads")
-            .select("*", { count: "exact", head: true })
-            .eq("business_id", biz.id)
-            .gte("created_at", weekAgo),
-          db
-            .from("loyalty_cards")
-            .select("*", { count: "exact", head: true })
-            .eq("business_id", biz.id)
-            .gte("created_at", weekAgo),
-          db
-            .from("plays")
-            .select("*", { count: "exact", head: true })
-            .eq("business_id", biz.id)
-            .not("redeemed_at", "is", null)
-            .gte("redeemed_at", weekAgo),
-          // Semaine PRÉCÉDENTE (J-14 → J-7) pour la comparaison.
-          db
-            .from("plays")
-            .select("*", { count: "exact", head: true })
-            .eq("business_id", biz.id)
-            .gte("created_at", twoWeeksAgo)
-            .lt("created_at", weekAgo),
-          db
-            .from("leads")
-            .select("*", { count: "exact", head: true })
-            .eq("business_id", biz.id)
-            .gte("created_at", twoWeeksAgo)
-            .lt("created_at", weekAgo),
-          db
-            .from("loyalty_cards")
-            .select("*", { count: "exact", head: true })
-            .eq("business_id", biz.id)
-            .gte("created_at", twoWeeksAgo)
-            .lt("created_at", weekAgo),
-        ]);
-
-        const tours = plays?.length ?? 0;
-        const gagnes = (plays ?? []).filter(
-          (p) => !labelIsLosing(p.prize_label)
-        ).length;
-        const emails = leads ?? 0;
-        const fid = fidNew ?? 0;
-        const echanges = redeemed ?? 0;
-        if (tours + emails + fid === 0) return; // rien à raconter
-
-        // Comparaison à la semaine précédente (fragment discret par indicateur).
-        const dTours = recapDeltaLabel(tours, prevTours ?? 0);
-        const dEmails = recapDeltaLabel(emails, prevLeads ?? 0);
-        const dFid = recapDeltaLabel(fid, prevFid ?? 0);
+        const dTours = recapDeltaLabel(r.tours, r.prev_tours);
+        const dEmails = recapDeltaLabel(r.emails, r.prev_emails);
+        const dFid = recapDeltaLabel(r.fid, r.prev_fid);
         const deltaCell = (d: string | null) =>
           d
             ? `<span style="font-size:12px;color:#8a83a0;">&nbsp;${d}</span>`
             : "";
 
-        const { email } = await getOwnerContact(db, biz.id);
+        const { email } = await getOwnerContact(db, r.business_id);
         if (!email) return;
 
         const res = await sendEmail({
           to: email,
-          subject: `Votre semaine Kado — ${tours} tour${tours > 1 ? "s" : ""} joué${tours > 1 ? "s" : ""}`,
+          subject: `Votre semaine Kado — ${r.tours} tour${r.tours > 1 ? "s" : ""} joué${r.tours > 1 ? "s" : ""}`,
           html: emailLayout({
             preview: "Le résumé d'activité de votre commerce.",
             heading: "Votre semaine en un coup d'œil",
             emoji: "📊",
-            bodyHtml: `Bonjour,<br><br>Voici l'activité de <b>${biz.name}</b> ces 7 derniers jours&nbsp;<span style="color:#8a83a0;">(avec l'évolution vs la semaine précédente)</span>&nbsp;:<br><br><table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;font-size:15px;line-height:2;"><tr><td>🎡 Parties jouées</td><td align="right"><b>${tours}</b>${deltaCell(dTours)}</td></tr><tr><td>🎁 Cadeaux gagnés</td><td align="right"><b>${gagnes}</b></td></tr><tr><td>🛍️ Cadeaux échangés en caisse</td><td align="right"><b>${echanges}</b></td></tr><tr><td>📧 E-mails clients capturés</td><td align="right"><b>${emails}</b>${deltaCell(dEmails)}</td></tr><tr><td>🎟️ Nouvelles cartes de fidélité</td><td align="right"><b>${fid}</b>${deltaCell(dFid)}</td></tr></table><br><a href="${SITE}/dashboard" style="display:inline-block;background:linear-gradient(135deg,#ff6b4a,#ff4e87);color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:12px;">Voir mon tableau de bord</a>`,
+            bodyHtml: `Bonjour,<br><br>Voici l'activité de <b>${r.name}</b> ces 7 derniers jours&nbsp;<span style="color:#8a83a0;">(avec l'évolution vs la semaine précédente)</span>&nbsp;:<br><br><table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;font-size:15px;line-height:2;"><tr><td>🎡 Parties jouées</td><td align="right"><b>${r.tours}</b>${deltaCell(dTours)}</td></tr><tr><td>🎁 Cadeaux gagnés</td><td align="right"><b>${r.gagnes}</b></td></tr><tr><td>🛍️ Cadeaux échangés en caisse</td><td align="right"><b>${r.echanges}</b></td></tr><tr><td>📧 E-mails clients capturés</td><td align="right"><b>${r.emails}</b>${deltaCell(dEmails)}</td></tr><tr><td>🎟️ Nouvelles cartes de fidélité</td><td align="right"><b>${r.fid}</b>${deltaCell(dFid)}</td></tr></table><br><a href="${SITE}/dashboard" style="display:inline-block;background:linear-gradient(135deg,#ff6b4a,#ff4e87);color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:12px;">Voir mon tableau de bord</a>`,
             footnote:
               "Astuce : plus votre affiche QR est visible, plus vos clients jouent.",
           }),
@@ -677,10 +625,116 @@ export async function GET(req: NextRequest) {
           await db
             .from("businesses")
             .update({ recap_sent_at: new Date().toISOString() })
-            .eq("id", biz.id);
+            .eq("id", r.business_id);
           out.recaps++;
         }
+      };
+
+      // Chemin agrégé (RPC 0065) : UNE requête pour tous les commerces actifs
+      // AYANT eu de l'activité cette semaine. Repli par-commerce si absente.
+      const rpc = await db.rpc("recap_weekly_stats", {
+        week_start: weekAgo,
+        prev_start: twoWeeksAgo,
       });
+      const rows = rpc.error ? null : parseRecapRows(rpc.data);
+
+      if (rows) {
+        if (rows.length) {
+          const { data: bizRows } = await db
+            .from("businesses")
+            .select("id, name, recap_sent_at")
+            .in(
+              "id",
+              rows.map((r) => r.business_id)
+            );
+          const bizBy = new Map((bizRows ?? []).map((b: any) => [b.id, b]));
+          await mapLimit(rows, 5, async (r) => {
+            const biz: any = bizBy.get(r.business_id);
+            if (!biz) return;
+            await sendRecap({
+              ...r,
+              name: biz.name || "votre commerce",
+              recap_sent_at: biz.recap_sent_at,
+            });
+          });
+        }
+      } else {
+        // Repli pré-migration : agrégation par commerce (O(7·N) requêtes).
+        const { data: actives, error } = await db
+          .from("businesses")
+          .select("id, name, slug, recap_sent_at")
+          .eq("status", "active");
+        if (error) throw new Error(error.message);
+
+        await mapLimit(actives ?? [], 5, async (biz) => {
+          if (biz.recap_sent_at && biz.recap_sent_at > fiveDaysAgo) return;
+
+          const [
+            { data: plays },
+            { count: leads },
+            { count: fidNew },
+            { count: redeemed },
+            { count: prevTours },
+            { count: prevLeads },
+            { count: prevFid },
+          ] = await Promise.all([
+            db
+              .from("plays")
+              .select("prize_label")
+              .eq("business_id", biz.id)
+              .gte("created_at", weekAgo),
+            db
+              .from("leads")
+              .select("*", { count: "exact", head: true })
+              .eq("business_id", biz.id)
+              .gte("created_at", weekAgo),
+            db
+              .from("loyalty_cards")
+              .select("*", { count: "exact", head: true })
+              .eq("business_id", biz.id)
+              .gte("created_at", weekAgo),
+            db
+              .from("plays")
+              .select("*", { count: "exact", head: true })
+              .eq("business_id", biz.id)
+              .not("redeemed_at", "is", null)
+              .gte("redeemed_at", weekAgo),
+            db
+              .from("plays")
+              .select("*", { count: "exact", head: true })
+              .eq("business_id", biz.id)
+              .gte("created_at", twoWeeksAgo)
+              .lt("created_at", weekAgo),
+            db
+              .from("leads")
+              .select("*", { count: "exact", head: true })
+              .eq("business_id", biz.id)
+              .gte("created_at", twoWeeksAgo)
+              .lt("created_at", weekAgo),
+            db
+              .from("loyalty_cards")
+              .select("*", { count: "exact", head: true })
+              .eq("business_id", biz.id)
+              .gte("created_at", twoWeeksAgo)
+              .lt("created_at", weekAgo),
+          ]);
+
+          await sendRecap({
+            business_id: biz.id,
+            name: biz.name || "votre commerce",
+            recap_sent_at: biz.recap_sent_at,
+            tours: plays?.length ?? 0,
+            gagnes: (plays ?? []).filter((p) => !labelIsLosing(p.prize_label))
+              .length,
+            echanges: redeemed ?? 0,
+            emails: leads ?? 0,
+            fid: fidNew ?? 0,
+            prev_tours: prevTours ?? 0,
+            prev_emails: prevLeads ?? 0,
+            prev_fid: prevFid ?? 0,
+          });
+        });
+      }
     }
   } catch (e: any) {
     out.errors.push(`recaps: ${e?.message ?? "error"}`);

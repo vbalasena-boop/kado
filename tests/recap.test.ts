@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { recapDelta, recapDeltaLabel } from "@/lib/recap";
+import { recapDelta, recapDeltaLabel, parseRecapRows } from "@/lib/recap";
 
 describe("recapDelta", () => {
   it("hausse : pourcentage positif, direction up", () => {
@@ -28,5 +28,39 @@ describe("recapDeltaLabel", () => {
   });
   it("null quand rien des deux côtés", () => {
     expect(recapDeltaLabel(0, 0)).toBeNull();
+  });
+});
+
+describe("parseRecapRows", () => {
+  it("normalise les lignes RPC (coerce les nombres)", () => {
+    const rows = parseRecapRows([
+      {
+        business_id: "b1",
+        tours: 10,
+        gagnes: "4",
+        echanges: 2,
+        emails: 5,
+        fid: 3,
+        prev_tours: 8,
+        prev_emails: "6",
+        prev_fid: 1,
+      },
+    ]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toEqual({
+      business_id: "b1",
+      tours: 10,
+      gagnes: 4,
+      echanges: 2,
+      emails: 5,
+      fid: 3,
+      prev_tours: 8,
+      prev_emails: 6,
+      prev_fid: 1,
+    });
+  });
+  it("ignore les entrées sans business_id et les non-tableaux", () => {
+    expect(parseRecapRows([{ tours: 1 }]).length).toBe(0);
+    expect(parseRecapRows(null).length).toBe(0);
   });
 });

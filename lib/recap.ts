@@ -3,6 +3,43 @@
  * (aucune base, aucun HTML) pour rester testable.
  */
 
+/** Une ligne de récap hebdo agrégée côté SQL (RPC `recap_weekly_stats`). */
+export type RecapRow = {
+  business_id: string;
+  tours: number;
+  gagnes: number;
+  echanges: number;
+  emails: number;
+  fid: number;
+  prev_tours: number;
+  prev_emails: number;
+  prev_fid: number;
+};
+
+/** Normalise la sortie JSON de la RPC `recap_weekly_stats` en lignes typées. */
+export function parseRecapRows(data: unknown): RecapRow[] {
+  if (!Array.isArray(data)) return [];
+  const n = (v: unknown) => (typeof v === "number" ? v : Number(v) || 0);
+  const out: RecapRow[] = [];
+  for (const r of data) {
+    if (!r || typeof r !== "object") continue;
+    const row = r as Record<string, unknown>;
+    if (row.business_id == null) continue;
+    out.push({
+      business_id: String(row.business_id),
+      tours: n(row.tours),
+      gagnes: n(row.gagnes),
+      echanges: n(row.echanges),
+      emails: n(row.emails),
+      fid: n(row.fid),
+      prev_tours: n(row.prev_tours),
+      prev_emails: n(row.prev_emails),
+      prev_fid: n(row.prev_fid),
+    });
+  }
+  return out;
+}
+
 export type RecapDelta = {
   pct: number | null; // variation %, null si la semaine précédente = 0
   dir: "up" | "down" | "flat";
