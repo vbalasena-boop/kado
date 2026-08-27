@@ -4451,6 +4451,33 @@ html { scroll-behavior: smooth; }
 .fid-extra b { display: block; color: var(--cream); font-size: 1rem; margin-bottom: 4px; }
 .fid-extra p { color: var(--cream-dim); font-size: 0.88rem; margin: 0 0 12px; line-height: 1.5; }
 .fid-extra .btn { width: 100%; }
+.fid-referral-count {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--cream-dim);
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+.fid-referral-count b { display: inline; color: var(--mint); font-size: inherit; margin: 0; }
+.fid-referral-n {
+  flex: 0 0 auto;
+  min-width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--mint, #34d399);
+  color: #0b1020;
+  font-weight: 800;
+  font-size: 1rem;
+}
 .fid-bday-row {
   display: flex;
   gap: 8px;
