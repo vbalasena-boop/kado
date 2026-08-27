@@ -15,7 +15,12 @@
  * Aucune dépendance : appel HTTP direct de l'API Anthropic (comme enrich-serper).
  */
 import type { ProspectSegment } from "@/lib/prospection/types";
-import { FOOTER, type GeneratedEmail, type TemplateContext } from "@/lib/prospection/templates";
+import {
+  FOOTER,
+  prettyName,
+  type GeneratedEmail,
+  type TemplateContext,
+} from "@/lib/prospection/templates";
 
 const API_URL = "https://api.anthropic.com/v1/messages";
 const DEFAULT_MODEL = "claude-haiku-4-5-20251001";
@@ -57,7 +62,7 @@ export interface AiMessages {
 export function buildPrompt(ctx: TemplateContext): { system: string; user: string } {
   const booking = bookingUrl(ctx);
   const facts = [
-    `Nom du commerce : ${ctx.name}`,
+    `Nom du commerce : ${prettyName(ctx.name)}`,
     ctx.city ? `Ville : ${ctx.city}` : null,
     `Type : ${noun(ctx.category ?? null)}`,
     ctx.google_reviews_count != null ? `Avis Google : ${ctx.google_reviews_count}` : null,

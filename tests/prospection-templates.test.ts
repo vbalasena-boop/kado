@@ -6,11 +6,36 @@ import {
   renderLastEmail,
   renderDm,
   emailSubjectVariant,
+  prettyName,
   SUBJECT_VARIANTS,
   UNSUBSCRIBE_MARKER,
   type TemplateContext,
 } from "@/lib/prospection/templates";
 import { spamCheck } from "@/lib/prospection/spam";
+
+describe("prettyName", () => {
+  it("met en casse de titre un nom TOUT EN MAJUSCULES", () => {
+    expect(prettyName("LE BOUILLON VERSAILLES")).toBe("Le Bouillon Versailles");
+  });
+  it("garde les petits mots en minuscule (hors 1er mot)", () => {
+    expect(prettyName("BAR DE LA GARE")).toBe("Bar de la Gare");
+  });
+  it("respecte une casse déjà correcte ou stylisée", () => {
+    expect(prettyName("Le Bouillon")).toBe("Le Bouillon");
+    expect(prettyName("iPhone Store")).toBe("iPhone Store");
+  });
+  it("évite le faux positif anti-spam sur un nom en majuscules", () => {
+    const email = renderEmail({
+      name: "LE BOUILLON VERSAILLES",
+      city: "Versailles",
+      category: "resto",
+      google_reviews_count: 344,
+      seed: "x",
+    });
+    const flags = spamCheck(email.body).flags.join(" ");
+    expect(flags.toLowerCase()).not.toContain("majuscule");
+  });
+});
 
 function ctx(over: Partial<TemplateContext> = {}): TemplateContext {
   return {
@@ -38,8 +63,9 @@ describe("reviewHook", () => {
 describe("renderEmail", () => {
   it("personnalise l'objet et le corps (invariants)", () => {
     const { subject, body } = renderEmail(ctx({ name: "BONNIE", google_reviews_count: 29 }));
-    expect(subject).toContain("BONNIE");
-    expect(body).toContain("BONNIE");
+    // Le nom Google en majuscules est normalisé (anti-spam) → « Bonnie ».
+    expect(subject).toContain("Bonnie");
+    expect(body).toContain("Bonnie");
     expect(body).toContain("Versailles");
     expect(body).toContain("29 avis");
   });
@@ -76,8 +102,9 @@ describe("emailSubjectVariant (mesure par objet)", () => {
 
   it("correspond à l'objet réellement rendu (attribution correcte)", () => {
     const seed = "prospect-xyz";
-    const expected = SUBJECT_VARIANTS[emailSubjectVariant(seed)].replace("{name}", "BONNIE");
-    const { subject } = renderEmail(ctx({ name: "BONNIE", seed }));
+    // Nom déjà en casse normale → pas de normalisation, comparaison directe.
+    const expected = SUBJECT_VARIANTS[emailSubjectVariant(seed)].replace("{name}", "Bonnie");
+    const { subject } = renderEmail(ctx({ name: "Bonnie", seed }));
     expect(subject).toBe(expected);
   });
 });

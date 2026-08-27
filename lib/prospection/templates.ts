@@ -64,6 +64,35 @@ function segmentNoun(category: string | null): string {
   return "commerce";
 }
 
+// Petits mots gardés en minuscule au milieu d'un nom (hors 1ᵉʳ mot).
+const NAME_SMALL_WORDS = new Set([
+  "le", "la", "les", "de", "des", "du", "d", "l", "et", "à", "au", "aux",
+  "un", "une", "sur", "chez", "en", "the", "of",
+]);
+
+/**
+ * Normalise la casse d'un nom de commerce venu de Google (souvent TOUT EN
+ * MAJUSCULES → « LE BOUILLON VERSAILLES ») en casse de titre lisible
+ * (« Le Bouillon Versailles »). N'agit QUE si le nom est intégralement en
+ * capitales — sinon on respecte la casse d'origine (marques stylisées).
+ * Évite aussi le faux positif anti-spam « trop de mots en majuscules ».
+ */
+export function prettyName(name: string): string {
+  const raw = (name ?? "").trim();
+  if (!raw) return raw;
+  // Contient déjà une minuscule → casse volontaire, on ne touche pas.
+  if (/[a-zà-ÿ]/.test(raw)) return raw;
+  return raw
+    .toLocaleLowerCase("fr")
+    .split(/\s+/)
+    .map((w, i) => {
+      if (i > 0 && NAME_SMALL_WORDS.has(w.replace(/[.'’-]$/, ""))) return w;
+      // Capitalise après un début de mot, un trait d'union ou une apostrophe.
+      return w.replace(/(^|[-'’])([a-zà-ÿ])/g, (_, sep, ch) => sep + ch.toUpperCase());
+    })
+    .join(" ");
+}
+
 /**
  * Accroche personnalisée selon le nombre d'avis Google.
  * Renvoie TOUJOURS une proposition complète (avec un verbe), pour s'insérer
@@ -118,11 +147,12 @@ function seedOf(ctx: TemplateContext): string {
 /** Génère l'email de prospection (objet + corps) personnalisé + varié. */
 export function renderEmail(ctx: TemplateContext): GeneratedEmail {
   const seed = seedOf(ctx);
+  const name = prettyName(ctx.name);
   const noun = segmentNoun(ctx.category ?? null);
   const hook = reviewHook(ctx.google_reviews_count);
   const city = ctx.city ? ` à ${ctx.city}` : "";
 
-  const subject = SUBJECT_VARIANTS[emailSubjectVariant(seed)].replace("{name}", ctx.name);
+  const subject = SUBJECT_VARIANTS[emailSubjectVariant(seed)].replace("{name}", name);
 
   const opener = pick(seed, "opener", [
     `J'ai repéré votre ${noun}${city} et j'ai remarqué que ${hook}.`,
@@ -171,7 +201,7 @@ export function renderEmail(ctx: TemplateContext): GeneratedEmail {
 
   // Email court : accroche + pitch (avec hook essai) + CTA.
   const body = [
-    `Bonjour ${ctx.name},`,
+    `Bonjour ${name},`,
     ``,
     opener,
     ``,
@@ -191,12 +221,13 @@ export function renderEmail(ctx: TemplateContext): GeneratedEmail {
 /** Génère l'email de RELANCE (2ᵉ contact, si pas de réponse) — varié. */
 export function renderFollowupEmail(ctx: TemplateContext): GeneratedEmail {
   const seed = seedOf(ctx);
+  const name = prettyName(ctx.name);
   const noun = segmentNoun(ctx.category ?? null);
 
   const subject = pick(seed, "fu_subject", [
-    `Re: pour ${ctx.name}`,
-    `Petit rappel pour ${ctx.name}`,
-    `On se manque pour ${ctx.name} ?`,
+    `Re: pour ${name}`,
+    `Petit rappel pour ${name}`,
+    `On se manque pour ${name} ?`,
   ]);
 
   const opener = pick(seed, "fu_opener", [
@@ -231,7 +262,7 @@ export function renderFollowupEmail(ctx: TemplateContext): GeneratedEmail {
       ]);
 
   const body = [
-    `Bonjour ${ctx.name},`,
+    `Bonjour ${name},`,
     ``,
     opener,
     ``,
@@ -254,11 +285,12 @@ export function renderFollowupEmail(ctx: TemplateContext): GeneratedEmail {
  */
 export function renderLastEmail(ctx: TemplateContext): GeneratedEmail {
   const seed = seedOf(ctx);
+  const name = prettyName(ctx.name);
 
   const subject = pick(seed, "last_subject", [
-    `Dernier message pour ${ctx.name}`,
-    `Je vous laisse tranquille — ${ctx.name}`,
-    `On en reste là pour ${ctx.name} ?`,
+    `Dernier message pour ${name}`,
+    `Je vous laisse tranquille — ${name}`,
+    `On en reste là pour ${name} ?`,
   ]);
 
   const opener = pick(seed, "last_opener", [
@@ -281,12 +313,12 @@ export function renderLastEmail(ctx: TemplateContext): GeneratedEmail {
         `Le créneau reste dispo au cas où → ${booking}. Belle continuation !`,
       ])
     : pick(seed, "last_cta", [
-        `Sinon, je n'insiste plus — belle continuation à ${ctx.name} !`,
+        `Sinon, je n'insiste plus — belle continuation à ${name} !`,
         `Sans réponse, je n'y reviendrai pas. Belle continuation !`,
       ]);
 
   const body = [
-    `Bonjour ${ctx.name},`,
+    `Bonjour ${name},`,
     ``,
     opener,
     ``,
@@ -306,12 +338,13 @@ export function renderLastEmail(ctx: TemplateContext): GeneratedEmail {
 /** Génère un DM Instagram court, naturel et varié pour un prospect. */
 export function renderDm(ctx: TemplateContext): string {
   const seed = seedOf(ctx);
+  const name = prettyName(ctx.name);
   const hook = reviewHook(ctx.google_reviews_count);
 
   const opener = pick(seed, "dm_opener", [
-    `Bonjour ${ctx.name} 👋`,
-    `Hello ${ctx.name} 👋`,
-    `Coucou ${ctx.name} 🙂`,
+    `Bonjour ${name} 👋`,
+    `Hello ${name} 👋`,
+    `Coucou ${name} 🙂`,
   ]);
 
   const body = pick(seed, "dm_body", [
