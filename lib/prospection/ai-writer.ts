@@ -115,7 +115,10 @@ export function parseAiMessages(text: string): AiMessages {
 }
 
 /** Assemble l'email final : corps IA + lien de RDV (si manquant) + pied de page RGPD. */
-export function assembleEmail(ctx: TemplateContext, ai: AiMessages): GeneratedEmail {
+export function assembleEmail(
+  ctx: TemplateContext,
+  ai: { subject: string; body: string }
+): GeneratedEmail {
   const booking = bookingUrl(ctx);
   let body = ai.body.trimEnd();
   // Filet de sécurité : garantir la présence du lien de RDV.
@@ -167,4 +170,115 @@ export async function writeMessagesWithAI(
   const ai = parseAiMessages(text);
   const email = assembleEmail(ctx, ai);
   return { subject: email.subject, body: email.body, dm: ai.dm };
+}
+
+// ---------- Relances (2ᵉ / 3ᵉ email) écrites par IA ----------
+
+export type FollowupKind = "followup" | "last";
+
+/** Appel bas niveau de l'API Claude → texte brut. Jette en cas d'erreur. */
+async function callClaude(system: string, user: string, doFetch: Fetch): Promise<string> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) throw new Error("not_configured");
+  const res = await doFetch(API_URL, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model: model(),
+      max_tokens: 600,
+      temperature: 0.7,
+      system,
+      messages: [{ role: "user", content: user }],
+    }),
+  });
+  if (!res.ok) throw new Error(`api_${res.status}`);
+  const data = (await res.json()) as { content?: { type: string; text?: string }[] };
+  const text = (data.content ?? [])
+    .filter((b) => b.type === "text")
+    .map((b) => b.text ?? "")
+    .join("");
+  if (!text) throw new Error("empty_response");
+  return text;
+}
+
+/** Prompts pour une relance (2ᵉ contact) ou le dernier email « break-up » (3ᵉ). */
+export function buildFollowupPrompt(
+  ctx: TemplateContext,
+  kind: FollowupKind
+): { system: string; user: string } {
+  const booking = bookingUrl(ctx);
+  const facts = [
+    `Nom du commerce : ${prettyName(ctx.name)}`,
+    ctx.city ? `Ville : ${ctx.city}` : null,
+    `Type : ${noun(ctx.category ?? null)}`,
+    ctx.google_reviews_count != null ? `Avis Google : ${ctx.google_reviews_count}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const stepRule =
+    kind === "last"
+      ? [
+          "Contexte : c'est le DERNIER message (email de rupture / « break-up »), après un 1er email et une relance restés SANS RÉPONSE.",
+          "Ton : détendu, sans aucune pression, TRÈS court (~40-70 mots). Dis clairement que c'est ton dernier message et que tu ne réécriras plus.",
+          "Laisse une porte ouverte simple (un mot suffit / réserver un appel).",
+        ].join("\n")
+      : [
+          "Contexte : c'est une RELANCE (2ᵉ contact), après un 1er email resté SANS RÉPONSE.",
+          "Ton : poli, léger, sans insister, court (~50-80 mots). Rappelle brièvement l'intérêt de Kado.",
+        ].join("\n");
+
+  const system = [
+    "Tu es un commercial B2B français qui relance des commerces de proximité pour Kado.",
+    "Kado : un jeu à scanner (QR code) en boutique qui transforme les clients en avis Google et en abonnés Instagram. 14 jours offerts, sans engagement.",
+    stepRule,
+    "Règles strictes :",
+    "- Vouvoiement.",
+    "- N'invente AUCUN fait (pas de faux chiffres, pas de fausse visite).",
+    "- Pas de MAJUSCULES criardes, pas de '!!!', pas de mots comme 'gratuit', 'promo', 'urgent', 'argent'.",
+    "- N'ajoute PAS de signature, PAS de mentions légales, PAS de lien de désinscription : c'est ajouté séparément.",
+    booking
+      ? `- Si tu proposes un appel, utilise ce lien EXACT : ${booking}`
+      : "- Si tu proposes un appel, demande simplement au prospect ses disponibilités.",
+    "Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format :",
+    '{"subject": "...", "body": "..."}',
+    "Le body commence par 'Bonjour <nom>,' et se termine par une formule de politesse suivie de 'L\\'équipe Kado'.",
+  ].join("\n");
+
+  const user = `Rédige ${kind === "last" ? "le dernier email" : "la relance"} pour ce commerce (messages précédents restés sans réponse) :\n${facts}`;
+  return { system, user };
+}
+
+/** Valide le JSON d'un email de relance (subject + body). Jette si invalide. */
+export function parseAiEmail(text: string): { subject: string; body: string } {
+  const cleaned = text.replace(/```json/gi, "").replace(/```/g, "").trim();
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+  if (start < 0 || end <= start) throw new Error("no_json");
+  const obj = JSON.parse(cleaned.slice(start, end + 1)) as Record<string, unknown>;
+  const str = (v: unknown) => (typeof v === "string" ? v.trim() : "");
+  const subject = str(obj.subject);
+  const body = str(obj.body);
+  if (!subject || !body) throw new Error("missing_fields");
+  if (subject.length > 120 || body.length > 1500) throw new Error("too_long");
+  return { subject, body };
+}
+
+/**
+ * Écrit une relance (ou le dernier email) par IA, pied de page RGPD + lien de
+ * RDV ajoutés par le code. Jette en cas d'erreur (le caller retombe sur le
+ * gabarit).
+ */
+export async function writeFollowupWithAI(
+  ctx: TemplateContext,
+  kind: FollowupKind,
+  doFetch: Fetch = fetch
+): Promise<GeneratedEmail> {
+  const { system, user } = buildFollowupPrompt(ctx, kind);
+  const text = await callClaude(system, user, doFetch);
+  return assembleEmail(ctx, parseAiEmail(text));
 }

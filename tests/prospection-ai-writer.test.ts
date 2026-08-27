@@ -4,6 +4,9 @@ import {
   parseAiMessages,
   assembleEmail,
   writeMessagesWithAI,
+  buildFollowupPrompt,
+  parseAiEmail,
+  writeFollowupWithAI,
 } from "@/lib/prospection/ai-writer";
 import type { TemplateContext } from "@/lib/prospection/templates";
 
@@ -68,21 +71,21 @@ describe("parseAiMessages", () => {
 
 describe("assembleEmail", () => {
   it("ajoute toujours le pied de page (désinscription/RGPD)", () => {
-    const email = assembleEmail(ctx, { subject: "O", body: "Bonjour,", dm: "D" });
+    const email = assembleEmail(ctx, { subject: "O", body: "Bonjour," });
     expect(email.body).toContain("{{unsubscribe_url}}");
     expect(email.body.startsWith("Bonjour,")).toBe(true);
   });
 
   it("ajoute le lien de RDV s'il manque dans le corps", () => {
     process.env.PROSPECT_BOOKING_URL = "https://cal.com/kado/15min";
-    const email = assembleEmail(ctx, { subject: "O", body: "Bonjour,", dm: "D" });
+    const email = assembleEmail(ctx, { subject: "O", body: "Bonjour," });
     expect(email.body).toContain("https://cal.com/kado/15min");
   });
 
   it("ne duplique pas le lien de RDV s'il est déjà présent", () => {
     process.env.PROSPECT_BOOKING_URL = "https://cal.com/kado/15min";
     const body = "Bonjour, réservez → https://cal.com/kado/15min";
-    const email = assembleEmail(ctx, { subject: "O", body, dm: "D" });
+    const email = assembleEmail(ctx, { subject: "O", body });
     const count = email.body.split("https://cal.com/kado/15min").length - 1;
     expect(count).toBe(1);
   });
@@ -115,5 +118,47 @@ describe("writeMessagesWithAI", () => {
 
   it("jette si la clé API est absente", async () => {
     await expect(writeMessagesWithAI(ctx)).rejects.toThrow();
+  });
+});
+
+describe("relances IA", () => {
+  it("buildFollowupPrompt distingue relance et dernier email", () => {
+    const fu = buildFollowupPrompt(ctx, "followup");
+    expect(fu.system.toLowerCase()).toContain("relance");
+    expect(fu.system).toContain("subject");
+    const last = buildFollowupPrompt(ctx, "last");
+    expect(last.system.toLowerCase()).toContain("dernier");
+    expect(last.system.toLowerCase()).toContain("rupture");
+  });
+
+  it("parseAiEmail lit subject + body (sans dm)", () => {
+    const out = parseAiEmail('{"subject":"Relance","body":"Bonjour,"}');
+    expect(out).toEqual({ subject: "Relance", body: "Bonjour," });
+  });
+
+  it("parseAiEmail jette si body manque", () => {
+    expect(() => parseAiEmail('{"subject":"x"}')).toThrow();
+  });
+
+  it("writeFollowupWithAI renvoie un email assemblé (footer inclus)", async () => {
+    process.env.ANTHROPIC_API_KEY = "sk-test";
+    const fakeFetch = (async () =>
+      ({
+        ok: true,
+        json: async () => ({
+          content: [{ type: "text", text: '{"subject":"Petit rappel","body":"Bonjour Café,"}' }],
+        }),
+      }) as unknown as Response) as typeof fetch;
+    const out = await writeFollowupWithAI(ctx, "followup", fakeFetch);
+    expect(out.subject).toBe("Petit rappel");
+    expect(out.body).toContain("Bonjour Café,");
+    expect(out.body).toContain("{{unsubscribe_url}}");
+  });
+
+  it("writeFollowupWithAI jette si l'API échoue (repli gabarit côté caller)", async () => {
+    process.env.ANTHROPIC_API_KEY = "sk-test";
+    const fakeFetch = (async () =>
+      ({ ok: false, status: 500, json: async () => ({}) }) as unknown as Response) as typeof fetch;
+    await expect(writeFollowupWithAI(ctx, "last", fakeFetch)).rejects.toThrow();
   });
 });
