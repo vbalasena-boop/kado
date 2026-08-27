@@ -35,6 +35,7 @@ export default function TrackerClient({
 }) {
   const isBuzzer = serviceMode === "buzzer" || buzzerNo != null;
   const [status, setStatus] = useState(initialStatus);
+  const [ahead, setAhead] = useState<number | null>(null);
   const [alert, setAlert] = useState<"idle" | "on" | "ko">("idle");
   const [buzzing, setBuzzing] = useState(false);
   const [iosHint, setIosHint] = useState(false);
@@ -135,6 +136,7 @@ export default function TrackerClient({
           }
           lastStatusRef.current = d.status;
           setStatus(d.status);
+          setAhead(typeof d.ahead === "number" ? d.ahead : null);
         }
         if (alive && !["ready", "done", "cancelled"].includes(d?.status)) {
           timer = setTimeout(poll, 12000);
@@ -144,13 +146,16 @@ export default function TrackerClient({
       }
     }
     if (!["ready", "done", "cancelled"].includes(initialStatus)) {
-      timer = setTimeout(poll, 8000);
+      // Bipeur : première interrogation immédiate pour afficher vite la position
+      // dans la file ; sinon on laisse respirer 8 s.
+      if (isBuzzer) poll();
+      else timer = setTimeout(poll, 8000);
     }
     return () => {
       alive = false;
       clearTimeout(timer);
     };
-  }, [slug, code, initialStatus]);
+  }, [slug, code, initialStatus, isBuzzer]);
 
   async function enableAlert() {
     try {
@@ -258,6 +263,17 @@ export default function TrackerClient({
                 <span>Votre numéro</span>
                 <b>{buzzerNo}</b>
               </div>
+            )}
+            {status === "new" && ahead != null && (
+              <p className="track-ahead">
+                {ahead === 0 ? (
+                  <>🙌 Vous êtes le prochain !</>
+                ) : (
+                  <>
+                    ⏳ <b>{ahead}</b> commande{ahead > 1 ? "s" : ""} avant vous
+                  </>
+                )}
+              </p>
             )}
             {!cancelled && (
               <p style={{ fontWeight: 700 }}>
