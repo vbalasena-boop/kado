@@ -7,6 +7,7 @@ import {
   buildFollowupPrompt,
   parseAiEmail,
   writeFollowupWithAI,
+  normalizeTone,
 } from "@/lib/prospection/ai-writer";
 import type { TemplateContext } from "@/lib/prospection/templates";
 
@@ -42,6 +43,22 @@ describe("buildPrompt", () => {
     const { system, user } = buildPrompt({ ...ctx, siteText: "Brunch et café de spécialité, cours de latte art." });
     expect(user).toContain("Brunch et café de spécialité");
     expect(system.toLowerCase()).toContain("invente jamais");
+  });
+
+  it("applique la tonalité choisie", () => {
+    expect(buildPrompt({ ...ctx, tone: "court" }).system.toLowerCase()).toContain("ultra court");
+    expect(buildPrompt({ ...ctx, tone: "direct" }).system.toLowerCase()).toContain("direct");
+    // Tonalité inconnue → repli équilibré.
+    expect(buildPrompt({ ...ctx, tone: "n'importe quoi" }).system.toLowerCase()).toContain("équilibré");
+  });
+});
+
+describe("normalizeTone", () => {
+  it("accepte les tons connus et retombe sur équilibré sinon", () => {
+    expect(normalizeTone("direct")).toBe("direct");
+    expect(normalizeTone("CHALEUREUX")).toBe("chaleureux");
+    expect(normalizeTone("")).toBe("equilibre");
+    expect(normalizeTone("xxx")).toBe("equilibre");
   });
 });
 

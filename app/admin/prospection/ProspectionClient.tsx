@@ -391,6 +391,24 @@ export default function ProspectionClient({
   // --- Rédaction IA ---
   const [aiWriting, setAiWriting] = useState(false);
   const [aiWritingAll, setAiWritingAll] = useState(false);
+  // Tonalité (persistée localement pour être mémorisée d'une visite à l'autre).
+  const [aiTone, setAiTone] = useState("equilibre");
+  useEffect(() => {
+    try {
+      const t = window.localStorage.getItem("kado_ai_tone");
+      if (t) setAiTone(t);
+    } catch {
+      /* localStorage indisponible → défaut */
+    }
+  }, []);
+  function changeTone(t: string) {
+    setAiTone(t);
+    try {
+      window.localStorage.setItem("kado_ai_tone", t);
+    } catch {
+      /* ignore */
+    }
+  }
 
   /** Enchaîne les lots IA jusqu'à ce qu'il ne reste plus rien (boucle côté client). */
   async function runAiWriteAll() {
@@ -405,7 +423,7 @@ export default function ProspectionClient({
         const res = await fetch("/api/admin/prospection/ai-write", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ limit: 10 }),
+          body: JSON.stringify({ limit: 10, tone: aiTone }),
         });
         const data = await res.json();
         if (!res.ok) {
@@ -448,7 +466,7 @@ export default function ProspectionClient({
       const res = await fetch("/api/admin/prospection/ai-write", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ tone: aiTone }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -654,6 +672,18 @@ export default function ProspectionClient({
           >
             {enriching ? "Enrichissement…" : "Enrichir (email / Insta)"}
           </button>
+          <select
+            value={aiTone}
+            onChange={(e) => changeTone(e.target.value)}
+            disabled={aiWriting || aiWritingAll}
+            title="Tonalité des messages rédigés par l'IA"
+            style={{ ...selectStyle, color: "#8b6cff" }}
+          >
+            <option value="equilibre">Ton : équilibré</option>
+            <option value="direct">Ton : direct</option>
+            <option value="chaleureux">Ton : chaleureux</option>
+            <option value="court">Ton : court</option>
+          </select>
           <button
             onClick={runAiWrite}
             disabled={aiWriting || aiWritingAll}
