@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
 
     const { data: order } = await db
       .from("orders")
-      .select("status")
+      .select("status, buzzer_no, service_mode")
       .eq("business_id", biz.id)
       .eq("code", code)
       .order("created_at", { ascending: false })
@@ -44,7 +44,32 @@ export async function GET(req: NextRequest) {
       .maybeSingle();
     if (!order) return Response.json({ error: "not_found" }, { status: 404 });
 
-    return Response.json({ status: (order as any).status ?? "new" });
+    const o = order as any;
+    const status = o.status ?? "new";
+
+    // Bipeur : position dans la file — nombre de commandes du jour encore « à
+    // préparer » avec un numéro INFÉRIEUR (donc devant celle-ci). Tolérant.
+    let ahead: number | null = null;
+    const isBuzzer = o.service_mode === "buzzer" || o.buzzer_no != null;
+    if (status === "new" && isBuzzer && typeof o.buzzer_no === "number") {
+      try {
+        const startOfDay = new Date();
+        startOfDay.setUTCHours(0, 0, 0, 0);
+        const { count } = await db
+          .from("orders")
+          .select("*", { count: "exact", head: true })
+          .eq("business_id", biz.id)
+          .eq("status", "new")
+          .gte("created_at", startOfDay.toISOString())
+          .not("buzzer_no", "is", null)
+          .lt("buzzer_no", o.buzzer_no);
+        ahead = count ?? 0;
+      } catch {
+        ahead = null; // colonne absente : on n'affiche pas la position
+      }
+    }
+
+    return Response.json({ status, ...(ahead != null ? { ahead } : {}) });
   } catch {
     return Response.json({ error: "unavailable" }, { status: 500 });
   }

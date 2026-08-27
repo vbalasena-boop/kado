@@ -5471,6 +5471,12 @@ html { scroll-behavior: smooth; }
 .track-number span { font-size: 15px; opacity: 0.85; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
 /* Taille fluide : un numéro à 3 chiffres à 84px débordait sous ~340px. */
 .track-number b { font-size: clamp(52px, 20vw, 84px); line-height: 1; font-weight: 800; }
+.track-ahead {
+  margin: 2px 0 6px;
+  font-size: 16px;
+  font-weight: 700;
+}
+.track-ahead b { font-size: 19px; }
 /* Carte commande « bipeur » côté commerçant */
 .order-buzznum {
   background: #17092e; color: #fff; font-weight: 800; font-size: 15px;
