@@ -11,6 +11,28 @@ def text_scene(t, blocks, cy=None):
         if op>0: para(img,spans,font,W//2,int(H*yf),int(W*0.86),opacity=op)
     return img
 
+# COLD OPEN : chiffre/mot choc dès la 1re seconde (retient avant le décrochage)
+def cold(t, big_spans, sub=None):
+    img=bg_violet()
+    op=int(255*ease(clamp(t/0.12)))          # apparition quasi instantanée
+    para(img, big_spans, BOLD(150), W//2, int(H*0.34), int(W*0.92), opacity=op)
+    if sub:
+        op2=int(255*ease(clamp((t-0.12)/0.2)))
+        if op2>0: para(img,[(sub,WHITE)],BOLD(56),W//2,int(H*0.56),int(W*0.86),opacity=op2)
+    return img
+def _co(big,sub): return lambda t: cold(t,big,sub)
+COLD={
+ 'reel2':_co([("+44 avis.",GOLD)],"Sans rien demander."),
+ 'reel3':_co([("29 €/mois",GOLD)],"= 1,5 client. C'est tout."),
+ 'reel4':_co([("Légal ?",GOLD)],"Récompenser un avis Google…"),
+ 'reel5':_co([("30 secondes.",GOLD)],"C'est tout ce que ça prend."),
+ 'reel7':_co([("La rentrée.",GOLD)],"Le moment pour vos avis."),
+}
+CO_DUR=0.9  # durée de base (x SCALE ensuite)
+def with_cold(name,TL):
+    if name not in COLD: return TL
+    return [(0,CO_DUR,COLD[name])]+[(a+CO_DUR,b+CO_DUR,f) for a,b,f in TL]
+
 # =================== RÉEL 2 — 3 avis -> 47 avis ===================
 def r2_hook(t):
     img=text_scene(t,[([("De 3 avis à 47 avis",WHITE)],BOLD(90),0.30,0.0),
@@ -35,7 +57,7 @@ def r2_wheel(t):
     if op>0: para(img,[("Automatique.",GOLD)],BOLD(72),W//2,int(H*0.80),int(W*0.86),opacity=op)
     return img
 REEL2=[(0,2.2,r2_hook),(2.2,6.2,r2_card),(6.2,9.4,r2_secret),(9.4,12.7,r2_wheel),
-       (12.7,15.0,lambda t: cta(t,"Chaque client = une chance d'avis"))]
+       (12.7,15.0,lambda t: cta(t,"Chaque client = une chance d'avis",q="Combien d'avis vous avez ?"))]
 
 # =================== RÉEL 3 — le calcul 29 € ===================
 def r3_hook(t):
@@ -60,7 +82,7 @@ def r3_punch(t):
                       ([("Il vous ",WHITE),("rapporte.",GREEN)],BOLD(88),0.50,0.45)])
     emoji_pop(img,"💰",W//2,int(H*0.70),140,t,0.7); return img
 REEL3=[(0,2.4,r3_hook),(2.4,6.4,r3_calc),(6.4,9.4,r3_more),(9.4,12.7,r3_punch),
-       (12.7,15.0,lambda t: cta(t,"Rentable dès le 1er mois"))]
+       (12.7,15.0,lambda t: cta(t,"Rentable dès le 1er mois",q="Votre panier moyen ?"))]
 
 # =================== RÉEL 4 — conformité ===================
 def r4_hook(t):
@@ -85,7 +107,7 @@ def r4_real(t):
     if op>0: para(img,[("100 % conforme Google.",WHITE)],BODYB(50),W//2,int(H*0.72),int(W*0.86),opacity=op)
     return img
 REEL4=[(0,2.4,r4_hook),(2.4,5.8,r4_not),(5.8,9.2,r4_yes),(9.2,12.7,r4_real),
-       (12.7,15.0,lambda t: cta(t,"100 % conforme Google"))]
+       (12.7,15.0,lambda t: cta(t,"100 % conforme Google",q="Une question ? Posez-la"))]
 
 # =================== RÉEL 5 — parcours 30 s ===================
 def r5_hook(t):
@@ -117,7 +139,7 @@ def r5_and(t):
     img=text_scene(t,[([("…et il a laissé un ",WHITE),("avis Google.",GOLD)],BOLD(72),0.40,0.0)])
     return img
 REEL5=[(0,2.0,_r5_hook),(2.0,5.4,r5_scan),(5.4,8.4,r5_play),(8.4,11.6,r5_win),
-       (11.6,13.2,r5_and),(13.2,15.0,lambda t: cta(t,"Sans que vous demandiez"))]
+       (11.6,13.2,r5_and),(13.2,15.0,lambda t: cta(t,"Sans que vous demandiez",q="Vous le mettriez où ?"))]
 
 # =================== RÉEL 6 — 1 par rue (rareté) ===================
 def r6_hook(t):
@@ -167,16 +189,18 @@ def r7_now(t):
     return text_scene(t,[([("Septembre se joue",WHITE)],BOLD(80),0.34,0.0),
                          ([("maintenant.",GOLD)],BOLD(96),0.50,0.4)])
 REEL7=[(0,2.4,r7_hook),(2.4,6.0,r7_each),(6.0,9.6,r7_ahead),(9.6,12.7,r7_now),
-       (12.7,15.0,lambda t: cta(t,"Lancez la rentrée avec Kado"))]
+       (12.7,15.0,lambda t: cta(t,"Lancez la rentrée avec Kado",q="Votre objectif rentrée ?"))]
 
-REELS={"reel2":REEL2,"reel3":REEL3,"reel4":REEL4,"reel5":REEL5,"reel6":REEL6,"reel7":REEL7}
+_BASE={"reel2":REEL2,"reel3":REEL3,"reel4":REEL4,"reel5":REEL5,"reel6":REEL6,"reel7":REEL7}
+REELS={n:with_cold(n,tl) for n,tl in _BASE.items()}
 
 if __name__=="__main__":
     which=sys.argv[1:] or list(REELS.keys())
     SCALE=1.5   # laisse le temps de lire : ~15 s -> ~22,5 s
     for name in which:
         TL=[(a*SCALE,b*SCALE,fn) for a,b,fn in REELS[name]]
-        print(f"→ {name} …", flush=True)
-        n=render(TL,15.0*SCALE,f"/tmp/claude-0/-home-user-kado/1bdcc5dd-53b3-5031-82ec-c2fcac50f53b/scratchpad/frames_{name}")
+        total=max(b for _,b,_ in TL)
+        print(f"→ {name} ({total:.1f}s) …", flush=True)
+        n=render(TL,total,f"/tmp/claude-0/-home-user-kado/1bdcc5dd-53b3-5031-82ec-c2fcac50f53b/scratchpad/frames_{name}")
         print(f"   {n} frames OK")
     print("Terminé.")

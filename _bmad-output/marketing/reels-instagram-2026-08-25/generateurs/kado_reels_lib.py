@@ -176,11 +176,14 @@ def pop(img,element,cx,cy,t,t0,dur=0.4):
     img.alpha_composite(el,(int(cx-nw/2),int(cy-nh/2)))
 def emoji_pop(img,ch,cx,cy,size,t,t0,dur=0.4): pop(img,emoji_img(ch,size),cx,cy,t,t0,dur)
 
-def cta(t,tagline="Chaque client = une chance d'avis"):
+def cta(t,tagline="Chaque client = une chance d'avis",q=None):
     img=BG_ORANGE.convert("RGBA"); a=ease(clamp(t/0.35))
-    ls=200; logo=gift_logo(ls); d=ImageDraw.Draw(img); wm=d.textlength("Kado",font=BOLD(150))
-    lx=int((W-(ls+30+wm))/2); img.alpha_composite(logo,(lx,int(H*0.15))); d.text((lx+ls+30,int(H*0.15)+18),"Kado",font=BOLD(150),fill=NAVY)
-    para(img,[(tagline,NAVY)],BOLD(72),W//2,int(H*0.36),int(W*0.82),soft=False)
+    ls=175; logo=gift_logo(ls); d=ImageDraw.Draw(img); wm=d.textlength("Kado",font=BOLD(130))
+    lx=int((W-(ls+26+wm))/2); img.alpha_composite(logo,(lx,int(H*0.10))); d.text((lx+ls+26,int(H*0.10)+16),"Kado",font=BOLD(130),fill=NAVY)
+    para(img,[(tagline,NAVY)],BOLD(70),W//2,int(H*0.29),int(W*0.82),soft=False)
+    # question d'engagement facile (comment-bait)
+    if q:
+        qp=pill(q,BOLD(48),WHITE,NAVY); img.alpha_composite(qp,((W-qp.width)//2,int(H*0.45)))
     pulse=1+0.028*math.sin(t*2*math.pi*1.4); bw,bh=int(W*0.74*pulse),int(150*pulse); bx,by=(W-bw)//2,int(H*0.55)
     d.rounded_rectangle([bx,by,bx+bw,by+bh],radius=bh//2,fill=NAVY)
     txt="Commentez DEMO"; tw=d.textlength(txt,font=BOLD(64)); d.text((W//2-tw/2,by+bh/2-46),txt,font=BOLD(64),fill=WHITE)
