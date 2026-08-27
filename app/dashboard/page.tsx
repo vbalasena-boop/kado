@@ -10,6 +10,7 @@ import {
   loyaltyRewardRate,
 } from "@/lib/dashboard-stats";
 import { avisMigrationNoticeNeeded } from "@/lib/wheel";
+import { summarizeSegments, segmentsFromRpc } from "@/lib/segments";
 import {
   parseTrendRpc,
   fillDailySeries,
@@ -29,6 +30,11 @@ export default async function DashboardHome() {
 
   const admin = getAdminClient();
   const since = new Date(Date.now() - 30 * 864e5).toISOString();
+  // Seuil « à réveiller » : dernier tampon plus ancien que 60 jours.
+  const SEGMENT_DORMANT_DAYS = 60;
+  const segCutoffIso = new Date(
+    Date.now() - SEGMENT_DORMANT_DAYS * 864e5
+  ).toISOString();
 
   const showRoue = hasModule(business, "roue");
   const showFid = hasModule(business, "fidelite");
@@ -47,8 +53,16 @@ export default async function DashboardHome() {
   // Chemin normal : agrégats calculés côté SQL (RPC 0051), en parallèle. Un
   // REPLI JS (fonctions pures, chiffres identiques) prend le relais si la
   // migration 0051 n'est pas encore appliquée (rpc en erreur).
-  const [cfgRes, playRpc, leadsRes, loyRpc, trendRpc, signupsRpc, pendingRes] =
-    await Promise.all([
+  const [
+    cfgRes,
+    playRpc,
+    leadsRes,
+    loyRpc,
+    trendRpc,
+    signupsRpc,
+    pendingRes,
+    segRpc,
+  ] = await Promise.all([
     admin
       .from("wheel_configs")
       .select("instagram_url, review_url, review_enabled, loyalty_enabled")
@@ -83,6 +97,13 @@ export default async function DashboardHome() {
           .eq("business_id", business.id)
           .eq("reward_ready", true)
       : Promise.resolve({ count: null, error: null }),
+    // Segmentation des clients fidélité (agrégat SQL, repli JS si RPC absente).
+    showFid
+      ? admin.rpc("dashboard_loyalty_segments", {
+          biz: business.id,
+          cutoff: segCutoffIso,
+        })
+      : Promise.resolve({ data: null, error: null }),
   ]);
 
   const cfg = cfgRes.data;
@@ -121,6 +142,16 @@ export default async function DashboardHome() {
   // Taux de remise des récompenses : remises = débloquées − en attente.
   const pendingRewards = pendingRes.error ? 0 : pendingRes.count ?? 0;
   const reward = loyaltyRewardRate(fidStats.rewards, pendingRewards);
+
+  // Segmentation clients (RPC 0063, repli JS si absente).
+  let segments = showFid && !segRpc.error ? segmentsFromRpc(segRpc.data) : null;
+  if (showFid && !segments) {
+    const { data: segRows } = await admin
+      .from("loyalty_cards")
+      .select("stamps, rewards_earned, last_stamp_at")
+      .eq("business_id", business.id);
+    segments = summarizeSegments(segRows ?? [], Date.parse(segCutoffIso));
+  }
 
   // Tendance des tours joués : série 30 jours + comparaison mensuelle. Rendu
   // uniquement si la RPC 0059 répond (sinon on masque proprement le bloc).
@@ -516,6 +547,41 @@ export default async function DashboardHome() {
               </div>
             </div>
           </div>
+          {segments && segments.total > 0 && (
+            <div className="dash-card">
+              <h2>Mes clients fidélité</h2>
+              <div className="seg-grid">
+                <div className="seg seg-loyal">
+                  <div className="seg-n">{segments.loyal}</div>
+                  <div className="seg-l">Fidèles</div>
+                  <div className="seg-d">ont déjà gagné une récompense</div>
+                </div>
+                <div className="seg seg-active">
+                  <div className="seg-n">{segments.active}</div>
+                  <div className="seg-l">En cours</div>
+                  <div className="seg-d">carte entamée, pas encore de récompense</div>
+                </div>
+                <div className="seg seg-new">
+                  <div className="seg-n">{segments.new}</div>
+                  <div className="seg-l">Nouveaux</div>
+                  <div className="seg-d">inscrits, pas encore de tampon</div>
+                </div>
+                <div className="seg seg-dormant">
+                  <div className="seg-n">{segments.dormant}</div>
+                  <div className="seg-l">À réveiller</div>
+                  <div className="seg-d">plus de 60 jours sans visite</div>
+                </div>
+              </div>
+              {segments.dormant > 0 && (
+                <p className="muted seg-hint">
+                  💡 {segments.dormant} client{segments.dormant > 1 ? "s" : ""}{" "}
+                  {segments.dormant > 1 ? "sont" : "est"} à réveiller. Activez la{" "}
+                  <Link href="/dashboard/wheel">relance « client inactif »</Link>{" "}
+                  pour les rappeler automatiquement.
+                </p>
+              )}
+            </div>
+          )}
           {fidStats.rewards > 0 && (
             <div className="dash-card">
               <h2>Récompenses remises</h2>

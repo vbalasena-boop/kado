@@ -1154,6 +1154,60 @@ canvas#confetti {
   margin: 10px 0 0;
   font-size: 13px;
 }
+/* Segmentation clients fidélité */
+.seg-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+@media (min-width: 720px) {
+  .seg-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+.seg {
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid #ece8f5;
+  background: #faf8ff;
+  text-align: center;
+}
+.seg-n {
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1;
+}
+.seg-l {
+  margin-top: 4px;
+  font-weight: 700;
+  font-size: 14px;
+}
+.seg-d {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #8a83a0;
+  line-height: 1.35;
+}
+.seg-loyal .seg-n {
+  color: #1a7f43;
+}
+.seg-active .seg-n {
+  color: #1a73e8;
+}
+.seg-new .seg-n {
+  color: #8b5cf6;
+}
+.seg-dormant .seg-n {
+  color: #d08700;
+}
+.seg-dormant {
+  border-color: #f3e2b8;
+  background: #fdf8ec;
+}
+.seg-hint {
+  margin: 12px 0 0;
+  font-size: 13px;
+}
 /* Editor */
 .editor {
   display: grid;
