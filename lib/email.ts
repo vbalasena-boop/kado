@@ -24,6 +24,39 @@ type SendArgs = {
 
 type SendResult = { ok: boolean; skipped?: boolean; error?: string };
 
+// Resilience aux limites de débit Resend (~2 req/s par défaut). Sans cela, un
+// envoi en rafale (campagne, invitation avis) déclenche des 429 traités comme
+// des échecs → e-mails non partis. On respecte le débit en attendant + réessai.
+const EMAIL_MAX_ATTEMPTS = 3;
+const EMAIL_MAX_BACKOFF_MS = 4000;
+
+/** Statuts HTTP qui méritent une nouvelle tentative (débit / panne passagère). */
+export function isRetriableEmailStatus(status: number): boolean {
+  return status === 429 || status === 408 || status >= 500;
+}
+
+/** Délai d'attente exponentiel (borné) pour la tentative n° `attempt` (1-based). */
+export function emailBackoffMs(attempt: number): number {
+  return Math.min(EMAIL_MAX_BACKOFF_MS, 500 * 2 ** Math.max(0, attempt - 1));
+}
+
+/**
+ * Traduit un en-tête `Retry-After` (secondes, ou date HTTP) en millisecondes,
+ * borné, ou `null` s'il est absent/illisible. Pur (hors branche date).
+ */
+export function parseRetryAfterMs(header: string | null): number | null {
+  if (!header) return null;
+  const s = header.trim();
+  if (/^\d+$/.test(s)) return Math.min(EMAIL_MAX_BACKOFF_MS, Number(s) * 1000);
+  const t = Date.parse(s);
+  if (!Number.isNaN(t)) {
+    return Math.max(0, Math.min(EMAIL_MAX_BACKOFF_MS, t - Date.now()));
+  }
+  return null;
+}
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 function fromAddress(fromName?: string, marketing = false) {
   const base =
     (marketing && process.env.EMAIL_FROM_MARKETING) ||
@@ -56,42 +89,61 @@ export async function sendEmail({
     console.warn("[email] RESEND_API_KEY manquant — e-mail non envoyé:", subject);
     return { ok: false, skipped: true };
   }
-  try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${key}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: fromAddress(fromName, marketing),
-        to,
-        subject,
-        html,
-        text,
-        ...(replyTo ? { reply_to: replyTo } : {}),
-        ...(attachments && attachments.length
-          ? {
-              attachments: attachments.map((a) => ({
-                filename: a.filename,
-                content: a.content,
-                ...(a.contentId ? { content_id: a.contentId } : {}),
-                ...(a.contentType ? { content_type: a.contentType } : {}),
-              })),
-            }
-          : {}),
-      }),
-    });
-    if (!res.ok) {
+  const body = JSON.stringify({
+    from: fromAddress(fromName, marketing),
+    to,
+    subject,
+    html,
+    text,
+    ...(replyTo ? { reply_to: replyTo } : {}),
+    ...(attachments && attachments.length
+      ? {
+          attachments: attachments.map((a) => ({
+            filename: a.filename,
+            content: a.content,
+            ...(a.contentId ? { content_id: a.contentId } : {}),
+            ...(a.contentType ? { content_type: a.contentType } : {}),
+          })),
+        }
+      : {}),
+  });
+
+  let lastError = "exception";
+  for (let attempt = 1; attempt <= EMAIL_MAX_ATTEMPTS; attempt++) {
+    try {
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${key}`,
+          "Content-Type": "application/json",
+        },
+        body,
+      });
+      if (res.ok) return { ok: true };
+      lastError = `http_${res.status}`;
+      // Débit dépassé / panne passagère : on attend (Retry-After sinon backoff).
+      if (isRetriableEmailStatus(res.status) && attempt < EMAIL_MAX_ATTEMPTS) {
+        const wait =
+          parseRetryAfterMs(res.headers.get("retry-after")) ??
+          emailBackoffMs(attempt);
+        await sleep(wait);
+        continue;
+      }
       const t = await res.text().catch(() => "");
       console.error("[email] échec Resend", res.status, t);
-      return { ok: false, error: `http_${res.status}` };
+      return { ok: false, error: lastError };
+    } catch (e) {
+      lastError = "exception";
+      // Erreur réseau : une nouvelle tentative peut aboutir.
+      if (attempt < EMAIL_MAX_ATTEMPTS) {
+        await sleep(emailBackoffMs(attempt));
+        continue;
+      }
+      console.error("[email] exception", e);
+      return { ok: false, error: "exception" };
     }
-    return { ok: true };
-  } catch (e) {
-    console.error("[email] exception", e);
-    return { ok: false, error: "exception" };
   }
+  return { ok: false, error: lastError };
 }
 
 /**
@@ -110,19 +162,37 @@ export async function sendBatch(emails: SendArgs[]): Promise<number> {
       html: e.html,
       ...(e.replyTo ? { reply_to: e.replyTo } : {}),
     }));
-    try {
-      const res = await fetch("https://api.resend.com/emails/batch", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${key}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(chunk),
-      });
-      if (res.ok) sent += chunk.length;
-      else console.error("[email] batch échec", res.status);
-    } catch (e) {
-      console.error("[email] batch exception", e);
+    const payload = JSON.stringify(chunk);
+    for (let attempt = 1; attempt <= EMAIL_MAX_ATTEMPTS; attempt++) {
+      try {
+        const res = await fetch("https://api.resend.com/emails/batch", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${key}`,
+            "Content-Type": "application/json",
+          },
+          body: payload,
+        });
+        if (res.ok) {
+          sent += chunk.length;
+          break;
+        }
+        if (isRetriableEmailStatus(res.status) && attempt < EMAIL_MAX_ATTEMPTS) {
+          const wait =
+            parseRetryAfterMs(res.headers.get("retry-after")) ??
+            emailBackoffMs(attempt);
+          await sleep(wait);
+          continue;
+        }
+        console.error("[email] batch échec", res.status);
+        break;
+      } catch (e) {
+        if (attempt < EMAIL_MAX_ATTEMPTS) {
+          await sleep(emailBackoffMs(attempt));
+          continue;
+        }
+        console.error("[email] batch exception", e);
+      }
     }
   }
   return sent;
