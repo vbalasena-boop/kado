@@ -49,11 +49,46 @@ export default function ProspectDetailClient({
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const [aiBusy, setAiBusy] = useState(false);
   const [spamFlags, setSpamFlags] = useState<string[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
 
   const email = messages.find((m) => m.channel === "email" && m.step === 1);
   const dm = messages.find((m) => m.channel === "instagram" && m.step === 1);
+
+  /** Rédige ce prospect avec l'IA (brouillon), en reprenant la tonalité choisie. */
+  async function aiGenerate() {
+    setAiBusy(true);
+    setMsg(null);
+    let tone: string | undefined;
+    try {
+      tone = window.localStorage.getItem("kado_ai_tone") || undefined;
+    } catch {
+      /* ignore */
+    }
+    try {
+      const res = await fetch("/api/admin/prospection/ai-write", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prospectId: prospect.id, tone }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setMsg(`Erreur : ${data.error ?? "inconnue"}`);
+      } else if (!data.configured) {
+        setMsg("IA non configurée (ANTHROPIC_API_KEY manquante dans Vercel).");
+      } else if (data.written > 0) {
+        setMsg("✨ Message rédigé par l'IA. Relis puis approuve.");
+        router.refresh();
+      } else {
+        setMsg("L'IA n'a pas pu écrire (repli possible : « Régénérer »).");
+      }
+    } catch {
+      setMsg("Erreur réseau (rédaction IA).");
+    } finally {
+      setAiBusy(false);
+    }
+  }
 
   async function generate() {
     setBusy(true);
@@ -122,8 +157,17 @@ export default function ProspectDetailClient({
       )}
 
       <div style={{ display: "flex", gap: 10, alignItems: "center", margin: "10px 0" }}>
-        <button onClick={generate} disabled={busy} className="dash-signout">
+        <button onClick={generate} disabled={busy || aiBusy} className="dash-signout">
           {busy ? "Génération…" : email || dm ? "Régénérer les messages" : "Générer les messages"}
+        </button>
+        <button
+          onClick={aiGenerate}
+          disabled={busy || aiBusy}
+          className="dash-signout"
+          style={{ color: "#8b6cff" }}
+          title="Rédige ce prospect avec l'IA (brouillon). Nécessite ANTHROPIC_API_KEY."
+        >
+          {aiBusy ? "Rédaction IA…" : "✨ Rédiger avec l'IA"}
         </button>
         {msg && <span style={{ fontSize: 14, color: "#333" }}>{msg}</span>}
       </div>

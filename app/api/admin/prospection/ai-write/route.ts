@@ -12,6 +12,8 @@ const schema = z
   .object({
     limit: z.number().int().min(1).max(20).optional(),
     tone: z.enum(AI_TONES).optional(),
+    // Si fourni : rédige uniquement CE prospect (depuis sa fiche), sans filtre.
+    prospectId: z.string().uuid().optional(),
   })
   .optional();
 
@@ -93,28 +95,42 @@ export const POST = adminRoute({
     const limit = body?.limit ?? 8;
     const db = getAdminClient();
 
-    // Prospects déjà rédigés par IA → à exclure (le lot avance dans la liste).
-    const { data: doneEvents } = await db
-      .from("prospect_events")
-      .select("prospect_id")
-      .eq("type", "ai_written")
-      .limit(10000);
-    const doneIds = new Set((doneEvents ?? []).map((e) => e.prospect_id as string));
+    const cols =
+      "id, name, city, category, email, instagram_handle, website, google_reviews_count, score";
 
-    // Candidats : contactables (statut non final) avec un email OU un Instagram.
-    const { data, error } = await db
-      .from("prospects")
-      .select("id, name, city, category, email, instagram_handle, website, google_reviews_count, score")
-      .in("status", ["new", "queued", "emailed", "dm_pending"])
-      .or("email.not.is.null,instagram_handle.not.is.null")
-      .order("score", { ascending: false, nullsFirst: false })
-      .limit(500);
-    if (error) return Response.json({ error: "db_error" }, { status: 500 });
+    let batch: (Row & { score: number | null })[];
+    let candidatesLen: number;
 
-    const candidates = ((data ?? []) as (Row & { score: number | null })[]).filter(
-      (p) => !doneIds.has(p.id)
-    );
-    const batch = candidates.slice(0, limit);
+    if (body?.prospectId) {
+      // Mode fiche : un seul prospect, sans filtre de statut ni exclusion.
+      const { data, error } = await db.from("prospects").select(cols).eq("id", body.prospectId).single();
+      if (error || !data) return Response.json({ error: "not_found" }, { status: 404 });
+      batch = [data as Row & { score: number | null }];
+      candidatesLen = 1;
+    } else {
+      // Mode lot : prospects contactables non encore rédigés par IA, par score.
+      const { data: doneEvents } = await db
+        .from("prospect_events")
+        .select("prospect_id")
+        .eq("type", "ai_written")
+        .limit(10000);
+      const doneIds = new Set((doneEvents ?? []).map((e) => e.prospect_id as string));
+
+      const { data, error } = await db
+        .from("prospects")
+        .select(cols)
+        .in("status", ["new", "queued", "emailed", "dm_pending"])
+        .or("email.not.is.null,instagram_handle.not.is.null")
+        .order("score", { ascending: false, nullsFirst: false })
+        .limit(500);
+      if (error) return Response.json({ error: "db_error" }, { status: 500 });
+
+      const candidates = ((data ?? []) as (Row & { score: number | null })[]).filter(
+        (p) => !doneIds.has(p.id)
+      );
+      candidatesLen = candidates.length;
+      batch = candidates.slice(0, limit);
+    }
 
     let written = 0;
     let failed = 0;
@@ -151,7 +167,7 @@ export const POST = adminRoute({
       configured: true,
       written,
       failed,
-      remaining: Math.max(0, candidates.length - written),
+      remaining: Math.max(0, candidatesLen - written),
     });
   },
 });
