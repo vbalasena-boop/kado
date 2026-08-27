@@ -190,8 +190,11 @@ export default function TrackerClient({
     }
   }
 
+  const awaiting = status === "awaiting_payment";
   const bannerEmoji = cancelled
     ? "❌"
+    : awaiting
+    ? "💳"
     : status === "ready"
     ? "✅"
     : status === "done"
@@ -199,6 +202,8 @@ export default function TrackerClient({
     : "👨‍🍳";
   const bannerText = cancelled
     ? "Commande annulée"
+    : awaiting
+    ? "En attente de paiement"
     : status === "ready"
     ? "Votre commande est prête !"
     : status === "done"
@@ -228,7 +233,7 @@ export default function TrackerClient({
           <b>{bannerText}</b>
         </div>
 
-        {!cancelled && (
+        {!cancelled && !awaiting && (
           <ol className="track">
             {TRACK.map((label, i) => (
               <li
@@ -277,6 +282,8 @@ export default function TrackerClient({
               <p className="uber-done-total">
                 {paid ? (
                   <>✅ Payé en ligne : <b>{euros(totalCents)} €</b></>
+                ) : awaiting ? (
+                  <>💳 Paiement en ligne non finalisé : <b>{euros(totalCents)} €</b></>
                 ) : (
                   <>Total à régler sur place : <b>{euros(totalCents)} €</b></>
                 )}
@@ -286,7 +293,7 @@ export default function TrackerClient({
         )}
 
         {/* Activer l'alerte quand c'est prêt */}
-        {!["ready", "done", "cancelled"].includes(status) && (
+        {!["ready", "done", "cancelled", "awaiting_payment"].includes(status) && (
           <>
             {alert === "on" ? (
               <p className="track-banner ready" style={{ marginTop: 8 }}>
