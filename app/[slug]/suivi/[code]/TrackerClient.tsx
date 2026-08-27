@@ -159,6 +159,26 @@ export default function TrackerClient({
     };
   }, [slug, code, initialStatus, isBuzzer]);
 
+  const [pickup, setPickup] = useState<"idle" | "busy" | "done">("idle");
+  async function confirmPickup() {
+    setPickup("busy");
+    try {
+      const r = await fetch("/api/order/pickup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug, code }),
+      });
+      if (r.ok) {
+        setStatus("done");
+        setPickup("done");
+      } else {
+        setPickup("idle");
+      }
+    } catch {
+      setPickup("idle");
+    }
+  }
+
   async function enableAlert() {
     try {
       if (
@@ -239,6 +259,18 @@ export default function TrackerClient({
           <span className="track-banner-emoji">{bannerEmoji}</span>
           <b>{bannerText}</b>
         </div>
+
+        {status === "ready" && (
+          <button
+            type="button"
+            className="uber-submit"
+            style={{ maxWidth: 420, marginTop: 4 }}
+            onClick={confirmPickup}
+            disabled={pickup === "busy"}
+          >
+            {pickup === "busy" ? "Un instant…" : "✅ J'ai récupéré ma commande"}
+          </button>
+        )}
 
         {!cancelled && !awaiting && (
           <ol className="track">
