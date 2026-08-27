@@ -128,6 +128,16 @@ export default async function WheelPage() {
     ? false
     : !!(rvi as any)?.review_invite;
 
+  // Relance de conversion (lecture tolérante si migration 0066 absente)
+  const { data: cvn, error: cvnErr } = await admin
+    .from("wheel_configs")
+    .select("convert_nudge")
+    .eq("business_id", business.id)
+    .maybeSingle();
+  const convertNudge: boolean = cvnErr
+    ? false
+    : !!(cvn as any)?.convert_nudge;
+
   // « À la une » (lecture tolérante si migration 0055 absente)
   const { data: hl, error: hlErr } = await admin
     .from("wheel_configs")
@@ -166,6 +176,7 @@ export default async function WheelPage() {
         reengage_inactive_days: reengageInactiveDays,
         reengage_reward: reengageReward,
         review_invite: reviewInvite,
+        convert_nudge: convertNudge,
         ...highlight,
       }}
       initialPrizes={prizes ?? []}
