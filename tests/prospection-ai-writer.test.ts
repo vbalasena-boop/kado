@@ -37,6 +37,12 @@ describe("buildPrompt", () => {
     const { system } = buildPrompt(ctx);
     expect(system).toContain("https://cal.com/kado/15min");
   });
+
+  it("intègre l'extrait du site et interdit d'inventer au-delà", () => {
+    const { system, user } = buildPrompt({ ...ctx, siteText: "Brunch et café de spécialité, cours de latte art." });
+    expect(user).toContain("Brunch et café de spécialité");
+    expect(system.toLowerCase()).toContain("invente jamais");
+  });
 });
 
 describe("parseAiMessages", () => {

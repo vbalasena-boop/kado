@@ -61,17 +61,22 @@ export interface AiMessages {
 /** Construit les prompts (pur, testable). */
 export function buildPrompt(ctx: TemplateContext): { system: string; user: string } {
   const booking = bookingUrl(ctx);
+  const site = (ctx.siteText ?? "").trim();
   const facts = [
     `Nom du commerce : ${prettyName(ctx.name)}`,
     ctx.city ? `Ville : ${ctx.city}` : null,
     `Type : ${noun(ctx.category ?? null)}`,
     ctx.google_reviews_count != null ? `Avis Google : ${ctx.google_reviews_count}` : null,
+    site ? `Extrait de leur site (pour personnaliser, SANS rien inventer au-delà) :\n"""${site}"""` : null,
   ]
     .filter(Boolean)
     .join("\n");
 
   const system = [
     "Tu es un commercial B2B français qui prospecte des commerces de proximité pour Kado.",
+    site
+      ? "Un extrait du site du commerce est fourni : appuie-toi dessus pour glisser UN détail concret et juste (ce qu'il propose, sa spécialité) — n'invente jamais au-delà de l'extrait."
+      : "",
     "Kado : un jeu à scanner (QR code) en boutique qui transforme les clients en avis Google et en abonnés Instagram. 14 jours offerts, sans engagement.",
     "Tu écris des messages de prospection à froid COURTS, chaleureux, naturels et crédibles — jamais 'spammy'.",
     "Règles strictes :",

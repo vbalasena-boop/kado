@@ -2,6 +2,7 @@ import { z } from "zod";
 import { adminRoute } from "@/lib/api";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { aiWriterConfigured, writeMessagesWithAI } from "@/lib/prospection/ai-writer";
+import { fetchSiteExcerpt } from "@/lib/prospection/site-excerpt";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -18,6 +19,7 @@ type Row = {
   category: string | null;
   email: string | null;
   instagram_handle: string | null;
+  website: string | null;
   google_reviews_count: number | null;
 };
 
@@ -97,7 +99,7 @@ export const POST = adminRoute({
     // Candidats : contactables (statut non final) avec un email OU un Instagram.
     const { data, error } = await db
       .from("prospects")
-      .select("id, name, city, category, email, instagram_handle, google_reviews_count, score")
+      .select("id, name, city, category, email, instagram_handle, website, google_reviews_count, score")
       .in("status", ["new", "queued", "emailed", "dm_pending"])
       .or("email.not.is.null,instagram_handle.not.is.null")
       .order("score", { ascending: false, nullsFirst: false })
@@ -113,12 +115,15 @@ export const POST = adminRoute({
     let failed = 0;
     for (const p of batch) {
       try {
+        // Extrait du site (best-effort) pour personnaliser sans rien inventer.
+        const siteText = (await fetchSiteExcerpt(p.website).catch(() => null)) ?? undefined;
         const ai = await writeMessagesWithAI({
           name: p.name,
           city: p.city,
           category: p.category,
           google_reviews_count: p.google_reviews_count,
           seed: p.id,
+          siteText,
         });
         if (p.email) {
           await upsertDraft(db, p.id, "email", { subject: ai.subject, body: ai.body });

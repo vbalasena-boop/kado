@@ -24,6 +24,11 @@ export interface TemplateContext {
    * prise de RDV « par réponse » (le prospect répond avec ses créneaux).
    */
   bookingUrl?: string;
+  /**
+   * Extrait de texte du site du commerce (facultatif) — sert à la rédaction IA
+   * pour personnaliser sans rien inventer. Ignoré par les gabarits.
+   */
+  siteText?: string;
 }
 
 /** Lien de réservation effectif (contexte > variable d'env > aucun). */
