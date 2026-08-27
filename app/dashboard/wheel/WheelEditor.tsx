@@ -43,6 +43,7 @@ type Config = {
   reengage_inactive?: boolean | null;
   reengage_inactive_days?: number | null;
   reengage_reward?: boolean | null;
+  review_invite?: boolean | null;
   play_alerts?: boolean | null;
   monthly_draw?: boolean | null;
   monthly_draw_prize?: string | null;
@@ -619,6 +620,29 @@ export default function WheelEditor({
                       }
                     />
                   </label>
+                )}
+
+                {(config.review_url ?? "").trim() !== "" ? (
+                  <label className="toggle-field" style={{ marginTop: 6 }}>
+                    <input
+                      type="checkbox"
+                      checked={!!config.review_invite}
+                      onChange={(e) =>
+                        setConfig({ ...config, review_invite: e.target.checked })
+                      }
+                    />
+                    <span>
+                      <b>⭐ Inviter mes clients fidèles à laisser un avis</b> —
+                      un e-mail neutre, envoyé une seule fois aux clients ayant
+                      complété au moins une carte. <b>Aucune récompense liée à
+                      l'avis</b> (conforme aux règles Google).
+                    </span>
+                  </label>
+                ) : (
+                  <p className="muted" style={{ marginTop: 6 }}>
+                    Renseignez votre <b>lien d'avis Google</b> ci-dessus pour
+                    pouvoir inviter vos clients fidèles à laisser un avis.
+                  </p>
                 )}
 
                 <hr className="fid-sep" />
