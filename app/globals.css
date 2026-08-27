@@ -1124,6 +1124,36 @@ canvas#confetti {
   color: #6a6580;
   background: #efeaf9;
 }
+/* Taux de remise des récompenses */
+.rate-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.rate-pct {
+  font-size: 30px;
+  font-weight: 800;
+  color: #1a7f43;
+  line-height: 1;
+}
+.rate-bar {
+  background: #e9f2ec;
+  border-radius: 999px;
+  height: 10px;
+  overflow: hidden;
+}
+.rate-fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #34a853, #1a7f43);
+  transition: width 0.3s ease;
+}
+.rate-note {
+  margin: 10px 0 0;
+  font-size: 13px;
+}
 /* Editor */
 .editor {
   display: grid;

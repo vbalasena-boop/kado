@@ -6,6 +6,7 @@ import {
   loyaltyStatsFromRpc,
   redemptionRateOf,
   finalizePlayStats,
+  loyaltyRewardRate,
 } from "@/lib/dashboard-stats";
 
 const SINCE = "2026-08-01T00:00:00.000Z";
@@ -149,5 +150,17 @@ describe("finalizePlayStats", () => {
     expect(out.distribution).toEqual([["A", 1], ["B", 1]]);
     // entrée non mutée
     expect(input.distribution).toEqual([["B", 1], ["A", 1]]);
+  });
+});
+
+describe("loyaltyRewardRate", () => {
+  it("remises = débloquées − en attente, taux arrondi", () => {
+    expect(loyaltyRewardRate(10, 3)).toEqual({ redeemed: 7, rate: 70 });
+  });
+  it("aucune récompense → taux 0, jamais de division par zéro", () => {
+    expect(loyaltyRewardRate(0, 0)).toEqual({ redeemed: 0, rate: 0 });
+  });
+  it("borne à 0 si en attente incohérent (jamais négatif)", () => {
+    expect(loyaltyRewardRate(2, 5)).toEqual({ redeemed: 0, rate: 0 });
   });
 });
