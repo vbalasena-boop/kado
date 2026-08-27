@@ -9,8 +9,14 @@ import {
   loyaltyStatsFromRpc,
 } from "@/lib/dashboard-stats";
 import { avisMigrationNoticeNeeded } from "@/lib/wheel";
+import {
+  parseTrendRpc,
+  fillDailySeries,
+  monthToDateComparison,
+} from "@/lib/trend";
 import AvisMigrationBanner from "./AvisMigrationBanner";
 import ReferralPanel from "@/components/ReferralPanel";
+import TrendChart from "@/components/TrendChart";
 
 export const dynamic = "force-dynamic";
 
@@ -24,10 +30,16 @@ export default async function DashboardHome() {
   const showRoue = hasModule(business, "roue");
   const showFid = hasModule(business, "fidelite");
 
+  // Tendance : on remonte au 1er du mois PRÉCÉDENT pour pouvoir comparer les
+  // deux mois à période égale ; la série affichée reste sur 30 jours.
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const trendStart = new Date(todayIso.slice(0, 7) + "-01T00:00:00Z");
+  trendStart.setUTCMonth(trendStart.getUTCMonth() - 1);
+
   // Chemin normal : agrégats calculés côté SQL (RPC 0051), en parallèle. Un
   // REPLI JS (fonctions pures, chiffres identiques) prend le relais si la
   // migration 0051 n'est pas encore appliquée (rpc en erreur).
-  const [cfgRes, playRpc, leadsRes, loyRpc] = await Promise.all([
+  const [cfgRes, playRpc, leadsRes, loyRpc, trendRpc] = await Promise.all([
     admin
       .from("wheel_configs")
       .select("instagram_url, review_url, review_enabled, loyalty_enabled")
@@ -40,6 +52,12 @@ export default async function DashboardHome() {
       .eq("business_id", business.id),
     showFid
       ? admin.rpc("dashboard_loyalty_stats", { biz: business.id })
+      : Promise.resolve({ data: null, error: null }),
+    showRoue
+      ? admin.rpc("dashboard_play_trend", {
+          biz: business.id,
+          since: trendStart.toISOString(),
+        })
       : Promise.resolve({ data: null, error: null }),
   ]);
 
@@ -75,6 +93,15 @@ export default async function DashboardHome() {
       fidStats = computeLoyaltyStats(fidRows ?? []);
     }
   }
+
+  // Tendance des tours joués : série 30 jours + comparaison mensuelle. Rendu
+  // uniquement si la RPC 0059 répond (sinon on masque proprement le bloc).
+  const trendCounts =
+    showRoue && !trendRpc.error ? parseTrendRpc(trendRpc.data) : null;
+  const trendSeries = trendCounts ? fillDailySeries(trendCounts, todayIso, 30) : null;
+  const trendCompare = trendCounts
+    ? monthToDateComparison(trendCounts, todayIso)
+    : null;
 
   // --- Premiers pas (checklist d'installation) ---
   const hasLinks = !!(cfg?.instagram_url || cfg?.review_url);
@@ -356,6 +383,36 @@ export default async function DashboardHome() {
               </div>
             </div>
           </div>
+
+          {trendSeries && (
+            <div className="dash-card">
+              <h2>Activité des 30 derniers jours</h2>
+              {trendCompare && (
+                <div className="trend-compare">
+                  <b>{trendCompare.current}</b>
+                  <span className="muted">
+                    tours ce mois-ci (vs {trendCompare.previous} le mois
+                    dernier à la même date)
+                  </span>
+                  {trendCompare.deltaPct !== null && (
+                    <span
+                      className={`trend-delta ${
+                        trendCompare.deltaPct > 0
+                          ? "up"
+                          : trendCompare.deltaPct < 0
+                          ? "down"
+                          : "flat"
+                      }`}
+                    >
+                      {trendCompare.deltaPct > 0 ? "▲ +" : trendCompare.deltaPct < 0 ? "▼ " : ""}
+                      {trendCompare.deltaPct}%
+                    </span>
+                  )}
+                </div>
+              )}
+              <TrendChart series={trendSeries} label="tours" />
+            </div>
+          )}
 
           <div className="dash-card">
             <h2>Cadeaux distribués</h2>
