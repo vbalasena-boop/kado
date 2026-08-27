@@ -1063,6 +1063,67 @@ canvas#confetti {
   height: 100%;
   background: linear-gradient(90deg, #8b6cff, #6b3ff0);
 }
+/* Graphique de tendance (barres journalières) */
+.trend-chart {
+  width: 100%;
+  margin-top: 4px;
+}
+.trend-chart svg {
+  display: block;
+  height: auto;
+  overflow: visible;
+}
+.trend-bar {
+  fill: #1a73e8;
+}
+.trend-axis {
+  stroke: #c9c2dd;
+  stroke-width: 1;
+}
+.trend-grid {
+  stroke: #ece8f5;
+  stroke-width: 1;
+}
+.trend-gridlabel,
+.trend-tick {
+  fill: #8a83a0;
+  font-size: 11px;
+  font-family: inherit;
+}
+.trend-empty {
+  margin: 6px 0 0;
+  font-size: 14px;
+}
+.trend-compare {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+.trend-compare b {
+  font-size: 22px;
+  font-weight: 800;
+}
+.trend-delta {
+  font-weight: 700;
+  font-size: 13px;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.trend-delta.up {
+  color: #1a7f43;
+  background: #e6f4ea;
+}
+.trend-delta.down {
+  color: #b3261e;
+  background: #fce8e6;
+}
+.trend-delta.flat {
+  color: #6a6580;
+  background: #efeaf9;
+}
 /* Editor */
 .editor {
   display: grid;
