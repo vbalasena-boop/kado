@@ -55,7 +55,7 @@ export default async function ProspectionPage() {
   if (!error) {
     const { data: all } = await admin
       .from("prospects")
-      .select("status, email, instagram_handle")
+      .select("status, email, instagram_handle, city, category")
       .limit(5000);
 
     const startOfDay = new Date();
@@ -74,12 +74,38 @@ export default async function ProspectionPage() {
     const byStatus: Record<string, number> = {};
     let withEmail = 0;
     let withInstagram = 0;
+
+    // Regroupements pour l'analyse de conversion (par ville / par secteur).
+    const CONTACTED = new Set(["emailed", "dm_sent", "replied", "interested", "client"]);
+    const REPLIED = new Set(["replied", "interested", "client"]);
+    type Agg = { total: number; contacted: number; replied: number; clients: number };
+    const cityAgg: Record<string, Agg> = {};
+    const segAgg: Record<string, Agg> = {};
+    const bump = (map: Record<string, Agg>, key: string, s: string) => {
+      const a = (map[key] ??= { total: 0, contacted: 0, replied: 0, clients: 0 });
+      a.total++;
+      if (CONTACTED.has(s)) a.contacted++;
+      if (REPLIED.has(s)) a.replied++;
+      if (s === "client") a.clients++;
+    };
+
     for (const r of rows) {
       const s = r.status as ProspectStatus;
       byStatus[s] = (byStatus[s] ?? 0) + 1;
       if (r.email) withEmail++;
       if (r.instagram_handle) withInstagram++;
+      bump(cityAgg, ((r.city as string) || "—").trim() || "—", s);
+      bump(segAgg, (r.category as string) || "autre", s);
     }
+
+    const toRows = (map: Record<string, Agg>) =>
+      Object.entries(map)
+        .map(([key, a]) => ({ key, ...a }))
+        .filter((r) => r.contacted > 0) // on ne montre que ce qui a été contacté
+        .sort((a, b) => b.contacted - a.contacted)
+        .slice(0, 12);
+    const byCity = toRows(cityAgg);
+    const bySegment = toRows(segAgg);
     const countAll = async (type: string | string[]) => {
       const q = admin.from("prospect_events").select("*", { count: "exact", head: true });
       const res = Array.isArray(type) ? await q.in("type", type) : await q.eq("type", type);
@@ -142,6 +168,8 @@ export default async function ProspectionPage() {
       sentTotal,
       bouncedTotal,
       subjectPerf,
+      byCity,
+      bySegment,
     };
   }
 
