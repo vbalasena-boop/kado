@@ -718,7 +718,8 @@ export default function OrdersClient({
     const payload: Record<string, [string, string] | null> = {};
     for (const { key } of HOURS_DAYS) {
       const d = hoursDraft[key];
-      payload[key] = d.open && d.from < d.to ? [d.from, d.to] : null;
+      // from ≠ to : autorise un créneau à cheval sur minuit (ex. 18:00–01:00).
+      payload[key] = d.open && d.from !== d.to ? [d.from, d.to] : null;
     }
     try {
       const res = await fetch("/api/dashboard/order-hours", {
