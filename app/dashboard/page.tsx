@@ -7,6 +7,7 @@ import {
   computeLoyaltyStats,
   playStatsFromRpc,
   loyaltyStatsFromRpc,
+  loyaltyRewardRate,
 } from "@/lib/dashboard-stats";
 import { avisMigrationNoticeNeeded } from "@/lib/wheel";
 import {
@@ -46,7 +47,8 @@ export default async function DashboardHome() {
   // Chemin normal : agrégats calculés côté SQL (RPC 0051), en parallèle. Un
   // REPLI JS (fonctions pures, chiffres identiques) prend le relais si la
   // migration 0051 n'est pas encore appliquée (rpc en erreur).
-  const [cfgRes, playRpc, leadsRes, loyRpc, trendRpc, signupsRpc] = await Promise.all([
+  const [cfgRes, playRpc, leadsRes, loyRpc, trendRpc, signupsRpc, pendingRes] =
+    await Promise.all([
     admin
       .from("wheel_configs")
       .select("instagram_url, review_url, review_enabled, loyalty_enabled")
@@ -72,6 +74,15 @@ export default async function DashboardHome() {
           since: signupsStart.toISOString(),
         })
       : Promise.resolve({ data: null, error: null }),
+    // Récompenses en attente (comptage indexé) → taux de remise fiable, sans
+    // dépendre de la forme de la RPC d'agrégats.
+    showFid
+      ? admin
+          .from("loyalty_cards")
+          .select("*", { count: "exact", head: true })
+          .eq("business_id", business.id)
+          .eq("reward_ready", true)
+      : Promise.resolve({ count: null, error: null }),
   ]);
 
   const cfg = cfgRes.data;
@@ -106,6 +117,10 @@ export default async function DashboardHome() {
       fidStats = computeLoyaltyStats(fidRows ?? []);
     }
   }
+
+  // Taux de remise des récompenses : remises = débloquées − en attente.
+  const pendingRewards = pendingRes.error ? 0 : pendingRes.count ?? 0;
+  const reward = loyaltyRewardRate(fidStats.rewards, pendingRewards);
 
   // Tendance des tours joués : série 30 jours + comparaison mensuelle. Rendu
   // uniquement si la RPC 0059 répond (sinon on masque proprement le bloc).
@@ -501,6 +516,32 @@ export default async function DashboardHome() {
               </div>
             </div>
           </div>
+          {fidStats.rewards > 0 && (
+            <div className="dash-card">
+              <h2>Récompenses remises</h2>
+              <div className="rate-head">
+                <span className="rate-pct">{reward.rate}%</span>
+                <span className="muted">
+                  {reward.redeemed} récompense{reward.redeemed > 1 ? "s" : ""}{" "}
+                  remise{reward.redeemed > 1 ? "s" : ""} en caisse sur{" "}
+                  {fidStats.rewards} débloquée{fidStats.rewards > 1 ? "s" : ""}
+                  {pendingRewards > 0 && (
+                    <> · {pendingRewards} en attente</>
+                  )}
+                </span>
+              </div>
+              <div className="rate-bar" aria-hidden="true">
+                <span
+                  className="rate-fill"
+                  style={{ width: `${reward.rate}%` }}
+                />
+              </div>
+              <p className="muted rate-note">
+                Part des récompenses gagnées que vos clients sont réellement
+                venus chercher — un bon indicateur du retour en boutique.
+              </p>
+            </div>
+          )}
           {signupsSeries && (
             <div className="dash-card">
               <h2>Nouveaux clients fidélité par mois</h2>

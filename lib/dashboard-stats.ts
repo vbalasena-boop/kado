@@ -106,6 +106,25 @@ export type LoyaltyStatRow = {
 
 export type LoyaltyStats = { cards: number; stamps: number; rewards: number };
 
+/**
+ * Taux de remise des récompenses fidélité.
+ *
+ * Chaque carte ne porte qu'UNE récompense en attente à la fois (il faut la
+ * remettre avant d'en débloquer une nouvelle) : les récompenses remises valent
+ * donc « total débloqué − en attente », sans avoir besoin d'historiser chaque
+ * remise. Rétroactif et exact sur les données existantes.
+ */
+export function loyaltyRewardRate(
+  rewards: number,
+  pending: number
+): { redeemed: number; rate: number } {
+  const redeemed = Math.max(0, rewards - pending);
+  return {
+    redeemed,
+    rate: rewards > 0 ? Math.round((redeemed / rewards) * 100) : 0,
+  };
+}
+
 /** Agrégation JS de repli des stats fidélité (compte + sommes). */
 export function computeLoyaltyStats(rows: LoyaltyStatRow[]): LoyaltyStats {
   return {
