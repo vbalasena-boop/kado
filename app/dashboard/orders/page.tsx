@@ -128,11 +128,14 @@ export default async function OrdersPage() {
 
     // Toutes les commandes servies, pour les statistiques (2000 max).
     // Lecture tolérante : service_mode / notified_ready_at peuvent manquer.
+    // NB : on exclut aussi `awaiting_payment` (paiement en ligne jamais abouti)
+    // pour ne pas gonfler le CA avec de l'argent jamais encaissé.
     let { data: s, error: sErr } = (await db
       .from("orders")
       .select("items, total_cents, status, created_at, service_mode, notified_ready_at")
       .eq("business_id", business.id)
       .neq("status", "cancelled")
+      .neq("status", "awaiting_payment")
       .order("created_at", { ascending: false })
       .limit(2000)) as { data: any[] | null; error: any };
     if (sErr) {
@@ -141,6 +144,7 @@ export default async function OrdersPage() {
         .select("items, total_cents, status, created_at")
         .eq("business_id", business.id)
         .neq("status", "cancelled")
+        .neq("status", "awaiting_payment")
         .order("created_at", { ascending: false })
         .limit(2000)) as { data: any[] | null; error: any });
     }
