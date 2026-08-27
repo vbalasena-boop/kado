@@ -24,6 +24,7 @@ import {
   CONVERT_MAX_AGE_DAYS,
 } from "@/lib/convert-nudge";
 import { hardenExternalUrl } from "@/lib/wheel";
+import { enqueueEmail, drainEmailQueue } from "@/lib/email-queue";
 import { mapLimit } from "@/lib/async";
 import { setSystemState } from "@/lib/health";
 import { sendPushToClients } from "@/lib/push";
@@ -53,6 +54,7 @@ export async function GET(req: NextRequest) {
   }
 
   const db = getAdminClient();
+  const cronStartedAt = Date.now();
   const out = {
     reminders: 0,
     birthdays: 0,
@@ -64,7 +66,30 @@ export async function GET(req: NextRequest) {
     reengageInactive: 0,
     reviewInvites: 0,
     convertNudges: 0,
+    emailsSent: 0,
     errors: [] as string[],
+  };
+
+  // Envoi de masse : on ENFILE (file 0069) puis un drain envoie au rythme
+  // Resend. Repli : si la file n'existe pas (migration non appliquée), envoi
+  // direct — comportement inchangé. Renvoie true si pris en charge.
+  const queueOrSend = async (e: {
+    to: string;
+    subject: string;
+    html: string;
+    fromName?: string;
+    marketing?: boolean;
+    businessId?: string | null;
+  }): Promise<boolean> => {
+    if (await enqueueEmail(db, e)) return true;
+    const res = await sendEmail({
+      to: e.to,
+      subject: e.subject,
+      html: e.html,
+      fromName: e.fromName,
+      marketing: e.marketing,
+    });
+    return res.ok;
   };
 
   // ── 1. Relance fin d'essai (J-3) ────────────────────────────────
@@ -156,7 +181,8 @@ export async function GET(req: NextRequest) {
         const unsub = `${SITE}/api/unsubscribe?b=${c.business_id}&e=${encodeURIComponent(
           Buffer.from(c.email).toString("base64url")
         )}&t=${unsubToken(c.business_id, c.email)}`;
-        const res = await sendEmail({
+        const ok = await queueOrSend({
+          businessId: c.business_id,
           to: c.email,
           subject: `Joyeux anniversaire de la part de ${biz.name} ! 🎂`,
           fromName: `${biz.name} via Kado`,
@@ -171,7 +197,7 @@ export async function GET(req: NextRequest) {
             footnote: `Offre liée à votre carte de fidélité, valable une fois. <a href="${unsub}" style="color:#9a94b4;">Ne plus recevoir ces e-mails</a>`,
           }),
         });
-        if (res.ok) {
+        if (ok) {
           await db
             .from("loyalty_cards")
             .update({ birthday_sent_at: new Date().toISOString() })
@@ -236,7 +262,8 @@ export async function GET(req: NextRequest) {
           const unsub = `${SITE}/api/unsubscribe?b=${cfg.business_id}&e=${encodeURIComponent(
             Buffer.from(c.email).toString("base64url")
           )}&t=${unsubToken(cfg.business_id, c.email)}`;
-          const res = await sendEmail({
+          const ok = await queueOrSend({
+            businessId: cfg.business_id,
             to: c.email,
             subject: `Plus qu'un tampon chez ${biz.name} ! ${cfg.loyalty_reward_emoji || "🎁"}`,
             fromName: `${biz.name} via Kado`,
@@ -249,7 +276,7 @@ export async function GET(req: NextRequest) {
               footnote: `Message lié à votre carte de fidélité. <a href="${unsub}" style="color:#9a94b4;">Ne plus recevoir ces e-mails</a>`,
             }),
           });
-          if (res.ok) {
+          if (ok) {
             await db
               .from("loyalty_cards")
               .update({ nudge_almost_at: new Date().toISOString() })
@@ -317,7 +344,8 @@ export async function GET(req: NextRequest) {
           const unsub = `${SITE}/api/unsubscribe?b=${cfg.business_id}&e=${encodeURIComponent(
             Buffer.from(c.email).toString("base64url")
           )}&t=${unsubToken(cfg.business_id, c.email)}`;
-          const res = await sendEmail({
+          const ok = await queueOrSend({
+            businessId: cfg.business_id,
             to: c.email,
             subject: `On ne vous a pas vu·e chez ${biz.name} !`,
             fromName: `${biz.name} via Kado`,
@@ -330,7 +358,7 @@ export async function GET(req: NextRequest) {
               footnote: `Message lié à votre carte de fidélité. <a href="${unsub}" style="color:#9a94b4;">Ne plus recevoir ces e-mails</a>`,
             }),
           });
-          if (res.ok) {
+          if (ok) {
             await db
               .from("loyalty_cards")
               .update({ nudge_inactive_at: new Date().toISOString() })
@@ -396,7 +424,8 @@ export async function GET(req: NextRequest) {
           const unsub = `${SITE}/api/unsubscribe?b=${cfg.business_id}&e=${encodeURIComponent(
             Buffer.from(c.email).toString("base64url")
           )}&t=${unsubToken(cfg.business_id, c.email)}`;
-          const res = await sendEmail({
+          const ok = await queueOrSend({
+            businessId: cfg.business_id,
             to: c.email,
             subject: `Un petit avis pour ${biz.name} ?`,
             fromName: `${biz.name} via Kado`,
@@ -409,7 +438,7 @@ export async function GET(req: NextRequest) {
               footnote: `Message lié à votre carte de fidélité, envoyé une seule fois. <a href="${unsub}" style="color:#9a94b4;">Ne plus recevoir ces e-mails</a>`,
             }),
           });
-          if (res.ok) {
+          if (ok) {
             await db
               .from("loyalty_cards")
               .update({ review_invite_at: new Date().toISOString() })
@@ -498,7 +527,8 @@ export async function GET(req: NextRequest) {
           const unsub = `${SITE}/api/unsubscribe?b=${cfg.business_id}&e=${encodeURIComponent(
             Buffer.from(l.email).toString("base64url")
           )}&t=${unsubToken(cfg.business_id, l.email)}`;
-          const res = await sendEmail({
+          const ok = await queueOrSend({
+            businessId: cfg.business_id,
             to: l.email,
             subject: `Ouvrez votre carte de fidélité chez ${biz.name} 🎟️`,
             fromName: `${biz.name} via Kado`,
@@ -511,7 +541,7 @@ export async function GET(req: NextRequest) {
               footnote: `Message unique lié à votre passage chez ${shop}. <a href="${unsub}" style="color:#9a94b4;">Ne plus recevoir ces e-mails</a>`,
             }),
           });
-          if (res.ok) {
+          if (ok) {
             await db
               .from("leads")
               .update({ convert_nudge_at: new Date().toISOString() })
@@ -991,6 +1021,20 @@ export async function GET(req: NextRequest) {
     }
   } catch (e: any) {
     out.errors.push(`admin_stats: ${e?.message ?? "error"}`);
+  }
+
+  // ── 8. Drain de la file d'e-mails : on envoie ce qui a été enfilé, dans un
+  // budget de temps (≤ ~45 s depuis le début) pour tenir dans la fenêtre de
+  // 60 s. Le reste part au prochain passage / via le cron dédié. No-op si la
+  // file n'existe pas (0069 non appliquée).
+  try {
+    const drain = await drainEmailQueue(db, {
+      max: 800,
+      deadlineMs: cronStartedAt + 45_000,
+    });
+    out.emailsSent = drain.sent;
+  } catch (e: any) {
+    out.errors.push(`email_drain: ${e?.message ?? "error"}`);
   }
 
   // Heartbeat : prouve au contrôle de santé que le cron a bien tourné
