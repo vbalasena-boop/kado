@@ -18,6 +18,11 @@ import { unsubToken } from "@/lib/unsub";
 import { isAlmostNudgeEligible, isInactiveNudgeEligible } from "@/lib/reengage";
 import { recapDeltaLabel, parseRecapRows } from "@/lib/recap";
 import { isReviewInviteEligible } from "@/lib/review-invite";
+import {
+  isConvertNudgeEligible,
+  CONVERT_MIN_AGE_DAYS,
+  CONVERT_MAX_AGE_DAYS,
+} from "@/lib/convert-nudge";
 import { hardenExternalUrl } from "@/lib/wheel";
 import { mapLimit } from "@/lib/async";
 import { setSystemState } from "@/lib/health";
@@ -58,6 +63,7 @@ export async function GET(req: NextRequest) {
     reengageAlmost: 0,
     reengageInactive: 0,
     reviewInvites: 0,
+    convertNudges: 0,
     errors: [] as string[],
   };
 
@@ -415,6 +421,108 @@ export async function GET(req: NextRequest) {
     }
   } catch (e: any) {
     out.errors.push(`review_invite: ${e?.message ?? "error"}`);
+  }
+
+  // ── 2e. Relance de conversion « a joué, pas de carte » ──────────
+  // Commerces ayant activé `convert_nudge` + fidélité : on invite les joueurs
+  // ayant laissé leur e-mail (lead) mais sans carte de fidélité à en ouvrir une.
+  // E-mail unique, respecte la désinscription.
+  const CONVERT_NUDGE_MAX_PER_RUN = 200; // garde-fou anti-rafale
+  try {
+    const { data: ccfgs, error: ccErr } = await db
+      .from("wheel_configs")
+      .select("business_id")
+      .eq("convert_nudge", true)
+      .eq("loyalty_enabled", true);
+    if (ccErr) {
+      // Colonne 0066 absente → fonctionnalité pas déployée : on ignore.
+      if (!isMissingColumnError(ccErr)) {
+        out.errors.push(`convert_nudge: ${ccErr.message}`);
+      }
+    } else if ((ccfgs ?? []).length) {
+      const ids = [...new Set((ccfgs as any[]).map((c) => c.business_id))];
+      const { data: bizs } = await db
+        .from("businesses")
+        .select("id, name, slug, status")
+        .in("id", ids);
+      const bizBy = new Map((bizs ?? []).map((b: any) => [b.id, b]));
+      const nowMs = Date.now();
+      const minAgeIso = new Date(
+        nowMs - CONVERT_MIN_AGE_DAYS * 864e5
+      ).toISOString(); // ≥ 3 j
+      const maxAgeIso = new Date(
+        nowMs - CONVERT_MAX_AGE_DAYS * 864e5
+      ).toISOString(); // ≤ 45 j
+
+      for (const cfg of ccfgs as any[]) {
+        const biz: any = bizBy.get(cfg.business_id);
+        if (!biz || biz.status !== "active") continue;
+
+        const { data: leads } = await db
+          .from("leads")
+          .select("id, email, unsubscribed_at, convert_nudge_at, created_at")
+          .eq("business_id", cfg.business_id)
+          .is("unsubscribed_at", null)
+          .is("convert_nudge_at", null)
+          .not("email", "is", null)
+          .lte("created_at", minAgeIso)
+          .gte("created_at", maxAgeIso)
+          .limit(CONVERT_NUDGE_MAX_PER_RUN * 2);
+
+        const candidates = (leads ?? []).filter((l: any) =>
+          isConvertNudgeEligible(l, nowMs)
+        );
+        if (!candidates.length) continue;
+
+        // Exclut les leads ayant DÉJÀ une carte de fidélité (comparaison
+        // insensible à la casse : les cartes stockent l'e-mail en minuscules).
+        const emailsLower = [
+          ...new Set(candidates.map((c: any) => c.email.toLowerCase())),
+        ];
+        const { data: cards } = await db
+          .from("loyalty_cards")
+          .select("email")
+          .eq("business_id", cfg.business_id)
+          .in("email", emailsLower);
+        const hasCard = new Set(
+          (cards ?? []).map((c: any) => (c.email || "").toLowerCase())
+        );
+
+        const eligible = candidates
+          .filter((c: any) => !hasCard.has(c.email.toLowerCase()))
+          .slice(0, CONVERT_NUDGE_MAX_PER_RUN);
+        const shop = escapeHtml(biz.name || "votre commerce");
+        const cardUrl = `${SITE}/${biz.slug}/fidelite`;
+
+        await mapLimit(eligible, 5, async (l: any) => {
+          const unsub = `${SITE}/api/unsubscribe?b=${cfg.business_id}&e=${encodeURIComponent(
+            Buffer.from(l.email).toString("base64url")
+          )}&t=${unsubToken(cfg.business_id, l.email)}`;
+          const res = await sendEmail({
+            to: l.email,
+            subject: `Ouvrez votre carte de fidélité chez ${biz.name} 🎟️`,
+            fromName: `${biz.name} via Kado`,
+            marketing: true,
+            html: emailLayout({
+              preview: "Cumulez des récompenses à chaque visite.",
+              heading: "Et si vous cumuliez des récompenses ? 🎟️",
+              emoji: "🎟️",
+              bodyHtml: `Vous avez récemment joué chez <b>${shop}</b> — merci&nbsp;! Saviez-vous qu'il existe une <b>carte de fidélité</b> ? Ouvrez la vôtre en quelques secondes et gagnez des récompenses à chaque visite.<br><br><a href="${cardUrl}" style="display:inline-block;background:linear-gradient(135deg,#ff6b4a,#ff4e87);color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:12px;">Ouvrir ma carte de fidélité</a>`,
+              footnote: `Message unique lié à votre passage chez ${shop}. <a href="${unsub}" style="color:#9a94b4;">Ne plus recevoir ces e-mails</a>`,
+            }),
+          });
+          if (res.ok) {
+            await db
+              .from("leads")
+              .update({ convert_nudge_at: new Date().toISOString() })
+              .eq("id", l.id);
+            out.convertNudges++;
+          }
+        });
+      }
+    }
+  } catch (e: any) {
+    out.errors.push(`convert_nudge: ${e?.message ?? "error"}`);
   }
 
   // ── 3a. Campagnes programmées arrivées à échéance ───────────────

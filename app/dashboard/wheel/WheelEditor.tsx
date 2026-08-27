@@ -44,6 +44,7 @@ type Config = {
   reengage_inactive_days?: number | null;
   reengage_reward?: boolean | null;
   review_invite?: boolean | null;
+  convert_nudge?: boolean | null;
   play_alerts?: boolean | null;
   monthly_draw?: boolean | null;
   monthly_draw_prize?: string | null;
@@ -1049,6 +1050,25 @@ export default function WheelEditor({
                       <b>🎉 E-mail « récompense débloquée »</b> — quand un client
                       complète sa carte, il reçoit un e-mail de félicitations avec
                       le code de sa récompense à présenter en caisse.
+                    </span>
+                  </label>
+
+                  <label className="toggle-field" style={{ marginTop: 6 }}>
+                    <input
+                      type="checkbox"
+                      checked={!!config.convert_nudge}
+                      onChange={(e) =>
+                        setConfig({
+                          ...config,
+                          convert_nudge: e.target.checked,
+                        })
+                      }
+                    />
+                    <span>
+                      <b>🎟️ Inviter les joueurs à ouvrir leur carte</b> — un
+                      joueur qui a laissé son e-mail mais n'a pas de carte de
+                      fidélité reçoit une invitation (une seule fois) à en
+                      ouvrir une.
                     </span>
                   </label>
 
