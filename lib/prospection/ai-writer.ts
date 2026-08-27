@@ -33,6 +33,23 @@ function model(): string {
   return (process.env.PROSPECT_AI_MODEL || DEFAULT_MODEL).trim();
 }
 
+// --- Tonalité des messages (réglable) ---
+export const AI_TONES = ["equilibre", "direct", "chaleureux", "court"] as const;
+export type AiTone = (typeof AI_TONES)[number];
+
+const TONE_RULE: Record<AiTone, string> = {
+  equilibre: "Ton équilibré : professionnel ET chaleureux, naturel.",
+  direct: "Ton direct et efficace : droit au but, phrases courtes, une idée par phrase, pas de fioritures.",
+  chaleureux: "Ton chaleureux et humain : bienveillant et proche, quelques mots sympathiques (sans excès ni familiarité déplacée).",
+  court: "Ton ultra court : l'email fait 45-60 mots MAX, l'essentiel seulement ; le DM 30-40 mots.",
+};
+
+/** Normalise une valeur de ton (ou l'env) vers un ton connu. Défaut : équilibré. */
+export function normalizeTone(value?: string | null): AiTone {
+  const v = (value ?? process.env.PROSPECT_AI_TONE ?? "").trim().toLowerCase();
+  return (AI_TONES as readonly string[]).includes(v) ? (v as AiTone) : "equilibre";
+}
+
 const SEGMENT_NOUN: Record<ProspectSegment, string> = {
   resto: "restaurant / bar / café",
   beaute: "salon de beauté / coiffure",
@@ -74,6 +91,7 @@ export function buildPrompt(ctx: TemplateContext): { system: string; user: strin
 
   const system = [
     "Tu es un commercial B2B français qui prospecte des commerces de proximité pour Kado.",
+    TONE_RULE[normalizeTone(ctx.tone)],
     site
       ? "Un extrait du site du commerce est fourni : appuie-toi dessus pour glisser UN détail concret et juste (ce qu'il propose, sa spécialité) — n'invente jamais au-delà de l'extrait."
       : "",
@@ -240,6 +258,7 @@ export function buildFollowupPrompt(
   const system = [
     "Tu es un commercial B2B français qui relance des commerces de proximité pour Kado.",
     "Kado : un jeu à scanner (QR code) en boutique qui transforme les clients en avis Google et en abonnés Instagram. 14 jours offerts, sans engagement.",
+    TONE_RULE[normalizeTone(ctx.tone)],
     stepRule,
     "Règles strictes :",
     "- Vouvoiement.",

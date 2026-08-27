@@ -29,6 +29,8 @@ export interface TemplateContext {
    * pour personnaliser sans rien inventer. Ignoré par les gabarits.
    */
   siteText?: string;
+  /** Tonalité souhaitée pour la rédaction IA (equilibre|direct|chaleureux|court). Ignoré par les gabarits. */
+  tone?: string;
 }
 
 /** Lien de réservation effectif (contexte > variable d'env > aucun). */

@@ -1,14 +1,19 @@
 import { z } from "zod";
 import { adminRoute } from "@/lib/api";
 import { getAdminClient } from "@/lib/supabase/admin";
-import { aiWriterConfigured, writeMessagesWithAI } from "@/lib/prospection/ai-writer";
+import { aiWriterConfigured, writeMessagesWithAI, AI_TONES } from "@/lib/prospection/ai-writer";
 import { fetchSiteExcerpt } from "@/lib/prospection/site-excerpt";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const schema = z.object({ limit: z.number().int().min(1).max(20).optional() }).optional();
+const schema = z
+  .object({
+    limit: z.number().int().min(1).max(20).optional(),
+    tone: z.enum(AI_TONES).optional(),
+  })
+  .optional();
 
 type Db = ReturnType<typeof getAdminClient>;
 
@@ -124,6 +129,7 @@ export const POST = adminRoute({
           google_reviews_count: p.google_reviews_count,
           seed: p.id,
           siteText,
+          tone: body?.tone,
         });
         if (p.email) {
           await upsertDraft(db, p.id, "email", { subject: ai.subject, body: ai.body });
