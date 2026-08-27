@@ -16,6 +16,7 @@ import {
 } from "@/lib/campaigns";
 import { unsubToken } from "@/lib/unsub";
 import { isAlmostNudgeEligible, isInactiveNudgeEligible } from "@/lib/reengage";
+import { recapDeltaLabel } from "@/lib/recap";
 import { mapLimit } from "@/lib/async";
 import { setSystemState } from "@/lib/health";
 import { sendPushToClients } from "@/lib/push";
@@ -494,6 +495,7 @@ export async function GET(req: NextRequest) {
     const isMonday = new Date().getUTCDay() === 1;
     if (isMonday) {
       const weekAgo = new Date(Date.now() - 7 * 864e5).toISOString();
+      const twoWeeksAgo = new Date(Date.now() - 14 * 864e5).toISOString();
       const fiveDaysAgo = new Date(Date.now() - 5 * 864e5).toISOString();
       const { data: actives, error } = await db
         .from("businesses")
@@ -510,6 +512,9 @@ export async function GET(req: NextRequest) {
           { count: leads },
           { count: fidNew },
           { count: redeemed },
+          { count: prevTours },
+          { count: prevLeads },
+          { count: prevFid },
         ] = await Promise.all([
           db
             .from("plays")
@@ -532,6 +537,25 @@ export async function GET(req: NextRequest) {
             .eq("business_id", biz.id)
             .not("redeemed_at", "is", null)
             .gte("redeemed_at", weekAgo),
+          // Semaine PRÉCÉDENTE (J-14 → J-7) pour la comparaison.
+          db
+            .from("plays")
+            .select("*", { count: "exact", head: true })
+            .eq("business_id", biz.id)
+            .gte("created_at", twoWeeksAgo)
+            .lt("created_at", weekAgo),
+          db
+            .from("leads")
+            .select("*", { count: "exact", head: true })
+            .eq("business_id", biz.id)
+            .gte("created_at", twoWeeksAgo)
+            .lt("created_at", weekAgo),
+          db
+            .from("loyalty_cards")
+            .select("*", { count: "exact", head: true })
+            .eq("business_id", biz.id)
+            .gte("created_at", twoWeeksAgo)
+            .lt("created_at", weekAgo),
         ]);
 
         const tours = plays?.length ?? 0;
@@ -543,6 +567,15 @@ export async function GET(req: NextRequest) {
         const echanges = redeemed ?? 0;
         if (tours + emails + fid === 0) return; // rien à raconter
 
+        // Comparaison à la semaine précédente (fragment discret par indicateur).
+        const dTours = recapDeltaLabel(tours, prevTours ?? 0);
+        const dEmails = recapDeltaLabel(emails, prevLeads ?? 0);
+        const dFid = recapDeltaLabel(fid, prevFid ?? 0);
+        const deltaCell = (d: string | null) =>
+          d
+            ? `<span style="font-size:12px;color:#8a83a0;">&nbsp;${d}</span>`
+            : "";
+
         const { email } = await getOwnerContact(db, biz.id);
         if (!email) return;
 
@@ -553,7 +586,7 @@ export async function GET(req: NextRequest) {
             preview: "Le résumé d'activité de votre commerce.",
             heading: "Votre semaine en un coup d'œil",
             emoji: "📊",
-            bodyHtml: `Bonjour,<br><br>Voici l'activité de <b>${biz.name}</b> ces 7 derniers jours&nbsp;:<br><br><table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;font-size:15px;line-height:2;"><tr><td>🎡 Parties jouées</td><td align="right"><b>${tours}</b></td></tr><tr><td>🎁 Cadeaux gagnés</td><td align="right"><b>${gagnes}</b></td></tr><tr><td>🛍️ Cadeaux échangés en caisse</td><td align="right"><b>${echanges}</b></td></tr><tr><td>📧 E-mails clients capturés</td><td align="right"><b>${emails}</b></td></tr><tr><td>🎟️ Nouvelles cartes de fidélité</td><td align="right"><b>${fid}</b></td></tr></table><br><a href="${SITE}/dashboard" style="display:inline-block;background:linear-gradient(135deg,#ff6b4a,#ff4e87);color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:12px;">Voir mon tableau de bord</a>`,
+            bodyHtml: `Bonjour,<br><br>Voici l'activité de <b>${biz.name}</b> ces 7 derniers jours&nbsp;<span style="color:#8a83a0;">(avec l'évolution vs la semaine précédente)</span>&nbsp;:<br><br><table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;font-size:15px;line-height:2;"><tr><td>🎡 Parties jouées</td><td align="right"><b>${tours}</b>${deltaCell(dTours)}</td></tr><tr><td>🎁 Cadeaux gagnés</td><td align="right"><b>${gagnes}</b></td></tr><tr><td>🛍️ Cadeaux échangés en caisse</td><td align="right"><b>${echanges}</b></td></tr><tr><td>📧 E-mails clients capturés</td><td align="right"><b>${emails}</b>${deltaCell(dEmails)}</td></tr><tr><td>🎟️ Nouvelles cartes de fidélité</td><td align="right"><b>${fid}</b>${deltaCell(dFid)}</td></tr></table><br><a href="${SITE}/dashboard" style="display:inline-block;background:linear-gradient(135deg,#ff6b4a,#ff4e87);color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:12px;">Voir mon tableau de bord</a>`,
             footnote:
               "Astuce : plus votre affiche QR est visible, plus vos clients jouent.",
           }),
