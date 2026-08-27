@@ -60,23 +60,32 @@ export const POST = publicRoute({
       return Response.json({ error: "disabled" }, { status: 403 });
     }
 
-    // Numéro du jour (remise à zéro chaque jour) — lecture tolérante.
-    const startOfDay = new Date();
-    startOfDay.setUTCHours(0, 0, 0, 0);
+    // Numéro du jour (remis à zéro chaque jour). Attribution ATOMIQUE via RPC
+    // (0067) : deux clients simultanés ne peuvent pas obtenir le même numéro.
     let number: number | null = null;
-    try {
-      const { data: last, error } = await db
-        .from("orders")
-        .select("buzzer_no")
-        .eq("business_id", (biz as any).id)
-        .gte("created_at", startOfDay.toISOString())
-        .not("buzzer_no", "is", null)
-        .order("buzzer_no", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (!error) number = (((last as any)?.buzzer_no as number) ?? 0) + 1;
-    } catch {
-      number = null; // colonne absente
+    const { data: rpcNo, error: rpcErr } = await db.rpc("next_buzzer_no", {
+      biz: (biz as any).id,
+    });
+    if (!rpcErr && typeof rpcNo === "number") {
+      number = rpcNo;
+    } else {
+      // Repli pré-migration (0067 non appliquée) : max+1, non atomique.
+      const startOfDay = new Date();
+      startOfDay.setUTCHours(0, 0, 0, 0);
+      try {
+        const { data: last, error } = await db
+          .from("orders")
+          .select("buzzer_no")
+          .eq("business_id", (biz as any).id)
+          .gte("created_at", startOfDay.toISOString())
+          .not("buzzer_no", "is", null)
+          .order("buzzer_no", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (!error) number = (((last as any)?.buzzer_no as number) ?? 0) + 1;
+      } catch {
+        number = null; // colonne absente
+      }
     }
 
     const code = pickupCode();
