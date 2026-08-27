@@ -42,6 +42,7 @@ type Config = {
   reengage_almost?: boolean | null;
   reengage_inactive?: boolean | null;
   reengage_inactive_days?: number | null;
+  reengage_reward?: boolean | null;
   play_alerts?: boolean | null;
   monthly_draw?: boolean | null;
   monthly_draw_prize?: string | null;
@@ -1008,6 +1009,24 @@ export default function WheelEditor({
                       />
                     </label>
                   )}
+
+                  <label className="toggle-field" style={{ marginTop: 6 }}>
+                    <input
+                      type="checkbox"
+                      checked={!!config.reengage_reward}
+                      onChange={(e) =>
+                        setConfig({
+                          ...config,
+                          reengage_reward: e.target.checked,
+                        })
+                      }
+                    />
+                    <span>
+                      <b>🎉 E-mail « récompense débloquée »</b> — quand un client
+                      complète sa carte, il reçoit un e-mail de félicitations avec
+                      le code de sa récompense à présenter en caisse.
+                    </span>
+                  </label>
 
                   <label className="toggle-field" style={{ marginTop: 6 }}>
                     <input
