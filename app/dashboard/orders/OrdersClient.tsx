@@ -197,6 +197,7 @@ const HOURS_DAYS: { key: string; label: string }[] = [
 
 export default function OrdersClient({
   slug,
+  shopName = "",
   products,
   orders,
   stats,
@@ -207,6 +208,7 @@ export default function OrdersClient({
   onlinePayment = false,
 }: {
   slug: string;
+  shopName?: string;
   products: Product[];
   orders: Order[];
   stats: OrderStats;
@@ -241,12 +243,17 @@ export default function OrdersClient({
   const [counterQr, setCounterQr] = useState<{ url: string; qr: string | null } | null>(
     null
   );
-  const [numberTicket, setNumberTicket] = useState<number | null>(null);
+  const [numberTicket, setNumberTicket] = useState<{
+    number: number;
+    code: string;
+    qr: string | null;
+    time: string;
+  } | null>(null);
   const [numberBusy, setNumberBusy] = useState(false);
   const [copied, setCopied] = useState(false);
 
   // « Donner un numéro » : pour un client SANS téléphone. Génère un numéro
-  // atomique côté serveur et l'affiche en grand à lire au client.
+  // atomique côté serveur, l'affiche en grand et prépare un ticket imprimable.
   async function giveNumber() {
     setNumberBusy(true);
     try {
@@ -257,7 +264,26 @@ export default function OrdersClient({
       });
       const d = await res.json().catch(() => ({}));
       if (res.ok && typeof d.number === "number") {
-        setNumberTicket(d.number);
+        // QR facultatif vers le suivi (utile si le client a finalement un tel).
+        let qr: string | null = null;
+        try {
+          const { default: QRCode } = await import("qrcode");
+          qr = await QRCode.toDataURL(
+            `${window.location.origin}/${slug}/suivi/${d.code}`,
+            { width: 180, margin: 1 }
+          );
+        } catch {
+          /* QR facultatif */
+        }
+        setNumberTicket({
+          number: d.number,
+          code: d.code,
+          qr,
+          time: new Date().toLocaleTimeString("fr-FR", {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        });
         router.refresh();
       } else {
         setMsg("Impossible de générer un numéro. Réessayez.");
@@ -1160,27 +1186,43 @@ export default function OrdersClient({
         </div>
       )}
 
-      {/* ---- Numéro donné à un client sans téléphone ---- */}
+      {/* ---- Numéro donné à un client sans téléphone (ticket imprimable) ---- */}
       {numberTicket != null && (
         <div className="pos-modal" onClick={() => setNumberTicket(null)}>
           <div className="pos-modal-box" onClick={(e) => e.stopPropagation()}>
-            <div className="counter-print" style={{ textAlign: "center" }}>
-              <p className="muted" style={{ margin: "0 0 4px" }}>
-                Numéro du client
-              </p>
-              <div className="give-number">{numberTicket}</div>
-              <p>
-                Communiquez ce numéro au client, puis appelez-le à voix haute
-                quand sa commande est prête. Il apparaît dans votre liste
-                ci-dessous.
-              </p>
+            {/* Ticket : format étroit type imprimante thermique (58/80 mm). */}
+            <div className="num-ticket">
+              {shopName && <div className="num-ticket-shop">{shopName}</div>}
+              <div className="num-ticket-label">Votre numéro</div>
+              <div className="num-ticket-no">{numberTicket.number}</div>
+              {numberTicket.qr && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={numberTicket.qr}
+                  alt="Suivi"
+                  className="num-ticket-qr"
+                />
+              )}
+              <div className="num-ticket-foot">
+                {numberTicket.time} · suivez en scannant le QR
+              </div>
             </div>
-            <button
-              className="btn-secondary"
-              onClick={() => setNumberTicket(null)}
-            >
-              Fermer
-            </button>
+            <p className="muted" style={{ fontSize: 12.5, textAlign: "center" }}>
+              Communiquez ce numéro au client et appelez-le à voix haute quand
+              c'est prêt. Vous pouvez imprimer le ticket sur une imprimante
+              thermique.
+            </p>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button className="btn" onClick={() => window.print()}>
+                🖨️ Imprimer le ticket
+              </button>
+              <button
+                className="btn-secondary"
+                onClick={() => setNumberTicket(null)}
+              >
+                Fermer
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -225,6 +225,7 @@ export default async function OrdersPage() {
   return (
     <OrdersClient
       slug={business.slug}
+      shopName={business.name}
       products={products}
       orders={orders}
       stats={stats}
