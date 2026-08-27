@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { isAdminEmail } from "@/lib/admin-guard";
+import AdminNav from "./AdminNav";
 
 export const dynamic = "force-dynamic";
 
@@ -44,6 +45,7 @@ export default async function AdminLayout({
           </form>
         </div>
       </header>
+      <AdminNav />
       <main className="dash-main">{children}</main>
     </div>
   );
