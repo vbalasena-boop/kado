@@ -101,6 +101,18 @@ export type Stats = {
   bouncedTotal: number;
   /** Performance par variante d'objet : envoyés vs réponses. */
   subjectPerf: { label: string; sent: number; replied: number }[];
+  /** Conversion par ville : contactés / réponses / clients. */
+  byCity: ConversionRow[];
+  /** Conversion par secteur : contactés / réponses / clients. */
+  bySegment: ConversionRow[];
+};
+
+export type ConversionRow = {
+  key: string;
+  total: number;
+  contacted: number;
+  replied: number;
+  clients: number;
 };
 
 export default function ProspectionClient({
@@ -607,6 +619,7 @@ export default function ProspectionClient({
 
       {stats && <StatsBand stats={stats} />}
       {stats && <SubjectPerf perf={stats.subjectPerf} />}
+      {stats && <ConversionTables byCity={stats.byCity} bySegment={stats.bySegment} />}
 
       {migrationMissing && (
         <div
@@ -1094,6 +1107,78 @@ function DmBadge({ p }: { p: ProspectRow }) {
   if (p.status === "dm_pending") return <Pill text="⏳ En file" bg="#fff4e0" color="#a86b00" />;
   if (p.instagram_handle) return <Pill text="À envoyer" bg="#eef0f3" color="#555" title="Dans la file Instagram" />;
   return <Pill {...PILL.none} title="Pas de compte Instagram" />;
+}
+
+/** Tableaux de conversion par ville et par secteur (taux de réponse). */
+function ConversionTables({
+  byCity,
+  bySegment,
+}: {
+  byCity: ConversionRow[];
+  bySegment: ConversionRow[];
+}) {
+  if (byCity.length === 0 && bySegment.length === 0) return null;
+
+  const Table = ({ title, rows, labelFor }: { title: string; rows: ConversionRow[]; labelFor: (k: string) => string }) => {
+    if (rows.length === 0) return null;
+    // Meilleur taux parmi les lignes assez contactées (fiabilité).
+    const eligible = rows.filter((r) => r.contacted >= 5);
+    const best = eligible.length
+      ? eligible.reduce((a, b) => (b.replied / b.contacted > a.replied / a.contacted ? b : a))
+      : null;
+    return (
+      <div style={{ flex: "1 1 320px", minWidth: 280 }}>
+        <h4 style={{ margin: "0 0 6px" }}>{title}</h4>
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
+            <thead>
+              <tr style={{ textAlign: "left", borderBottom: "2px solid #eee" }}>
+                <th style={th}>{title.includes("ville") ? "Ville" : "Secteur"}</th>
+                <th style={th}>Contactés</th>
+                <th style={th}>Réponses</th>
+                <th style={th}>Taux</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => {
+                const rate = r.contacted > 0 ? Math.round((r.replied / r.contacted) * 100) : 0;
+                const isBest = Boolean(best && r.key === best.key && r.contacted >= 5);
+                return (
+                  <tr key={r.key} style={{ borderBottom: "1px solid #f0f0f0", background: isBest ? "#e6f4ea" : undefined }}>
+                    <td style={td}>{labelFor(r.key)} {isBest && "🏆"}</td>
+                    <td style={td}>{r.contacted}</td>
+                    <td style={td}>{r.replied}{r.clients ? ` (${r.clients} client${r.clients > 1 ? "s" : ""})` : ""}</td>
+                    <td style={td}>{rate}%</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div style={{ border: "1px solid #eee", borderRadius: 10, padding: 14, margin: "0 0 16px" }}>
+      <h3 style={{ margin: "0 0 2px" }}>📈 Conversion par ville & secteur</h3>
+      <p style={{ color: "#666", marginTop: 0, fontSize: 13 }}>
+        Où tes efforts convertissent le mieux (réponses / contactés). Concentre-toi
+        sur les 🏆.
+      </p>
+      <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
+        <Table title="Par ville" rows={byCity} labelFor={(k) => k} />
+        <Table
+          title="Par secteur"
+          rows={bySegment}
+          labelFor={(k) => SEGMENT_LABEL[k as ProspectSegment] ?? k}
+        />
+      </div>
+      <p style={{ color: "#999", fontSize: 12, marginBottom: 0 }}>
+        Un taux n'est fiable qu'à partir de ~10 contactés. 🏆 = meilleur taux à ce stade.
+      </p>
+    </div>
+  );
 }
 
 /** Tableau « Performance par objet » : taux de réponse par variante d'objet. */
