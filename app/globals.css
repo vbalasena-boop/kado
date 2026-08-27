@@ -5484,6 +5484,14 @@ html { scroll-behavior: smooth; }
   font-weight: 600;
   opacity: 0.8;
 }
+/* Numéro donné à un client sans téléphone (grand, lisible à distance) */
+.give-number {
+  font-size: clamp(80px, 34vw, 160px);
+  font-weight: 800;
+  line-height: 1;
+  color: var(--g-blue, #1a73e8);
+  margin: 4px 0 10px;
+}
 /* Carte commande « bipeur » côté commerçant */
 .order-buzznum {
   background: #17092e; color: #fff; font-weight: 800; font-size: 15px;

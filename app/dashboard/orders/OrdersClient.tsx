@@ -241,7 +241,33 @@ export default function OrdersClient({
   const [counterQr, setCounterQr] = useState<{ url: string; qr: string | null } | null>(
     null
   );
+  const [numberTicket, setNumberTicket] = useState<number | null>(null);
+  const [numberBusy, setNumberBusy] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  // « Donner un numéro » : pour un client SANS téléphone. Génère un numéro
+  // atomique côté serveur et l'affiche en grand à lire au client.
+  async function giveNumber() {
+    setNumberBusy(true);
+    try {
+      const res = await fetch("/api/dashboard/orders/ticket", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      });
+      const d = await res.json().catch(() => ({}));
+      if (res.ok && typeof d.number === "number") {
+        setNumberTicket(d.number);
+        router.refresh();
+      } else {
+        setMsg("Impossible de générer un numéro. Réessayez.");
+      }
+    } catch {
+      setMsg("Connexion impossible.");
+    } finally {
+      setNumberBusy(false);
+    }
+  }
   const orderLink =
     typeof window !== "undefined"
       ? `${window.location.origin}/${slug}/commander`
@@ -983,6 +1009,13 @@ export default function OrdersClient({
             </button>
             <button
               className="btn scan-open"
+              onClick={giveNumber}
+              disabled={numberBusy}
+            >
+              {numberBusy ? "…" : "🔢 Donner un numéro (sans téléphone)"}
+            </button>
+            <button
+              className="btn scan-open"
               onClick={() => {
                 setPosResult(null);
                 setPosOpen((v) => !v);
@@ -1123,6 +1156,31 @@ export default function OrdersClient({
                 Fermer
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ---- Numéro donné à un client sans téléphone ---- */}
+      {numberTicket != null && (
+        <div className="pos-modal" onClick={() => setNumberTicket(null)}>
+          <div className="pos-modal-box" onClick={(e) => e.stopPropagation()}>
+            <div className="counter-print" style={{ textAlign: "center" }}>
+              <p className="muted" style={{ margin: "0 0 4px" }}>
+                Numéro du client
+              </p>
+              <div className="give-number">{numberTicket}</div>
+              <p>
+                Communiquez ce numéro au client, puis appelez-le à voix haute
+                quand sa commande est prête. Il apparaît dans votre liste
+                ci-dessous.
+              </p>
+            </div>
+            <button
+              className="btn-secondary"
+              onClick={() => setNumberTicket(null)}
+            >
+              Fermer
+            </button>
           </div>
         </div>
       )}
