@@ -12,6 +12,8 @@ import { avisMigrationNoticeNeeded } from "@/lib/wheel";
 import {
   parseTrendRpc,
   fillDailySeries,
+  fillMonthlySeries,
+  aggregateByMonth,
   monthToDateComparison,
 } from "@/lib/trend";
 import AvisMigrationBanner from "./AvisMigrationBanner";
@@ -36,10 +38,15 @@ export default async function DashboardHome() {
   const trendStart = new Date(todayIso.slice(0, 7) + "-01T00:00:00Z");
   trendStart.setUTCMonth(trendStart.getUTCMonth() - 1);
 
+  // Tendance fidélité : 12 mois glissants (graphique mensuel) — on part du 1er
+  // du mois, 11 mois en arrière, pour un axe régulier.
+  const signupsStart = new Date(todayIso.slice(0, 7) + "-01T00:00:00Z");
+  signupsStart.setUTCMonth(signupsStart.getUTCMonth() - 11);
+
   // Chemin normal : agrégats calculés côté SQL (RPC 0051), en parallèle. Un
   // REPLI JS (fonctions pures, chiffres identiques) prend le relais si la
   // migration 0051 n'est pas encore appliquée (rpc en erreur).
-  const [cfgRes, playRpc, leadsRes, loyRpc, trendRpc] = await Promise.all([
+  const [cfgRes, playRpc, leadsRes, loyRpc, trendRpc, signupsRpc] = await Promise.all([
     admin
       .from("wheel_configs")
       .select("instagram_url, review_url, review_enabled, loyalty_enabled")
@@ -57,6 +64,12 @@ export default async function DashboardHome() {
       ? admin.rpc("dashboard_play_trend", {
           biz: business.id,
           since: trendStart.toISOString(),
+        })
+      : Promise.resolve({ data: null, error: null }),
+    showFid
+      ? admin.rpc("dashboard_loyalty_signups_trend", {
+          biz: business.id,
+          since: signupsStart.toISOString(),
         })
       : Promise.resolve({ data: null, error: null }),
   ]);
@@ -102,6 +115,22 @@ export default async function DashboardHome() {
   const trendCompare = trendCounts
     ? monthToDateComparison(trendCounts, todayIso)
     : null;
+
+  // Tendance fidélité : inscriptions par mois (12 mois) + comparaison mensuelle
+  // à période égale. Masqué proprement si la RPC 0060 n'est pas appliquée.
+  const signupsCounts =
+    showFid && !signupsRpc.error ? parseTrendRpc(signupsRpc.data) : null;
+  const signupsSeries = signupsCounts
+    ? fillMonthlySeries(aggregateByMonth(signupsCounts), todayIso.slice(0, 7), 12)
+    : null;
+  const signupsCompare = signupsCounts
+    ? monthToDateComparison(signupsCounts, todayIso)
+    : null;
+  const frMonth = (key: string) =>
+    new Date(key + "-01T00:00:00Z").toLocaleDateString("fr-FR", {
+      month: "short",
+      year: "2-digit",
+    });
 
   // --- Premiers pas (checklist d'installation) ---
   const hasLinks = !!(cfg?.instagram_url || cfg?.review_url);
@@ -472,6 +501,39 @@ export default async function DashboardHome() {
               </div>
             </div>
           </div>
+          {signupsSeries && (
+            <div className="dash-card">
+              <h2>Nouveaux clients fidélité par mois</h2>
+              {signupsCompare && (
+                <div className="trend-compare">
+                  <b>{signupsCompare.current}</b>
+                  <span className="muted">
+                    inscriptions ce mois-ci (vs {signupsCompare.previous} le
+                    mois dernier à la même date)
+                  </span>
+                  {signupsCompare.deltaPct !== null && (
+                    <span
+                      className={`trend-delta ${
+                        signupsCompare.deltaPct > 0
+                          ? "up"
+                          : signupsCompare.deltaPct < 0
+                          ? "down"
+                          : "flat"
+                      }`}
+                    >
+                      {signupsCompare.deltaPct > 0 ? "▲ +" : signupsCompare.deltaPct < 0 ? "▼ " : ""}
+                      {signupsCompare.deltaPct}%
+                    </span>
+                  )}
+                </div>
+              )}
+              <TrendChart
+                series={signupsSeries}
+                label="nouveaux clients"
+                formatDate={frMonth}
+              />
+            </div>
+          )}
           {!cfg?.loyalty_enabled && (
             <div className="dash-card">
               <p className="muted">

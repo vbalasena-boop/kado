@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import {
   parseTrendRpc,
   fillDailySeries,
+  fillMonthlySeries,
+  aggregateByMonth,
   monthToDateComparison,
 } from "@/lib/trend";
 
@@ -37,6 +39,36 @@ describe("fillDailySeries", () => {
   it("gère un passage de mois", () => {
     const s = fillDailySeries(new Map(), "2026-09-01", 2);
     expect(s.map((d) => d.date)).toEqual(["2026-08-31", "2026-09-01"]);
+  });
+});
+
+describe("aggregateByMonth", () => {
+  it("regroupe les comptes journaliers par mois", () => {
+    const m = aggregateByMonth(
+      new Map([
+        ["2026-08-01", 2],
+        ["2026-08-31", 3],
+        ["2026-07-15", 4],
+      ])
+    );
+    expect(m.get("2026-08")).toBe(5);
+    expect(m.get("2026-07")).toBe(4);
+  });
+});
+
+describe("fillMonthlySeries", () => {
+  it("série mensuelle continue, mois manquants à 0, finit à endMonth", () => {
+    const s = fillMonthlySeries(new Map([["2026-08", 5]]), "2026-09", 3);
+    expect(s).toEqual([
+      { date: "2026-07", count: 0 },
+      { date: "2026-08", count: 5 },
+      { date: "2026-09", count: 0 },
+    ]);
+  });
+
+  it("gère un passage d'année", () => {
+    const s = fillMonthlySeries(new Map(), "2027-01", 2);
+    expect(s.map((d) => d.date)).toEqual(["2026-12", "2027-01"]);
   });
 });
 

@@ -44,6 +44,43 @@ export function fillDailySeries(
   return out;
 }
 
+/** Agrège des comptes journaliers (AAAA-MM-JJ) en comptes mensuels (AAAA-MM). */
+export function aggregateByMonth(
+  counts: Map<string, number>
+): Map<string, number> {
+  const m = new Map<string, number>();
+  for (const [day, n] of counts) {
+    const month = day.slice(0, 7);
+    m.set(month, (m.get(month) ?? 0) + n);
+  }
+  return m;
+}
+
+/** Décale un mois ISO (AAAA-MM) de `n` mois. */
+function addMonths(isoMonth: string, n: number): string {
+  const d = new Date(isoMonth + "-01T00:00:00Z");
+  d.setUTCMonth(d.getUTCMonth() + n);
+  return d.toISOString().slice(0, 7);
+}
+
+/**
+ * Série mensuelle continue de `months` mois se terminant à `endMonthIso`
+ * (AAAA-MM, inclus), les mois sans donnée complétés à 0. Les clés restent au
+ * format AAAA-MM (compatible avec un formateur mensuel de TrendChart).
+ */
+export function fillMonthlySeries(
+  monthCounts: Map<string, number>,
+  endMonthIso: string,
+  months: number
+): DayCount[] {
+  const out: DayCount[] = [];
+  for (let i = months - 1; i >= 0; i--) {
+    const date = addMonths(endMonthIso, -i);
+    out.push({ date, count: monthCounts.get(date) ?? 0 });
+  }
+  return out;
+}
+
 export type MonthCompare = {
   current: number; // ce mois, du 1er à aujourd'hui
   previous: number; // mois précédent, du 1er au MÊME quantième
