@@ -54,13 +54,27 @@ export const POST = publicRoute({
 
       const { data: order } = await db
         .from("orders")
-        .select("id")
+        .select("id, notify_push")
         .eq("business_id", biz.id)
         .eq("code", code)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
       if (!order) return Response.json({ error: "not_found" }, { status: 404 });
+
+      // Le PREMIER abonné gagne : on n'écrase pas l'alerte d'un tiers (quelqu'un
+      // qui devinerait un code ne peut pas détourner la notif « prête » du vrai
+      // client). Un ré-abonnement du MÊME appareil (endpoint identique) reste
+      // idempotent. Réponse neutre (ne révèle pas qu'un abonnement existe déjà).
+      const existing = (order as any).notify_push as
+        | { endpoint?: string }
+        | null;
+      if (
+        existing?.endpoint &&
+        existing.endpoint !== endpoint.slice(0, 1000)
+      ) {
+        return Response.json({ ok: true });
+      }
 
       const { error } = await db
         .from("orders")

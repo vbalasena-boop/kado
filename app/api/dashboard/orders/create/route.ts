@@ -65,7 +65,9 @@ export const POST = merchantRoute({
     for (const it of items) {
       const p = byId.get(it.id as string);
       if (!p || !p.active) continue;
-      const qty = it.qty as number;
+      // Borne haute (comme côté public) : évite un total absurde / dépassement
+      // d'int32 sur total_cents si une quantité énorme est saisie.
+      const qty = Math.min(it.qty as number, 99);
       lines.push({ name: p.name, qty, price_cents: p.price_cents });
       total += p.price_cents * qty;
     }

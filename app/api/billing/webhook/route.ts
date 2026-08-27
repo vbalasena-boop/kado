@@ -6,6 +6,8 @@ import { sendEmail, emailLayout, getOwnerContact } from "@/lib/email";
 import { reportError } from "@/lib/report";
 import { isMissingColumnError } from "@/lib/db-errors";
 import { reconcileRefundEvent } from "@/lib/refund-reconcile";
+import { sendPushToBusiness } from "@/lib/push";
+import { buildMerchantOrderEmail, formatEuros } from "@/lib/orders";
 
 /** Retrouve l'établissement lié à une facture (via metadata ou customer). */
 async function resolveBusinessId(
@@ -129,14 +131,54 @@ export async function POST(req: NextRequest) {
             // (Stripe rejouera sinon), mais on ne gobe plus en silence un échec
             // d'écriture de `paid=true` (colonne absente → ignoré ; sinon Sentry).
             try {
-              const { error } = await getAdminClient()
+              const db = getAdminClient();
+              const { data: updated, error } = await db
                 .from("orders")
                 .update({ status: "new", paid: true })
                 .eq("business_id", bizId)
                 .eq("code", code)
-                .eq("status", "awaiting_payment");
+                .eq("status", "awaiting_payment")
+                .select(
+                  "code, customer_name, customer_phone, note, pickup_at, items, total_cents"
+                );
               if (error && !isMissingColumnError(error)) {
                 reportError(error, { where: "webhook.order_paid", code });
+              }
+              // Alerte commerçant — UNIQUEMENT si la transition a bien eu lieu
+              // (idempotent : un rejeu du webhook ne modifie plus de ligne, donc
+              // n'envoie rien). Miroir du chemin « paiement sur place ».
+              const order: any = updated && updated[0];
+              if (order) {
+                try {
+                  await sendPushToBusiness(db, bizId, {
+                    title: `🛒 Nouvelle commande ${order.code} (payée en ligne)`,
+                    body: `${order.customer_name} · ${formatEuros(
+                      order.total_cents
+                    )} € · retrait ${order.pickup_at || "dès que possible"}`,
+                    url: "/dashboard/orders",
+                  });
+                } catch {
+                  /* le push ne doit pas faire échouer le webhook */
+                }
+                try {
+                  const { email: ownerEmail } = await getOwnerContact(db, bizId);
+                  if (ownerEmail) {
+                    await sendEmail(
+                      buildMerchantOrderEmail({
+                        to: ownerEmail,
+                        name: order.customer_name,
+                        phone: order.customer_phone,
+                        code: order.code,
+                        pickup: order.pickup_at || "",
+                        note: order.note || "",
+                        lines: order.items,
+                        total: order.total_cents,
+                      })
+                    );
+                  }
+                } catch {
+                  /* l'e-mail ne doit pas faire échouer le webhook */
+                }
               }
             } catch (e) {
               reportError(e, { where: "webhook.order_paid", code });
