@@ -17,6 +17,8 @@ import {
 import { unsubToken } from "@/lib/unsub";
 import { isAlmostNudgeEligible, isInactiveNudgeEligible } from "@/lib/reengage";
 import { recapDeltaLabel } from "@/lib/recap";
+import { isReviewInviteEligible } from "@/lib/review-invite";
+import { hardenExternalUrl } from "@/lib/wheel";
 import { mapLimit } from "@/lib/async";
 import { setSystemState } from "@/lib/health";
 import { sendPushToClients } from "@/lib/push";
@@ -55,6 +57,7 @@ export async function GET(req: NextRequest) {
     consentPurged: 0,
     reengageAlmost: 0,
     reengageInactive: 0,
+    reviewInvites: 0,
     errors: [] as string[],
   };
 
@@ -333,6 +336,85 @@ export async function GET(req: NextRequest) {
     }
   } catch (e: any) {
     out.errors.push(`reengage_inactive: ${e?.message ?? "error"}`);
+  }
+
+  // ── 2d. Invitation à laisser un avis Google (conforme) ──────────
+  // Commerces ayant activé `review_invite` ET renseigné un lien d'avis : on
+  // invite les clients FIDÈLES (au moins une carte complétée) qui n'ont jamais
+  // été invités. E-mail neutre, aucune récompense liée à l'avis, envoi unique.
+  const REVIEW_INVITE_MAX_PER_RUN = 200; // garde-fou anti-rafale
+  try {
+    const { data: vcfgs, error: vcErr } = await db
+      .from("wheel_configs")
+      .select("business_id, review_url, review_enabled")
+      .eq("review_invite", true);
+    if (vcErr) {
+      // Colonne 0062 absente → fonctionnalité pas déployée : on ignore.
+      if (!isMissingColumnError(vcErr)) {
+        out.errors.push(`review_invite: ${vcErr.message}`);
+      }
+    } else if ((vcfgs ?? []).length) {
+      const ids = [...new Set((vcfgs as any[]).map((c) => c.business_id))];
+      const { data: bizs } = await db
+        .from("businesses")
+        .select("id, name, status")
+        .in("id", ids);
+      const bizBy = new Map((bizs ?? []).map((b: any) => [b.id, b]));
+
+      for (const cfg of vcfgs as any[]) {
+        const biz: any = bizBy.get(cfg.business_id);
+        if (!biz || biz.status !== "active") continue;
+        // Lien d'avis obligatoire et durci (anti-XSS) ; avis non désactivé.
+        if (cfg.review_enabled === false) continue;
+        const reviewHref = hardenExternalUrl(cfg.review_url);
+        if (!reviewHref) continue;
+
+        const { data: cards } = await db
+          .from("loyalty_cards")
+          .select(
+            "id, email, rewards_earned, marketing_ok, unsubscribed_at, review_invite_at"
+          )
+          .eq("business_id", cfg.business_id)
+          .eq("marketing_ok", true)
+          .is("unsubscribed_at", null)
+          .is("review_invite_at", null)
+          .gte("rewards_earned", 1);
+
+        const eligible = (cards ?? [])
+          .filter((c: any) => isReviewInviteEligible(c))
+          .slice(0, REVIEW_INVITE_MAX_PER_RUN);
+        const shop = escapeHtml(biz.name || "votre commerce");
+        const safeHref = escapeHtml(reviewHref);
+
+        await mapLimit(eligible, 5, async (c: any) => {
+          const unsub = `${SITE}/api/unsubscribe?b=${cfg.business_id}&e=${encodeURIComponent(
+            Buffer.from(c.email).toString("base64url")
+          )}&t=${unsubToken(cfg.business_id, c.email)}`;
+          const res = await sendEmail({
+            to: c.email,
+            subject: `Un petit avis pour ${biz.name} ?`,
+            fromName: `${biz.name} via Kado`,
+            marketing: true,
+            html: emailLayout({
+              preview: "Votre avis nous aiderait beaucoup.",
+              heading: "Merci pour votre fidélité ! 🙏",
+              emoji: "⭐",
+              bodyHtml: `Merci de faire partie des clients fidèles de <b>${shop}</b> !<br><br>Si vous avez un instant, un avis sur Google nous aiderait énormément à nous faire connaître. C'est totalement libre et sans obligation.<br><br><a href="${safeHref}" style="display:inline-block;background:linear-gradient(135deg,#ff6b4a,#ff4e87);color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:12px;">Laisser un avis Google</a>`,
+              footnote: `Message lié à votre carte de fidélité, envoyé une seule fois. <a href="${unsub}" style="color:#9a94b4;">Ne plus recevoir ces e-mails</a>`,
+            }),
+          });
+          if (res.ok) {
+            await db
+              .from("loyalty_cards")
+              .update({ review_invite_at: new Date().toISOString() })
+              .eq("id", c.id);
+            out.reviewInvites++;
+          }
+        });
+      }
+    }
+  } catch (e: any) {
+    out.errors.push(`review_invite: ${e?.message ?? "error"}`);
   }
 
   // ── 3a. Campagnes programmées arrivées à échéance ───────────────

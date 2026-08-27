@@ -118,6 +118,16 @@ export default async function WheelPage() {
     ? false
     : !!(rw as any)?.reengage_reward;
 
+  // Invitation à laisser un avis (lecture tolérante si migration 0062 absente)
+  const { data: rvi, error: rviErr } = await admin
+    .from("wheel_configs")
+    .select("review_invite")
+    .eq("business_id", business.id)
+    .maybeSingle();
+  const reviewInvite: boolean = rviErr
+    ? false
+    : !!(rvi as any)?.review_invite;
+
   // « À la une » (lecture tolérante si migration 0055 absente)
   const { data: hl, error: hlErr } = await admin
     .from("wheel_configs")
@@ -155,6 +165,7 @@ export default async function WheelPage() {
         reengage_inactive: reengageInactive,
         reengage_inactive_days: reengageInactiveDays,
         reengage_reward: reengageReward,
+        review_invite: reviewInvite,
         ...highlight,
       }}
       initialPrizes={prizes ?? []}
