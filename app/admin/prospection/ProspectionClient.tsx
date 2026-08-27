@@ -390,6 +390,56 @@ export default function ProspectionClient({
 
   // --- Rédaction IA ---
   const [aiWriting, setAiWriting] = useState(false);
+  const [aiWritingAll, setAiWritingAll] = useState(false);
+
+  /** Enchaîne les lots IA jusqu'à ce qu'il ne reste plus rien (boucle côté client). */
+  async function runAiWriteAll() {
+    if (!window.confirm("Rédiger par IA TOUS les prospects restants ? (par lots automatiques, ça peut prendre un moment)")) return;
+    setAiWritingAll(true);
+    setMessage(null);
+    let totalWritten = 0;
+    let totalFailed = 0;
+    try {
+      // Garde-fou : borne le nombre de tours (10 par tour → jusqu'à ~2000 prospects).
+      for (let round = 0; round < 200; round++) {
+        const res = await fetch("/api/admin/prospection/ai-write", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ limit: 10 }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setMessage(`Erreur : ${data.error ?? "inconnue"} (arrêt après ${totalWritten} rédigé(s)).`);
+          break;
+        }
+        if (!data.configured) {
+          setMessage("IA non configurée : ajoute la variable ANTHROPIC_API_KEY dans Vercel.");
+          break;
+        }
+        totalWritten += data.written;
+        totalFailed += data.failed;
+        // Progression en direct.
+        setMessage(
+          `✨ Rédaction IA en cours… ${totalWritten} rédigé(s)` +
+            (data.remaining ? `, ${data.remaining} restant(s)` : "") +
+            (totalFailed ? `, ${totalFailed} échec(s)` : "")
+        );
+        router.refresh();
+        // Fin : plus rien de nouveau (terminé, ou seuls des échecs persistent).
+        if (data.written === 0 || data.remaining === 0) break;
+      }
+      setMessage(
+        `✨ Terminé : ${totalWritten} prospect(s) rédigé(s) par IA` +
+          (totalFailed ? `, ${totalFailed} échec(s)` : "") +
+          ". Messages en brouillon : relis-les puis approuve."
+      );
+      router.refresh();
+    } catch {
+      setMessage(`Erreur réseau pendant la rédaction IA (arrêt après ${totalWritten} rédigé(s)).`);
+    } finally {
+      setAiWritingAll(false);
+    }
+  }
 
   async function runAiWrite() {
     setAiWriting(true);
@@ -606,12 +656,21 @@ export default function ProspectionClient({
           </button>
           <button
             onClick={runAiWrite}
-            disabled={aiWriting}
+            disabled={aiWriting || aiWritingAll}
             className="dash-signout"
-            style={{ opacity: aiWriting ? 0.6 : 1, color: "#8b6cff" }}
-            title="Rédige des messages email + DM personnalisés par IA (brouillons à valider). Nécessite ANTHROPIC_API_KEY."
+            style={{ opacity: aiWriting || aiWritingAll ? 0.6 : 1, color: "#8b6cff" }}
+            title="Rédige un lot (8) de messages email + DM personnalisés par IA (brouillons à valider). Nécessite ANTHROPIC_API_KEY."
           >
-            {aiWriting ? "Rédaction IA…" : "✨ Rédiger avec l'IA"}
+            {aiWriting ? "Rédaction IA…" : "✨ Rédiger avec l'IA (lot)"}
+          </button>
+          <button
+            onClick={runAiWriteAll}
+            disabled={aiWriting || aiWritingAll}
+            className="dash-signout"
+            style={{ opacity: aiWriting || aiWritingAll ? 0.6 : 1, color: "#8b6cff", fontWeight: 600 }}
+            title="Rédige par IA TOUS les prospects restants, lot après lot, automatiquement."
+          >
+            {aiWritingAll ? "Rédaction en cours…" : "✨ Tout rédiger (IA)"}
           </button>
           <button
             onClick={revalidate}
