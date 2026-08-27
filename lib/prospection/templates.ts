@@ -41,7 +41,7 @@ export interface GeneratedEmail {
 export const UNSUBSCRIBE_MARKER = "{{unsubscribe_url}}";
 
 /** Pied de page commun : signature + mentions d'origine + désinscription (RGPD). */
-const FOOTER = [
+export const FOOTER = [
   `—`,
   `Kado · la solution qui aide les commerces de proximité (avis Google, ` +
     `Instagram, fidélité) · kado-app.fr`,

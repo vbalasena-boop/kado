@@ -59,6 +59,21 @@ describe("buildDeliverabilityReport", () => {
     expect(r.checks.every((c) => c.status === "ok")).toBe(true);
   });
 
+  it("détecte le DKIM publié sous le sélecteur OVH Zimbra (ovhmo-selector-1)", async () => {
+    const domain = "kado-pro.fr";
+    const dns = fakeDns({
+      mx: [{ exchange: "mx0.mail.ovh.net", priority: 1 }],
+      txt: {
+        [domain]: [["v=spf1 include:mx.ovh.com ~all"]],
+        // OVH publie le DKIM en CNAME → le résolveur renvoie le TXT cible.
+        [`ovhmo-selector-1._domainkey.${domain}`]: [["v=DKIM1; k=rsa; p=ABC"]],
+        [`_dmarc.${domain}`]: [["v=DMARC1; p=none"]],
+      },
+    });
+    const r = await buildDeliverabilityReport(domain, dns);
+    expect(r.checks.find((c) => c.key === "dkim")?.status).toBe("ok");
+  });
+
   it("DMARC p=none => warn (score réduit)", async () => {
     const domain = "kado-pro.fr";
     const dns = fakeDns({
