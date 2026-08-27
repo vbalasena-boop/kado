@@ -19,6 +19,12 @@
 
 **Règle CTA unique et constante : « Commentez DEMO »** → tu envoies la démo en DM. Ne change jamais de CTA d'un réel à l'autre.
 
+### 🔁 Mise à jour v2 (d'après les stats du Réel 1 : 4 s de vue, 0 commentaire)
+Les réels 2 à 7 ont été **retravaillés** pour corriger le décrochage précoce et le manque d'engagement :
+- **Cold open** : un chiffre/mot choc dès la **1ʳᵉ seconde** (ex. « +44 avis », « 29 €/mois », « 30 secondes »), avant le hook, pour retenir avant les 4 s fatidiques.
+- **Question d'engagement facile** ajoutée sur l'écran final + à mettre **en tête de ta légende** (ex. « Combien d'avis Google vous avez ? 👇 »). C'est plus facile à faire que « Commentez DEMO » pour quelqu'un qui te découvre → ça décoince les commentaires, et chaque commentaire booste la portée.
+- **Toujours** : garder « Commentez DEMO » en CTA principal + répondre en DM sous 30 min.
+
 ---
 
 ## 1. Quand poster (calendrier)
