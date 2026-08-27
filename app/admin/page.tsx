@@ -8,6 +8,7 @@ import {
   adminPlayStatsFromRpc,
   businessPlayCountsFromRpc,
 } from "@/lib/admin-stats";
+import { summarizeMrr } from "@/lib/admin-mrr";
 
 export const dynamic = "force-dynamic";
 
@@ -86,12 +87,13 @@ export default async function AdminPage() {
     admin_note: string | null;
     campaigns_addon: boolean | null;
     click_collect: boolean | null;
+    order_tracking: boolean | null;
   };
   const extraById = new Map<string, Extra>();
   try {
     const { data: extras } = await admin
       .from("businesses")
-      .select("id, phone, address, plan, setup_option, setup_paid_at, setup_done_at, admin_note, campaigns_addon, click_collect");
+      .select("id, phone, address, plan, setup_option, setup_paid_at, setup_done_at, admin_note, campaigns_addon, click_collect, order_tracking");
     for (const e of (extras ?? []) as Extra[]) extraById.set(e.id, e);
   } catch {
     /* colonnes absentes : valeurs par défaut */
@@ -126,6 +128,37 @@ export default async function AdminPage() {
   // ---- Statistiques plateforme ----
   const now = Date.now();
   const bizList = businesses ?? [];
+
+  // MRR / ARR : à partir des formules + options (copie des prix Stripe).
+  const mrr = summarizeMrr(
+    bizList.map((b) => {
+      const x = extraById.get(b.id);
+      return {
+        status: b.status,
+        subscription_status: b.subscription_status,
+        plan: x?.plan ?? null,
+        campaigns_addon: x?.campaigns_addon ?? null,
+        order_tracking: x?.order_tracking ?? null,
+      };
+    })
+  );
+
+  // Signaux de churn : essais finissant sous 3 j, payants jamais utilisés.
+  const soon = now + 3 * 864e5;
+  const trialsEndingSoon = bizList.filter(
+    (b) =>
+      b.subscription_status === "trial" &&
+      b.subscription_ends_at &&
+      new Date(b.subscription_ends_at).getTime() > now &&
+      new Date(b.subscription_ends_at).getTime() <= soon
+  ).length;
+  const unusedPaying = bizList.filter(
+    (b) =>
+      b.status !== "suspended" &&
+      b.subscription_status === "active" &&
+      (playCounts.get(b.id) ?? 0) === 0
+  ).length;
+
   const stats: AdminStats = {
     bizTotal: bizList.length,
     bizActive: bizList.filter(
@@ -144,6 +177,12 @@ export default async function AdminPage() {
     won: playStatsResolved.won,
     redeemed: playStatsResolved.redeemed,
     leads: leadsCount ?? 0,
+    mrrEur: mrr.mrrEur,
+    arrEur: mrr.arrEur,
+    payingCount: mrr.payingCount,
+    byPlan: mrr.byPlan,
+    trialsEndingSoon,
+    unusedPaying,
   };
 
   const health = await healthPromise;

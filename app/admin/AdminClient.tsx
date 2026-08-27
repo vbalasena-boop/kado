@@ -46,6 +46,12 @@ export type AdminStats = {
   won: number;
   redeemed: number;
   leads: number;
+  mrrEur: number;
+  arrEur: number;
+  payingCount: number;
+  byPlan: Record<string, number>;
+  trialsEndingSoon: number;
+  unusedPaying: number;
 };
 
 /** Renvoie un libellé de temps restant + s'il est expiré. */
@@ -556,6 +562,61 @@ export default function AdminClient({
             matin — vous recevez un e-mail d'alerte si un contrôle échoue.
           </p>
         </div>
+      )}
+
+      {/* ---- Revenu (MRR) & santé ---- */}
+      <div className="stat-h">Revenu récurrent</div>
+      <div className="stat-grid">
+        <div className="stat">
+          <div className="stat-icon"><Icon name="chart" size={22} /></div>
+          <div>
+            <div className="stat-n">{stats.mrrEur.toLocaleString("fr-FR")} €</div>
+            <div className="stat-l">MRR (récurrent / mois)</div>
+          </div>
+        </div>
+        <div className="stat">
+          <div className="stat-icon"><Icon name="chart" size={22} /></div>
+          <div>
+            <div className="stat-n">{stats.arrEur.toLocaleString("fr-FR")} €</div>
+            <div className="stat-l">ARR (projeté / an)</div>
+          </div>
+        </div>
+        <div className="stat">
+          <div className="stat-icon"><Icon name="check" size={22} /></div>
+          <div>
+            <div className="stat-n">{stats.payingCount}</div>
+            <div className="stat-l">Abonnés payants</div>
+          </div>
+        </div>
+        <div className="stat">
+          <div className="stat-icon"><Icon name="event" size={22} /></div>
+          <div>
+            <div className="stat-n">{stats.trialsEndingSoon}</div>
+            <div className="stat-l">Essais finissent &lt; 3 j</div>
+          </div>
+        </div>
+        <div className="stat">
+          <div className="stat-icon"><Icon name="block" size={22} /></div>
+          <div>
+            <div className="stat-n">{stats.unusedPaying}</div>
+            <div className="stat-l">Payants sans 1 tour ⚠️</div>
+          </div>
+        </div>
+      </div>
+      {Object.keys(stats.byPlan).length > 0 && (
+        <p className="muted" style={{ marginTop: 6, fontSize: 12.5 }}>
+          Répartition MRR&nbsp;:{" "}
+          {Object.entries(stats.byPlan)
+            .sort((a, b) => b[1] - a[1])
+            .map(([plan, eur]) => {
+              const label =
+                { roue: "Jeux", fidelite: "Fidélité", complet: "Complet", comptoir: "Comptoir" }[
+                  plan
+                ] ?? "Autres";
+              return `${label} ${eur.toLocaleString("fr-FR")} €`;
+            })
+            .join(" · ")}
+        </p>
       )}
 
       {/* ---- Statistiques plateforme ---- */}
