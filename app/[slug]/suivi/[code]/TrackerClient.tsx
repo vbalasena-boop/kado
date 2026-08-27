@@ -36,6 +36,7 @@ export default function TrackerClient({
   const isBuzzer = serviceMode === "buzzer" || buzzerNo != null;
   const [status, setStatus] = useState(initialStatus);
   const [ahead, setAhead] = useState<number | null>(null);
+  const [waitMin, setWaitMin] = useState<number | null>(null);
   const [alert, setAlert] = useState<"idle" | "on" | "ko">("idle");
   const [buzzing, setBuzzing] = useState(false);
   const [iosHint, setIosHint] = useState(false);
@@ -137,6 +138,7 @@ export default function TrackerClient({
           lastStatusRef.current = d.status;
           setStatus(d.status);
           setAhead(typeof d.ahead === "number" ? d.ahead : null);
+          setWaitMin(typeof d.waitMin === "number" ? d.waitMin : null);
         }
         if (alive && !["ready", "done", "cancelled"].includes(d?.status)) {
           timer = setTimeout(poll, 12000);
@@ -272,6 +274,11 @@ export default function TrackerClient({
                   <>
                     ⏳ <b>{ahead}</b> commande{ahead > 1 ? "s" : ""} avant vous
                   </>
+                )}
+                {waitMin != null && (
+                  <span className="track-eta">
+                    ~{waitMin} min d'attente estimée
+                  </span>
                 )}
               </p>
             )}
