@@ -5484,13 +5484,49 @@ html { scroll-behavior: smooth; }
   font-weight: 600;
   opacity: 0.8;
 }
-/* Numéro donné à un client sans téléphone (grand, lisible à distance) */
-.give-number {
-  font-size: clamp(80px, 34vw, 160px);
+/* Ticket « numéro » pour un client sans téléphone — format imprimante thermique */
+.num-ticket {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 18px;
+  text-align: center;
+  background: #fff;
+  color: #111;
+  border: 2px dashed #d8d2e6;
+  border-radius: 16px;
+}
+.num-ticket-shop { font-weight: 800; font-size: 18px; }
+.num-ticket-label {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.7;
+}
+.num-ticket-no {
+  font-size: clamp(72px, 30vw, 130px);
   font-weight: 800;
   line-height: 1;
-  color: var(--g-blue, #1a73e8);
-  margin: 4px 0 10px;
+}
+.num-ticket-qr { width: 130px; height: 130px; }
+.num-ticket-foot { font-size: 12px; opacity: 0.7; }
+@media print {
+  body * { visibility: hidden; }
+  .num-ticket, .num-ticket * { visibility: visible; }
+  .num-ticket {
+    position: fixed;
+    inset: 0;
+    margin: 0 auto;
+    width: 72mm; /* s'adapte au format 58/80 mm des imprimantes thermiques */
+    border: none;
+    border-radius: 0;
+    padding: 4mm 2mm;
+    color: #000;
+  }
+  .num-ticket-no { font-size: 40mm; }
+  .num-ticket-qr { width: 30mm; height: 30mm; }
 }
 /* Carte commande « bipeur » côté commerçant */
 .order-buzznum {
