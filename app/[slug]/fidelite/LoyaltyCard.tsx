@@ -16,6 +16,8 @@ type CardData = {
   rewardEmoji: string;
   birthdayEnabled?: boolean;
   referralEnabled?: boolean;
+  referralCount?: number;
+  referralRewarded?: number;
   birthdaySet?: boolean;
   marketingOk?: boolean;
   unsubscribed?: boolean;
@@ -494,6 +496,23 @@ export default function LoyaltyCard({
                   Votre ami crée sa carte via votre lien, et dès son premier
                   achat en caisse, vous gagnez un tampon.
                 </p>
+                {(card.referralCount ?? 0) > 0 && (
+                  <div className="fid-referral-count" role="status">
+                    <span className="fid-referral-n">{card.referralCount}</span>
+                    <span>
+                      ami{(card.referralCount ?? 0) > 1 ? "s" : ""} inscrit
+                      {(card.referralCount ?? 0) > 1 ? "s" : ""} grâce à vous
+                      {(card.referralRewarded ?? 0) > 0 && (
+                        <>
+                          {" "}
+                          · <b>+{card.referralRewarded} tampon
+                          {(card.referralRewarded ?? 0) > 1 ? "s" : ""}</b> gagné
+                          {(card.referralRewarded ?? 0) > 1 ? "s" : ""} 🎉
+                        </>
+                      )}
+                    </span>
+                  </div>
+                )}
                 <button className="btn" onClick={shareReferral}>
                   {copied ? "✅ Lien copié !" : "Partager mon lien"}
                 </button>

@@ -147,6 +147,32 @@ export const POST = publicRoute({
       // /api/dashboard/loyalty/stamp.
     }
 
+    // Parrainage 2.0 : compteur de filleuls (rendu visible sur la carte pour
+    // motiver le partage). Tolérant : colonnes récentes / erreur → 0.
+    let referralCount = 0;
+    let referralRewarded = 0;
+    if (referralEnabled && card?.id) {
+      try {
+        const [{ count: joined }, { count: rewarded }] = await Promise.all([
+          db
+            .from("loyalty_cards")
+            .select("*", { count: "exact", head: true })
+            .eq("business_id", biz.id)
+            .eq("referred_by_card", card.id),
+          db
+            .from("loyalty_cards")
+            .select("*", { count: "exact", head: true })
+            .eq("business_id", biz.id)
+            .eq("referred_by_card", card.id)
+            .not("referred_reward_granted_at", "is", null),
+        ]);
+        referralCount = joined ?? 0;
+        referralRewarded = rewarded ?? 0;
+      } catch {
+        /* colonnes/migration absentes : compteur masqué (0) */
+      }
+    }
+
     return Response.json({
       ok: true,
       business: biz.name,
@@ -161,6 +187,8 @@ export const POST = publicRoute({
       stampEmoji: (cfg as any).loyalty_stamp_emoji || "⭐",
       birthdayEnabled,
       referralEnabled,
+      referralCount,
+      referralRewarded,
       birthdaySet: card.birthday_day != null,
       marketingOk: !!card.marketing_ok,
       unsubscribed: !!card.unsubscribed_at,
