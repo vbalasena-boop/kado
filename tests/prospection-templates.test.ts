@@ -125,13 +125,13 @@ describe("renderDm", () => {
 });
 
 describe("RDV téléphonique (lien de réservation)", () => {
-  it("insère le lien de réservation dans l'email quand il est fourni", () => {
+  it("le 1er email ne contient AUCUN lien, même si un lien est fourni (anti-Promotions)", () => {
     const url = "https://cal.com/kado/10min";
-    const { body } = renderEmail(ctx({ bookingUrl: url }));
-    expect(body).toContain(url);
-    // spamCheck : un seul lien cliquable + désinscription → non risqué.
-    const { subject, body: b2 } = renderEmail(ctx({ bookingUrl: url }));
-    expect(spamCheck(`${subject}\n${b2}`).risky).toBe(false);
+    const { subject, body } = renderEmail(ctx({ bookingUrl: url }));
+    expect(body).not.toContain(url);
+    // Aucun lien http (hors marqueur de désinscription).
+    expect(body).not.toMatch(/https?:\/\//);
+    expect(spamCheck(`${subject}\n${body}`).risky).toBe(false);
   });
 
   it("propose un rappel « par réponse » sans lien quand aucun lien n'est fourni", () => {

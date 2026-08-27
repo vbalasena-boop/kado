@@ -77,7 +77,6 @@ export interface AiMessages {
 
 /** Construit les prompts (pur, testable). */
 export function buildPrompt(ctx: TemplateContext): { system: string; user: string } {
-  const booking = bookingUrl(ctx);
   const site = (ctx.siteText ?? "").trim();
   const facts = [
     `Nom du commerce : ${prettyName(ctx.name)}`,
@@ -95,18 +94,17 @@ export function buildPrompt(ctx: TemplateContext): { system: string; user: strin
     site
       ? "Un extrait du site du commerce est fourni : appuie-toi dessus pour glisser UN détail concret et juste (ce qu'il propose, sa spécialité) — n'invente jamais au-delà de l'extrait."
       : "",
-    "Kado : un jeu à scanner (QR code) en boutique qui transforme les clients en avis Google et en abonnés Instagram. 14 jours offerts, sans engagement.",
-    "Tu écris des messages de prospection à froid COURTS, chaleureux, naturels et crédibles — jamais 'spammy'.",
+    "Kado : à partir d'un QR code en boutique, les clients laissent plus d'avis Google et deviennent abonnés Instagram, sans effort pour le commerçant.",
+    "Tu écris un email de prospection à froid qui doit ressembler à un message PERSONNEL (1:1) écrit à la main — surtout PAS à une publicité (sinon il tombe dans l'onglet Promotions de Gmail).",
     "Règles strictes :",
     "- Tutoyer JAMAIS le prospect : vouvoiement.",
     "- Personnalise avec le nom/la ville/le secteur, sans en faire trop.",
     "- N'invente AUCUN fait (pas de faux chiffres, pas de fausse visite).",
-    "- Pas de MAJUSCULES criardes, pas de '!!!', pas de mots comme 'gratuit', 'promo', 'urgent', 'argent'.",
+    "- Pas de MAJUSCULES criardes, pas de '!!!'.",
+    "- Bannis totalement le vocabulaire promotionnel : 'gratuit', 'offert', 'cadeau', 'jeu', 'gagnez', 'promo', 'urgent', 'argent', '14 jours'.",
     "- N'ajoute PAS de signature, PAS de mentions légales, PAS de lien de désinscription : c'est ajouté séparément.",
-    "- Email : ~70-100 mots. DM Instagram : ~40-60 mots, ton plus direct.",
-    booking
-      ? `- Termine l'email par une invitation à réserver un appel de 15 min via ce lien EXACT : ${booking}`
-      : "- Termine l'email en proposant un court appel de 15 min et en demandant au prospect ses disponibilités.",
+    "- Email : ~60-90 mots. DM Instagram : ~40-60 mots, ton plus direct.",
+    "- N'inclus AUCUN lien dans l'email (un lien fait basculer en Promotions). Termine par UNE question simple qui invite à répondre (le prospect répondra s'il est intéressé) — surtout pas de lien de réservation ici.",
     "Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format :",
     '{"subject": "...", "body": "...", "dm": "..."}',
     "Le body commence par 'Bonjour <nom>,' et se termine par une formule de politesse suivie de 'L\\'équipe Kado'.",
@@ -137,15 +135,19 @@ export function parseAiMessages(text: string): AiMessages {
   return { subject, body, dm };
 }
 
-/** Assemble l'email final : corps IA + lien de RDV (si manquant) + pied de page RGPD. */
+/**
+ * Assemble l'email final : corps IA + (optionnel) lien de RDV + pied de page RGPD.
+ * `includeBooking` : n'ajoute le lien Calendly QUE pour les relances — le 1er
+ * email reste sans lien (meilleure délivrabilité, évite l'onglet Promotions).
+ */
 export function assembleEmail(
   ctx: TemplateContext,
-  ai: { subject: string; body: string }
+  ai: { subject: string; body: string },
+  includeBooking = false
 ): GeneratedEmail {
   const booking = bookingUrl(ctx);
   let body = ai.body.trimEnd();
-  // Filet de sécurité : garantir la présence du lien de RDV.
-  if (booking && !body.includes(booking)) {
+  if (includeBooking && booking && !body.includes(booking)) {
     body += `\n\nRéservez un appel de 15 min quand vous voulez → ${booking}`;
   }
   body += `\n\n${FOOTER}`;
@@ -263,7 +265,7 @@ export function buildFollowupPrompt(
     "Règles strictes :",
     "- Vouvoiement.",
     "- N'invente AUCUN fait (pas de faux chiffres, pas de fausse visite).",
-    "- Pas de MAJUSCULES criardes, pas de '!!!', pas de mots comme 'gratuit', 'promo', 'urgent', 'argent'.",
+    "- Pas de MAJUSCULES criardes, pas de '!!!'. Bannis le vocabulaire promotionnel : 'gratuit', 'offert', 'cadeau', 'jeu', 'gagnez', 'promo', 'urgent', 'argent'.",
     "- N'ajoute PAS de signature, PAS de mentions légales, PAS de lien de désinscription : c'est ajouté séparément.",
     booking
       ? `- Si tu proposes un appel, utilise ce lien EXACT : ${booking}`
@@ -304,5 +306,6 @@ export async function writeFollowupWithAI(
 ): Promise<GeneratedEmail> {
   const { system, user } = buildFollowupPrompt(ctx, kind);
   const text = await callClaude(system, user, doFetch);
-  return assembleEmail(ctx, parseAiEmail(text));
+  // Relances : on garde le lien de RDV (l'historique justifie déjà l'échange).
+  return assembleEmail(ctx, parseAiEmail(text), true);
 }
