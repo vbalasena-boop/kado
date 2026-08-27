@@ -7,10 +7,35 @@
 import { getAdminClient } from "@/lib/supabase/admin";
 import { sendProspectEmail, finalizeBody } from "@/lib/prospection/sender";
 import { unsubUrl } from "@/lib/prospection/unsub";
-import { renderFollowupEmail, renderLastEmail } from "@/lib/prospection/templates";
+import {
+  renderFollowupEmail,
+  renderLastEmail,
+  type GeneratedEmail,
+  type TemplateContext,
+} from "@/lib/prospection/templates";
+import { aiWriterConfigured, writeFollowupWithAI } from "@/lib/prospection/ai-writer";
 import { verifyEmail, type EmailVerdict } from "@/lib/prospection/verify-email";
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://kado-app.fr";
+
+/**
+ * Contenu d'une relance : par IA si `ANTHROPIC_API_KEY` est présent, sinon
+ * gabarit. Repli automatique sur le gabarit à la moindre erreur IA (on ne
+ * bloque jamais un envoi de relance).
+ */
+async function followupEmail(
+  ctx: TemplateContext,
+  kind: "followup" | "last"
+): Promise<GeneratedEmail> {
+  if (aiWriterConfigured()) {
+    try {
+      return await writeFollowupWithAI(ctx, kind);
+    } catch {
+      // repli silencieux sur le gabarit
+    }
+  }
+  return kind === "last" ? renderLastEmail(ctx) : renderFollowupEmail(ctx);
+}
 
 export interface SendSummary {
   sent: number;
@@ -212,13 +237,16 @@ export async function runProspectionSend(): Promise<SendSummary> {
       continue;
     }
 
-    const fu = renderFollowupEmail({
-      name: p.name,
-      city: p.city,
-      category: p.category,
-      google_reviews_count: p.google_reviews_count,
-      seed: f.prospect_id,
-    });
+    const fu = await followupEmail(
+      {
+        name: p.name,
+        city: p.city,
+        category: p.category,
+        google_reviews_count: p.google_reviews_count,
+        seed: f.prospect_id,
+      },
+      "followup"
+    );
     const body = finalizeBody(fu.body, email, SITE);
     const res = await sendProspectEmail({
       to: email,
@@ -298,13 +326,16 @@ export async function runProspectionSend(): Promise<SendSummary> {
       continue;
     }
 
-    const last = renderLastEmail({
-      name: p.name,
-      city: p.city,
-      category: p.category,
-      google_reviews_count: p.google_reviews_count,
-      seed: f.prospect_id,
-    });
+    const last = await followupEmail(
+      {
+        name: p.name,
+        city: p.city,
+        category: p.category,
+        google_reviews_count: p.google_reviews_count,
+        seed: f.prospect_id,
+      },
+      "last"
+    );
     const body = finalizeBody(last.body, email, SITE);
     const res = await sendProspectEmail({
       to: email,
