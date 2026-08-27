@@ -5,12 +5,21 @@ import type { DayCount } from "@/lib/trend";
  * Une seule série → pas de légende (le titre nomme la donnée). Tooltip natif
  * par barre (<title>), grille discrète, barres fines à sommet arrondi.
  */
+const dayFormat = (v: string) =>
+  new Date(v + "T00:00:00Z").toLocaleDateString("fr-FR", {
+    day: "numeric",
+    month: "short",
+  });
+
 export default function TrendChart({
   series,
   label = "tours",
+  formatDate = dayFormat,
 }: {
   series: DayCount[];
   label?: string;
+  /** Formate une clé de série (jour AAAA-MM-JJ par défaut) en libellé lisible. */
+  formatDate?: (key: string) => string;
 }) {
   const max = series.reduce((m, d) => Math.max(m, d.count), 0);
   const total = series.reduce((s, d) => s + d.count, 0);
@@ -37,11 +46,7 @@ export default function TrendChart({
   const barW = Math.max(3, Math.min(18, slot - 2)); // fines, 2px d'écart mini
   const baseY = padT + plotH;
 
-  const fr = (v: string) =>
-    new Date(v + "T00:00:00Z").toLocaleDateString("fr-FR", {
-      day: "numeric",
-      month: "short",
-    });
+  const fr = formatDate;
 
   // 3 repères de date : premier, milieu, dernier.
   const ticks = [0, Math.floor(n / 2), n - 1];
@@ -53,7 +58,7 @@ export default function TrendChart({
         width="100%"
         preserveAspectRatio="none"
         role="img"
-        aria-label={`Activité par jour sur ${n} jours, ${total} ${label} au total, maximum ${max} en une journée.`}
+        aria-label={`Tendance sur ${n} périodes, ${total} ${label} au total, maximum ${max} sur une période.`}
       >
         {/* Ligne de base + repère du maximum (grille discrète). */}
         <line
