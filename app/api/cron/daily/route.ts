@@ -982,6 +982,17 @@ export async function GET(req: NextRequest) {
     out.errors.push(`consent_purge: ${e?.message ?? "error"}`);
   }
 
+  // ── 7. Rafraîchit le cache des stats admin (évite le scan complet de
+  // `plays` à chaque ouverture de /admin). Best-effort : absent = ignoré.
+  try {
+    const { error } = await db.rpc("refresh_admin_stats");
+    if (error && !/function .*refresh_admin_stats.* does not exist/i.test(error.message)) {
+      out.errors.push(`admin_stats: ${error.message}`);
+    }
+  } catch (e: any) {
+    out.errors.push(`admin_stats: ${e?.message ?? "error"}`);
+  }
+
   // Heartbeat : prouve au contrôle de santé que le cron a bien tourné
   await setSystemState("cron_daily_last_run", new Date().toISOString());
 

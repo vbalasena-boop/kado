@@ -7,6 +7,7 @@ import {
   computeBusinessPlayCounts,
   adminPlayStatsFromRpc,
   businessPlayCountsFromRpc,
+  type AdminPlayStats,
 } from "@/lib/admin-stats";
 import { summarizeMrr } from "@/lib/admin-mrr";
 
@@ -38,29 +39,73 @@ export default async function AdminPage() {
   const monthIso = startMonth.toISOString();
   const dayIso = startDay.toISOString();
 
-  // Agrégats plateforme + tours/commerce : délégués à SQL (RPC 0053), en
-  // parallèle. Repli JS (chiffres identiques) si la migration n'est pas là.
-  const [statsRpc, countsRpc, leadsRes] = await Promise.all([
-    admin.rpc("admin_play_stats", { month_start: monthIso, day_start: dayIso }),
-    admin.rpc("admin_business_play_counts"),
-    admin.from("leads").select("*", { count: "exact", head: true }),
-  ]);
-  const leadsCount = leadsRes.count;
+  const leadsPromise = admin
+    .from("leads")
+    .select("*", { count: "exact", head: true });
 
-  let playStats = statsRpc.error ? null : adminPlayStatsFromRpc(statsRpc.data);
-  let counts = countsRpc.error
-    ? null
-    : businessPlayCountsFromRpc(countsRpc.data);
-  if (!playStats || !counts) {
-    // Repli : une seule lecture de `plays`, on calcule ce qui manque.
-    const { data: playRows } = await admin
-      .from("plays")
-      .select("business_id, play_type, prize_label, redeemed_at, created_at");
-    const rowsPlays = playRows ?? [];
-    playStats = playStats ?? computeAdminPlayStats(rowsPlays, monthIso, dayIso);
-    counts = counts ?? computeBusinessPlayCounts(rowsPlays);
+  let playStats: AdminPlayStats | null = null;
+  let counts: Map<string, number> | null = null;
+
+  // Chemin RAPIDE : cache pré-calculé (0068) pour les agrégats non bornés +
+  // comptes bornés (aujourd'hui / ce mois) en direct (servis par un index).
+  const cacheRes = await admin
+    .from("admin_stats_cache")
+    .select("plays_total, insta, review, won, redeemed, refreshed_at")
+    .eq("id", 1)
+    .maybeSingle();
+  if (!cacheRes.error && (cacheRes.data as any)?.refreshed_at) {
+    const c = cacheRes.data as any;
+    const [totalsRes, monthCnt, dayCnt] = await Promise.all([
+      admin.from("business_play_totals").select("business_id, plays"),
+      admin
+        .from("plays")
+        .select("*", { count: "exact", head: true })
+        .gte("created_at", monthIso),
+      admin
+        .from("plays")
+        .select("*", { count: "exact", head: true })
+        .gte("created_at", dayIso),
+    ]);
+    if (!totalsRes.error) {
+      playStats = {
+        playsTotal: Number(c.plays_total) || 0,
+        playsMonth: monthCnt.count ?? 0,
+        playsToday: dayCnt.count ?? 0,
+        insta: Number(c.insta) || 0,
+        review: Number(c.review) || 0,
+        won: Number(c.won) || 0,
+        redeemed: Number(c.redeemed) || 0,
+      };
+      counts = new Map(
+        ((totalsRes.data ?? []) as any[]).map((r) => [r.business_id, r.plays])
+      );
+    }
   }
-  // Garantis non-null (RPC OU repli les a renseignés).
+
+  // Chemin de REPLI : agrégats délégués à SQL (RPC 0053), sinon scan JS unique
+  // (cache 0068 pas encore appliqué ou pas encore rafraîchi). Chiffres égaux.
+  if (!playStats || !counts) {
+    const [statsRpc, countsRpc] = await Promise.all([
+      admin.rpc("admin_play_stats", { month_start: monthIso, day_start: dayIso }),
+      admin.rpc("admin_business_play_counts"),
+    ]);
+    playStats =
+      playStats ?? (statsRpc.error ? null : adminPlayStatsFromRpc(statsRpc.data));
+    counts =
+      counts ?? (countsRpc.error ? null : businessPlayCountsFromRpc(countsRpc.data));
+    if (!playStats || !counts) {
+      const { data: playRows } = await admin
+        .from("plays")
+        .select("business_id, play_type, prize_label, redeemed_at, created_at");
+      const rowsPlays = playRows ?? [];
+      playStats = playStats ?? computeAdminPlayStats(rowsPlays, monthIso, dayIso);
+      counts = counts ?? computeBusinessPlayCounts(rowsPlays);
+    }
+  }
+
+  const leadsRes = await leadsPromise;
+  const leadsCount = leadsRes.count;
+  // Garantis non-null (cache, RPC OU repli les a renseignés).
   const playStatsResolved = playStats!;
   const playCounts = counts!;
 
