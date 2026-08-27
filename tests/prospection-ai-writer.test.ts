@@ -33,10 +33,11 @@ describe("buildPrompt", () => {
     expect(system).toContain("JSON");
   });
 
-  it("intègre le lien de RDV quand il est fourni", () => {
+  it("n'inclut PAS de lien dans le 1er email (anti-Promotions)", () => {
     process.env.PROSPECT_BOOKING_URL = "https://cal.com/kado/15min";
     const { system } = buildPrompt(ctx);
-    expect(system).toContain("https://cal.com/kado/15min");
+    expect(system).not.toContain("https://cal.com/kado/15min");
+    expect(system.toLowerCase()).toContain("aucun lien");
   });
 
   it("intègre l'extrait du site et interdit d'inventer au-delà", () => {
@@ -99,16 +100,22 @@ describe("assembleEmail", () => {
     expect(email.body.startsWith("Bonjour,")).toBe(true);
   });
 
-  it("ajoute le lien de RDV s'il manque dans le corps", () => {
+  it("ajoute le lien de RDV pour une relance (includeBooking=true)", () => {
     process.env.PROSPECT_BOOKING_URL = "https://cal.com/kado/15min";
-    const email = assembleEmail(ctx, { subject: "O", body: "Bonjour," });
+    const email = assembleEmail(ctx, { subject: "O", body: "Bonjour," }, true);
     expect(email.body).toContain("https://cal.com/kado/15min");
   });
 
-  it("ne duplique pas le lien de RDV s'il est déjà présent", () => {
+  it("n'ajoute PAS de lien pour le 1er email (défaut)", () => {
+    process.env.PROSPECT_BOOKING_URL = "https://cal.com/kado/15min";
+    const email = assembleEmail(ctx, { subject: "O", body: "Bonjour," });
+    expect(email.body).not.toContain("https://cal.com/kado/15min");
+  });
+
+  it("ne duplique pas le lien de RDV s'il est déjà présent (relance)", () => {
     process.env.PROSPECT_BOOKING_URL = "https://cal.com/kado/15min";
     const body = "Bonjour, réservez → https://cal.com/kado/15min";
-    const email = assembleEmail(ctx, { subject: "O", body });
+    const email = assembleEmail(ctx, { subject: "O", body }, true);
     const count = email.body.split("https://cal.com/kado/15min").length - 1;
     expect(count).toBe(1);
   });

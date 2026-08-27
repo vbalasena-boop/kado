@@ -168,36 +168,27 @@ export function renderEmail(ctx: TemplateContext): GeneratedEmail {
     `Petit message au sujet de votre ${noun}${city} : ${hook}.`,
   ]);
 
-  // Pitch court (1 phrase) + hook essai, sans prix.
+  // Pitch court, sobre (ton personnel 1:1 — on évite le vocabulaire « pub »
+  // qui envoie l'email dans l'onglet Promotions de Gmail).
   const pitch = pick(seed, "pitch", [
-    `Kado aide les commerces comme le vôtre à récolter plus d'avis Google et ` +
-      `d'abonnés Instagram : vos clients scannent un QR code, jouent et gagnent un ` +
-      `cadeau — en échange d'un avis ou d'un suivi. 14 jours offerts, sans engagement.`,
-    `Avec Kado, un petit jeu à scanner en boutique transforme vos clients en avis ` +
-      `Google et en abonnés Instagram, sans effort pour vous. Testable 14 jours, ` +
-      `sans engagement.`,
-    `Kado, c'est plus d'avis Google et d'abonnés Insta grâce à un jeu à scanner : ` +
-      `vos clients jouent, gagnent un cadeau, vous laissent un avis. 14 jours offerts.`,
+    `On aide les commerces comme le vôtre à obtenir plus d'avis Google et ` +
+      `d'abonnés Instagram, à partir d'un simple QR code en boutique — sans effort ` +
+      `de votre côté.`,
+    `Avec Kado, un QR code en boutique amène naturellement plus d'avis Google et ` +
+      `d'abonnés Instagram, sans rien à gérer pour vous.`,
+    `L'idée de Kado : un QR code en boutique qui vous ramène des avis Google et des ` +
+      `abonnés Instagram, simplement.`,
   ]);
 
-  const booking = resolveBooking(ctx);
-  const cta = booking
-    ? pick(seed, "cta_book", [
-        `Le plus simple : un court échange téléphonique de 15 min. ` +
-          `Réservez le créneau qui vous arrange → ${booking}`,
-        `Ça vous dirait d'en parler 15 min au téléphone ? ` +
-          `Choisissez votre horaire ici → ${booking}`,
-        `Je vous propose un appel rapide de 15 min — ` +
-          `réservez quand vous voulez → ${booking}`,
-      ])
-    : pick(seed, "cta", [
-        `Ça vous dirait qu'on en parle 15 min au téléphone ? ` +
-          `Répondez-moi avec un créneau et je vous rappelle.`,
-        `Un rapide appel de 15 min vous intéresse ? ` +
-          `Dites-moi vos dispos, je m'adapte.`,
-        `Je peux vous montrer en 5 min ce que ça donnerait pour votre ${noun} — ` +
-          `dites-moi quand vous êtes joignable.`,
-      ]);
+  // 1er email : PAS de lien (un lien pousse Gmail à classer en Promotions).
+  // On invite à répondre ; le lien de RDV revient dans les relances.
+  const cta = pick(seed, "cta", [
+    `Est-ce un sujet sur lequel vous aimeriez avancer ? Un simple mot en réponse et ` +
+      `je vous en dis plus.`,
+    `Ça vous parle ? Répondez-moi et on en discute rapidement, quand vous voulez.`,
+    `Si le sujet vous intéresse, dites-le-moi en réponse et je reviens vers vous avec ` +
+      `les détails.`,
+  ]);
 
   const signoff = pick(seed, "signoff", [
     `Belle journée,`,
