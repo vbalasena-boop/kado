@@ -7,6 +7,7 @@ import { buildTheme } from "@/lib/theme";
 import { isValidEmail, autoSendCodeTarget, needsCollectStep } from "@/lib/optin";
 import type { Highlight } from "@/lib/highlight";
 import HighlightCard from "@/components/HighlightCard";
+import FeedbackForm from "@/components/FeedbackForm";
 import {
   unlockedSpinActions,
   reviewCtaHref,
@@ -428,6 +429,7 @@ export default function Game({
   decorEmojis = "",
   drawPrize = "",
   highlight = null,
+  feedbackEnabled = false,
 }: {
   slug: string;
   name: string;
@@ -441,6 +443,7 @@ export default function Game({
   decorEmojis?: string;
   drawPrize?: string;
   highlight?: Highlight | null;
+  feedbackEnabled?: boolean;
 }) {
   // Tours du jeu = actions déclenchantes non-avis configurées par le commerçant
   // (⊆ {instagram, loyalty, optin}). Lecture tolérante : `unlockedSpinActions`
@@ -1465,6 +1468,7 @@ export default function Game({
                     "Le cadeau n'est pas conditionné à la note laissée."}
                 </p>
                 {!preview && <HighlightCard highlight={highlight} />}
+                {!preview && <FeedbackForm slug={slug} enabled={feedbackEnabled} />}
                 <button className="btn" onClick={afterPrize}>
                   {usedCount >= totalTurns ? "Voir mes gains" : "Continuer"}
                 </button>
@@ -1506,6 +1510,7 @@ export default function Game({
                   Présentez vos codes en caisse. À très vite&nbsp;!
                 </p>
                 {!preview && <HighlightCard highlight={highlight} />}
+                {!preview && <FeedbackForm slug={slug} enabled={feedbackEnabled} />}
                 {!preview && (
                   <a
                     className="merchant-loop-cta"

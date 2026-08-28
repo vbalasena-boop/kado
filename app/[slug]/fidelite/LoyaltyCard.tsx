@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { subscribeWithCurrentKey } from "@/lib/push-client";
 import type { Highlight } from "@/lib/highlight";
 import HighlightCard from "@/components/HighlightCard";
+import FeedbackForm from "@/components/FeedbackForm";
 
 type CardData = {
   code: string;
@@ -38,6 +39,7 @@ export default function LoyaltyCard({
   stampEmoji = "⭐",
   parrain = null,
   highlight = null,
+  feedbackEnabled = false,
 }: {
   slug: string;
   name: string;
@@ -48,6 +50,7 @@ export default function LoyaltyCard({
   stampEmoji?: string;
   parrain?: string | null;
   highlight?: Highlight | null;
+  feedbackEnabled?: boolean;
 }) {
   const [email, setEmail] = useState("");
   const [card, setCard] = useState<CardData | null>(null);
@@ -616,6 +619,7 @@ export default function LoyaltyCard({
             </button>
           </section>
         )}
+        <FeedbackForm slug={slug} enabled={feedbackEnabled} />
       </div>
       <footer className="game-footer">
         <a href={`/${slug}`}>← Retour au jeu</a>

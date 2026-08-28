@@ -45,6 +45,7 @@ type Config = {
   reengage_reward?: boolean | null;
   review_invite?: boolean | null;
   convert_nudge?: boolean | null;
+  feedback_enabled?: boolean | null;
   play_alerts?: boolean | null;
   monthly_draw?: boolean | null;
   monthly_draw_prize?: string | null;
@@ -1069,6 +1070,25 @@ export default function WheelEditor({
                       joueur qui a laissé son e-mail mais n'a pas de carte de
                       fidélité reçoit une invitation (une seule fois) à en
                       ouvrir une.
+                    </span>
+                  </label>
+
+                  <label className="toggle-field" style={{ marginTop: 6 }}>
+                    <input
+                      type="checkbox"
+                      checked={!!config.feedback_enabled}
+                      onChange={(e) =>
+                        setConfig({
+                          ...config,
+                          feedback_enabled: e.target.checked,
+                        })
+                      }
+                    />
+                    <span>
+                      <b>💬 Recueillir les avis privés</b> — un bouton « Un souci
+                      ? Dites-le nous » s'affiche sur vos pages jeu et fidélité.
+                      Les clients vous écrivent en privé (vous êtes alerté), au
+                      lieu de laisser un avis Google négatif.
                     </span>
                   </label>
 

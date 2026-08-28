@@ -138,6 +138,16 @@ export default async function WheelPage() {
     ? false
     : !!(cvn as any)?.convert_nudge;
 
+  // Feedback privé (lecture tolérante si migration 0071 absente)
+  const { data: fbk, error: fbkErr } = await admin
+    .from("wheel_configs")
+    .select("feedback_enabled")
+    .eq("business_id", business.id)
+    .maybeSingle();
+  const feedbackEnabled: boolean = fbkErr
+    ? false
+    : !!(fbk as any)?.feedback_enabled;
+
   // « À la une » (lecture tolérante si migration 0055 absente)
   const { data: hl, error: hlErr } = await admin
     .from("wheel_configs")
@@ -177,6 +187,7 @@ export default async function WheelPage() {
         reengage_reward: reengageReward,
         review_invite: reviewInvite,
         convert_nudge: convertNudge,
+        feedback_enabled: feedbackEnabled,
         ...highlight,
       }}
       initialPrizes={prizes ?? []}
