@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Éteindre les mauvaises étoiles</title>
+<style>
+  :root{
+    --bg:#0e1020;
+    --bg2:#161a33;
+    --ink:#f4f1ff;
+    --muted:#b7b3d8;
+    --gold:#ffcf3f;
+    --gold-soft:#ffe89b;
+    --star:#ffd54a;
+    --line:rgba(255,255,255,.10);
+    --card:rgba(255,255,255,.05);
+    --red:#ff5d6c;
+    --red-deep:#7a0f1d;
+    --green:#37e0a6;
+    --blue:#5aa9ff;
+    --violet:#b98bff;
+    --amber:#ffab52;
+    --shadow:0 18px 50px rgba(0,0,0,.45);
+    font-synthesis:none;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:
+      radial-gradient(1200px 700px at 12% -8%, #2a1c52 0%, transparent 55%),
+      radial-gradient(1000px 600px at 100% 0%, #10305a 0%, transparent 50%),
+      radial-gradient(900px 900px at 50% 120%, #241033 0%, transparent 55%),
+      var(--bg);
+    color:var(--ink);
+    font-family:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.55;
+    overflow-x:hidden;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:26px 20px 90px}
+
+  /* twinkle background stars */
+  .sky{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.5}
+  .sky span{position:absolute;color:var(--gold-soft);opacity:.0;animation:tw 5s ease-in-out infinite}
+  @keyframes tw{0%,100%{opacity:.05;transform:scale(.7)}50%{opacity:.85;transform:scale(1.1)}}
+  .wrap,.hero,section{position:relative;z-index:1}
+
+  /* HERO */
+  .hero{
+    text-align:center;
+    padding:34px 20px 30px;
+    border-radius:26px;
+    background:linear-gradient(160deg, rgba(255,207,63,.14), rgba(90,169,255,.06) 55%, rgba(185,139,255,.10));
+    border:1px solid var(--line);
+    box-shadow:var(--shadow);
+    overflow:hidden;
+  }
+  .eyebrow{
+    display:inline-block;letter-spacing:.28em;text-transform:uppercase;
+    font-size:11px;color:var(--gold);font-weight:700;
+    padding:6px 14px;border:1px solid rgba(255,207,63,.4);border-radius:999px;
+    background:rgba(255,207,63,.07);margin-bottom:16px;
+  }
+  h1{
+    font-size:clamp(30px,7vw,54px);line-height:1.02;margin:.1em 0 .2em;font-weight:800;
+    background:linear-gradient(90deg,#fff,var(--gold-soft) 45%,var(--gold) 60%,#fff);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .lede{max-width:640px;margin:14px auto 0;color:var(--muted);font-size:clamp(15px,2.4vw,18px)}
+  .rating{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:22px;flex-wrap:wrap}
+  .rating .stars{font-size:26px;letter-spacing:2px}
+  .rating .stars .off{filter:grayscale(1);opacity:.35}
+  .rating .num{font-weight:800;font-size:22px;color:var(--gold)}
+  .rating .tag{font-size:12px;color:var(--muted)}
+  .arrow-up{color:var(--green);font-weight:700;font-size:13px}
+
+  /* section shell */
+  section{margin-top:30px;border-radius:22px;padding:24px 22px;border:1px solid var(--line);box-shadow:var(--shadow)}
+  .sec-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:4px}
+  .chip{
+    font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+    padding:5px 11px;border-radius:999px;white-space:nowrap;
+  }
+  h2{font-size:clamp(20px,3.6vw,27px);margin:.15em 0 .1em;font-weight:800;letter-spacing:-.01em}
+  .sub{color:var(--muted);font-size:14px;margin:2px 0 18px}
+  .emoji{font-size:1.25em;filter:drop-shadow(0 2px 6px rgba(0,0,0,.4))}
+
+  /* ---- 1. ANTI-PROBLÈME : miroir inversé ---- */
+  .s-anti{background:linear-gradient(180deg,rgba(255,93,108,.10),rgba(55,224,166,.06)),var(--bg2)}
+  .s-anti .chip{background:rgba(255,93,108,.18);color:#ffb3bb}
+  .flip{display:grid;gap:12px}
+  .flip-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:stretch;gap:10px}
+  .flip-bad,.flip-good{border-radius:14px;padding:12px 14px;font-size:14px;border:1px solid var(--line)}
+  .flip-bad{background:rgba(255,93,108,.10);border-color:rgba(255,93,108,.3);color:#ffcdd2}
+  .flip-good{background:rgba(55,224,166,.10);border-color:rgba(55,224,166,.32);color:#c7ffe9}
+  .flip-bad b,.flip-good b{display:block;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;opacity:.7;margin-bottom:3px}
+  .flip .mid{display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--gold)}
+  @media(max-width:620px){
+    .flip-row{grid-template-columns:1fr;gap:6px}
+    .flip .mid{transform:rotate(90deg);height:14px}
+  }
+
+  /* ---- 2. SIGNALEMENT : dossier / ticket ---- */
+  .s-report{background:linear-gradient(180deg,rgba(90,169,255,.10),transparent),var(--bg2)}
+  .s-report .chip{background:rgba(90,169,255,.2);color:#bcdcff}
+  .steps{counter-reset:st;display:grid;gap:10px;margin:6px 0 18px}
+  .step{position:relative;padding:12px 14px 12px 50px;border-radius:12px;background:var(--card);border:1px solid var(--line);font-size:14px}
+  .step::before{
+    counter-increment:st;content:counter(st);
+    position:absolute;left:12px;top:11px;width:26px;height:26px;border-radius:50%;
+    display:grid;place-items:center;font-weight:800;font-size:13px;color:#06203f;
+    background:linear-gradient(180deg,#bcdcff,#5aa9ff);
+  }
+  .motifs{display:flex;flex-wrap:wrap;gap:8px}
+  .motif{font-size:12.5px;padding:7px 11px;border-radius:10px;background:rgba(90,169,255,.12);border:1px dashed rgba(90,169,255,.45);color:#dcebff}
+  .lastresort{margin-top:14px;font-size:13px;color:var(--muted);border-left:3px solid var(--red);padding-left:12px}
+
+  /* ---- 3. ROLE-STORMING : personnages ---- */
+  .s-role{background:linear-gradient(180deg,rgba(185,139,255,.11),transparent),var(--bg2)}
+  .s-role .chip{background:rgba(185,139,255,.2);color:#e0ccff}
+  .roles{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px}
+  .role{border-radius:16px;padding:14px;background:var(--card);border:1px solid var(--line)}
+  .role .who{font-size:26px}
+  .role .name{font-weight:800;margin:6px 0 4px;font-size:14px;color:var(--violet)}
+  .role p{margin:0;font-size:13px;color:var(--muted)}
+
+  /* ---- 4. RÉPONDRE : bulles de chat ---- */
+  .s-reply{background:linear-gradient(180deg,rgba(55,224,166,.10),transparent),var(--bg2)}
+  .s-reply .chip{background:rgba(55,224,166,.2);color:#c7ffe9}
+  .chatline{display:flex;gap:8px;margin-bottom:10px}
+  .bubble{border-radius:16px;padding:11px 14px;font-size:13.5px;max-width:82%}
+  .b-client{background:rgba(255,93,108,.14);border:1px solid rgba(255,93,108,.3);border-bottom-left-radius:4px;color:#ffdadf}
+  .b-you{margin-left:auto;background:rgba(55,224,166,.14);border:1px solid rgba(55,224,166,.32);border-bottom-right-radius:4px;color:#d6fff2}
+  .reply-rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:12px}
+  .rr{font-size:13px;padding:11px 13px;border-radius:12px;background:var(--card);border:1px solid var(--line)}
+  .rr b{color:var(--green)}
+  .rgpd{margin-top:12px;font-size:12.5px;color:var(--gold-soft);background:rgba(255,207,63,.08);border:1px solid rgba(255,207,63,.3);padding:9px 12px;border-radius:10px}
+
+  /* ---- 5. DILUER : jauge d'étoiles ---- */
+  .s-dilute{background:linear-gradient(180deg,rgba(255,207,63,.12),transparent),var(--bg2)}
+  .s-dilute .chip{background:rgba(255,207,63,.22);color:#ffe89b}
+  .gauge{height:16px;border-radius:999px;background:rgba(255,93,108,.25);overflow:hidden;border:1px solid var(--line);margin:8px 0 6px}
+  .gauge i{display:block;height:100%;width:82%;background:linear-gradient(90deg,var(--gold),var(--gold-soft));border-radius:999px;animation:fill 1.6s ease-out both}
+  @keyframes fill{from{width:0}}
+  .gauge-legend{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:16px}
+  .dilute-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+  .di{border-radius:14px;padding:14px;background:var(--card);border:1px solid var(--line);font-size:13.5px}
+  .di .ic{font-size:22px;display:block;margin-bottom:6px}
+  .di b{color:var(--gold)}
+
+  /* ---- 6. PRÉVENIR : source / robinet ---- */
+  .s-prevent{background:linear-gradient(180deg,rgba(90,169,255,.10),rgba(55,224,166,.07)),var(--bg2)}
+  .s-prevent .chip{background:rgba(90,169,255,.2);color:#c9e6ff}
+  .flow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 16px}
+  .node{flex:1 1 130px;min-width:120px;text-align:center;padding:14px 10px;border-radius:14px;background:var(--card);border:1px solid var(--line)}
+  .node .ic{font-size:26px;display:block}
+  .node .lbl{font-size:12.5px;margin-top:6px;color:var(--ink)}
+  .flow .to{color:var(--blue);font-size:20px;font-weight:800}
+  .prevent-notes{display:grid;gap:9px}
+  .pn{font-size:13.5px;padding:10px 13px;border-radius:11px;background:var(--card);border:1px solid var(--line)}
+  .pn .k{color:var(--blue);font-weight:800}
+  .warn-inline{border:1px solid rgba(255,171,82,.5);background:rgba(255,171,82,.10);color:#ffe0bf}
+
+  /* ---- 7. FAUSSES PROMESSES : zone interdite ---- */
+  .s-danger{
+    background:
+      repeating-linear-gradient(45deg,rgba(255,93,108,.09) 0 22px,rgba(0,0,0,0) 22px 44px),
+      linear-gradient(180deg,rgba(122,15,29,.55),rgba(20,8,12,.6));
+    border:1px solid rgba(255,93,108,.55);
+    box-shadow:0 0 0 1px rgba(255,93,108,.2), var(--shadow);
+  }
+  .s-danger .chip{background:var(--red);color:#2a0006}
+  .s-danger h2{color:#ffd7db}
+  .forbidden{display:grid;gap:11px;margin-top:6px}
+  .fb{
+    display:flex;align-items:flex-start;gap:12px;padding:13px 15px;border-radius:12px;
+    background:rgba(20,6,10,.55);border:1px solid rgba(255,93,108,.4);
+  }
+  .fb .no{font-size:22px;line-height:1;flex-shrink:0}
+  .fb .txt{font-size:14px}
+  .fb .txt s{color:#ff9ba6;text-decoration-thickness:2px}
+  .fb .why{display:block;font-size:12px;color:#ffb9c0;margin-top:3px;opacity:.9}
+  .danger-strap{text-align:center;margin-top:16px;font-weight:800;letter-spacing:.05em;color:#ffd7db;font-size:13.5px}
+
+  /* ---- 8. OUTILLER DANS KADO : boîte à outils ---- */
+  .s-tools{background:linear-gradient(180deg,rgba(255,171,82,.10),transparent),var(--bg2)}
+  .s-tools .chip{background:rgba(255,171,82,.22);color:#ffd9b3}
+  .tools{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+  .tool{border-radius:16px;padding:15px;background:var(--card);border:1px solid var(--line);position:relative;overflow:hidden}
+  .tool .ic{font-size:24px}
+  .tool .t{font-weight:800;margin:8px 0 4px;font-size:14.5px}
+  .tool p{margin:0;font-size:13px;color:var(--muted)}
+  .tool::after{content:"";position:absolute;right:-30px;top:-30px;width:90px;height:90px;border-radius:50%;background:radial-gradient(circle,rgba(255,171,82,.18),transparent 70%)}
+
+  /* ---- SYNTHÈSE : climax ---- */
+  .s-synth{
+    background:linear-gradient(150deg,rgba(255,207,63,.16),rgba(185,139,255,.12) 60%,rgba(90,169,255,.12));
+    border:1px solid rgba(255,207,63,.4);
+    padding:30px 24px 28px;
+  }
+  .s-synth .chip{background:var(--gold);color:#2a1c00}
+  .truth{
+    text-align:center;font-size:clamp(17px,3vw,22px);font-weight:700;line-height:1.4;
+    margin:14px auto 6px;max-width:680px;
+  }
+  .truth b{color:var(--gold)}
+  .truth .strike{color:var(--red);text-decoration:line-through;text-decoration-thickness:2px}
+  .triad{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:20px 0 26px}
+  .tri{flex:1 1 150px;text-align:center;padding:16px 12px;border-radius:16px;background:rgba(255,255,255,.06);border:1px solid var(--line)}
+  .tri .ic{font-size:26px;display:block;margin-bottom:6px}
+  .tri .h{font-weight:800;letter-spacing:.08em;text-transform:uppercase;font-size:12px;color:var(--gold)}
+  .tri p{margin:6px 0 0;font-size:12.5px;color:var(--muted)}
+  .pistes{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:640px){.pistes{grid-template-columns:1fr}}
+  .piste{border-radius:18px;padding:20px;position:relative;overflow:hidden}
+  .piste-a{background:linear-gradient(160deg,rgba(55,224,166,.16),rgba(90,169,255,.10));border:1px solid rgba(55,224,166,.4)}
+  .piste-b{background:linear-gradient(160deg,rgba(185,139,255,.16),rgba(90,169,255,.10));border:1px solid rgba(185,139,255,.4)}
+  .piste .lab{font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;opacity:.85}
+  .piste-a .lab{color:var(--green)}
+  .piste-b .lab{color:var(--violet)}
+  .piste .name{font-size:19px;font-weight:800;margin:6px 0 4px}
+  .piste .kind{font-size:12px;color:var(--muted);margin-bottom:12px}
+  .piste ul{margin:0;padding-left:18px;font-size:13.5px}
+  .piste li{margin:5px 0}
+  .compl{
+    margin-top:18px;text-align:center;font-size:14px;font-weight:600;
+    background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:14px;padding:14px;
+  }
+  .compl .a{color:var(--green);font-weight:800}
+  .compl .b{color:var(--violet);font-weight:800}
+
+  footer{text-align:center;margin-top:36px;color:var(--muted);font-size:12px;opacity:.8}
+  footer .k{color:var(--gold);font-weight:700}
+</style>
+</head>
+<body>
+<div class="sky" id="sky" aria-hidden="true"></div>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">⭐ Session Brainstorming · Kado</span>
+    <h1>Éteindre les mauvaises étoiles</h1>
+    <p class="lede">Comment vraiment gérer un mauvais avis Google d'un commerçant local — sans mensonge, sans arnaque, sans supprimer l'impossible.</p>
+    <div class="rating">
+      <span class="stars">⭐⭐⭐⭐<span class="off">⭐</span></span>
+      <span class="num">4,2</span>
+      <span class="tag">↗ <span class="arrow-up">on fait remonter la note, on ne l'efface pas</span></span>
+    </div>
+  </header>
+
+  <!-- 1. ANTI-PROBLÈME -->
+  <section class="s-anti">
+    <div class="sec-head">
+      <span class="chip">Technique 01</span>
+      <h2><span class="emoji">🙃</span> Anti-problème</h2>
+    </div>
+    <p class="sub">On inverse la question : « comment GARANTIR qu'un mauvais avis fasse un max de dégâts ? » Chaque piège révèle son antidote.</p>
+    <div class="flip">
+      <div class="flip-row">
+        <div class="flip-bad"><b>Le piège</b>Ne jamais répondre — l'avis reste seul, jamais recontextualisé.</div>
+        <div class="mid">➜</div>
+        <div class="flip-good"><b>L'antidote</b>TOUJOURS répondre.</div>
+      </div>
+      <div class="flip-row">
+        <div class="flip-bad"><b>Le piège</b>Avoir très peu d'avis — un seul négatif plombe toute la note.</div>
+        <div class="mid">➜</div>
+        <div class="flip-good"><b>L'antidote</b>Faire du VOLUME d'avis positifs.</div>
+      </div>
+      <div class="flip-row">
+        <div class="flip-bad"><b>Le piège</b>Laisser le négatif être l'avis le plus récent.</div>
+        <div class="mid">➜</div>
+        <div class="flip-good"><b>L'antidote</b>Fraîcheur : en générer régulièrement.</div>
+      </div>
+      <div class="flip-row">
+        <div class="flip-bad"><b>Le piège</b>Répondre à chaud, agacé.</div>
+        <div class="mid">➜</div>
+        <div class="flip-good"><b>L'antidote</b>Réponse calme, différée, empathique.</div>
+      </div>
+      <div class="flip-row">
+        <div class="flip-bad"><b>Le piège</b>Ignorer le mécontentement en boutique jusqu'à l'avis public.</div>
+        <div class="mid">➜</div>
+        <div class="flip-good"><b>L'antidote</b>Capter le feedback AVANT Google.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. SIGNALEMENT -->
+  <section class="s-report">
+    <div class="sec-head">
+      <span class="chip">Technique 02</span>
+      <h2><span class="emoji">🚩</span> Signalement Google</h2>
+    </div>
+    <p class="sub">Le SEUL vrai « retrait » : il ne marche que sur une <b>violation des règles</b>, jamais sur un avis sincère.</p>
+    <div class="steps">
+      <div class="step">Signaler l'avis via Google Business Profile (⋮ → <b>Signaler</b>) pour violation des règles.</div>
+      <div class="step">Qualifier le motif exact — c'est ce qui fait la différence.</div>
+      <div class="step">Sans suite ? Escalade : formulaire Google « signaler un contenu inapproprié ».</div>
+      <div class="step">Toujours rien ? Support Google Business (chat / tél) et suivre le <b>numéro de ticket</b>.</div>
+    </div>
+    <div class="motifs">
+      <span class="motif">Spam / faux</span>
+      <span class="motif">Hors-sujet</span>
+      <span class="motif">Langage haineux / injurieux</span>
+      <span class="motif">Conflit d'intérêt</span>
+      <span class="motif">Infos perso</span>
+      <span class="motif">Contenu illégal</span>
+      <span class="motif">Publicité</span>
+    </div>
+    <div class="lastresort">
+      <p style="margin:.4em 0"><b>Cas particuliers :</b> faux avis d'un concurrent → réunir les preuves (aucune transaction, jamais client). Avis destiné à un homonyme / mauvaise fiche → retrait pour erreur d'établissement. Ex-employé ou rival → motif conflit d'intérêt.</p>
+      <p style="margin:.4em 0"><b>Dernier recours</b> (faux avis diffamatoire) : mise en demeure / voie juridique — DGCCRF, diffamation.</p>
+    </div>
+  </section>
+
+  <!-- 3. ROLE-STORMING -->
+  <section class="s-role">
+    <div class="sec-head">
+      <span class="chip">Technique 03</span>
+      <h2><span class="emoji">🎭</span> Role-storming</h2>
+    </div>
+    <p class="sub">On regarde l'avis à travers les yeux de chaque partie prenante.</p>
+    <div class="roles">
+      <div class="role"><div class="who">🔍</div><div class="name">Google</div><p>Récompense la réactivité. Répondre améliore la perception — mais ne supprime rien.</p></div>
+      <div class="role"><div class="who">🧐</div><div class="name">Futur client</div><p>Lit surtout la RÉPONSE du commerçant, pas juste l'avis. Regarde la note moyenne et la tendance : le volume récent prime.</p></div>
+      <div class="role"><div class="who">😤</div><div class="name">Client mécontent</div><p>Voulait souvent juste être entendu. Un canal privé aurait évité l'avis public.</p></div>
+      <div class="role"><div class="who">🕵️</div><div class="name">Agence « suppression »</div><p>Promet, ne livre pas. À écarter : arnaque et risque.</p></div>
+    </div>
+  </section>
+
+  <!-- 4. RÉPONDRE -->
+  <section class="s-reply">
+    <div class="sec-head">
+      <span class="chip">Technique 04</span>
+      <h2><span class="emoji">💬</span> Répondre</h2>
+    </div>
+    <p class="sub">Neutraliser l'effet sans supprimer. La réponse est lue plus que l'avis — c'est l'arme.</p>
+    <div class="chatline"><div class="bubble b-client">⭐ « Accueil décevant, j'ai attendu 20 min… »</div></div>
+    <div class="chatline"><div class="bubble b-you">« Bonjour, merci de nous l'avoir signalé et navrés pour cette attente. Nous aimerions comprendre : contactez-nous au 0X… pour qu'on répare cela. »</div></div>
+    <div class="reply-rules">
+      <div class="rr"><b>Ton</b> — calme, empathique, orienté solution.</div>
+      <div class="rr"><b>Délai</b> — sous 24-48h.</div>
+      <div class="rr"><b>Hors-ligne</b> — « contactez-nous au… » pour désamorcer.</div>
+      <div class="rr"><b>Gabarits</b> — par cas : fondé / injuste / manifestement faux.</div>
+      <div class="rr"><b>Assistant Kado</b> — gabarits + ton sobre ou chaleureux, sans IA externe.</div>
+    </div>
+    <div class="rgpd">🔒 Garde-fou RGPD : ne jamais révéler d'infos client dans la réponse publique.</div>
+  </section>
+
+  <!-- 5. DILUER -->
+  <section class="s-dilute">
+    <div class="sec-head">
+      <span class="chip">Technique 05</span>
+      <h2><span class="emoji">⭐</span> Diluer / faire remonter la note</h2>
+    </div>
+    <p class="sub">Le levier de fond : noyer le négatif sous un flux d'avis positifs récents.</p>
+    <div class="gauge"><i></i></div>
+    <div class="gauge-legend"><span>1 avis négatif isolé</span><span>dilué dans le volume ➜</span></div>
+    <div class="dilute-grid">
+      <div class="di"><span class="ic">📣</span><b>Inviter les satisfaits</b> — déjà dans Kado, conforme, sans récompense.</div>
+      <div class="di"><span class="ic">⏱️</span><b>Bon timing</b> — après un moment positif (récompense fidélité, gros lot).</div>
+      <div class="di"><span class="ic">🔁</span><b>Volume + fraîcheur</b> — un flux régulier fait chuter le poids du négatif.</div>
+      <div class="di"><span class="ic">📱</span><b>QR « laissez un avis »</b> — en boutique / sur le ticket de caisse.</div>
+      <div class="di"><span class="ic">🎯</span><b>Cibler les engagés</b> — la segmentation Kado est déjà en place.</div>
+    </div>
+  </section>
+
+  <!-- 6. PRÉVENIR -->
+  <section class="s-prevent">
+    <div class="sec-head">
+      <span class="chip">Technique 06</span>
+      <h2><span class="emoji">🚰</span> Prévenir à la source</h2>
+    </div>
+    <p class="sub">Capter le mécontentement avant qu'il ne devienne public.</p>
+    <div class="flow">
+      <div class="node"><span class="ic">😟</span><div class="lbl">Client déçu</div></div>
+      <span class="to">➜</span>
+      <div class="node"><span class="ic">📨</span><div class="lbl">Feedback privé<br>« un souci ? »</div></div>
+      <span class="to">➜</span>
+      <div class="node"><span class="ic">🔔</span><div class="lbl">Alerte<br>commerçant</div></div>
+      <span class="to">➜</span>
+      <div class="node"><span class="ic">🤝</span><div class="lbl">Rattrapé<br>avant Google</div></div>
+    </div>
+    <div class="prevent-notes">
+      <div class="pn"><span class="k">Canal privé</span> — « un souci ? dites-le nous » ouvert à TOUS sur la page jeu / fidélité.</div>
+      <div class="pn"><span class="k">Alerte</span> — feedback privé négatif → le commerçant rattrape le client avant l'avis public.</div>
+      <div class="pn warn-inline"><span class="k" style="color:var(--amber)">⚠️ Conformité</span> — ne PAS rediriger seulement les contents vers Google (review gating interdit). Le canal privé est pour tous.</div>
+      <div class="pn"><span class="k">Analyse</span> — thèmes récurrents des avis → corriger le point de douleur : la vraie cause.</div>
+    </div>
+  </section>
+
+  <!-- 7. FAUSSES PROMESSES -->
+  <section class="s-danger">
+    <div class="sec-head">
+      <span class="chip">⛔ Zone interdite</span>
+      <h2><span class="emoji">🚫</span> Fausses promesses à écarter</h2>
+    </div>
+    <p class="sub" style="color:#ffc2c9">Par honnêteté : ces raccourcis sont illégaux, pénalisés ou arnaques. On ne les propose pas.</p>
+    <div class="forbidden">
+      <div class="fb"><span class="no">⛔</span><div class="txt"><s>Acheter des avis positifs</s><span class="why">Interdit (UE / DGCCRF), pénalisé par Google.</span></div></div>
+      <div class="fb"><span class="no">⛔</span><div class="txt"><s>Payer un service « suppression garantie »</s><span class="why">Le plus souvent une arnaque.</span></div></div>
+      <div class="fb"><span class="no">⛔</span><div class="txt"><s>Review gating (n'inviter que les contents)</s><span class="why">Interdit par Google.</span></div></div>
+      <div class="fb"><span class="no">⛔</span><div class="txt"><s>Faux avis négatifs sur les concurrents</s><span class="why">Illégal.</span></div></div>
+    </div>
+    <p class="danger-strap">L'honnêteté n'est pas une contrainte — c'est le seul terrain qui tient dans la durée.</p>
+  </section>
+
+  <!-- 8. OUTILLER -->
+  <section class="s-tools">
+    <div class="sec-head">
+      <span class="chip">Technique 08</span>
+      <h2><span class="emoji">🧰</span> Outiller dans Kado</h2>
+    </div>
+    <p class="sub">Ce qu'on peut concrètement activer dans l'app.</p>
+    <div class="tools">
+      <div class="tool"><span class="ic">🗂️</span><div class="t">Espace « Gérer mes avis »</div><p>Lien fiche Google + mémo des motifs de signalement + assistant de réponse.</p></div>
+      <div class="tool"><span class="ic">📊</span><div class="t">Mini tableau « réputation »</div><p>Note actuelle + tendance, pour la motivation.</p></div>
+      <div class="tool"><span class="ic">📄</span><div class="t">Modèle de mise en demeure</div><p>Pour les faux avis — téléchargeable.</p></div>
+      <div class="tool"><span class="ic">✅</span><div class="t">Checklist « avant de signaler »</div><p>+ suivi des signalements en cours.</p></div>
+    </div>
+  </section>
+
+  <!-- SYNTHÈSE -->
+  <section class="s-synth">
+    <div class="sec-head">
+      <span class="chip">✨ Synthèse</span>
+      <h2>La vérité centrale</h2>
+    </div>
+    <p class="truth">
+      On ne peut pas <span class="strike">supprimer</span> un avis sincère négatif. La seule vraie « suppression » passe par le <b>signalement Google pour violation des règles</b>. Le levier durable, lui, est ailleurs.
+    </p>
+    <div class="triad">
+      <div class="tri"><span class="ic">🚰</span><div class="h">Prévenir</div><p>Feedback privé, avant Google</p></div>
+      <div class="tri"><span class="ic">⭐</span><div class="h">Diluer</div><p>Volume d'avis positifs récents</p></div>
+      <div class="tri"><span class="ic">💬</span><div class="h">Répondre</div><p>La réponse est lue plus que l'avis</p></div>
+    </div>
+
+    <div class="pistes">
+      <div class="piste piste-a">
+        <div class="lab">Piste A · Curatif</div>
+        <div class="name">🛠️ Gérer mes avis</div>
+        <div class="kind">Agir sur les avis qui existent déjà</div>
+        <ul>
+          <li>Mémo + lien de signalement</li>
+          <li>Assistant de réponse (gabarits)</li>
+          <li>Boost des avis positifs</li>
+          <li><em>Spec déjà rédigée, en pause</em></li>
+        </ul>
+      </div>
+      <div class="piste piste-b">
+        <div class="lab">Piste B · Préventif</div>
+        <div class="name">🔒 Feedback privé avant Google</div>
+        <div class="kind">Tarir la source du mécontentement</div>
+        <ul>
+          <li>Canal privé ouvert à TOUS</li>
+          <li>Alerte commerçant pour rattraper le client</li>
+          <li>Conforme — pas de review gating</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="compl">
+      <span class="a">A</span> gère l'existant · <span class="b">B</span> tarit la source. Les deux se complètent : l'une soigne, l'autre empêche la blessure.
+    </div>
+  </section>
+
+  <footer>
+    Keepsake de brainstorming · <span class="k">Kado</span> · 27 août 2026 · réputation gérée avec honnêteté ⭐
+  </footer>
+
+</div>
+
+<script>
+  // semer un ciel d'étoiles scintillantes
+  (function(){
+    var sky = document.getElementById('sky');
+    if(!sky) return;
+    var glyphs = ['⭐','✦','✧','·','✩'];
+    var n = 46;
+    for(var i=0;i<n;i++){
+      var s = document.createElement('span');
+      s.textContent = glyphs[i % glyphs.length];
+      s.style.left = Math.random()*100 + '%';
+      s.style.top = Math.random()*100 + '%';
+      s.style.fontSize = (7 + Math.random()*13) + 'px';
+      s.style.animationDelay = (Math.random()*5) + 's';
+      s.style.animationDuration = (3.5 + Math.random()*4) + 's';
+      sky.appendChild(s);
+    }
+  })();
+</script>
+</body>
+</html>

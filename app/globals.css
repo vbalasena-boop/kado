@@ -840,6 +840,48 @@ canvas#confetti {
   font-size: 13px;
   cursor: pointer;
 }
+/* Espace « Gérer mes avis » */
+.avis-reasons {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.avis-reasons li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.avis-reason-emoji {
+  flex: 0 0 auto;
+  font-size: 18px;
+  line-height: 1.3;
+}
+.avis-warn {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fdf3e7;
+  color: #8a5a1a;
+  font-size: 13px;
+}
+.avis-controls {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+@media (min-width: 640px) {
+  .avis-controls {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+.avis-draft {
+  margin-top: 12px;
+}
 /* Navigation entre les sections admin (tableau de bord / prospection / …) */
 .admin-nav {
   display: flex;
