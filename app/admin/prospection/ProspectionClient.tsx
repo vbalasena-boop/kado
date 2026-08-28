@@ -177,13 +177,36 @@ export default function ProspectionClient({
       if (!res.ok) {
         setMessage(`Erreur : ${data.error ?? "inconnue"}`);
       } else {
+        const errs = Array.isArray(data.errors) ? data.errors : [];
         const nbVilles = Array.isArray(data.cities) ? data.cities.length : 1;
-        setMessage(
-          `${data.inserted} nouveau(x) prospect(s) ajouté(s)` +
-            (nbVilles > 1 ? ` sur ${nbVilles} villes` : "") +
-            (data.duplicates ? `, ${data.duplicates} doublon(s) ignoré(s)` : "") +
-            (data.mock ? " — mode démo (pas de clé Google Places)" : "")
-        );
+        if (errs.length > 0) {
+          // Google a renvoyé une erreur (quota, clé, réseau…) : on le dit.
+          const codes = [...new Set(errs.map((e: { error: string }) => e.error))].join(", ");
+          const isQuota = codes.includes("429");
+          setMessage(
+            `⚠️ Google Places a renvoyé une erreur (${codes})` +
+              (isQuota
+                ? " — quota atteint. Réessaie dans quelques minutes ou demain."
+                : ". Réessaie dans un instant.") +
+              (data.inserted ? ` ${data.inserted} prospect(s) tout de même ajouté(s).` : "")
+          );
+        } else if (data.found === 0) {
+          setMessage(
+            "0 résultat renvoyé par Google pour cette recherche. Essaie une autre ville ou un autre secteur."
+          );
+        } else if (data.inserted === 0) {
+          setMessage(
+            `0 nouveau — ${data.duplicates || data.found} commerce(s) déjà dans ta liste. ` +
+              "Rien n'est supprimé. Change de ville ou de secteur pour en ajouter d'autres."
+          );
+        } else {
+          setMessage(
+            `✅ ${data.inserted} nouveau(x) prospect(s) ajouté(s)` +
+              (nbVilles > 1 ? ` sur ${nbVilles} villes` : "") +
+              (data.duplicates ? ` · ${data.duplicates} déjà en liste (ignoré(s))` : "") +
+              (data.mock ? " — mode démo (pas de clé Google Places)" : "")
+          );
+        }
         router.refresh();
       }
     } catch {
