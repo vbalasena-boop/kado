@@ -29,6 +29,20 @@ export default async function DashboardHome() {
   if (!business) return null;
 
   const admin = getAdminClient();
+
+  // Identifiant lisible de l'établissement (0072) — lu tolérant : à indiquer au
+  // support pour être retrouvé vite. Absent tant que la migration n'est pas là.
+  let bizRef: string | null = null;
+  try {
+    const { data } = await admin
+      .from("businesses")
+      .select("ref")
+      .eq("id", business.id)
+      .maybeSingle();
+    bizRef = (data as { ref?: string | null } | null)?.ref ?? null;
+  } catch {
+    bizRef = null;
+  }
   const since = new Date(Date.now() - 30 * 864e5).toISOString();
   // Seuil « à réveiller » : dernier tampon plus ancien que 60 jours.
   const SEGMENT_DORMANT_DAYS = 60;
@@ -257,6 +271,11 @@ export default async function DashboardHome() {
     <>
       <h1 className="dash-h1">Vue d'ensemble</h1>
       <p className="dash-sub">
+        {bizRef && (
+          <>
+            <span className="admin-ref">{bizRef}</span>{" "}
+          </>
+        )}
         Activité de <b>{business.name}</b> · statut :{" "}
         <span className={`pill ${business.status}`}>
           {business.status === "active" ? "Actif" : "Suspendu"}
@@ -266,6 +285,12 @@ export default async function DashboardHome() {
           {PLAN_LABEL[business.plan] || business.plan}
         </span>
       </p>
+      {bizRef && (
+        <p className="muted" style={{ marginTop: -6, fontSize: 12.5 }}>
+          🔖 Votre identifiant : <b>{bizRef}</b> — indiquez-le à l'assistance
+          pour être retrouvé plus vite.
+        </p>
+      )}
 
       {/* Bannière migration avis : uniquement aux commerçants qui ont
           RÉELLEMENT utilisé l'avis pour débloquer un tour (review > 0), qui ont
