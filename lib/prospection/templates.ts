@@ -347,20 +347,20 @@ export function renderDm(ctx: TemplateContext): string {
 
   const body = pick(seed, "dm_body", [
     `On adore ce que vous faites ! On a vu que ${hook} — on aide les commerces comme ` +
-      `le vôtre à en obtenir plus (et des abonnés Insta) avec un petit jeu à scanner en boutique 🎡`,
+      `le vôtre à en obtenir plus (et des abonnés Insta), à partir d'un simple QR code en boutique 🙂`,
     `Super compte ! On a remarqué que ${hook}. Kado aide les commerces à récolter plus ` +
-      `d'avis Google et d'abonnés grâce à un jeu à scanner sur place 🎁`,
-    `On aime beaucoup votre univers ✨ On a vu que ${hook} — avec Kado, vos clients jouent ` +
-      `et vous laissent un avis ou un suivi, en échange d'un cadeau 🎡`,
+      `d'avis Google et d'abonnés, simplement, via un QR code sur place.`,
+    `On aime beaucoup votre univers ✨ On a vu que ${hook} — avec Kado, un QR code en ` +
+      `boutique vous ramène des avis Google et des abonnés, sans effort.`,
   ]);
 
   // Sur Instagram, on évite de coller un lien brut dans un DM à froid (risque
   // de blocage du compte) : on propose l'appel « par réponse ». Mettez plutôt
   // votre lien de réservation dans la BIO du compte.
   const cta = pick(seed, "dm_cta", [
-    `Ça vous dit un échange rapide de 15 min ? Répondez-moi et on cale un créneau 🙂 (14 jours offerts pour tester)`,
+    `Ça vous dit un échange rapide de 15 min ? Répondez-moi et on cale un créneau 🙂`,
     `On peut en parler 15 min par téléphone ? Dites-moi vos dispos 😉`,
-    `Envie d'en discuter 15 min ? Répondez et on trouve un créneau (14 jours offerts) ✨`,
+    `Envie d'en discuter 15 min ? Répondez et on trouve un créneau ✨`,
   ]);
 
   return [opener, body, cta].join("\n\n");
