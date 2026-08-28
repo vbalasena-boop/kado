@@ -98,12 +98,12 @@ function LoginInner() {
               {isSignup ? (
                 <>
                   Entrez votre e-mail pour créer votre compte : vous recevrez un{" "}
-                  <b>code à 6 chiffres</b> (sans mot de passe). Votre espace est
+                  <b>code à 8 chiffres</b> (sans mot de passe). Votre espace est
                   créé en 2 minutes.
                 </>
               ) : (
                 <>
-                  Entrez votre e-mail : vous recevrez un <b>code à 6 chiffres</b>{" "}
+                  Entrez votre e-mail : vous recevrez un <b>code à 8 chiffres</b>{" "}
                   pour vous connecter (sans mot de passe).
                 </>
               )}
@@ -143,7 +143,7 @@ function LoginInner() {
         ) : (
           <form onSubmit={verify} className="auth-form">
             <p>
-              Un <b>code à 6 chiffres</b> a été envoyé à <b>{email}</b>. Entrez-le
+              Un <b>code à 8 chiffres</b> a été envoyé à <b>{email}</b>. Entrez-le
               ci-dessous <i>(pensez à vérifier les spams)</i>.
             </p>
             <input
@@ -151,7 +151,7 @@ function LoginInner() {
               inputMode="numeric"
               autoComplete="one-time-code"
               required
-              placeholder="123456"
+              placeholder="12345678"
               value={code}
               onChange={(e) => setCode(e.target.value)}
               className="auth-input"
