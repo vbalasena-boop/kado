@@ -8,6 +8,7 @@ import {
   type ProspectStatus,
 } from "@/lib/prospection/types";
 import { mapCsv } from "@/lib/prospection/csv";
+import CityInput from "./CityInput";
 import type {
   DeliverabilityReport,
   DeliverabilityCheck,
@@ -649,13 +650,12 @@ export default function ProspectionClient({
       >
         <h3 style={{ marginTop: 0 }}>Lancer un sourcing</h3>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-          <input
-            type="text"
-            placeholder="Ville(s) — ex. Versailles, Le Chesnay"
+          <CityInput
             value={city}
-            onChange={(e) => setCity(e.target.value)}
-            title="Une ou plusieurs villes séparées par des virgules (5 max par passage)"
-            style={{ padding: "8px 10px", borderRadius: 8, border: "1px solid #ccc", minWidth: 240 }}
+            onChange={setCity}
+            placeholder="Ville(s) — ex. Versailles, Le Chesnay"
+            title="Commence à taper : les villes sont proposées automatiquement. Plusieurs villes séparées par des virgules (5 max)."
+            style={{ padding: "8px 10px", borderRadius: 8, border: "1px solid #ccc", minWidth: 240, width: "100%", boxSizing: "border-box" }}
           />
           <label style={{ fontSize: 14 }}>
             Limite&nbsp;
