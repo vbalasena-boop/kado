@@ -107,6 +107,60 @@ export default function AdminSettings({
     });
   }
 
+  async function activateAll() {
+    if (
+      !confirm(
+        "Tout activer sur cet établissement ?\n\n" +
+          "Passe la formule en COMPLET et active toutes les options et fonctions " +
+          "(pour vendre un compte clés en main). N'affecte ni l'abonnement " +
+          "(essai/dates) ni le mode démo. Le paiement en ligne n'est pas activé " +
+          "(il exige Stripe Connect)."
+      )
+    )
+      return;
+    setBusy(true);
+    setMsg(null);
+    setIsErr(false);
+    try {
+      const res = await fetch(
+        `/api/admin/business/${businessId}/activate-all`,
+        { method: "POST" }
+      );
+      if (res.ok) {
+        const d = await res.json().catch(() => ({}));
+        if (Array.isArray(d.skipped) && d.skipped.length > 0) {
+          setIsErr(true);
+          setMsg(
+            `Activé en partie. Non appliqué : ${d.skipped.join(", ")} ` +
+              "(migrations 0072/0073 à jour ?)."
+          );
+        } else {
+          // Reflète l'état « tout activé » sans recharger l'abonnement.
+          setWheel({
+            review_invite: true,
+            convert_nudge: true,
+            feedback_enabled: true,
+            play_alerts: true,
+          });
+          setOrderTracking(true);
+          setFeatures(
+            Object.fromEntries(OPTIONAL_FEATURES.map((f) => [f.key, true]))
+          );
+          setMsg("Tout activé ✓ (formule Complet + toutes les fonctions).");
+        }
+      } else {
+        const d = await res.json().catch(() => ({}));
+        setIsErr(true);
+        setMsg(d.detail || d.error || "Échec de l'activation.");
+      }
+    } catch {
+      setIsErr(true);
+      setMsg("Connexion impossible.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function save() {
     setBusy(true);
     setMsg(null);
@@ -157,6 +211,18 @@ export default function AdminSettings({
         {plan && <> · formule {plan}</>}
         {subscriptionStatus && <> · {subscriptionStatus}</>}
       </p>
+
+      <div className="dash-card">
+        <h2>⚡ Compte clés en main</h2>
+        <p className="muted" style={{ margin: "0 0 12px", fontSize: 13 }}>
+          Active <b>tout</b> d'un coup (formule Complet + toutes les options et
+          fonctions) — pratique pour vendre un établissement entièrement équipé.
+          N'affecte ni l'abonnement ni le mode démo.
+        </p>
+        <button className="btn" onClick={activateAll} disabled={busy}>
+          {busy ? "Activation…" : "⚡ Tout activer"}
+        </button>
+      </div>
 
       <div className="dash-card">
         <h2>Fonctions de la page</h2>
