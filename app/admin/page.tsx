@@ -156,6 +156,18 @@ export default async function AdminPage() {
     /* colonne `ref` absente : aucun identifiant affiché */
   }
 
+  // Établissements en DÉMO (0073) — exclus des statistiques. Lu à part, tolérant.
+  const demoIds = new Set<string>();
+  try {
+    const { data: demos } = await admin
+      .from("businesses")
+      .select("id, demo")
+      .eq("demo", true);
+    for (const d of (demos ?? []) as { id: string }[]) demoIds.add(d.id);
+  } catch {
+    /* colonne `demo` absente : aucun établissement en démo */
+  }
+
   const rows: AdminBusiness[] = (businesses ?? []).map((b) => {
     const x = extraById.get(b.id);
     return {
@@ -180,12 +192,42 @@ export default async function AdminPage() {
       campaigns_addon: !!x?.campaigns_addon,
       click_collect: !!x?.click_collect,
       ref: refById.get(b.id) ?? null,
+      demo: demoIds.has(b.id),
     };
   });
 
   // ---- Statistiques plateforme ----
   const now = Date.now();
-  const bizList = businesses ?? [];
+  // Les établissements en DÉMO (données de test) sont exclus de TOUS les
+  // agrégats : comptes, MRR, signaux de churn et parties jouées.
+  const bizList = (businesses ?? []).filter((b) => !demoIds.has(b.id));
+
+  // Parties : les stats de parties viennent d'un cache GLOBAL (0068) qui inclut
+  // la démo. On lit uniquement les parties des établissements en démo (requête
+  // bornée, très peu de lignes) et on retranche leur contribution, champ par
+  // champ, pour garder le cache tout en excluant proprement la démo.
+  let playsAdj = playStatsResolved;
+  if (demoIds.size > 0) {
+    try {
+      const { data: demoRows } = await admin
+        .from("plays")
+        .select("business_id, play_type, prize_label, redeemed_at, created_at")
+        .in("business_id", [...demoIds]);
+      const d = computeAdminPlayStats(demoRows ?? [], monthIso, dayIso);
+      const sub = (a: number, b: number) => Math.max(0, a - b);
+      playsAdj = {
+        playsTotal: sub(playStatsResolved.playsTotal, d.playsTotal),
+        playsMonth: sub(playStatsResolved.playsMonth, d.playsMonth),
+        playsToday: sub(playStatsResolved.playsToday, d.playsToday),
+        insta: sub(playStatsResolved.insta, d.insta),
+        review: sub(playStatsResolved.review, d.review),
+        won: sub(playStatsResolved.won, d.won),
+        redeemed: sub(playStatsResolved.redeemed, d.redeemed),
+      };
+    } catch {
+      playsAdj = playStatsResolved;
+    }
+  }
 
   // MRR / ARR : à partir des formules + options (copie des prix Stripe).
   const mrr = summarizeMrr(
@@ -227,13 +269,13 @@ export default async function AdminPage() {
     ).length,
     bizTrial: bizList.filter((b) => b.subscription_status === "trial").length,
     bizSuspended: bizList.filter((b) => b.status === "suspended").length,
-    playsTotal: playStatsResolved.playsTotal,
-    playsMonth: playStatsResolved.playsMonth,
-    playsToday: playStatsResolved.playsToday,
-    insta: playStatsResolved.insta,
-    review: playStatsResolved.review,
-    won: playStatsResolved.won,
-    redeemed: playStatsResolved.redeemed,
+    playsTotal: playsAdj.playsTotal,
+    playsMonth: playsAdj.playsMonth,
+    playsToday: playsAdj.playsToday,
+    insta: playsAdj.insta,
+    review: playsAdj.review,
+    won: playsAdj.won,
+    redeemed: playsAdj.redeemed,
     leads: leadsCount ?? 0,
     mrrEur: mrr.mrrEur,
     arrEur: mrr.arrEur,
