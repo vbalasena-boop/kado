@@ -2,7 +2,12 @@ import { getAdminUser } from "@/lib/admin-guard";
 import { getAdminClient } from "@/lib/supabase/admin";
 import ProspectionClient, { type ProspectRow, type Stats } from "./ProspectionClient";
 import type { ProspectStatus } from "@/lib/prospection/types";
-import { SUBJECT_VARIANTS, emailSubjectVariant } from "@/lib/prospection/templates";
+import {
+  SUBJECT_VARIANTS,
+  emailSubjectVariant,
+  EMAIL_ANGLE_LABELS,
+  emailAngleVariant,
+} from "@/lib/prospection/templates";
 
 export const dynamic = "force-dynamic";
 
@@ -134,6 +139,13 @@ export default async function ProspectionPage() {
       sent: 0,
       replied: 0,
     }));
+    // Performance PAR angle A/B (email rédigé par IA) — même principe : angle
+    // recalculé depuis l'id du prospect (déterministe → pas de stockage).
+    const anglePerf = EMAIL_ANGLE_LABELS.map((label) => ({
+      label,
+      sent: 0,
+      replied: 0,
+    }));
     const { data: sentEmails } = await admin
       .from("prospect_messages")
       .select("prospect_id")
@@ -150,9 +162,13 @@ export default async function ProspectionPage() {
         .limit(5000);
       const REPLIED = new Set(["replied", "interested", "client"]);
       for (const p of emailedProspects ?? []) {
+        const replied = REPLIED.has(p.status as string);
         const idx = emailSubjectVariant(p.id as string);
         subjectPerf[idx].sent++;
-        if (REPLIED.has(p.status as string)) subjectPerf[idx].replied++;
+        if (replied) subjectPerf[idx].replied++;
+        const aidx = emailAngleVariant(p.id as string);
+        anglePerf[aidx].sent++;
+        if (replied) anglePerf[aidx].replied++;
       }
     }
 
@@ -168,6 +184,7 @@ export default async function ProspectionPage() {
       sentTotal,
       bouncedTotal,
       subjectPerf,
+      anglePerf,
       byCity,
       bySegment,
     };

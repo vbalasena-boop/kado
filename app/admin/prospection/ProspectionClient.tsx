@@ -102,6 +102,8 @@ export type Stats = {
   bouncedTotal: number;
   /** Performance par variante d'objet : envoyés vs réponses. */
   subjectPerf: { label: string; sent: number; replied: number }[];
+  /** Performance par angle A/B (email IA) : envoyés vs réponses. */
+  anglePerf: { label: string; sent: number; replied: number }[];
   /** Conversion par ville : contactés / réponses / clients. */
   byCity: ConversionRow[];
   /** Conversion par secteur : contactés / réponses / clients. */
@@ -619,6 +621,7 @@ export default function ProspectionClient({
       </p>
 
       {stats && <StatsBand stats={stats} />}
+      {stats && <AnglePerf perf={stats.anglePerf} />}
       {stats && <SubjectPerf perf={stats.subjectPerf} />}
       {stats && <ConversionTables byCity={stats.byCity} bySegment={stats.bySegment} />}
 
@@ -1176,6 +1179,72 @@ function ConversionTables({
       </div>
       <p style={{ color: "#999", fontSize: 12, marginBottom: 0 }}>
         Un taux n'est fiable qu'à partir de ~10 contactés. 🏆 = meilleur taux à ce stade.
+      </p>
+    </div>
+  );
+}
+
+/**
+ * Tableau « Test A/B des emails » : compare le taux de réponse des deux angles
+ * d'accroche (Question curieuse vs Approche directe). Chaque prospect reçoit un
+ * angle de façon automatique (~50/50) ; on garde ensuite celui qui répond le mieux.
+ */
+function AnglePerf({ perf }: { perf: Stats["anglePerf"] }) {
+  const totalSent = perf.reduce((s, p) => s + p.sent, 0);
+  if (totalSent === 0) return null; // rien envoyé encore → pas de mesure
+
+  const eligible = perf.filter((p) => p.sent >= 5);
+  const best =
+    eligible.length > 0
+      ? eligible.reduce((a, b) => (b.replied / b.sent > a.replied / a.sent ? b : a))
+      : null;
+
+  return (
+    <div style={{ border: "1px solid #eee", borderRadius: 10, padding: 14, margin: "0 0 16px" }}>
+      <h3 style={{ margin: "0 0 2px" }}>🧪 Test A/B des emails (IA)</h3>
+      <p style={{ color: "#666", marginTop: 0, fontSize: 13 }}>
+        Deux façons d&apos;aborder le prospect sont testées automatiquement (une
+        moitié chacune). On garde celle qui obtient le plus de réponses.
+      </p>
+      <div style={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
+          <thead>
+            <tr style={{ textAlign: "left", borderBottom: "2px solid #eee" }}>
+              <th style={th}>Variante</th>
+              <th style={th}>Envoyés</th>
+              <th style={th}>Réponses</th>
+              <th style={th}>Taux</th>
+            </tr>
+          </thead>
+          <tbody>
+            {perf.map((p) => {
+              const rate = p.sent > 0 ? Math.round((p.replied / p.sent) * 100) : 0;
+              const isBest = Boolean(best && p.label === best.label && p.sent >= 5);
+              return (
+                <tr
+                  key={p.label}
+                  style={{
+                    borderBottom: "1px solid #f0f0f0",
+                    background: isBest ? "#e6f4ea" : undefined,
+                  }}
+                >
+                  <td style={td}>
+                    {p.label} {isBest && "🏆"}
+                  </td>
+                  <td style={td}>{p.sent}</td>
+                  <td style={td}>{p.replied}</td>
+                  <td style={td}>{p.sent > 0 ? `${rate}%` : "—"}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <p style={{ color: "#999", fontSize: 12, marginBottom: 0 }}>
+        <strong>Question curieuse</strong> = on pose une vraie question sans dire
+        tout de suite qu&apos;on vend un outil. <strong>Approche directe</strong> =
+        on annonce Kado dès la 1ʳᵉ phrase. Un taux devient fiable à partir de
+        ~15–20 envois par variante. 🏆 = meilleure variante à ce stade.
       </p>
     </div>
   );

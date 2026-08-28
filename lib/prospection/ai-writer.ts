@@ -18,6 +18,8 @@ import type { ProspectSegment } from "@/lib/prospection/types";
 import {
   FOOTER,
   prettyName,
+  emailAngleVariant,
+  EMAIL_ANGLE_LABELS,
   type GeneratedEmail,
   type TemplateContext,
 } from "@/lib/prospection/templates";
@@ -69,6 +71,29 @@ function bookingUrl(ctx: TemplateContext): string | null {
   return url || null;
 }
 
+/**
+ * Règle de prompt pour chaque angle A/B (même ordre que EMAIL_ANGLE_LABELS).
+ * L'angle est choisi de façon déterministe par prospect (son id) → ~50/50, et
+ * on mesure ensuite quel angle obtient le plus de réponses.
+ */
+const ANGLE_RULE = [
+  // A — Question curieuse : indirect, la découverte vient de la réponse.
+  "ANGLE À RESPECTER : ouvre par une observation sincère et précise sur leur commerce (par ex. leur nombre d'avis Google), puis pose UNE vraie question ouverte sur leur façon de faire. N'annonce PAS d'emblée que tu proposes un outil — l'intérêt doit naître de leur réponse.",
+  // B — Approche directe : transparent dès la 1ʳᵉ phrase.
+  "ANGLE À RESPECTER : sois transparent dès la 1ʳᵉ phrase — dis simplement que tu as créé Kado, qui aide les commerces comme le leur à obtenir plus d'avis Google et d'abonnés Instagram à partir d'un QR code en boutique. Reste un message PERSONNEL (jamais une publicité) et termine par une question simple du type « est-ce que ça vaut un rapide échange ? ».",
+] as const;
+
+/** Angle A/B (0|1) attribué à ce contexte, déterministe par seed. */
+export function angleOf(ctx: TemplateContext): number {
+  const seed = (ctx.seed || `${ctx.name}|${ctx.city ?? ""}`).trim();
+  return emailAngleVariant(seed) % ANGLE_RULE.length;
+}
+
+/** Nom lisible de l'angle A/B d'un contexte (pour l'affichage/fiche). */
+export function angleLabel(ctx: TemplateContext): string {
+  return EMAIL_ANGLE_LABELS[angleOf(ctx)];
+}
+
 export interface AiMessages {
   subject: string;
   body: string; // corps SANS pied de page (ajouté ensuite)
@@ -96,6 +121,7 @@ export function buildPrompt(ctx: TemplateContext): { system: string; user: strin
       : "",
     "Kado : à partir d'un QR code en boutique, les clients laissent plus d'avis Google et deviennent abonnés Instagram, sans effort pour le commerçant.",
     "Tu écris un email de prospection à froid qui doit ressembler à un message PERSONNEL (1:1) écrit à la main — surtout PAS à une publicité (sinon il tombe dans l'onglet Promotions de Gmail).",
+    ANGLE_RULE[angleOf(ctx)],
     "Règles strictes :",
     "- Tutoyer JAMAIS le prospect : vouvoiement.",
     "- Personnalise avec le nom/la ville/le secteur, sans en faire trop.",
