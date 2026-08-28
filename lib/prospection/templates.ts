@@ -147,6 +147,24 @@ export function emailSubjectVariant(seed: string): number {
   return pickIndex(seed, "subject", SUBJECT_VARIANTS.length);
 }
 
+/**
+ * Deux « angles » d'accroche pour l'A/B test des emails rédigés par IA :
+ *  - A « Question curieuse » : indirect, on pose une vraie question, la
+ *    découverte de Kado vient de la réponse du prospect ;
+ *  - B « Approche directe » : transparent dès la 1ʳᵉ phrase, on annonce Kado.
+ * Chaque prospect est affecté de façon DÉTERMINISTE (seed = son id) → on peut
+ * recalculer sa variante pour mesurer le taux de réponse, sans rien stocker.
+ */
+export const EMAIL_ANGLE_LABELS = [
+  "Question curieuse",
+  "Approche directe",
+] as const;
+
+/** Index (0|1) de l'angle A/B reçu par un prospect (seed = son id). */
+export function emailAngleVariant(seed: string): number {
+  return pickIndex(seed, "angle", EMAIL_ANGLE_LABELS.length);
+}
+
 function seedOf(ctx: TemplateContext): string {
   return ctx.seed || `${ctx.name}|${ctx.city ?? ""}`;
 }

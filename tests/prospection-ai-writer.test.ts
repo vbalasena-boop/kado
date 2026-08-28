@@ -8,8 +8,11 @@ import {
   parseAiEmail,
   writeFollowupWithAI,
   normalizeTone,
+  angleOf,
+  angleLabel,
 } from "@/lib/prospection/ai-writer";
 import type { TemplateContext } from "@/lib/prospection/templates";
+import { emailAngleVariant, EMAIL_ANGLE_LABELS } from "@/lib/prospection/templates";
 
 const ctx: TemplateContext = {
   name: "Café du Coin",
@@ -51,6 +54,44 @@ describe("buildPrompt", () => {
     expect(buildPrompt({ ...ctx, tone: "direct" }).system.toLowerCase()).toContain("direct");
     // Tonalité inconnue → repli équilibré.
     expect(buildPrompt({ ...ctx, tone: "n'importe quoi" }).system.toLowerCase()).toContain("équilibré");
+  });
+
+  it("injecte l'angle A/B correspondant au prospect (déterministe)", () => {
+    // Trouve deux seeds qui tombent sur des angles différents (A vs B).
+    let seedA: string | null = null;
+    let seedB: string | null = null;
+    for (let i = 0; i < 50 && (!seedA || !seedB); i++) {
+      const s = `seed-${i}`;
+      if (emailAngleVariant(s) === 0) seedA ??= s;
+      else seedB ??= s;
+    }
+    expect(seedA).toBeTruthy();
+    expect(seedB).toBeTruthy();
+
+    const sysA = buildPrompt({ ...ctx, seed: seedA! }).system;
+    const sysB = buildPrompt({ ...ctx, seed: seedB! }).system;
+    // Angle A : on n'annonce pas l'outil d'emblée. Angle B : transparent dès le début.
+    expect(sysA).toContain("N'annonce PAS");
+    expect(sysB).toContain("tu as créé Kado");
+    expect(sysA).not.toBe(sysB);
+  });
+});
+
+describe("angleOf / angleLabel", () => {
+  it("est déterministe et stable pour un même prospect", () => {
+    expect(angleOf({ ...ctx, seed: "xyz" })).toBe(angleOf({ ...ctx, seed: "xyz" }));
+  });
+
+  it("renvoie un des deux libellés A/B", () => {
+    expect(EMAIL_ANGLE_LABELS).toContain(angleLabel({ ...ctx, seed: "xyz" }));
+  });
+
+  it("répartit les prospects sur les deux angles (~50/50)", () => {
+    let a = 0;
+    for (let i = 0; i < 200; i++) if (emailAngleVariant(`p-${i}`) === 0) a++;
+    // Tolérance large : on vérifie juste que les deux variantes sont utilisées.
+    expect(a).toBeGreaterThan(40);
+    expect(a).toBeLessThan(160);
   });
 });
 
