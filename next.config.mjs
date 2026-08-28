@@ -47,4 +47,8 @@ export default withSentryConfig(nextConfig, {
   disableLogger: true,
   // N'échoue jamais le build à cause de Sentry.
   telemetry: false,
+  // Désactive la génération des source maps au build : très gourmande en
+  // mémoire (cause d'échecs OOM du build sur le plan Vercel gratuit), et
+  // inutile ici puisqu'on ne les téléverse pas (pas de SENTRY_AUTH_TOKEN).
+  sourcemaps: { disable: true },
 });
