@@ -338,6 +338,11 @@ function EmailEditor({ message }: { message: MessageRow }) {
   return (
     <div style={{ border: "1px solid #eee", borderRadius: 10, padding: 14 }}>
       <h3 style={{ marginTop: 0 }}>✉️ Email {statusBadge(message.status)}</h3>
+      {message.status === "sent" && (
+        <p style={{ fontSize: 13, color: "#a86b00", background: "#fff4e0", borderRadius: 8, padding: "8px 10px", margin: "0 0 10px" }}>
+          ✅ Cet email a déjà été envoyé — « Régénérer » ne le modifie pas. Pour tester une nouvelle version, ajoute un autre prospect.
+        </p>
+      )}
       <input
         value={subject}
         onChange={(e) => setSubject(e.target.value)}
