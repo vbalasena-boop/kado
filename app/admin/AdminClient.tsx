@@ -25,6 +25,7 @@ export type AdminBusiness = {
   campaigns_addon?: boolean;
   click_collect?: boolean;
   ref?: string | null;
+  demo?: boolean;
 };
 
 const PLAN_LABEL: Record<string, string> = {
@@ -376,6 +377,41 @@ export default function AdminClient({
         res.ok
           ? `✅ Click & collect ${!current ? "activé pour" : "désactivé pour"} « ${name} ».`
           : "❌ " + (d.detail || d.error || "Échec — la migration 0019 est-elle passée ?")
+      );
+      router.refresh();
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  /**
+   * Démo ↔ essai. Marquer en démo (exclu des stats) ou « passer en essai »
+   * (retire la démo + démarre 14 jours d'essai à partir de maintenant).
+   */
+  async function toggleDemo(id: string, name: string, current: boolean) {
+    if (
+      !confirm(
+        current
+          ? `Passer « ${name} » en essai ?\n\nL'établissement sort du mode démo (il recompte dans les stats) et un essai de 14 jours démarre maintenant.`
+          : `Marquer « ${name} » comme démo ?\n\nIl sera EXCLU des statistiques admin (données de test).`
+      )
+    )
+      return;
+    setBusyId(id);
+    setMsg(null);
+    try {
+      const res = await fetch(`/api/admin/business/${id}/demo`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enable: !current }),
+      });
+      const d = await res.json().catch(() => ({}));
+      setMsg(
+        res.ok
+          ? current
+            ? `✅ « ${name} » passé en essai (14 jours).`
+            : `✅ « ${name} » marqué comme démo (exclu des stats).`
+          : "❌ " + (d.detail || d.error || "Échec — la migration 0073 est-elle passée ?")
       );
       router.refresh();
     } finally {
@@ -812,6 +848,7 @@ export default function AdminClient({
                     <tr key={b.id}>
                       <td>
                         {b.ref && <span className="admin-ref">{b.ref}</span>}
+                        {b.demo && <span className="admin-demo">🎬 Démo</span>}
                         <b>{b.name}</b>
                         <br />
                         <a
@@ -901,6 +938,15 @@ export default function AdminClient({
                       <td>
                         {/* Actions principales, toujours visibles */}
                         <div className="sub-actions">
+                          {b.demo && (
+                            <button
+                              className="btn-mini ok"
+                              disabled={busy}
+                              onClick={() => toggleDemo(b.id, b.name, true)}
+                            >
+                              ▶️ Passer en essai
+                            </button>
+                          )}
                           <button
                             className="btn-mini soft"
                             disabled={busy}
@@ -981,6 +1027,13 @@ export default function AdminClient({
                             >
                               🛒 Click &amp; collect{" "}
                               {b.click_collect ? "on" : "off"}
+                            </button>
+                            <button
+                              className="btn-mini soft"
+                              disabled={busy}
+                              onClick={() => toggleDemo(b.id, b.name, !!b.demo)}
+                            >
+                              🎬 {b.demo ? "Retirer la démo" : "Marquer démo"}
                             </button>
                             <a
                               className="btn-mini soft"

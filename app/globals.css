@@ -1616,6 +1616,18 @@ canvas#confetti {
   font-variant-numeric: tabular-nums;
   vertical-align: middle;
 }
+/* Badge « démo » (établissement de test, exclu des stats). */
+.admin-demo {
+  display: inline-block;
+  margin-right: 8px;
+  padding: 1px 7px;
+  border-radius: 6px;
+  background: #fff0d6;
+  color: #a05a00;
+  font-size: 12px;
+  font-weight: 700;
+  vertical-align: middle;
+}
 .admin-email {
   color: #6b6089;
   font-size: 13px;

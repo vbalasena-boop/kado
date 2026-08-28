@@ -79,6 +79,11 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "create_failed" }, { status: 500 });
   }
 
+  // 3bis) Les comptes créés depuis l'admin démarrent en DÉMO (exclus des stats).
+  // Écrit à part, tolérant : si la colonne `demo` (0073) n'existe pas encore, on
+  // n'échoue pas la création — le compte est simplement créé sans le drapeau.
+  await db.from("businesses").update({ demo: true }).eq("id", biz.id);
+
   // 4) config + cadeaux par défaut
   await db.from("wheel_configs").insert({
     business_id: biz.id,
