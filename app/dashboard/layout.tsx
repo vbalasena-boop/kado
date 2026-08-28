@@ -144,6 +144,9 @@ export default async function DashboardLayout({
             <Link href="/dashboard/campaigns">
               <Icon name="share" /> Campagnes
             </Link>
+            <Link href="/dashboard/avis">
+              <Icon name="star" /> Avis
+            </Link>
             {clickCollect && (
               <Link href="/dashboard/orders">
                 <Icon name="cart" /> Commandes
