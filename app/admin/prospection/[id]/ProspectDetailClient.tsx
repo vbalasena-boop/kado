@@ -90,6 +90,27 @@ export default function ProspectDetailClient({
     }
   }
 
+  async function deleteProspect() {
+    if (!window.confirm(`Supprimer définitivement « ${prospect.name} » ? Cette action est irréversible.`)) return;
+    setBusy(true);
+    setMsg(null);
+    try {
+      const res = await fetch(`/api/admin/prospection/${prospect.id}/delete`, {
+        method: "POST",
+      });
+      if (res.ok) {
+        router.push("/admin/prospection");
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setMsg(`Erreur : ${data.error ?? "suppression impossible"}`);
+        setBusy(false);
+      }
+    } catch {
+      setMsg("Erreur réseau (suppression).");
+      setBusy(false);
+    }
+  }
+
   async function generate() {
     setBusy(true);
     setMsg(null);
@@ -114,9 +135,18 @@ export default function ProspectDetailClient({
 
   return (
     <div className="dash-card">
-      <p>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
         <Link href="/admin/prospection">← Retour à la prospection</Link>
-      </p>
+        <button
+          onClick={deleteProspect}
+          disabled={busy || aiBusy}
+          className="dash-signout"
+          style={{ fontSize: 13, color: "#c0392b" }}
+          title="Supprimer définitivement ce prospect"
+        >
+          🗑️ Supprimer
+        </button>
+      </div>
       <h2 style={{ marginBottom: 4 }}>{prospect.name}</h2>
       <p style={{ color: "#666", marginTop: 0 }}>
         {prospect.city ?? "—"}

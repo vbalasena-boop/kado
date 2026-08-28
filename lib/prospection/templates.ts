@@ -208,7 +208,7 @@ export function renderEmail(ctx: TemplateContext): GeneratedEmail {
     cta,
     ``,
     signoff,
-    `L'équipe Kado`,
+    `Vobinson — Kado`,
     ``,
     FOOTER,
   ].join("\n");
@@ -269,7 +269,7 @@ export function renderFollowupEmail(ctx: TemplateContext): GeneratedEmail {
     cta,
     ``,
     `Belle journée,`,
-    `L'équipe Kado`,
+    `Vobinson — Kado`,
     ``,
     FOOTER,
   ].join("\n");
@@ -325,7 +325,7 @@ export function renderLastEmail(ctx: TemplateContext): GeneratedEmail {
     cta,
     ``,
     `Bien à vous,`,
-    `L'équipe Kado`,
+    `Vobinson — Kado`,
     ``,
     FOOTER,
   ].join("\n");

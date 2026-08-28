@@ -107,7 +107,7 @@ export function buildPrompt(ctx: TemplateContext): { system: string; user: strin
     "- N'inclus AUCUN lien dans l'email (un lien fait basculer en Promotions). Termine par UNE question simple qui invite à répondre (le prospect répondra s'il est intéressé) — surtout pas de lien de réservation ici.",
     "Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format :",
     '{"subject": "...", "body": "...", "dm": "..."}',
-    "Le body commence par 'Bonjour <nom>,' et se termine par une formule de politesse suivie de 'L\\'équipe Kado'.",
+    "Le body commence par 'Bonjour <nom>,' et se termine par une formule de politesse suivie de 'Vobinson — Kado'.",
   ].join("\n");
 
   const user = `Rédige l'email et le DM pour ce commerce :\n${facts}`;
@@ -272,7 +272,7 @@ export function buildFollowupPrompt(
       : "- Si tu proposes un appel, demande simplement au prospect ses disponibilités.",
     "Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format :",
     '{"subject": "...", "body": "..."}',
-    "Le body commence par 'Bonjour <nom>,' et se termine par une formule de politesse suivie de 'L\\'équipe Kado'.",
+    "Le body commence par 'Bonjour <nom>,' et se termine par une formule de politesse suivie de 'Vobinson — Kado'.",
   ].join("\n");
 
   const user = `Rédige ${kind === "last" ? "le dernier email" : "la relance"} pour ce commerce (messages précédents restés sans réponse) :\n${facts}`;
