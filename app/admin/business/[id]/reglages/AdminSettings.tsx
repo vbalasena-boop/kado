@@ -113,8 +113,8 @@ export default function AdminSettings({
         "Tout activer sur cet établissement ?\n\n" +
           "Passe la formule en COMPLET et active toutes les options et fonctions " +
           "(pour vendre un compte clés en main). N'affecte ni l'abonnement " +
-          "(essai/dates) ni le mode démo. Le paiement en ligne n'est pas activé " +
-          "(il exige Stripe Connect)."
+          "(essai/dates) ni le mode démo. Le paiement en ligne n'est activé que " +
+          "si le compte Stripe Connect est déjà prêt."
       )
     )
       return;
@@ -146,7 +146,12 @@ export default function AdminSettings({
           setFeatures(
             Object.fromEntries(OPTIONAL_FEATURES.map((f) => [f.key, true]))
           );
-          setMsg("Tout activé ✓ (formule Complet + toutes les fonctions).");
+          const payNote = d.onlinePayment
+            ? " Paiement en ligne activé (Stripe Connect prêt)."
+            : " Paiement en ligne laissé désactivé (Stripe Connect pas encore configuré).";
+          setMsg(
+            "Tout activé ✓ (formule Complet + toutes les fonctions)." + payNote
+          );
         }
       } else {
         const d = await res.json().catch(() => ({}));
@@ -217,7 +222,8 @@ export default function AdminSettings({
         <p className="muted" style={{ margin: "0 0 12px", fontSize: 13 }}>
           Active <b>tout</b> d'un coup (formule Complet + toutes les options et
           fonctions) — pratique pour vendre un établissement entièrement équipé.
-          N'affecte ni l'abonnement ni le mode démo.
+          N'affecte ni l'abonnement ni le mode démo. Le paiement en ligne
+          s'active seulement si Stripe Connect est prêt.
         </p>
         <button className="btn" onClick={activateAll} disabled={busy}>
           {busy ? "Activation…" : "⚡ Tout activer"}
