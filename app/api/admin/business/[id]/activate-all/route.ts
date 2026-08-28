@@ -39,19 +39,43 @@ export const POST = adminRoute({
     const applied: string[] = [];
     const skipped: string[] = [];
 
+    // Paiement en ligne : activable UNIQUEMENT si le compte Stripe Connect est
+    // prêt (sinon le parcours de commande casserait). Lecture tolérante.
+    let onlinePayment = false;
+    let stripeReady = false;
+    try {
+      const { data } = await db
+        .from("businesses")
+        .select("stripe_account_ready")
+        .eq("id", params.id)
+        .maybeSingle();
+      stripeReady = !!(data as { stripe_account_ready?: boolean | null } | null)
+        ?.stripe_account_ready;
+    } catch {
+      stripeReady = false;
+    }
+
     // 1) Formule complète + options (colonnes de longue date).
     {
+      const update: Record<string, unknown> = {
+        plan: "complet",
+        campaigns_addon: true,
+        click_collect: true,
+        order_tracking: true,
+      };
+      // Paiement en ligne seulement si Stripe Connect est prêt.
+      if (stripeReady) {
+        update.online_payment = true;
+        onlinePayment = true;
+      }
       const { error } = await db
         .from("businesses")
-        .update({
-          plan: "complet",
-          campaigns_addon: true,
-          click_collect: true,
-          order_tracking: true,
-        })
+        .update(update)
         .eq("id", params.id);
-      if (error) skipped.push("plan/options");
-      else applied.push("plan/options");
+      if (error) {
+        skipped.push("plan/options");
+        onlinePayment = false;
+      } else applied.push("plan/options");
     }
 
     // 2) Fonctions avancées (businesses.features jsonb — 0072).
@@ -91,6 +115,12 @@ export const POST = adminRoute({
       else applied.push("wheel");
     }
 
-    return Response.json({ ok: true, applied, skipped });
+    return Response.json({
+      ok: true,
+      applied,
+      skipped,
+      onlinePayment, // activé (Stripe Connect prêt)
+      stripeReady, // false → paiement en ligne laissé off
+    });
   },
 });
