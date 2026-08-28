@@ -18,7 +18,7 @@ const BIZ_BASE =
   "id, slug, name, logo_url, status, subscription_ends_at, owner_user_id, plan, subscription_status";
 const CFG_BASE =
   "primary_color, accent_color, bg_color, bg_image_url, collect_email, instagram_url, review_url, compliance_note, instagram_enabled, review_enabled, loyalty_enabled, game_type";
-const CFG_WIDE = `${CFG_BASE}, prize_validity_days, decor_emojis, monthly_draw, monthly_draw_prize, trigger_actions, highlight_title, highlight_text, highlight_url, highlight_until`;
+const CFG_WIDE = `${CFG_BASE}, prize_validity_days, decor_emojis, monthly_draw, monthly_draw_prize, trigger_actions, highlight_title, highlight_text, highlight_url, highlight_until, feedback_enabled`;
 
 type PublicData = {
   biz: any | null;
@@ -203,6 +203,7 @@ export default async function Page({
       decorEmojis={decorEmojis}
       drawPrize={drawPrize}
       highlight={highlight}
+      feedbackEnabled={!!(config as any)?.feedback_enabled}
       prizes={prizes ?? []}
       config={
         config ?? {

@@ -77,6 +77,19 @@ export default async function FidelitePage({
   const today = new Date().toISOString().slice(0, 10);
   const highlight = visibleHighlight(hlRow, today);
 
+  // Feedback privé (lecture tolérante si colonne 0071 absente).
+  let feedbackEnabled = false;
+  try {
+    const { data: fb } = await db
+      .from("wheel_configs")
+      .select("feedback_enabled")
+      .eq("business_id", biz.id)
+      .maybeSingle();
+    feedbackEnabled = !!(fb as any)?.feedback_enabled;
+  } catch {
+    feedbackEnabled = false;
+  }
+
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: themeCss }} />
@@ -90,6 +103,7 @@ export default async function FidelitePage({
         stampEmoji={cfg.loyalty_stamp_emoji || "⭐"}
         parrain={searchParams?.parrain?.trim() || null}
         highlight={highlight}
+        feedbackEnabled={feedbackEnabled}
       />
     </>
   );
