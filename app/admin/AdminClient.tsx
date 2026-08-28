@@ -24,6 +24,7 @@ export type AdminBusiness = {
   admin_note: string | null;
   campaigns_addon?: boolean;
   click_collect?: boolean;
+  ref?: string | null;
 };
 
 const PLAN_LABEL: Record<string, string> = {
@@ -94,11 +95,11 @@ export default function AdminClient({
   const [busyId, setBusyId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
 
-  // Recherche : nom, lien, e-mail, téléphone ou adresse
+  // Recherche : identifiant (KADO-xxxx), nom, lien, e-mail, téléphone ou adresse
   const q = query.trim().toLowerCase();
   const filtered = q
     ? businesses.filter((b) =>
-        [b.name, b.slug, b.owner_email, b.phone ?? "", b.address ?? ""]
+        [b.ref ?? "", b.name, b.slug, b.owner_email, b.phone ?? "", b.address ?? ""]
           .join(" ")
           .toLowerCase()
           .includes(q)
@@ -773,7 +774,7 @@ export default function AdminClient({
           <input
             type="search"
             className="admin-search"
-            placeholder="🔍 Rechercher un commerçant (nom, e-mail, téléphone…)"
+            placeholder="🔍 Rechercher (identifiant KADO-…, nom, e-mail, téléphone…)"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -810,6 +811,7 @@ export default function AdminClient({
                   return (
                     <tr key={b.id}>
                       <td>
+                        {b.ref && <span className="admin-ref">{b.ref}</span>}
                         <b>{b.name}</b>
                         <br />
                         <a
@@ -980,6 +982,12 @@ export default function AdminClient({
                               🛒 Click &amp; collect{" "}
                               {b.click_collect ? "on" : "off"}
                             </button>
+                            <a
+                              className="btn-mini soft"
+                              href={`/admin/business/${b.id}/reglages`}
+                            >
+                              ⚙️ Réglages &amp; fonctions
+                            </a>
                             <a
                               className="btn-mini soft"
                               href={`/admin/business/${b.id}/personnaliser`}

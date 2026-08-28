@@ -1602,9 +1602,56 @@ canvas#confetti {
   text-decoration: none;
   font-size: 13px;
 }
+/* Identifiant lisible d'un établissement (KADO-0001). */
+.admin-ref {
+  display: inline-block;
+  margin-right: 8px;
+  padding: 1px 7px;
+  border-radius: 6px;
+  background: #efe9ff;
+  color: #6b3ff0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  vertical-align: middle;
+}
 .admin-email {
   color: #6b6089;
   font-size: 13px;
+}
+/* Liste de bascules (réglages admin d'un établissement). */
+.admin-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.admin-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 8px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.admin-toggle:hover {
+  background: #f6f3ff;
+}
+.admin-toggle input {
+  margin-top: 3px;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.admin-toggle-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.admin-toggle-text small {
+  color: #6b6089;
+  font-size: 12.5px;
 }
 .btn-mini {
   border: none;

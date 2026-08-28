@@ -144,6 +144,18 @@ export default async function AdminPage() {
     /* colonnes absentes : valeurs par défaut */
   }
 
+  // Identifiant lisible (0072) — lu à part, tolérant : si la colonne `ref`
+  // n'existe pas encore, on n'altère pas les autres extras.
+  const refById = new Map<string, string>();
+  try {
+    const { data: refs } = await admin.from("businesses").select("id, ref");
+    for (const r of (refs ?? []) as { id: string; ref: string | null }[]) {
+      if (r.ref) refById.set(r.id, r.ref);
+    }
+  } catch {
+    /* colonne `ref` absente : aucun identifiant affiché */
+  }
+
   const rows: AdminBusiness[] = (businesses ?? []).map((b) => {
     const x = extraById.get(b.id);
     return {
@@ -167,6 +179,7 @@ export default async function AdminPage() {
       admin_note: x?.admin_note ?? null,
       campaigns_addon: !!x?.campaigns_addon,
       click_collect: !!x?.click_collect,
+      ref: refById.get(b.id) ?? null,
     };
   });
 
