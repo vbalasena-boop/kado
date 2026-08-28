@@ -1191,7 +1191,8 @@ function ConversionTables({
  */
 function AnglePerf({ perf }: { perf: Stats["anglePerf"] }) {
   const totalSent = perf.reduce((s, p) => s + p.sent, 0);
-  if (totalSent === 0) return null; // rien envoyé encore → pas de mesure
+  // On affiche TOUJOURS le tableau (même à 0 envoi) pour montrer que le test A/B
+  // est actif ; il se remplira dès les premiers emails partis.
 
   const eligible = perf.filter((p) => p.sent >= 5);
   const best =
@@ -1206,6 +1207,23 @@ function AnglePerf({ perf }: { perf: Stats["anglePerf"] }) {
         Deux façons d&apos;aborder le prospect sont testées automatiquement (une
         moitié chacune). On garde celle qui obtient le plus de réponses.
       </p>
+      {totalSent === 0 && (
+        <p
+          style={{
+            background: "#eef2ff",
+            border: "1px solid #e0e7ff",
+            borderRadius: 8,
+            padding: "8px 10px",
+            fontSize: 13,
+            color: "#3730a3",
+            margin: "0 0 10px",
+          }}
+        >
+          ✅ Le test A/B est <strong>actif</strong>. Les chiffres ci-dessous se
+          rempliront dès que tu auras <strong>envoyé des emails</strong> (colonne
+          « Envoyés »), et le taux de réponse s&apos;affichera au fil des retours.
+        </p>
+      )}
       <div style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
           <thead>
