@@ -53,7 +53,9 @@ const STRIPE_PRICES: [string, "recurring" | "one_time", string][] = [
   ["STRIPE_PRICE_ROUE", "recurring", "Jeux 29 €"],
   ["STRIPE_PRICE_FIDELITE", "recurring", "Fidélité 19 €"],
   ["STRIPE_PRICE_COMPLET", "recurring", "Complet 44 €"],
+  ["STRIPE_PRICE_COMPTOIR", "recurring", "Comptoir 19 €"],
   ["STRIPE_PRICE_CAMPAIGNS", "recurring", "Campagnes 15 €"],
+  ["STRIPE_PRICE_COMPTOIR_ADDON", "recurring", "Option comptoir 12 €"],
   ["STRIPE_PRICE_SETUP_REMOTE", "one_time", "Installation 79 €"],
   ["STRIPE_PRICE_SETUP_ONSITE", "one_time", "Installation 129 €"],
 ];
@@ -123,7 +125,7 @@ export async function runHealthChecks(): Promise<HealthCheck[]> {
       }
     }
     checks.push({
-      name: "Tarifs Stripe (6)",
+      name: "Tarifs Stripe (8)",
       ok: issues.length === 0,
       detail: issues.length ? issues.join(" · ") : undefined,
     });

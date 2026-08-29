@@ -40,12 +40,25 @@ const PLANS = [
     ],
     recommended: true,
   },
+  {
+    id: "comptoir",
+    emoji: "🎫",
+    label: "Comptoir",
+    price: "19",
+    features: [
+      "Bipeur digital (file d'attente)",
+      "Client prévenu sur son téléphone",
+      "Commande en ligne incluse",
+      "Sans jeu ni fidélité",
+    ],
+  },
 ];
 
 const PLAN_LABEL: Record<string, string> = {
   roue: "Jeux (29 €/mois)",
   fidelite: "Fidélité (19 €/mois)",
   complet: "Complet (44 €/mois)",
+  comptoir: "Comptoir (19 €/mois)",
 };
 
 export default function BillingClient({

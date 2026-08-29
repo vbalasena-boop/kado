@@ -23,7 +23,7 @@ export default function CGV() {
       <p>
         Kado est un logiciel en ligne (SaaS) permettant à un commerce de
         proposer un jeu de roue et/ou une carte de fidélité à ses clients. Le
-        service est proposé selon trois formules&nbsp;:
+        service est proposé selon quatre formules&nbsp;:
       </p>
       <ul>
         <li>
@@ -39,6 +39,12 @@ export default function CGV() {
         <li>
           <b>Complet</b> — l'ensemble des fonctionnalités des formules Jeux et
           Fidélité.
+        </li>
+        <li>
+          <b>Comptoir</b> — bipeur digital&nbsp;: le commerce gère une file
+          d'attente et prévient chaque client sur son téléphone lorsque sa
+          commande est prête. Inclut la commande en ligne («&nbsp;Click &amp;
+          collect&nbsp;»). Sans jeu ni carte de fidélité.
         </li>
       </ul>
       <p>
@@ -66,12 +72,14 @@ export default function CGV() {
       <h2>3. Prix</h2>
       <p>
         Les abonnements sont facturés mensuellement&nbsp;: <b>Jeux 29&nbsp;€/mois</b>,{" "}
-        <b>Fidélité 19&nbsp;€/mois</b>, <b>Complet 44&nbsp;€/mois</b>. Une option{" "}
-        <b>«&nbsp;Campagnes&nbsp;» à 15&nbsp;€/mois</b> (envoi d'offres par
-        e-mail et par notification aux clients ayant donné leur accord), sans
-        engagement,
-        peut être activée et désactivée à tout moment depuis l'espace client
-        (prorata appliqué). La TVA
+        <b>Fidélité 19&nbsp;€/mois</b>, <b>Complet 44&nbsp;€/mois</b>,{" "}
+        <b>Comptoir 19&nbsp;€/mois</b>. Deux options mensuelles, sans engagement,
+        peuvent être activées et désactivées à tout moment depuis l'espace
+        client (prorata appliqué)&nbsp;: <b>«&nbsp;Campagnes&nbsp;» à
+        15&nbsp;€/mois</b> (envoi d'offres par e-mail et par notification aux
+        clients ayant donné leur accord) et <b>«&nbsp;Suivi au comptoir&nbsp;»
+        (bipeur digital) à 12&nbsp;€/mois</b> (incluse dans les formules
+        Comptoir et Complet). La TVA
         n'étant pas applicable (art. 293 B du CGI), ces montants sont nets. En
         cas de changement de formule en cours de période, un prorata est appliqué
         sur la facture suivante. Les prix peuvent évoluer&nbsp;; toute évolution
