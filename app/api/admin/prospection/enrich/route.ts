@@ -14,7 +14,13 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const schema = z
-  .object({ limit: z.number().int().min(1).max(30).optional() })
+  .object({
+    limit: z.number().int().min(1).max(30).optional(),
+    // Repart de zéro : oublie les fiches déjà tentées pour re-scanner TOUTE la
+    // liste (utile après avoir activé Serper). L'enrichissement ne remplit que
+    // ce qui manque — jamais d'écrasement.
+    rescan: z.boolean().optional(),
+  })
   .optional();
 
 type Row = {
@@ -41,6 +47,12 @@ export const POST = adminRoute({
   handler: async ({ body }) => {
     const limit = body?.limit ?? 15;
     const db = getAdminClient();
+
+    // Re-scan complet demandé : on efface les marqueurs « déjà tentée » pour que
+    // toute la liste soit re-traitée (ex. après activation de Serper).
+    if (body?.rescan) {
+      await db.from("prospect_events").delete().eq("type", "enrich_scanned");
+    }
 
     // Prospects déjà tentés (marqueur `enrich_scanned`) — on ne les repasse pas,
     // pour AVANCER dans la liste à chaque clic au lieu de tourner sur les mêmes.
