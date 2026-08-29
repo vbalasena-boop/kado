@@ -7,9 +7,10 @@ import JoinForm from "./JoinForm";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export const metadata = {
-  title: "Devenir promoteur — Kado",
+  title: "Devenir promoteur",
   description:
     "Recommandez Kado aux commerçants autour de vous et touchez une commission à chaque abonnement signé.",
+  alternates: { canonical: "/vendeur" },
 };
 
 /** Présentation du programme + parcours d'inscription. */

@@ -16,7 +16,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.6,
       lastModified: a.date,
     })),
-    { path: "/login", priority: 0.5 },
+    // Page marketing du programme promoteur (indexable).
+    { path: "/vendeur", priority: 0.5 },
     { path: "/legal/mentions", priority: 0.3 },
     { path: "/legal/confidentialite", priority: 0.3 },
     { path: "/legal/cgu", priority: 0.3 },

@@ -1,4 +1,9 @@
-export const metadata = { title: "CGV — Kado" };
+export const metadata = {
+  title: "CGV",
+  description:
+    "Conditions générales de vente de Kado : formules, prix, abonnement mensuel, essai gratuit de 14 jours et résiliation.",
+  alternates: { canonical: "/legal/cgv" },
+};
 
 export default function CGV() {
   return (
