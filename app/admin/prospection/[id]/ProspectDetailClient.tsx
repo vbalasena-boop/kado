@@ -228,7 +228,7 @@ export default function ProspectDetailClient({
       ) : (
         <div style={{ display: "grid", gap: 16 }}>
           {email && <EmailEditor message={email} />}
-          {dm && <DmEditor message={dm} />}
+          {dm && <DmEditor message={dm} instagramHandle={prospect.instagram_handle} />}
         </div>
       )}
     </div>
@@ -394,9 +394,30 @@ function EmailEditor({ message }: { message: MessageRow }) {
   );
 }
 
-function DmEditor({ message }: { message: MessageRow }) {
+function DmEditor({
+  message,
+  instagramHandle,
+}: {
+  message: MessageRow;
+  instagramHandle: string | null;
+}) {
   const [body, setBody] = useState(message.body);
   const [saved, setSaved] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const handle = (instagramHandle ?? "").replace(/^@/, "").trim();
+  // ig.me/m/<compte> ouvre directement la conversation DM (connecté).
+  const dmUrl = handle ? `https://ig.me/m/${handle}` : null;
+
+  async function copyDm() {
+    try {
+      await navigator.clipboard.writeText(body);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
+    }
+  }
 
   async function save(status?: "approved") {
     const res = await fetch(`/api/admin/prospection/message/${message.id}`, {
@@ -416,6 +437,31 @@ function DmEditor({ message }: { message: MessageRow }) {
         rows={8}
         style={{ width: "100%", padding: 8, borderRadius: 8, border: "1px solid #ccc", fontFamily: "inherit" }}
       />
+      {/* Envoi manuel assisté : copier le texte, puis ouvrir le DM Instagram. */}
+      <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", margin: "8px 0 0" }}>
+        <button onClick={copyDm} className="dash-signout" style={{ fontSize: 13 }}>
+          {copied ? "Copié ✅" : "📋 Copier le DM"}
+        </button>
+        {dmUrl ? (
+          <a
+            href={dmUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="dash-signout"
+            style={{ fontSize: 13, textDecoration: "none", display: "inline-block" }}
+          >
+            📸 Ouvrir le DM (@{handle})
+          </a>
+        ) : (
+          <span style={{ fontSize: 12, color: "#999" }}>
+            Pas de compte Instagram sur cette fiche.
+          </span>
+        )}
+      </div>
+      <p style={{ fontSize: 12, color: "#888", margin: "6px 0 0" }}>
+        Astuce : « Copier le DM » puis « Ouvrir le DM » → tu colles et tu envoies
+        (Instagram ne permet pas de pré-remplir le message).
+      </p>
       <Actions onSave={() => save()} onApprove={() => save("approved")} saved={saved} />
     </div>
   );
