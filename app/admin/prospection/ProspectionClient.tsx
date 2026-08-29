@@ -403,22 +403,41 @@ export default function ProspectionClient({
   async function runEnrich() {
     setEnriching(true);
     setMessage(null);
+    // Enchaîne automatiquement les lots (15/appel) jusqu'à avoir tout tenté,
+    // pour couvrir TOUTE la liste en un seul clic (chaque appel reste court).
+    let totalScanned = 0;
+    let totalEmails = 0;
+    let totalInsta = 0;
+    const MAX_ROUNDS = 40; // garde-fou (≈600 fiches) contre toute boucle infinie
     try {
-      const res = await fetch("/api/admin/prospection/enrich", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setMessage(`Erreur : ${data.error ?? "inconnue"}`);
-      } else {
+      for (let round = 0; round < MAX_ROUNDS; round++) {
+        const res = await fetch("/api/admin/prospection/enrich", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({}),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setMessage(`Erreur : ${data.error ?? "inconnue"}`);
+          break;
+        }
+        totalScanned += data.scanned ?? 0;
+        totalEmails += data.emails_found ?? 0;
+        totalInsta += data.instagram_found ?? 0;
+        const remaining = data.remaining ?? 0;
+        // Progression en direct pendant l'enchaînement.
         setMessage(
-          `${data.enriched} fiche(s) enrichie(s) sur ${data.scanned} analysée(s) — ` +
-            `${data.emails_found ?? 0} email(s), ${data.instagram_found ?? 0} Instagram trouvé(s).`
+          `Enrichissement en cours… ${totalScanned} fiche(s) analysée(s), ` +
+            `${totalEmails} email(s) et ${totalInsta} Instagram trouvés` +
+            (remaining > 0 ? ` · ${remaining} restante(s)…` : "")
         );
-        router.refresh();
+        if ((data.scanned ?? 0) === 0 || remaining === 0) break;
       }
+      setMessage(
+        `✅ Enrichissement terminé — ${totalScanned} fiche(s) analysée(s) : ` +
+          `${totalEmails} nouvel(s) email(s) et ${totalInsta} Instagram trouvés.`
+      );
+      router.refresh();
     } catch {
       setMessage("Erreur réseau pendant l'enrichissement.");
     } finally {
