@@ -400,7 +400,12 @@ export default function ProspectionClient({
     }
   }
 
-  async function runEnrich() {
+  async function runEnrich(rescan = false) {
+    if (rescan && !confirm(
+      "Re-scanner TOUTE la liste (y compris les fiches déjà tentées) ?\n\n" +
+        "Utile après avoir activé Serper. Aucune donnée n'est supprimée — on ne " +
+        "remplit que ce qui manque. Si Serper est configuré, ça consomme des crédits Serper."
+    )) return;
     setEnriching(true);
     setMessage(null);
     // Enchaîne automatiquement les lots (15/appel) jusqu'à avoir tout tenté,
@@ -414,7 +419,8 @@ export default function ProspectionClient({
         const res = await fetch("/api/admin/prospection/enrich", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({}),
+          // Le re-scan (oubli des « déjà tentées ») ne doit se faire qu'au 1ᵉʳ tour.
+          body: JSON.stringify(rescan && round === 0 ? { rescan: true } : {}),
         });
         const data = await res.json();
         if (!res.ok) {
@@ -722,13 +728,22 @@ export default function ProspectionClient({
             {sourcing ? "Sourcing…" : "Lancer le sourcing"}
           </button>
           <button
-            onClick={runEnrich}
+            onClick={() => runEnrich(false)}
             disabled={enriching}
             className="dash-signout"
             style={{ opacity: enriching ? 0.6 : 1 }}
-            title="Devine les emails et comptes Instagram depuis les sites web"
+            title="Cherche les emails et comptes Instagram réellement publiés sur les sites (jamais deviné). Passe toute la liste automatiquement."
           >
             {enriching ? "Enrichissement…" : "Enrichir (email / Insta)"}
+          </button>
+          <button
+            onClick={() => runEnrich(true)}
+            disabled={enriching}
+            className="dash-signout"
+            style={{ opacity: enriching ? 0.6 : 1 }}
+            title="Re-scanne TOUTE la liste, même les fiches déjà tentées (utile après avoir activé Serper). Ne supprime rien."
+          >
+            {enriching ? "…" : "🔄 Tout ré-enrichir"}
           </button>
           <select
             value={aiTone}
