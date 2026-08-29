@@ -82,7 +82,7 @@ const REASSURE = [
 const VALUE = [
   {
     t: "Les avis font venir les clients",
-    d: "9 personnes sur 10 lisent les avis avant de choisir un commerce. Chaque avis 5★ supplémentaire vous rend plus visible sur Google Maps.",
+    d: "Selon les études du secteur, la grande majorité des clients consultent les avis avant de choisir un commerce. Chaque avis 5★ supplémentaire vous rend plus visible sur Google Maps.",
   },
   {
     t: "Une communauté qui revient",
@@ -90,7 +90,7 @@ const VALUE = [
   },
   {
     t: "La fidélité qui rapporte",
-    d: "Un programme de fidélité digital augmente la fréquence des visites de 20 à 30 %. Vos clients reviennent plus souvent, et dépensent plus.",
+    d: "Un programme de fidélité digital encourage vos clients à revenir plus souvent — et à dépenser davantage à chaque visite.",
   },
 ];
 
