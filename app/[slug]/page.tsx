@@ -175,8 +175,10 @@ export default async function Page({
       : "";
 
   // Démo : tours illimités (personne n'est bloqué). On ne charge pas l'historique
-  // (les boutons restent actifs) et on l'indique au composant de jeu.
-  const demo = !!biz.demo;
+  // (les boutons restent actifs) et on l'indique au composant de jeu. Uniquement
+  // tant que c'est une démo : un établissement devenu PAYANT
+  // (subscription_status = 'active') repasse en mode normal.
+  const demo = !!biz.demo && biz.subscription_status !== "active";
 
   // Tours déjà joués par ce navigateur (verrou serveur) — personnalisé, hors cache.
   const played: Record<string, { label: string; code: string }> = {};
