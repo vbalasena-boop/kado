@@ -109,6 +109,13 @@ export async function POST(req: NextRequest) {
       metadata: { business_id: biz.id, plan, ...(setup ? { setup } : {}) },
       subscription_data: { metadata: { business_id: biz.id, plan } },
       allow_promotion_codes: true,
+      // Facturation B2B : on collecte l'adresse de facturation (obligatoire sur
+      // une facture française) et un éventuel n° de TVA/SIRET, puis on les
+      // enregistre sur le client Stripe (customer_update) → ils apparaissent sur
+      // toutes les factures d'abonnement suivantes.
+      billing_address_collection: "required",
+      tax_id_collection: { enabled: true },
+      customer_update: { address: "auto", name: "auto" },
     });
 
     return Response.json({ url: session.url });

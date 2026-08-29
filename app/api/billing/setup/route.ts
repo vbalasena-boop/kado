@@ -86,6 +86,13 @@ export async function POST(req: NextRequest) {
       cancel_url: `${origin}/dashboard/billing`,
       metadata: { business_id: business.id, setup },
       allow_promotion_codes: true,
+      // Paiement unique : on génère une VRAIE facture (et non un simple reçu),
+      // avec l'adresse de facturation + n° de TVA/SIRET éventuel, enregistrés
+      // sur le client Stripe. La facture est téléchargeable dans le portail.
+      billing_address_collection: "required",
+      tax_id_collection: { enabled: true },
+      customer_update: { address: "auto", name: "auto" },
+      invoice_creation: { enabled: true },
     });
 
     return Response.json({ url: session.url });
