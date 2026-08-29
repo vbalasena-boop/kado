@@ -957,6 +957,14 @@ export default function AdminClient({
                           <button
                             className="btn-mini ok"
                             disabled={busy}
+                            title="Offrir 1 mois gratuit en un clic (ex. partage de la roue sur Instagram)"
+                            onClick={() => subscribe(b.id, "months", 1)}
+                          >
+                            🎁 1 mois
+                          </button>
+                          <button
+                            className="btn-mini ok"
+                            disabled={busy}
                             onClick={() => giftMonths(b.id, b.name)}
                           >
                             <Icon name="add" size={15} /> Offrir des mois…
