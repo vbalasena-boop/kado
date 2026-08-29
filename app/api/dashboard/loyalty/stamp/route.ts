@@ -218,11 +218,24 @@ export const POST = merchantRoute({
       if (!card.reward_ready) {
         return Response.json({ status: "nothing_to_collect", card: view(card) });
       }
-      const { error } = await db
+      // Remise ATOMIQUE : l'UPDATE ne s'applique QUE si la récompense est
+      // ENCORE prête (`.eq("reward_ready", true)`). Deux validations
+      // concurrentes / un double-clic → une seule réussit ; l'autre ne modifie
+      // aucune ligne → « rien à remettre ». Empêche le double-usage.
+      const { data: updated, error } = await db
         .from("loyalty_cards")
         .update({ reward_ready: false, reward_code: null })
-        .eq("id", card.id);
+        .eq("id", card.id)
+        .eq("reward_ready", true)
+        .select("id");
       if (error) return Response.json({ error: "update_failed" }, { status: 500 });
+      if (!updated || updated.length === 0) {
+        // Déjà récupérée entre-temps → pas de double remise.
+        return Response.json({
+          status: "nothing_to_collect",
+          card: view({ ...card, reward_ready: false }),
+        });
+      }
       return Response.json({
         status: "collected",
         card: view({ ...card, reward_ready: false }),

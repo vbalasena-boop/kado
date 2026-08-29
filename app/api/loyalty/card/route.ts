@@ -181,7 +181,10 @@ export const POST = publicRoute({
       goal: cfg.loyalty_goal,
       rewardsEarned: card.rewards_earned,
       rewardReady: card.reward_ready,
-      rewardCode: card.reward_ready ? card.reward_code : null,
+      // Le code de récompense n'est JAMAIS renvoyé côté public (défense en
+      // profondeur) : la validation se fait en caisse par le commerçant, qui
+      // voit l'état « récompense prête ». Le client affiche « Montrez cette
+      // carte au commerçant » sans avoir besoin du code.
       reward: cfg.loyalty_reward,
       rewardEmoji: cfg.loyalty_reward_emoji,
       stampEmoji: (cfg as any).loyalty_stamp_emoji || "⭐",

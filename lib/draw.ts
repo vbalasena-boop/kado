@@ -49,7 +49,21 @@ export function prizeIsLosing(p: {
   return p.is_losing === true || labelIsLosing(p.label);
 }
 
-/** Code de lot court et lisible, ex: "KD-4K9Q2". */
+/**
+ * Code de lot court et lisible, ex: "KD-4K9Q2".
+ *
+ * Tirage CRYPTOGRAPHIQUE (getRandomValues, dispo en Node et Edge) au lieu de
+ * `Math.random()` : les codes de récompense/fidélité ne doivent pas être
+ * devinables. Échantillonnage par rejet (buf < 252 = 36×7) pour un tirage
+ * uniforme sur l'alphabet base36, sans biais de modulo.
+ */
 export function generateCode(prefix = "KD"): string {
-  return `${prefix}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
+  const A = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; // 36 caractères
+  const buf = new Uint8Array(1);
+  let s = "";
+  while (s.length < 5) {
+    globalThis.crypto.getRandomValues(buf);
+    if (buf[0] < 252) s += A[buf[0] % 36];
+  }
+  return `${prefix}-${s}`;
 }
