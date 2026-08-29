@@ -964,6 +964,71 @@ ARTICLES.push(
         p: "Faire revenir ses clients repose sur deux piliers : capter le contact au bon moment, puis donner des raisons de revenir (cadeau, anniversaire, offres, rituels). Kado réunit ces leviers pour la restauration — jeu en caisse, carte de fidélité, anniversaires, avis Google et click & collect — dans un seul outil, sans application.",
       },
     ],
+  },
+  {
+    slug: "bipeur-digital-restaurant-file-attente",
+    title: "Bipeur digital : gérer sa file d'attente sans boîtier",
+    metaTitle: "Bipeur digital pour restaurant : le guide (2026)",
+    description:
+      "Fini les bipeurs à boîtier coûteux et perdus : le bipeur digital prévient vos clients sur leur propre téléphone quand leur commande est prête. Comment ça marche, pour quels commerces.",
+    keywords: [
+      "bipeur digital",
+      "bipeur restaurant",
+      "gestion file d'attente restaurant",
+      "système d'appel client",
+      "bipeur sans boîtier",
+      "gestionnaire de file d'attente",
+    ],
+    date: "2026-08-29",
+    readMinutes: 5,
+    category: "Comptoir",
+    emoji: "🎫",
+    excerpt:
+      "Les bipeurs à boîtier coûtent cher, se perdent et s'abîment. Le bipeur digital fait la même chose — mieux — depuis le téléphone du client. On vous explique.",
+    blocks: [
+      {
+        p: "Dans un fast-food, une boulangerie ou un food-court, la file au comptoir est un moment sensible : le client attend, ne sait pas quand sa commande est prête, et l'attente perçue plombe l'expérience. La solution classique — les bipeurs à boîtier — fonctionne, mais coûte cher et pose plein de petits problèmes. Le bipeur digital règle tout ça. Voici comment.",
+      },
+      { h: "Qu'est-ce qu'un bipeur digital ?" },
+      {
+        p: "C'est un système qui remplace le boîtier vibrant que l'on tend au client par une simple notification sur son propre téléphone. Le client prend un numéro (souvent en scannant un QR code), et il est prévenu — par notification et/ou par un écran d'appel — quand sa commande est prête à être retirée. Aucun matériel à distribuer, à récupérer ou à recharger.",
+      },
+      { h: "Pourquoi abandonner les bipeurs à boîtier ?" },
+      {
+        ul: [
+          "Le coût : un parc de bipeurs à boîtier représente plusieurs centaines d'euros, plus le remplacement des unités perdues ou cassées.",
+          "La perte : des clients repartent avec le boîtier en poche, sans le vouloir.",
+          "L'usure et l'hygiène : des boîtiers manipulés toute la journée, à nettoyer, avec des batteries qui lâchent.",
+          "La portée limitée : le client ne peut pas s'éloigner (aller dehors, à la voiture) sans risquer de rater l'appel.",
+        ],
+      },
+      { h: "Comment ça marche, concrètement ?" },
+      {
+        p: "Le parcours est volontairement ultra-simple, sans application à installer : le commerçant crée une commande et lui attribue un numéro ; le client repart avec ce numéro (ticket ou lien) ; quand c'est prêt, un clic côté commerçant déclenche l'alerte. Le client voit « votre commande n°42 est prête » sur son téléphone et vient la chercher. Il peut attendre où il veut.",
+      },
+      { h: "Pour quels commerces ?" },
+      {
+        p: "Le bipeur digital brille partout où l'on commande puis attend un retrait au comptoir : fast-foods et snacks, boulangeries et pâtisseries aux heures de pointe, food-courts, cafés, points de vente à emporter. Il se marie aussi parfaitement avec la commande en ligne (click & collect) : le client commande à l'avance et se laisse guider jusqu'au retrait.",
+      },
+      { h: "Les avantages face au boîtier" },
+      {
+        ul: [
+          "Zéro matériel : rien à acheter, distribuer, nettoyer ni recharger.",
+          "Illimité : autant de « bipeurs » que de clients, sans surcoût.",
+          "Sans application : le client n'installe rien, tout passe par le navigateur.",
+          "Portée infinie : le client est prévenu même s'il patiente dehors.",
+          "Une file plus fluide : moins de monde agglutiné au comptoir, une attente mieux vécue.",
+        ],
+      },
+      { h: "Et si le client n'a pas de téléphone sous la main ?" },
+      {
+        p: "Un bon système prévoit ce cas : le numéro reste affiché sur un écran d'appel côté commerce, et le commerçant peut toujours appeler le numéro à voix haute. Le digital vient compléter le comptoir, il ne le remplace pas de force.",
+      },
+      { h: "En résumé" },
+      {
+        p: "Le bipeur digital fait tout ce que fait un boîtier — prévenir le client que sa commande est prête — sans le matériel, sans la perte, sans la limite de portée, et pour un coût fixe. C'est exactement ce que propose la formule Comptoir de Kado : un gestionnaire de file d'attente et un bipeur digital, sans application, à partir de 19 €/mois, avec la commande en ligne incluse.",
+      },
+    ],
   }
 );
 
