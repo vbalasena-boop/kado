@@ -64,6 +64,7 @@ const PLANS = [
       "Le client prend un numéro en scannant un QR",
       "Suivi de commande en direct",
       "Alerte quand c'est prêt (notification + e-mail)",
+      "Commande en ligne (click & collect) incluse",
       "Compatible avec votre caisse actuelle",
       "Illimité — plus de bipeurs à acheter",
       "Aussi disponible en option (+12 €/mois) sur les autres formules",

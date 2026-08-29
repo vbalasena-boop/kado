@@ -3929,6 +3929,8 @@ canvas#confetti {
 }
 .plan-grid.billing {
   margin-bottom: 0;
+  /* 4 formules → grille 2×2 (plus lisible qu'une rangée de 4 étroites). */
+  grid-template-columns: repeat(2, 1fr);
 }
 @media (max-width: 640px) {
   .plan-grid { grid-template-columns: 1fr; }
