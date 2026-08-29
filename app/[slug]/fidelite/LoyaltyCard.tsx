@@ -12,7 +12,6 @@ type CardData = {
   goal: number;
   rewardsEarned: number;
   rewardReady: boolean;
-  rewardCode: string | null;
   reward: string;
   rewardEmoji: string;
   birthdayEnabled?: boolean;
