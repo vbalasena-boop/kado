@@ -39,21 +39,43 @@ export const POST = publicRoute({
 
     const supa = getAdminClient();
 
-    const { data: biz } = await supa
+    // Lecture du drapeau `demo` avec repli tolérant (colonne 0073 récente).
+    let bizRes = await supa
       .from("businesses")
-      .select("id, status")
+      .select("id, status, demo")
       .eq("slug", slug)
       .maybeSingle();
+    if (bizRes.error) {
+      bizRes = await supa
+        .from("businesses")
+        .select("id, status")
+        .eq("slug", slug)
+        .maybeSingle();
+    }
+    const biz = bizRes.data as
+      | { id: string; status: string; demo?: boolean | null }
+      | null;
 
     if (!biz || biz.status !== "active") {
       return Response.json({ error: "unavailable" }, { status: 404 });
     }
 
-    const playerId = getOrCreatePlayerId();
+    // DÉMO (ex. « Café Lumière ») : tours ILLIMITÉS. On n'applique aucun des
+    // verrous par client — chaque tour reçoit un identifiant de joueur unique
+    // (jamais de collision sur la contrainte unique), la dédup par appareil est
+    // désactivée et le plafond quotidien ne s'applique pas. N'affecte QUE les
+    // établissements marqués démo ; les vrais clients gardent le verrou normal.
+    const isDemo = !!biz.demo;
+
+    const playerId = isDemo
+      ? globalThis.crypto.randomUUID()
+      : getOrCreatePlayerId();
 
     // Empreinte d'appareil (verrou secondaire). On n'accepte qu'un hex SHA-256
     // bien formé ; toute autre valeur est ignorée (repli sur le cookie seul).
-    const deviceHash = isValidDeviceHash(body.deviceHash) ? body.deviceHash : null;
+    // En démo, on la neutralise (aucun re-verrouillage).
+    const deviceHash =
+      !isDemo && isValidDeviceHash(body.deviceHash) ? body.deviceHash : null;
 
     // Cet APPAREIL a-t-il déjà joué ce type ? Attrape le rejeu en navigation
     // privée / cookies vidés, que le cookie laisse passer. Vérification SOUPLE
@@ -128,7 +150,7 @@ export const POST = publicRoute({
     // affluence ; repli sur l'ancien comptage souple si la fonction n'est pas
     // encore déployée.
     const limit = cfg?.daily_prize_limit;
-    if (limit && limit > 0 && isWin(prizes[idx])) {
+    if (!isDemo && limit && limit > 0 && isWin(prizes[idx])) {
       let allowed: boolean;
       const { data: claimed, error: claimErr } = await supa.rpc(
         "claim_daily_prize",

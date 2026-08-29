@@ -424,6 +424,7 @@ export default function Game({
   config,
   played: initialPlayed,
   preview = false,
+  demo = false,
   orderEnabled = false,
   prizeValidityDays = 30,
   decorEmojis = "",
@@ -438,6 +439,7 @@ export default function Game({
   config: Config;
   played: Played;
   preview?: boolean;
+  demo?: boolean;
   orderEnabled?: boolean;
   prizeValidityDays?: number | null;
   decorEmojis?: string;
@@ -471,7 +473,7 @@ export default function Game({
   const turnsLabel = totalTurns === 1 ? T.one : `${totalTurns} ${turnNoun}`;
 
   const allDone =
-    !preview && enabledActions.every((k) => initialPlayed[k] != null);
+    !preview && !demo && enabledActions.every((k) => initialPlayed[k] != null);
   const [screen, setScreen] = useState<Screen>(allDone ? "done" : "rules");
   const [played, setPlayed] = useState<Played>(initialPlayed);
   const [current, setCurrent] = useState<PlayType | null>(null);
@@ -626,7 +628,8 @@ export default function Game({
   // (navigation privée / cookies vidés), on demande au serveur ce que CET
   // appareil a déjà joué, et on réaffiche cadeaux + codes.
   useEffect(() => {
-    if (preview || allDone) return;
+    // En démo, on ne re-verrouille jamais : tours illimités.
+    if (preview || demo || allDone) return;
     let alive = true;
     (async () => {
       const fp = await deviceHash();
@@ -785,7 +788,7 @@ export default function Game({
 
   // ---------- Flow ----------
   function startPlay(kind: PlayType) {
-    if (!preview && played[kind]) return;
+    if (!preview && !demo && played[kind]) return;
     setError(null);
     setCurrent(kind);
     // Offres / Fidélité : on propose d'abord de laisser un e-mail (facultatif)
@@ -1020,8 +1023,9 @@ export default function Game({
     setCurrent(null);
     setScratchPrize(null);
     setReels(["🎁", "⭐", "🍀"]);
-    if (preview) {
-      setPlayed({}); // en test, on peut rejouer indéfiniment
+    // Test (aperçu commerçant) ou DÉMO : on peut rejouer indéfiniment.
+    if (preview || demo) {
+      setPlayed({});
       setScreen("hub");
       return;
     }

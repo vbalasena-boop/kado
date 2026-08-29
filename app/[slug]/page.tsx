@@ -41,7 +41,7 @@ function loadPublicData(slug: string): Promise<PublicData> {
       // migration 0019 n'est pas encore appliquée).
       let bizRes = await supa
         .from("businesses")
-        .select(`${BIZ_BASE}, click_collect`)
+        .select(`${BIZ_BASE}, click_collect, demo`)
         .eq("slug", slug)
         .maybeSingle();
       if (bizRes.error) {
@@ -174,10 +174,14 @@ export default async function Page({
       ? String(config.monthly_draw_prize || "").trim()
       : "";
 
+  // Démo : tours illimités (personne n'est bloqué). On ne charge pas l'historique
+  // (les boutons restent actifs) et on l'indique au composant de jeu.
+  const demo = !!biz.demo;
+
   // Tours déjà joués par ce navigateur (verrou serveur) — personnalisé, hors cache.
   const played: Record<string, { label: string; code: string }> = {};
   const playerId = readPlayerId();
-  if (playerId && !preview) {
+  if (playerId && !preview && !demo) {
     const { data: rows } = await getAdminClient()
       .from("plays")
       .select("play_type, prize_label, prize_code")
@@ -222,6 +226,7 @@ export default async function Page({
       }
       played={played}
       preview={preview}
+      demo={demo}
     />
   );
 }
