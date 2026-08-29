@@ -41,6 +41,45 @@ const SEGMENT_LABEL: Record<ProspectSegment, string> = {
   autre: "Autre",
 };
 
+/** Options du filtre « contact » (présence email / Instagram). */
+const CONTACT_FILTERS: { value: string; label: string }[] = [
+  { value: "", label: "Tous les contacts" },
+  { value: "email", label: "Avec email" },
+  { value: "no_email", label: "Sans email" },
+  { value: "insta", label: "Avec Instagram" },
+  { value: "no_insta", label: "Sans Instagram" },
+  { value: "any", label: "Avec email OU Insta" },
+  { value: "both", label: "Avec email ET Insta" },
+  { value: "none", label: "Sans aucun contact" },
+];
+
+/** Vrai si le prospect correspond au filtre de contact choisi. */
+function matchContact(
+  p: { email: string | null; instagram_handle: string | null },
+  f: string
+): boolean {
+  const hasEmail = Boolean(p.email);
+  const hasInsta = Boolean(p.instagram_handle);
+  switch (f) {
+    case "email":
+      return hasEmail;
+    case "no_email":
+      return !hasEmail;
+    case "insta":
+      return hasInsta;
+    case "no_insta":
+      return !hasInsta;
+    case "any":
+      return hasEmail || hasInsta;
+    case "both":
+      return hasEmail && hasInsta;
+    case "none":
+      return !hasEmail && !hasInsta;
+    default:
+      return true;
+  }
+}
+
 const STATUS_LABEL: Record<ProspectStatus, string> = {
   new: "Nouveau",
   queued: "En file",
@@ -140,6 +179,7 @@ export default function ProspectionClient({
   // --- Filtres/tri (côté client) ---
   const [fSegment, setFSegment] = useState<string>("");
   const [fStatus, setFStatus] = useState<string>("");
+  const [fContact, setFContact] = useState<string>("");
   const [maxReviews, setMaxReviews] = useState<string>("");
   const [sort, setSort] = useState<SortKey>("score");
 
@@ -150,7 +190,7 @@ export default function ProspectionClient({
   const PAGE_SIZE = 50;
   const [page, setPage] = useState(0);
   // Revenir à la 1ʳᵉ page quand un filtre/tri change.
-  useEffect(() => setPage(0), [fSegment, fStatus, maxReviews, sort]);
+  useEffect(() => setPage(0), [fSegment, fStatus, fContact, maxReviews, sort]);
 
   const isMobile = useIsMobile();
 
@@ -625,6 +665,7 @@ export default function ProspectionClient({
     const rows = prospects.filter((p) => {
       if (fSegment && p.category !== fSegment) return false;
       if (fStatus && p.status !== fStatus) return false;
+      if (!matchContact(p, fContact)) return false;
       if (max != null && (p.google_reviews_count ?? Infinity) > max) return false;
       return true;
     });
@@ -641,7 +682,7 @@ export default function ProspectionClient({
       }
     });
     return rows;
-  }, [prospects, fSegment, fStatus, maxReviews, sort]);
+  }, [prospects, fSegment, fStatus, fContact, maxReviews, sort]);
 
   // Lignes pour la vue pipeline : mêmes filtres SAUF le statut (le board
   // regroupe justement par statut), triées par score décroissant.
@@ -650,11 +691,12 @@ export default function ProspectionClient({
     return prospects
       .filter((p) => {
         if (fSegment && p.category !== fSegment) return false;
+        if (!matchContact(p, fContact)) return false;
         if (max != null && (p.google_reviews_count ?? Infinity) > max) return false;
         return true;
       })
       .sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
-  }, [prospects, fSegment, maxReviews]);
+  }, [prospects, fSegment, fContact, maxReviews]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const clampedPage = Math.min(page, totalPages - 1);
@@ -911,6 +953,16 @@ export default function ProspectionClient({
           <option value="">Tous les statuts</option>
           {(Object.keys(STATUS_LABEL) as ProspectStatus[]).map((s) => (
             <option key={s} value={s}>{STATUS_LABEL[s]}</option>
+          ))}
+        </select>
+        <select
+          value={fContact}
+          onChange={(e) => setFContact(e.target.value)}
+          style={selectStyle}
+          title="Filtrer selon la présence d'un email et/ou d'un compte Instagram"
+        >
+          {CONTACT_FILTERS.map((c) => (
+            <option key={c.value} value={c.value}>{c.label}</option>
           ))}
         </select>
         <label style={{ fontSize: 14 }}>
