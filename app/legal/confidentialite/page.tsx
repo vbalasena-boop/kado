@@ -1,4 +1,9 @@
-export const metadata = { title: "Politique de confidentialité — Kado" };
+export const metadata = {
+  title: "Politique de confidentialité",
+  description:
+    "Politique de confidentialité de Kado : quelles données sont collectées, pourquoi, et vos droits (RGPD).",
+  alternates: { canonical: "/legal/confidentialite" },
+};
 
 export default function Confidentialite() {
   return (

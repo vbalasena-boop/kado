@@ -1,5 +1,5 @@
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Aide — Kado" };
+export const metadata = { title: "Aide" };
 
 type QA = { q: string; a: React.ReactNode };
 

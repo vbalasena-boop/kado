@@ -176,6 +176,13 @@ const JSON_LD = {
         "Kado est la solution tout-en-un de fidélisation pour les commerces de proximité : jeux, avis Google, carte de fidélité digitale, campagnes et commande en ligne.",
       areaServed: "FR",
       email: "vbalasena@instant-events.fr",
+      address: {
+        "@type": "PostalAddress",
+        streetAddress: "5 rue Émile Cousin",
+        postalCode: "78000",
+        addressLocality: "Versailles",
+        addressCountry: "FR",
+      },
     },
     {
       "@type": "WebSite",

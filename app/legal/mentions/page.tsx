@@ -1,4 +1,9 @@
-export const metadata = { title: "Mentions légales — Kado" };
+export const metadata = {
+  title: "Mentions légales",
+  description:
+    "Mentions légales du service Kado : éditeur, hébergeur et coordonnées de contact.",
+  alternates: { canonical: "/legal/mentions" },
+};
 
 export default function Mentions() {
   return (

@@ -1,4 +1,9 @@
-export const metadata = { title: "Règlement du jeu — Kado" };
+export const metadata = {
+  title: "Règlement du jeu",
+  description:
+    "Règlement du jeu (roue de la fortune, grattage, machine à sous) proposé par les commerces via Kado.",
+  alternates: { canonical: "/legal/reglement" },
+};
 
 export default function Reglement() {
   return (
