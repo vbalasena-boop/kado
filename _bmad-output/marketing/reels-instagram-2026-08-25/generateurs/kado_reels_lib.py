@@ -176,7 +176,7 @@ def pop(img,element,cx,cy,t,t0,dur=0.4):
     img.alpha_composite(el,(int(cx-nw/2),int(cy-nh/2)))
 def emoji_pop(img,ch,cx,cy,size,t,t0,dur=0.4): pop(img,emoji_img(ch,size),cx,cy,t,t0,dur)
 
-def cta(t,tagline="Chaque client = une chance d'avis",q=None):
+def cta(t,tagline="Chaque client = une chance d'avis",q=None,btn="Commentez DEMO",sub="essai gratuit 14 jours · sans carte bancaire"):
     img=BG_ORANGE.convert("RGBA"); a=ease(clamp(t/0.35))
     ls=175; logo=gift_logo(ls); d=ImageDraw.Draw(img); wm=d.textlength("Kado",font=BOLD(130))
     lx=int((W-(ls+26+wm))/2); img.alpha_composite(logo,(lx,int(H*0.10))); d.text((lx+ls+26,int(H*0.10)+16),"Kado",font=BOLD(130),fill=NAVY)
@@ -186,10 +186,10 @@ def cta(t,tagline="Chaque client = une chance d'avis",q=None):
         qp=pill(q,BOLD(48),WHITE,NAVY); img.alpha_composite(qp,((W-qp.width)//2,int(H*0.45)))
     pulse=1+0.028*math.sin(t*2*math.pi*1.4); bw,bh=int(W*0.74*pulse),int(150*pulse); bx,by=(W-bw)//2,int(H*0.55)
     d.rounded_rectangle([bx,by,bx+bw,by+bh],radius=bh//2,fill=NAVY)
-    txt="Commentez DEMO"; tw=d.textlength(txt,font=BOLD(64)); d.text((W//2-tw/2,by+bh/2-46),txt,font=BOLD(64),fill=WHITE)
+    tw=d.textlength(btn,font=BOLD(64)); d.text((W//2-tw/2,by+bh/2-46),btn,font=BOLD(64),fill=WHITE)
     img.alpha_composite(down_chevron(90,NAVY),(W//2-45,by+bh+24))
     f=BOLD(54); t1="kado-app.fr"; d.text((W//2-d.textlength(t1,font=f)/2,int(H*0.74)),t1,font=f,fill=NAVY)
-    f2=BODYB(40); sub="essai gratuit 14 jours · sans carte bancaire"; d.text((W//2-d.textlength(sub,font=f2)/2,int(H*0.74)+72),sub,font=f2,fill=(90,45,10))
+    f2=BODYB(40); d.text((W//2-d.textlength(sub,font=f2)/2,int(H*0.74)+72),sub,font=f2,fill=(90,45,10))
     if a<1: return Image.blend(BG_ORANGE.convert("RGBA"),img,a)
     return img
 

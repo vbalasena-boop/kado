@@ -27,6 +27,7 @@ COLD={
  'reel4':_co([("Légal ?",GOLD)],"Récompenser un avis Google…"),
  'reel5':_co([("30 secondes.",GOLD)],"C'est tout ce que ça prend."),
  'reel7':_co([("La rentrée.",GOLD)],"Le moment pour vos avis."),
+ 'reel8':_co([("1er mois ",WHITE),("OFFERT",GOLD)],"Offre spéciale commerçants"),
 }
 CO_DUR=0.9  # durée de base (x SCALE ensuite)
 def with_cold(name,TL):
@@ -191,7 +192,26 @@ def r7_now(t):
 REEL7=[(0,2.4,r7_hook),(2.4,6.0,r7_each),(6.0,9.6,r7_ahead),(9.6,12.7,r7_now),
        (12.7,15.0,lambda t: cta(t,"Lancez la rentrée avec Kado",q="Votre objectif rentrée ?"))]
 
-_BASE={"reel2":REEL2,"reel3":REEL3,"reel4":REEL4,"reel5":REEL5,"reel6":REEL6,"reel7":REEL7}
+# =================== RÉEL 8 — Offre « 1er mois offert » ===================
+def r8_hook(t):
+    return text_scene(t,[([("Créez votre roue Kado",WHITE)],BOLD(76),0.32,0.0),
+                         ([("en 5 minutes.",GOLD)],BOLD(80),0.48,0.4)])
+def r8_wheel(t):
+    img=bg_violet()
+    para(img,[("Vos clients scannent, jouent,",WHITE)],BOLD(52),W//2,int(H*0.13),int(W*0.88))
+    para(img,[("et laissent un avis.",GOLD)],BOLD(58),W//2,int(H*0.20),int(W*0.88))
+    ws=560; ang=-(360*2.3*ease(clamp(t/0.7))+35); img.alpha_composite(wheel(ws,ang),((W-ws)//2,int(H*0.34)))
+    return img
+def r8_scar(t):
+    img=text_scene(t,[([("Les ",WHITE),("10 premiers",GOLD),(" commerçants",WHITE)],BOLD(72),0.30,0.0)])
+    pop(img,pill("cette semaine seulement",BOLD(52),NAVY,GOLD),W//2,int(H*0.50),t,0.4)
+    op=int(255*ease(clamp((t-0.6)/0.35)))
+    if op>0: para(img,[("1 mois pour tout tester. Gratuitement.",WHITE)],BOLD(52),W//2,int(H*0.62),int(W*0.86),opacity=op)
+    return img
+REEL8=[(0,2.4,r8_hook),(2.4,6.0,r8_wheel),(6.0,10.0,r8_scar),
+       (10.0,14.0,lambda t: cta(t,"Créez votre roue = 1er mois offert",btn="Commentez OFFRE",sub="offre limitée · sans carte bancaire"))]
+
+_BASE={"reel2":REEL2,"reel3":REEL3,"reel4":REEL4,"reel5":REEL5,"reel6":REEL6,"reel7":REEL7,"reel8":REEL8}
 REELS={n:with_cold(n,tl) for n,tl in _BASE.items()}
 
 if __name__=="__main__":
