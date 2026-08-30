@@ -598,6 +598,46 @@ export default function ProspectionClient({
   const [importing, setImporting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  // --- Import rapide de comptes Instagram (collage libre) ---
+  const [showInsta, setShowInsta] = useState(false);
+  const [instaText, setInstaText] = useState("");
+  const [instaCity, setInstaCity] = useState("");
+  const [instaImporting, setInstaImporting] = useState(false);
+
+  async function runInstaImport() {
+    if (!instaText.trim()) {
+      setMessage("Colle au moins un compte Instagram.");
+      return;
+    }
+    setInstaImporting(true);
+    setMessage(null);
+    try {
+      const res = await fetch("/api/admin/prospection/import-instagram", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: instaText, city: instaCity.trim() || undefined }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setMessage(`Erreur : ${data.error ?? "inconnue"}`);
+      } else if (data.found === 0) {
+        setMessage("Aucun compte Instagram valide détecté dans le texte collé.");
+      } else {
+        setMessage(
+          `✅ ${data.inserted} compte(s) ajouté(s)` +
+            (data.duplicates ? ` · ${data.duplicates} déjà en liste (ignoré(s))` : "") +
+            (data.capped ? " · limite de 100 par import atteinte" : "")
+        );
+        setInstaText("");
+        router.refresh();
+      }
+    } catch {
+      setMessage("Erreur réseau pendant l'import Instagram.");
+    } finally {
+      setInstaImporting(false);
+    }
+  }
+
   // --- Test de délivrabilité (SPF/DKIM/DMARC/MX) ---
   const [deliv, setDeliv] = useState<DeliverabilityReport | null>(null);
   const [delivLoading, setDelivLoading] = useState(false);
@@ -911,6 +951,58 @@ export default function ProspectionClient({
         >
           {importing ? "Import…" : "📥 Importer un CSV"}
         </button>
+        <button
+          onClick={() => setShowInsta((v) => !v)}
+          className="dash-signout"
+          style={{ fontSize: 13 }}
+          title="Coller une liste de comptes Instagram trouvés à la main (un par ligne)"
+        >
+          {showInsta ? "Annuler" : "📸 Coller des comptes Instagram"}
+        </button>
+        {showInsta && (
+          <div
+            style={{
+              border: "1px solid #eee",
+              borderRadius: 10,
+              padding: 14,
+              marginTop: 8,
+              width: "100%",
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+            }}
+          >
+            <div style={{ fontSize: 13, color: "#555" }}>
+              Colle les comptes trouvés sur Instagram — <strong>un par ligne</strong>{" "}
+              (@nom, nom, ou lien instagram.com/nom). 100 max par import. Les doublons
+              sont ignorés, rien n'est écrasé.
+            </div>
+            <textarea
+              value={instaText}
+              onChange={(e) => setInstaText(e.target.value)}
+              rows={6}
+              placeholder={"@le.bouillon.versailles\n@cafe.des.amis\ninstagram.com/salon.marie"}
+              style={{ width: "100%", padding: 10, borderRadius: 8, border: "1px solid #ccc", fontFamily: "inherit", fontSize: 14, boxSizing: "border-box" }}
+            />
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+              <input
+                type="text"
+                value={instaCity}
+                onChange={(e) => setInstaCity(e.target.value)}
+                placeholder="Ville (facultatif)"
+                style={{ padding: "8px 10px", borderRadius: 8, border: "1px solid #ccc", minWidth: 180 }}
+              />
+              <button
+                onClick={runInstaImport}
+                disabled={instaImporting}
+                className="dash-signout"
+                style={{ fontSize: 13, opacity: instaImporting ? 0.6 : 1 }}
+              >
+                {instaImporting ? "Import…" : "Importer les comptes"}
+              </button>
+            </div>
+          </div>
+        )}
         {showAdd && (
           <div
             style={{
