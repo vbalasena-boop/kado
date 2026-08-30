@@ -20,6 +20,7 @@ import {
   prettyName,
   emailAngleVariant,
   EMAIL_ANGLE_LABELS,
+  offerUrl,
   type GeneratedEmail,
   type TemplateContext,
 } from "@/lib/prospection/templates";
@@ -63,12 +64,6 @@ const SEGMENT_NOUN: Record<ProspectSegment, string> = {
 function noun(category: string | null): string {
   if (category && category in SEGMENT_NOUN) return SEGMENT_NOUN[category as ProspectSegment];
   return "commerce de proximité";
-}
-
-/** Lien de RDV effectif (contexte > variable d'env). */
-function bookingUrl(ctx: TemplateContext): string | null {
-  const url = (ctx.bookingUrl ?? process.env.PROSPECT_BOOKING_URL ?? "").trim();
-  return url || null;
 }
 
 /**
@@ -171,10 +166,15 @@ export function assembleEmail(
   ai: { subject: string; body: string },
   includeBooking = false
 ): GeneratedEmail {
-  const booking = bookingUrl(ctx);
   let body = ai.body.trimEnd();
-  if (includeBooking && booking && !body.includes(booking)) {
-    body += `\n\nRéservez un appel de 15 min quand vous voulez → ${booking}`;
+  // Relances uniquement : on ajoute (par le code, jamais par l'IA) le lien vers
+  // la page de vente la plus pertinente selon le secteur. Le 1er email, lui,
+  // reste SANS lien (includeBooking=false) pour la délivrabilité.
+  if (includeBooking) {
+    const link = offerUrl(ctx.category ?? null);
+    if (!body.includes(link)) {
+      body += `\n\nP.S. — Je vous montre Kado en 30 secondes → ${link}`;
+    }
   }
   body += `\n\n${FOOTER}`;
   return { subject: ai.subject, body };
@@ -261,7 +261,6 @@ export function buildFollowupPrompt(
   ctx: TemplateContext,
   kind: FollowupKind
 ): { system: string; user: string } {
-  const booking = bookingUrl(ctx);
   const facts = [
     `Nom du commerce : ${prettyName(ctx.name)}`,
     ctx.city ? `Ville : ${ctx.city}` : null,
@@ -293,9 +292,7 @@ export function buildFollowupPrompt(
     "- N'invente AUCUN fait (pas de faux chiffres, pas de fausse visite).",
     "- Pas de MAJUSCULES criardes, pas de '!!!'. Bannis le vocabulaire promotionnel : 'gratuit', 'offert', 'cadeau', 'jeu', 'gagnez', 'promo', 'urgent', 'argent'.",
     "- N'ajoute PAS de signature, PAS de mentions légales, PAS de lien de désinscription : c'est ajouté séparément.",
-    booking
-      ? `- Si tu proposes un appel, utilise ce lien EXACT : ${booking}`
-      : "- Si tu proposes un appel, demande simplement au prospect ses disponibilités.",
+    "- N'inclus AUCUN lien ni URL dans le corps : un lien vers une courte démo est ajouté automatiquement à la fin. Termine par une phrase qui donne envie de la découvrir.",
     "Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format :",
     '{"subject": "...", "body": "..."}',
     "Le body commence par 'Bonjour <nom>,' et se termine par une formule de politesse suivie de 'Vobinson — Kado'.",

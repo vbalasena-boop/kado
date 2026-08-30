@@ -141,23 +141,21 @@ describe("assembleEmail", () => {
     expect(email.body.startsWith("Bonjour,")).toBe(true);
   });
 
-  it("ajoute le lien de RDV pour une relance (includeBooking=true)", () => {
-    process.env.PROSPECT_BOOKING_URL = "https://cal.com/kado/15min";
+  it("ajoute le lien de la page de vente (selon le secteur) pour une relance", () => {
+    // ctx.category === "resto" → /pro/jeux
     const email = assembleEmail(ctx, { subject: "O", body: "Bonjour," }, true);
-    expect(email.body).toContain("https://cal.com/kado/15min");
+    expect(email.body).toContain("https://kado-app.fr/pro/jeux");
   });
 
   it("n'ajoute PAS de lien pour le 1er email (défaut)", () => {
-    process.env.PROSPECT_BOOKING_URL = "https://cal.com/kado/15min";
     const email = assembleEmail(ctx, { subject: "O", body: "Bonjour," });
-    expect(email.body).not.toContain("https://cal.com/kado/15min");
+    expect(email.body).not.toContain("kado-app.fr/pro");
   });
 
-  it("ne duplique pas le lien de RDV s'il est déjà présent (relance)", () => {
-    process.env.PROSPECT_BOOKING_URL = "https://cal.com/kado/15min";
-    const body = "Bonjour, réservez → https://cal.com/kado/15min";
-    const email = assembleEmail(ctx, { subject: "O", body }, true);
-    const count = email.body.split("https://cal.com/kado/15min").length - 1;
+  it("ne duplique pas le lien s'il est déjà présent (relance)", () => {
+    const url = "https://kado-app.fr/pro/jeux";
+    const email = assembleEmail(ctx, { subject: "O", body: `Bonjour, voir → ${url}` }, true);
+    const count = email.body.split(url).length - 1;
     expect(count).toBe(1);
   });
 });

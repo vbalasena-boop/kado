@@ -33,12 +33,6 @@ export interface TemplateContext {
   tone?: string;
 }
 
-/** Lien de réservation effectif (contexte > variable d'env > aucun). */
-function resolveBooking(ctx: TemplateContext): string | null {
-  const url = (ctx.bookingUrl ?? process.env.PROSPECT_BOOKING_URL ?? "").trim();
-  return url ? url : null;
-}
-
 export interface GeneratedEmail {
   subject: string;
   body: string;
@@ -63,6 +57,32 @@ const SEGMENT_NOUN: Record<ProspectSegment, string> = {
   sport: "établissement",
   autre: "commerce",
 };
+
+/** URL de base du site (sans slash final). */
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://kado-app.fr").replace(/\/+$/, "");
+
+/**
+ * Page de vente la plus pertinente selon le secteur du prospect.
+ * À n'utiliser QUE dans les relances (jamais le 1er email) — un lien dès le 1er
+ * contact dégrade la délivrabilité (onglet Promotions / spam).
+ */
+export function offerPath(category: string | null): string {
+  switch (category) {
+    case "resto":
+      return "/pro/jeux";
+    case "beaute":
+    case "boutique":
+    case "sport":
+      return "/pro/fidelite";
+    default:
+      return "/pro";
+  }
+}
+
+/** URL absolue de la page de vente adaptée au secteur du prospect. */
+export function offerUrl(category: string | null): string {
+  return SITE_URL + offerPath(category);
+}
 
 function segmentNoun(category: string | null): string {
   if (category && category in SEGMENT_NOUN) {
@@ -262,21 +282,14 @@ export function renderFollowupEmail(ctx: TemplateContext): GeneratedEmail {
       `et vous laissent un avis ou un suivi. Testable 14 jours, offerts.`,
   ]);
 
-  const booking = resolveBooking(ctx);
-  const cta = booking
-    ? pick(seed, "fu_cta_book", [
-        `Si le sujet vous parle, réservez un appel de 15 min quand vous ` +
-          `voulez → ${booking}`,
-        `Le plus rapide : choisissez un créneau pour un court échange ` +
-          `téléphonique → ${booking}`,
-        `Un appel de 15 min pour en parler ? Réservez ici → ${booking}`,
-      ])
-    : pick(seed, "fu_cta", [
-        `Un simple « oui » et je vous rappelle quand vous voulez.`,
-        `Dites-moi si un court appel de 15 min vous intéresse.`,
-        `Répondez-moi avec un créneau et je vous appelle.`,
-      ]);
+  const cta = pick(seed, "fu_cta", [
+    `Un simple « oui » et je vous en dis plus, quand vous voulez.`,
+    `Dites-moi si le sujet vous intéresse et on en discute.`,
+    `Répondez-moi d'un mot si vous voulez en savoir plus.`,
+  ]);
 
+  // Relance : on ajoute (2ᵉ contact = contexte établi) le lien vers la page de
+  // vente adaptée au secteur. Jamais dans le 1er email.
   const body = [
     `Bonjour ${name},`,
     ``,
@@ -288,6 +301,8 @@ export function renderFollowupEmail(ctx: TemplateContext): GeneratedEmail {
     ``,
     `Belle journée,`,
     `Vobinson — Kado`,
+    ``,
+    `P.S. — Je vous montre Kado en 30 secondes → ${offerUrl(ctx.category ?? null)}`,
     ``,
     FOOTER,
   ].join("\n");
@@ -322,16 +337,10 @@ export function renderLastEmail(ctx: TemplateContext): GeneratedEmail {
       `vous parle un jour, un mot suffit et je m'occupe du reste.`,
   ]);
 
-  const booking = resolveBooking(ctx);
-  const cta = booking
-    ? pick(seed, "last_cta_book", [
-        `Sinon, je n'insiste plus — le lien reste ici si besoin : ${booking}`,
-        `Le créneau reste dispo au cas où → ${booking}. Belle continuation !`,
-      ])
-    : pick(seed, "last_cta", [
-        `Sinon, je n'insiste plus — belle continuation à ${name} !`,
-        `Sans réponse, je n'y reviendrai pas. Belle continuation !`,
-      ]);
+  const cta = pick(seed, "last_cta", [
+    `Sinon, je n'insiste plus — belle continuation à ${name} !`,
+    `Sans réponse, je n'y reviendrai pas. Belle continuation !`,
+  ]);
 
   const body = [
     `Bonjour ${name},`,
@@ -344,6 +353,8 @@ export function renderLastEmail(ctx: TemplateContext): GeneratedEmail {
     ``,
     `Bien à vous,`,
     `Vobinson — Kado`,
+    ``,
+    `P.S. — La démo reste ici si besoin → ${offerUrl(ctx.category ?? null)}`,
     ``,
     FOOTER,
   ].join("\n");
