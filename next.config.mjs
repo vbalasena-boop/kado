@@ -6,6 +6,11 @@ const nextConfig = {
   experimental: {
     instrumentationHook: true,
   },
+  // Page de vente commerçants : /pro sert le fichier statique public/pro.html
+  // (page autonome, isolée des styles globaux de l'app).
+  async rewrites() {
+    return [{ source: "/pro", destination: "/pro.html" }];
+  },
   // En-têtes de sécurité appliqués à toutes les réponses.
   // `frame-ancestors 'none'` + X-Frame-Options : anti-clickjacking (les espaces
   // /dashboard et /admin ne peuvent plus être encadrés dans une iframe piégée).
