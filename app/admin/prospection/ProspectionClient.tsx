@@ -53,6 +53,29 @@ const CONTACT_FILTERS: { value: string; label: string }[] = [
   { value: "none", label: "Sans aucun contact" },
 ];
 
+/** Options du filtre « date d'ajout ». */
+const ADDED_FILTERS: { value: string; label: string }[] = [
+  { value: "", label: "Ajouté : tout" },
+  { value: "today", label: "Ajouté aujourd'hui" },
+  { value: "7d", label: "Ajouté : 7 derniers jours" },
+  { value: "30d", label: "Ajouté : 30 derniers jours" },
+];
+
+/** Vrai si le prospect a été ajouté dans la fenêtre choisie (created_at). */
+function matchAdded(p: { created_at: string }, f: string): boolean {
+  if (!f) return true;
+  const days = f === "today" ? 1 : f === "7d" ? 7 : f === "30d" ? 30 : 0;
+  if (!days) return true;
+  const t = new Date(p.created_at).getTime();
+  if (Number.isNaN(t)) return true; // date illisible → on n'exclut pas
+  if (f === "today") {
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    return t >= start.getTime();
+  }
+  return t >= Date.now() - days * 864e5;
+}
+
 /** Vrai si le prospect correspond au filtre de contact choisi. */
 function matchContact(
   p: { email: string | null; instagram_handle: string | null },
@@ -111,7 +134,7 @@ const PIPELINE_COLUMNS: {
   { key: "excluded", label: "Exclus", emoji: "🚫", statuses: ["excluded"], accent: "#999" },
 ];
 
-type SortKey = "score" | "reviews" | "rating" | "name";
+type SortKey = "score" | "reviews" | "rating" | "name" | "recent";
 
 /** Vrai sur petit écran (mobile) — pour basculer tableau ↔ cartes. */
 function useIsMobile(breakpoint = 720): boolean {
@@ -180,6 +203,7 @@ export default function ProspectionClient({
   const [fSegment, setFSegment] = useState<string>("");
   const [fStatus, setFStatus] = useState<string>("");
   const [fContact, setFContact] = useState<string>("");
+  const [fAdded, setFAdded] = useState<string>("");
   const [maxReviews, setMaxReviews] = useState<string>("");
   const [sort, setSort] = useState<SortKey>("score");
 
@@ -190,7 +214,7 @@ export default function ProspectionClient({
   const PAGE_SIZE = 50;
   const [page, setPage] = useState(0);
   // Revenir à la 1ʳᵉ page quand un filtre/tri change.
-  useEffect(() => setPage(0), [fSegment, fStatus, fContact, maxReviews, sort]);
+  useEffect(() => setPage(0), [fSegment, fStatus, fContact, fAdded, maxReviews, sort]);
 
   const isMobile = useIsMobile();
 
@@ -706,6 +730,7 @@ export default function ProspectionClient({
       if (fSegment && p.category !== fSegment) return false;
       if (fStatus && p.status !== fStatus) return false;
       if (!matchContact(p, fContact)) return false;
+      if (!matchAdded(p, fAdded)) return false;
       if (max != null && (p.google_reviews_count ?? Infinity) > max) return false;
       return true;
     });
@@ -717,12 +742,16 @@ export default function ProspectionClient({
           return (b.google_rating ?? 0) - (a.google_rating ?? 0);
         case "name":
           return a.name.localeCompare(b.name);
+        case "recent":
+          return (
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          );
         default:
           return (b.score ?? 0) - (a.score ?? 0);
       }
     });
     return rows;
-  }, [prospects, fSegment, fStatus, fContact, maxReviews, sort]);
+  }, [prospects, fSegment, fStatus, fContact, fAdded, maxReviews, sort]);
 
   // Lignes pour la vue pipeline : mêmes filtres SAUF le statut (le board
   // regroupe justement par statut), triées par score décroissant.
@@ -732,11 +761,12 @@ export default function ProspectionClient({
       .filter((p) => {
         if (fSegment && p.category !== fSegment) return false;
         if (!matchContact(p, fContact)) return false;
+        if (!matchAdded(p, fAdded)) return false;
         if (max != null && (p.google_reviews_count ?? Infinity) > max) return false;
         return true;
       })
       .sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
-  }, [prospects, fSegment, fContact, maxReviews]);
+  }, [prospects, fSegment, fContact, fAdded, maxReviews]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const clampedPage = Math.min(page, totalPages - 1);
@@ -1057,6 +1087,16 @@ export default function ProspectionClient({
             <option key={c.value} value={c.value}>{c.label}</option>
           ))}
         </select>
+        <select
+          value={fAdded}
+          onChange={(e) => setFAdded(e.target.value)}
+          style={selectStyle}
+          title="Filtrer selon la date d'ajout du prospect"
+        >
+          {ADDED_FILTERS.map((c) => (
+            <option key={c.value} value={c.value}>{c.label}</option>
+          ))}
+        </select>
         <label style={{ fontSize: 14 }}>
           Avis max&nbsp;
           <input
@@ -1073,6 +1113,7 @@ export default function ProspectionClient({
           <option value="reviews">Tri : moins d'avis</option>
           <option value="rating">Tri : meilleure note</option>
           <option value="name">Tri : nom</option>
+          <option value="recent">Tri : ajout récent</option>
         </select>
         {/* Bascule Liste / Pipeline */}
         <div style={{ display: "inline-flex", borderRadius: 8, overflow: "hidden", border: "1px solid #ccc" }}>
