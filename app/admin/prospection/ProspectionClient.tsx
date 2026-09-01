@@ -180,6 +180,27 @@ export type ConversionRow = {
   clients: number;
 };
 
+/** Vue Prospection mémorisée (filtres, tri, page) pour la restaurer au retour. */
+type SavedUi = {
+  fSegment?: string;
+  fStatus?: string;
+  fContact?: string;
+  fAdded?: string;
+  maxReviews?: string;
+  sort?: SortKey;
+  view?: "list" | "pipeline";
+  page?: number;
+};
+const UI_KEY = "kado_prospection_ui";
+function readSavedUi(): SavedUi {
+  if (typeof window === "undefined") return {};
+  try {
+    return JSON.parse(sessionStorage.getItem(UI_KEY) || "{}") as SavedUi;
+  } catch {
+    return {};
+  }
+}
+
 export default function ProspectionClient({
   prospects,
   migrationMissing,
@@ -213,8 +234,52 @@ export default function ProspectionClient({
   // --- Pagination (côté client) ---
   const PAGE_SIZE = 50;
   const [page, setPage] = useState(0);
-  // Revenir à la 1ʳᵉ page quand un filtre/tri change.
-  useEffect(() => setPage(0), [fSegment, fStatus, fContact, fAdded, maxReviews, sort]);
+
+  // --- Mémorisation de la vue (filtres/tri/page) : on la restaure au retour
+  // (ex. après avoir ouvert une fiche puis « précédent »). ---
+  const [restored, setRestored] = useState(false);
+  // Tant que la restauration n'est pas faite, on n'exécute pas le reset de page.
+  const skipReset = useRef(true);
+
+  useEffect(() => {
+    const s = readSavedUi();
+    if (s.fSegment != null) setFSegment(s.fSegment);
+    if (s.fStatus != null) setFStatus(s.fStatus);
+    if (s.fContact != null) setFContact(s.fContact);
+    if (s.fAdded != null) setFAdded(s.fAdded);
+    if (s.maxReviews != null) setMaxReviews(s.maxReviews);
+    if (s.sort != null) setSort(s.sort);
+    if (s.view === "list" || s.view === "pipeline") setView(s.view);
+    if (typeof s.page === "number" && s.page >= 0) setPage(s.page);
+    setRestored(true);
+  }, []);
+
+  // Revenir à la 1ʳᵉ page quand un filtre/tri change (sauf pendant la restauration).
+  // Déclaré AVANT l'effet qui réautorise le reset, pour qu'au rendu issu de la
+  // restauration ce reset soit encore ignoré (page mémorisée préservée).
+  useEffect(() => {
+    if (skipReset.current) return;
+    setPage(0);
+  }, [fSegment, fStatus, fContact, fAdded, maxReviews, sort]);
+
+  // Une fois la restauration terminée, on réautorise le reset de page.
+  useEffect(() => {
+    if (restored) skipReset.current = false;
+  }, [restored]);
+
+  // Sauvegarde la vue courante (après restauration, pour ne pas écraser le state
+  // mémorisé au 1er rendu par défaut).
+  useEffect(() => {
+    if (!restored) return;
+    try {
+      sessionStorage.setItem(
+        UI_KEY,
+        JSON.stringify({ fSegment, fStatus, fContact, fAdded, maxReviews, sort, view, page })
+      );
+    } catch {
+      /* stockage indisponible : on ignore */
+    }
+  }, [restored, fSegment, fStatus, fContact, fAdded, maxReviews, sort, view, page]);
 
   const isMobile = useIsMobile();
 
