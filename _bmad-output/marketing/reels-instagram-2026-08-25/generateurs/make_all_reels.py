@@ -28,6 +28,8 @@ COLD={
  'reel5':_co([("30 secondes.",GOLD)],"C'est tout ce que ça prend."),
  'reel7':_co([("La rentrée.",GOLD)],"Le moment pour vos avis."),
  'reel8':_co([("1er mois ",WHITE),("OFFERT",GOLD)],"Offre de lancement"),
+ 'reel9':_co([("Vous perdez",WHITE),(" des clients",GOLD)],"…et vous ne le voyez pas."),
+ 'reel10':_co([("x2 d'avis.",GOLD)],"0 € de pub."),
 }
 CO_DUR=0.9  # durée de base (x SCALE ensuite)
 def with_cold(name,TL):
@@ -211,7 +213,53 @@ def r8_scar(t):
 REEL8=[(0,2.4,r8_hook),(2.4,6.0,r8_wheel),(6.0,10.0,r8_scar),
        (10.0,14.0,lambda t: cta(t,"Offre de lancement · 1er mois offert",btn="Commentez OFFRE",sub="offre de lancement · sans carte bancaire"))]
 
-_BASE={"reel2":REEL2,"reel3":REEL3,"reel4":REEL4,"reel5":REEL5,"reel6":REEL6,"reel7":REEL7,"reel8":REEL8}
+# =================== RÉEL 9 — « Vous perdez des clients » (douleur) ===================
+def r9_hook(t):
+    return text_scene(t,[([("Un client sur deux",WHITE)],BOLD(78),0.30,0.0),
+                         ([("vérifie Google avant de venir.",GOLD)],BOLD(60),0.46,0.4)])
+def r9_cards(t):
+    img=bg_violet(int(H*0.40))
+    para(img,[("Et il choisit le mieux noté :",WHITE)],BOLD(56),W//2,int(H*0.15),int(W*0.85))
+    cw=int(W*0.82); a1=ease(clamp(t/0.4))
+    c1=google_card(cw,"Le Voisin",5,"312 avis",GREEN); x1=int(lerp((-cw,0,0),((W-cw)//2,0,0),a1)[0])
+    img.alpha_composite(c1,(x1,int(H*0.27)))
+    a2=ease(clamp((t-0.22)/0.4))
+    if a2>0:
+        c2=google_card(cw,"Vous",5,"3 avis",RED); x2=int(lerp((W,0,0),((W-cw)//2,0,0),a2)[0])
+        img.alpha_composite(c2,(x2,int(H*0.49)))
+    pop(img,pill("il prend VOS clients",BOLD(52),WHITE,RED),W//2,int(H*0.70),t,0.55)
+    return img
+def r9_fix(t):
+    img=bg_violet()
+    para(img,[("Kado inverse la tendance.",WHITE)],BOLD(70),W//2,int(H*0.13),int(W*0.88))
+    ws=560; ang=-(360*2.3*ease(clamp(t/0.7))+35); img.alpha_composite(wheel(ws,ang),((W-ws)//2,int(H*0.34)))
+    pop(img,review_card(int(W*0.78)),W//2,int(H*0.80),t,0.6)
+    return img
+REEL9=[(0,2.4,r9_hook),(2.4,6.6,r9_cards),(6.6,10.2,r9_fix),
+       (10.2,14.0,lambda t: cta(t,"Reprenez vos clients",q="Combien d'avis vous avez ?"))]
+
+# =================== RÉEL 10 — « x2 d'avis sans pub » (preuve/curiosité) ===================
+def r10_hook(t):
+    return text_scene(t,[([("Doubler vos avis Google",WHITE)],BOLD(70),0.30,0.0),
+                         ([("sans 1 € de pub ?",GOLD)],BOLD(74),0.46,0.4)])
+def r10_count(t):
+    img=bg_violet(int(H*0.40))
+    para(img,[("Ce commerce l'a fait :",WHITE)],BOLD(58),W//2,int(H*0.16),int(W*0.85))
+    cw=int(W*0.82); cnt=int(38+42*ease(clamp((t-0.1)/0.55)))
+    img.alpha_composite(google_card(cw,"Votre commerce",5,f"{cnt} avis",GREEN),((W-cw)//2,int(H*0.34)))
+    pop(img,pill("x2 sans pub, sans effort",BOLD(50),NAVY,GOLD),W//2,int(H*0.60),t,0.55)
+    return img
+def r10_how(t):
+    img=bg_violet()
+    para(img,[("Le secret : un QR + une roue.",WHITE)],BOLD(60),W//2,int(H*0.13),int(W*0.88))
+    ws=560; ang=-(360*2.3*ease(clamp(t/0.7))+35); img.alpha_composite(wheel(ws,ang),((W-ws)//2,int(H*0.34)))
+    op=int(255*ease(clamp((t-0.55)/0.4)))
+    if op>0: para(img,[("Vos clients jouent, l'avis vient tout seul.",WHITE)],BODYB(46),W//2,int(H*0.80),int(W*0.88),opacity=op)
+    return img
+REEL10=[(0,2.4,r10_hook),(2.4,6.4,r10_count),(6.4,10.0,r10_how),
+        (10.0,14.0,lambda t: cta(t,"Doublez vos avis Google",q="Vous en êtes à combien ?"))]
+
+_BASE={"reel2":REEL2,"reel3":REEL3,"reel4":REEL4,"reel5":REEL5,"reel6":REEL6,"reel7":REEL7,"reel8":REEL8,"reel9":REEL9,"reel10":REEL10}
 REELS={n:with_cold(n,tl) for n,tl in _BASE.items()}
 
 if __name__=="__main__":
