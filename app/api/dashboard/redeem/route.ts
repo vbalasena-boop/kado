@@ -15,7 +15,7 @@ const Body = z.object({
 /**
  * Vérifie / valide un code cadeau présenté en caisse.
  * action = 'check' (juste vérifier) | 'redeem' (marquer comme utilisé).
- * Statuts : not_found | no_win | already | expired | valid | redeemed.
+ * Statuts : not_found | no_win | already | expired | daily_limit | valid | redeemed.
  */
 export const POST = merchantRoute({
   schema: Body,
@@ -27,7 +27,7 @@ export const POST = merchantRoute({
     const db = getAdminClient();
     const playRes = await db
       .from("plays")
-      .select("id, prize_label, prize_code, created_at, redeemed_at, is_losing")
+      .select("id, player_id, prize_label, prize_code, created_at, redeemed_at, is_losing")
       .eq("business_id", business.id)
       .eq("prize_code", code)
       .maybeSingle();
@@ -63,6 +63,38 @@ export const POST = merchantRoute({
       new Date(play.created_at).getTime() + validityDays * 864e5 < Date.now();
     if (expired) {
       return Response.json({ status: "expired", prize: label, days: validityDays });
+    }
+
+    // Option « 1 cadeau récupéré par jour et par client » (0074, lue tolérante).
+    // Si activée : ce client (player_id du tour) a-t-il DÉJÀ fait valider un
+    // cadeau aujourd'hui ? Si oui, on refuse — que ce soit en 'check' ou 'redeem'.
+    let onePerDay = false;
+    try {
+      const { data } = await db
+        .from("wheel_configs")
+        .select("one_prize_per_day")
+        .eq("business_id", business.id)
+        .maybeSingle();
+      onePerDay = !!(data as { one_prize_per_day?: boolean | null } | null)
+        ?.one_prize_per_day;
+    } catch {
+      onePerDay = false;
+    }
+    if (onePerDay && (play as { player_id?: string | null }).player_id) {
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      const { data: sameDay } = await db
+        .from("plays")
+        .select("id")
+        .eq("business_id", business.id)
+        .eq("player_id", (play as { player_id: string }).player_id)
+        .neq("id", play.id)
+        .not("redeemed_at", "is", null)
+        .gte("redeemed_at", startOfDay.toISOString())
+        .limit(1);
+      if (sameDay && sameDay.length > 0) {
+        return Response.json({ status: "daily_limit", prize: label });
+      }
     }
 
     if (body.action === "redeem") {

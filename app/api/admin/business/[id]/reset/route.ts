@@ -30,6 +30,16 @@ export const POST = adminRoute({
       /* table absente */
     }
 
+    // Rafraîchit immédiatement le cache des stats admin (0068) : sans cela, le
+    // tableau de bord continuerait d'afficher les anciens totaux jusqu'au
+    // prochain cron quotidien. Best-effort : ignoré si la fonction n'est pas
+    // encore déployée.
+    try {
+      await db.rpc("refresh_admin_stats");
+    } catch {
+      /* fonction absente : le cron rafraîchira le cache */
+    }
+
     return Response.json({ ok: true, deleted: count ?? 0, orders });
   },
 });

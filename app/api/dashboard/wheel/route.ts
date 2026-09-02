@@ -23,6 +23,7 @@ export async function POST(req: NextRequest) {
       review_url?: string;
       compliance_note?: string;
       daily_prize_limit?: number | null;
+      one_prize_per_day?: boolean;
       prize_validity_days?: number | null;
       accent_color?: string | null;
       bg_color?: string | null;
@@ -393,6 +394,25 @@ export async function POST(req: NextRequest) {
     }
   } catch (e) {
     reportError(e, { where: "dashboard/wheel", field: "highlight" });
+    return Response.json({ error: "save_failed" }, { status: 500 });
+  }
+
+  // « 1 cadeau récupérable par jour » : colonne récente (0074), mise à jour
+  // isolée et tolérante (ignorée si la migration n'est pas encore appliquée).
+  try {
+    const { error } = await admin
+      .from("wheel_configs")
+      .update({ one_prize_per_day: !!cfg.one_prize_per_day })
+      .eq("business_id", business.id);
+    if (error && !isMissingColumnError(error)) {
+      reportError(error, { where: "dashboard/wheel", field: "one_prize_per_day" });
+      return Response.json(
+        { error: "save_failed", detail: error.message },
+        { status: 500 }
+      );
+    }
+  } catch (e) {
+    reportError(e, { where: "dashboard/wheel", field: "one_prize_per_day" });
     return Response.json({ error: "save_failed" }, { status: 500 });
   }
 
