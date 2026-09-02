@@ -26,6 +26,7 @@ type Config = {
   review_url: string | null;
   compliance_note: string | null;
   daily_prize_limit?: number | null;
+  one_prize_per_day?: boolean | null;
   prize_validity_days?: number | null;
   collect_email?: boolean | null;
   instagram_enabled?: boolean | null;
@@ -1166,6 +1167,21 @@ export default function WheelEditor({
                 Passé ce délai, le code cadeau est refusé en caisse. La validité
                 est affichée au client quand il gagne.
               </p>
+              <label className="toggle-field">
+                <input
+                  type="checkbox"
+                  checked={!!config.one_prize_per_day}
+                  onChange={(e) =>
+                    setConfig({ ...config, one_prize_per_day: e.target.checked })
+                  }
+                />
+                <span>
+                  <b>🎁 1 cadeau récupérable par jour et par client</b> — même
+                  s'il gagne plusieurs cadeaux, un client n'en fait valider qu'un
+                  seul par jour en caisse (les autres restent valables un autre
+                  jour).
+                </span>
+              </label>
               <hr className="fid-sep" />
               <label className="toggle-field">
                 <input

@@ -34,6 +34,16 @@ export default async function WheelPage() {
   const prizeValidity: number | null =
     vErr || !v ? 30 : ((v as any).prize_validity_days ?? null);
 
+  // 1 cadeau récupérable par jour et par client (lecture tolérante, migration 0074)
+  const { data: opd, error: opdErr } = await admin
+    .from("wheel_configs")
+    .select("one_prize_per_day")
+    .eq("business_id", business.id)
+    .maybeSingle();
+  const onePrizePerDay: boolean = opdErr
+    ? false
+    : !!(opd as any)?.one_prize_per_day;
+
   // Décor animé (lecture tolérante si la migration 0027 manque)
   const { data: dec, error: decErr } = await admin
     .from("wheel_configs")
@@ -173,6 +183,7 @@ export default async function WheelPage() {
           compliance_note: "Le cadeau n'est pas conditionné à la note laissée.",
         }),
         prize_validity_days: prizeValidity,
+        one_prize_per_day: onePrizePerDay,
         decor_emojis: decorEmojis,
         theme_locked: themeLocked,
         play_alerts: playAlerts,

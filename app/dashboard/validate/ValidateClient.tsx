@@ -25,6 +25,10 @@ const LABELS: Record<string, { txt: string; cls: string }> = {
   valid: { txt: "✅ Code valide — cadeau à remettre", cls: "ok" },
   redeemed: { txt: "✅ Cadeau remis et marqué comme utilisé", cls: "ok" },
   already: { txt: "⚠️ Code déjà utilisé", cls: "warn" },
+  daily_limit: {
+    txt: "⚠️ Ce client a déjà récupéré un cadeau aujourd'hui",
+    cls: "warn",
+  },
   expired: { txt: "⏰ Code expiré", cls: "warn" },
   no_win: { txt: "❌ Ce tour n'a rien gagné", cls: "bad" },
   not_found: { txt: "❌ Code introuvable", cls: "bad" },
