@@ -7,7 +7,11 @@ import { reportError } from "@/lib/report";
 import { isMissingColumnError } from "@/lib/db-errors";
 import { reconcileRefundEvent } from "@/lib/refund-reconcile";
 import { sendPushToBusiness } from "@/lib/push";
-import { buildMerchantOrderEmail, formatEuros } from "@/lib/orders";
+import {
+  buildMerchantOrderEmail,
+  buildCustomerOrderEmail,
+  formatEuros,
+} from "@/lib/orders";
 
 /** Retrouve l'établissement lié à une facture (via metadata ou customer). */
 async function resolveBusinessId(
@@ -139,7 +143,7 @@ export async function POST(req: NextRequest) {
                 .eq("code", code)
                 .eq("status", "awaiting_payment")
                 .select(
-                  "code, customer_name, customer_phone, note, pickup_at, items, total_cents"
+                  "code, customer_name, customer_phone, customer_email, note, pickup_at, items, total_cents"
                 );
               if (error && !isMissingColumnError(error)) {
                 reportError(error, { where: "webhook.order_paid", code });
@@ -160,8 +164,14 @@ export async function POST(req: NextRequest) {
                 } catch {
                   /* le push ne doit pas faire échouer le webhook */
                 }
+                // Un seul appel : sert l'alerte commerçant ET le nom du
+                // commerce affiché dans le bon de commande du client.
+                const contact = await getOwnerContact(db, bizId).catch(() => ({
+                  email: null,
+                  businessName: null,
+                }));
                 try {
-                  const { email: ownerEmail } = await getOwnerContact(db, bizId);
+                  const ownerEmail = contact.email;
                   if (ownerEmail) {
                     await sendEmail(
                       buildMerchantOrderEmail({
@@ -173,6 +183,29 @@ export async function POST(req: NextRequest) {
                         note: order.note || "",
                         lines: order.items,
                         total: order.total_cents,
+                      })
+                    );
+                  }
+                } catch {
+                  /* l'e-mail ne doit pas faire échouer le webhook */
+                }
+                // Bon de commande au CLIENT. Le tunnel « paiement en ligne »
+                // sort de /api/order AVANT l'envoi client : sans cet envoi ici,
+                // un client qui a payé ne recevait aucun e-mail avec son code
+                // de retrait (il n'avait que l'onglet de suivi, perdu s'il le
+                // fermait). Variante `paid` : ne réclame aucun règlement.
+                try {
+                  if (order.customer_email) {
+                    await sendEmail(
+                      buildCustomerOrderEmail({
+                        to: order.customer_email,
+                        name: order.customer_name || "",
+                        code: order.code,
+                        bizName: contact.businessName || "",
+                        pickup: order.pickup_at || "",
+                        lines: order.items,
+                        total: order.total_cents,
+                        paid: true,
                       })
                     );
                   }

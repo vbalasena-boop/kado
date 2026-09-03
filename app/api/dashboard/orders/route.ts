@@ -163,6 +163,17 @@ export const POST = merchantRoute({
     if (next === "ready" || next === "cancelled") {
       const isCancel = next === "cancelled";
       const homeUrl = `/${business.slug}/commander`;
+      // Mention de paiement de l'e-mail « prête » : ne JAMAIS réclamer un
+      // règlement au comptoir pour une commande déjà payée en ligne (le client
+      // croirait devoir payer deux fois). `paid` peut être illisible si le
+      // select de repli a servi (colonne 0040 absente) : dans ce cas on
+      // n'affirme rien plutôt que d'affirmer faux.
+      const readyFootnote =
+        order.paid === true
+          ? "Cette commande est déjà réglée en ligne : rien à payer au retrait."
+          : order.paid === false
+          ? "Le paiement se fait sur place, au comptoir, lors du retrait."
+          : undefined;
       // Push vers l'appareil du client (s'il l'a demandé à la commande)
       try {
         if (order.notify_push) {
@@ -232,8 +243,7 @@ export const POST = merchantRoute({
                 <p style="margin:0 0 8px;text-align:center;"><span style="display:inline-block;font-family:monospace;font-size:30px;font-weight:800;letter-spacing:0.15em;background:#f7f5fb;border:2px dashed #cfc5e5;border-radius:14px;padding:12px 22px;">${escapeHtml(
                   order.code
                 )}</span></p>`,
-                    footnote:
-                      "Le paiement se fait sur place, au comptoir, lors du retrait.",
+                    footnote: readyFootnote,
                   }),
                   text: `Votre commande ${order.code} chez ${business.name} est prête. Venez la récupérer !`,
                 }
