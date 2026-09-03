@@ -18,6 +18,9 @@ import type { ProspectSegment } from "@/lib/prospection/types";
 import {
   FOOTER,
   prettyName,
+  emailAngleVariant,
+  EMAIL_ANGLE_LABELS,
+  offerUrl,
   type GeneratedEmail,
   type TemplateContext,
 } from "@/lib/prospection/templates";
@@ -63,10 +66,27 @@ function noun(category: string | null): string {
   return "commerce de proximité";
 }
 
-/** Lien de RDV effectif (contexte > variable d'env). */
-function bookingUrl(ctx: TemplateContext): string | null {
-  const url = (ctx.bookingUrl ?? process.env.PROSPECT_BOOKING_URL ?? "").trim();
-  return url || null;
+/**
+ * Règle de prompt pour chaque angle A/B (même ordre que EMAIL_ANGLE_LABELS).
+ * L'angle est choisi de façon déterministe par prospect (son id) → ~50/50, et
+ * on mesure ensuite quel angle obtient le plus de réponses.
+ */
+const ANGLE_RULE = [
+  // A — Question curieuse : indirect, la découverte vient de la réponse.
+  "ANGLE À RESPECTER : ouvre par une observation sincère et précise sur leur commerce (par ex. leur nombre d'avis Google), puis pose UNE vraie question ouverte sur leur façon de faire. N'annonce PAS d'emblée que tu proposes un outil — l'intérêt doit naître de leur réponse.",
+  // B — Approche directe : transparent dès la 1ʳᵉ phrase.
+  "ANGLE À RESPECTER : sois transparent dès la 1ʳᵉ phrase — dis simplement que tu as créé Kado, qui aide les commerces comme le leur à obtenir plus d'avis Google et d'abonnés Instagram à partir d'un QR code en boutique. Reste un message PERSONNEL (jamais une publicité) et termine par une question simple du type « est-ce que ça vaut un rapide échange ? ».",
+] as const;
+
+/** Angle A/B (0|1) attribué à ce contexte, déterministe par seed. */
+export function angleOf(ctx: TemplateContext): number {
+  const seed = (ctx.seed || `${ctx.name}|${ctx.city ?? ""}`).trim();
+  return emailAngleVariant(seed) % ANGLE_RULE.length;
+}
+
+/** Nom lisible de l'angle A/B d'un contexte (pour l'affichage/fiche). */
+export function angleLabel(ctx: TemplateContext): string {
+  return EMAIL_ANGLE_LABELS[angleOf(ctx)];
 }
 
 export interface AiMessages {
@@ -96,6 +116,7 @@ export function buildPrompt(ctx: TemplateContext): { system: string; user: strin
       : "",
     "Kado : à partir d'un QR code en boutique, les clients laissent plus d'avis Google et deviennent abonnés Instagram, sans effort pour le commerçant.",
     "Tu écris un email de prospection à froid qui doit ressembler à un message PERSONNEL (1:1) écrit à la main — surtout PAS à une publicité (sinon il tombe dans l'onglet Promotions de Gmail).",
+    ANGLE_RULE[angleOf(ctx)],
     "Règles strictes :",
     "- Tutoyer JAMAIS le prospect : vouvoiement.",
     "- Personnalise avec le nom/la ville/le secteur, sans en faire trop.",
@@ -145,10 +166,15 @@ export function assembleEmail(
   ai: { subject: string; body: string },
   includeBooking = false
 ): GeneratedEmail {
-  const booking = bookingUrl(ctx);
   let body = ai.body.trimEnd();
-  if (includeBooking && booking && !body.includes(booking)) {
-    body += `\n\nRéservez un appel de 15 min quand vous voulez → ${booking}`;
+  // Relances uniquement : on ajoute (par le code, jamais par l'IA) le lien vers
+  // la page de vente la plus pertinente selon le secteur. Le 1er email, lui,
+  // reste SANS lien (includeBooking=false) pour la délivrabilité.
+  if (includeBooking) {
+    const link = offerUrl(ctx.category ?? null);
+    if (!body.includes(link)) {
+      body += `\n\nP.S. — Je vous montre Kado en 30 secondes → ${link}`;
+    }
   }
   body += `\n\n${FOOTER}`;
   return { subject: ai.subject, body };
@@ -235,7 +261,6 @@ export function buildFollowupPrompt(
   ctx: TemplateContext,
   kind: FollowupKind
 ): { system: string; user: string } {
-  const booking = bookingUrl(ctx);
   const facts = [
     `Nom du commerce : ${prettyName(ctx.name)}`,
     ctx.city ? `Ville : ${ctx.city}` : null,
@@ -267,9 +292,7 @@ export function buildFollowupPrompt(
     "- N'invente AUCUN fait (pas de faux chiffres, pas de fausse visite).",
     "- Pas de MAJUSCULES criardes, pas de '!!!'. Bannis le vocabulaire promotionnel : 'gratuit', 'offert', 'cadeau', 'jeu', 'gagnez', 'promo', 'urgent', 'argent'.",
     "- N'ajoute PAS de signature, PAS de mentions légales, PAS de lien de désinscription : c'est ajouté séparément.",
-    booking
-      ? `- Si tu proposes un appel, utilise ce lien EXACT : ${booking}`
-      : "- Si tu proposes un appel, demande simplement au prospect ses disponibilités.",
+    "- N'inclus AUCUN lien ni URL dans le corps : un lien vers une courte démo est ajouté automatiquement à la fin. Termine par une phrase qui donne envie de la découvrir.",
     "Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format :",
     '{"subject": "...", "body": "..."}',
     "Le body commence par 'Bonjour <nom>,' et se termine par une formule de politesse suivie de 'Vobinson — Kado'.",

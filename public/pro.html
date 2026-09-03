@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Kado — le jeu de roue qui transforme vos clients en avis Google et abonnés Instagram. Sans appli, 14 jours offerts.">
+<title>Kado pour les commerces</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
+<style>
+  :root {
+    --ground: #140b28;
+    --ground-2: #1d1038;
+    --panel: #221643;
+    --panel-2: #2c1e52;
+    --gold: #ffc24d;
+    --gold-deep: #ffab2e;
+    --ink: #fdf4e3;
+    --ink-dim: rgba(253, 244, 227, 0.70);
+    --ink-faint: rgba(253, 244, 227, 0.42);
+    --line: rgba(255, 255, 255, 0.10);
+    --coral: #ff5d73;
+    --violet: #8b6cff;
+    --green: #39d98a;
+    --sky: #4fc3f7;
+    --orange: #ff8a5c;
+    --shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+    --font-display: "Fredoka", system-ui, sans-serif;
+    --font-body: "Manrope", system-ui, sans-serif;
+    --wrap: 1080px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: var(--font-body);
+    color: var(--ink);
+    background:
+      radial-gradient(130% 80% at 50% -5%, #3a1c63 0%, var(--ground-2) 40%, var(--ground) 100%);
+    background-attachment: fixed;
+    line-height: 1.55;
+    overflow-x: hidden;
+  }
+  h1, h2, h3 { font-family: var(--font-display); font-weight: 700; text-wrap: balance; margin: 0; }
+  p { margin: 0; }
+  a { color: inherit; }
+
+  .wrap { width: 100%; max-width: var(--wrap); margin: 0 auto; padding: 0 20px; }
+
+  /* ---- Header ---- */
+  header.nav {
+    position: sticky; top: 0; z-index: 30;
+    background: rgba(20, 11, 40, 0.82);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav-in { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; max-width: var(--wrap); margin: 0 auto; }
+  .logo { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-display); font-weight: 700; font-size: 24px; color: var(--gold); }
+  .logo span { animation: sway 6s ease-in-out infinite; }
+  @keyframes sway { 0%, 100% { transform: rotate(-6deg); } 50% { transform: rotate(6deg); } }
+
+  .btn {
+    font-family: var(--font-display); font-weight: 700; font-size: 16px;
+    color: #3a1400; cursor: pointer; text-decoration: none; display: inline-block;
+    background: linear-gradient(180deg, #ffd274, var(--gold) 55%, var(--gold-deep));
+    border: none; border-radius: 999px; padding: 12px 26px;
+    box-shadow: 0 8px 0 #b9741b, 0 14px 22px rgba(0, 0, 0, 0.35);
+    transition: transform 0.08s ease, box-shadow 0.08s ease;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn:active { transform: translateY(5px); box-shadow: 0 3px 0 #b9741b; }
+  .btn.sm { font-size: 14px; padding: 9px 18px; box-shadow: 0 5px 0 #b9741b; }
+  .btn:focus-visible { outline: 3px solid var(--sky); outline-offset: 3px; }
+
+  /* ---- Hero ---- */
+  .hero { padding: 46px 0 30px; }
+  .hero-grid { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 40px; align-items: center; }
+  .eyebrow {
+    display: inline-block; font-weight: 700; font-size: 12.5px; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--gold);
+    background: rgba(255, 194, 77, 0.12); border: 1px solid rgba(255, 194, 77, 0.3);
+    padding: 5px 12px; border-radius: 999px; margin-bottom: 18px;
+  }
+  .hero h1 { font-size: clamp(32px, 5.4vw, 52px); line-height: 1.04; }
+  .hero h1 em { color: var(--gold); font-style: normal; }
+  .hero .lead { color: var(--ink-dim); font-size: clamp(16px, 2.3vw, 19px); margin: 18px 0 26px; max-width: 42ch; }
+  .hero-cta { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .link-ghost { font-weight: 600; color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--line); padding-bottom: 2px; }
+  .link-ghost:hover { color: var(--gold); }
+  .trust { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 26px; color: var(--ink-faint); font-size: 13.5px; }
+  .trust b { color: var(--ink); font-weight: 700; }
+
+  /* ---- Roue (héros jouable) ---- */
+  .wheel-panel { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+  .wheel-wrap { position: relative; width: min(78vw, 340px); aspect-ratio: 1; display: grid; place-items: center; }
+  .pointer {
+    position: absolute; top: -4px; left: 50%; transform: translateX(-50%);
+    width: 0; height: 0; border-left: 14px solid transparent; border-right: 14px solid transparent;
+    border-top: 24px solid var(--gold); filter: drop-shadow(0 4px 5px rgba(0,0,0,0.5)); z-index: 4;
+  }
+  canvas.wheel {
+    width: 100%; height: 100%; border-radius: 50%;
+    box-shadow: 0 0 0 7px #120a24, 0 0 0 11px rgba(255,194,77,0.85), var(--shadow);
+  }
+  .hub {
+    position: absolute; width: 21%; aspect-ratio: 1; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #fff2d0, var(--gold) 55%, var(--gold-deep));
+    display: grid; place-items: center; font-size: clamp(18px, 5vw, 26px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.5), inset 0 -3px 6px rgba(0,0,0,0.2); z-index: 3;
+  }
+  .spin-btn {
+    font-family: var(--font-display); font-weight: 700; font-size: 18px; color: #3a1400;
+    background: linear-gradient(180deg, #ffd274, var(--gold) 55%, var(--gold-deep));
+    border: none; border-radius: 999px; padding: 13px 34px; cursor: pointer;
+    box-shadow: 0 8px 0 #b9741b, 0 14px 22px rgba(0,0,0,0.4); transition: transform 0.08s ease, box-shadow 0.08s ease;
+  }
+  .spin-btn:hover { transform: translateY(-1px); }
+  .spin-btn:active { transform: translateY(5px); box-shadow: 0 3px 0 #b9741b; }
+  .spin-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+  .spin-btn:focus-visible { outline: 3px solid var(--sky); outline-offset: 3px; }
+  .try-note { font-size: 12.5px; color: var(--ink-faint); }
+
+  /* ---- Sections ---- */
+  section { padding: 40px 0; }
+  .sec-head { text-align: center; max-width: 46ch; margin: 0 auto 30px; }
+  .sec-head h2 { font-size: clamp(26px, 4vw, 36px); }
+  .sec-head p { color: var(--ink-dim); margin-top: 10px; }
+
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; counter-reset: s; }
+  .step { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 22px 18px; text-align: center; position: relative; }
+  .step-n {
+    counter-increment: s; position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+    width: 28px; height: 28px; border-radius: 50%; background: var(--gold); color: #3a1400;
+    font-family: var(--font-display); font-weight: 700; display: grid; place-items: center; font-size: 15px;
+  }
+  .step-n::before { content: counter(s); }
+  .step-e { font-size: 34px; }
+  .step h3 { font-size: 18px; margin: 8px 0 4px; }
+  .step p { color: var(--ink-dim); font-size: 14px; }
+
+  .benefits { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .bene { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 22px; display: flex; gap: 16px; align-items: flex-start; }
+  .bene .ic { font-size: 30px; flex: none; }
+  .bene h3 { font-size: 18px; margin-bottom: 4px; }
+  .bene p { color: var(--ink-dim); font-size: 14px; }
+
+  /* ---- Tarifs ---- */
+  .plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-items: stretch; }
+  .plan { background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 26px 22px; display: flex; flex-direction: column; }
+  .plan.pop { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold), var(--shadow); position: relative; }
+  .plan .tag { position: absolute; top: -12px; left: 22px; background: var(--gold); color: #3a1400; font-family: var(--font-display); font-weight: 700; font-size: 12px; padding: 4px 12px; border-radius: 999px; }
+  .plan h3 { font-size: 20px; }
+  .price { font-family: var(--font-display); font-weight: 700; font-size: 40px; color: var(--gold); margin: 8px 0 2px; }
+  .price small { font-family: var(--font-body); font-size: 15px; color: var(--ink-faint); font-weight: 500; }
+  .plan ul { list-style: none; padding: 0; margin: 16px 0 22px; display: flex; flex-direction: column; gap: 9px; }
+  .plan li { font-size: 14px; color: var(--ink-dim); padding-left: 26px; position: relative; }
+  .plan li::before { content: "✓"; position: absolute; left: 0; color: var(--green); font-weight: 800; }
+  .plan .btn { margin-top: auto; text-align: center; }
+  .plan.pop .btn { }
+  .plan:not(.pop) .btn { background: transparent; color: var(--ink); border: 1px solid var(--line); box-shadow: none; }
+  .plan:not(.pop) .btn:active { transform: none; }
+
+  /* ---- Rassurance ---- */
+  .reassure { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+  .chip { background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 10px 18px; font-size: 14px; font-weight: 600; }
+  .chip b { color: var(--gold); }
+
+  /* ---- CTA final ---- */
+  .final { text-align: center; background: linear-gradient(180deg, var(--panel-2), var(--panel)); border: 1px solid var(--line); border-radius: 26px; padding: 44px 24px; margin: 20px 0; }
+  .final h2 { font-size: clamp(26px, 4vw, 38px); }
+  .final p { color: var(--ink-dim); margin: 12px auto 24px; max-width: 44ch; }
+
+  footer { text-align: center; padding: 30px 0 44px; color: var(--ink-faint); font-size: 13px; }
+  footer a { color: var(--gold); text-decoration: none; font-weight: 600; }
+
+  /* ---- Overlays ---- */
+  .overlay { position: fixed; inset: 0; z-index: 40; display: none; place-items: center; padding: 22px; background: rgba(9,5,20,0.74); backdrop-filter: blur(6px); }
+  .overlay.show { display: grid; animation: fade 0.25s ease; }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+  .card { width: 100%; max-width: 360px; background: linear-gradient(180deg, var(--panel-2), var(--panel)); border: 1px solid var(--line); border-radius: 22px; padding: 26px 22px; text-align: center; box-shadow: var(--shadow); animation: pop 0.35s cubic-bezier(0.18,0.9,0.3,1.3); }
+  @keyframes pop { from { transform: scale(0.82); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .card h2 { font-size: 25px; margin: 8px 0 4px; }
+  .prize-big { font-size: 52px; line-height: 1; }
+  .prize-name { font-family: var(--font-display); font-weight: 600; font-size: 21px; color: var(--gold); margin-top: 4px; }
+  .card p { color: var(--ink-dim); font-size: 14px; margin: 10px 0; }
+  .code { display: inline-block; font-weight: 700; letter-spacing: 3px; font-variant-numeric: tabular-nums; background: rgba(0,0,0,0.28); border: 1px dashed var(--gold); color: var(--gold); border-radius: 12px; padding: 10px 18px; font-size: 20px; margin: 4px 0 2px; }
+  .valid { font-size: 12px; color: var(--ink-faint); }
+  .card .cta { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .btn-insta { font-family: var(--font-body); font-weight: 700; font-size: 15px; color: #fff; border: none; border-radius: 999px; cursor: pointer; padding: 13px 20px; background: linear-gradient(90deg, #f9ce34, #ee2a7b 45%, #6228d7); text-decoration: none; display: inline-block; }
+  .btn-ghost { font-family: var(--font-body); font-weight: 600; font-size: 15px; background: transparent; color: var(--ink); border: 1px solid var(--line); border-radius: 999px; padding: 12px 20px; cursor: pointer; }
+  .btn-ghost:hover { background: rgba(255,255,255,0.06); }
+  .btn-insta:focus-visible, .btn-ghost:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+  canvas.confetti { position: fixed; inset: 0; z-index: 50; pointer-events: none; display: none; }
+
+  @media (max-width: 860px) {
+    .hero-grid { grid-template-columns: 1fr; gap: 28px; }
+    .hero-panel-first { order: -1; }
+    .steps { grid-template-columns: 1fr; }
+    .benefits { grid-template-columns: 1fr; }
+    .plans { grid-template-columns: 1fr; }
+    .nav .btn { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { .logo span { animation: none; } }
+</style>
+</head>
+<body>
+<header class="nav">
+  <div class="nav-in">
+    <div class="logo"><span>🎡</span> Kado</div>
+    <a class="btn sm" href="#tarifs">Découvrir les formules</a>
+  </div>
+</header>
+
+<main>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="eyebrow">Avis Google · Abonnés Insta · Fidélité</span>
+        <h1>Transformez vos clients en <em>avis Google</em> et en <em>abonnés</em>.</h1>
+        <p class="lead">Un petit jeu à scanner en boutique : vos clients tournent la roue, gagnent un cadeau… et vous laissent un avis ou s'abonnent à votre Instagram. Sans effort, sans appli.</p>
+        <div class="hero-cta">
+          <a class="btn" href="https://calendly.com/vbalasena-instant-events/15min" target="_blank" rel="noopener">Je veux Kado</a>
+          <a class="link-ghost" href="#comment">Comment ça marche →</a>
+        </div>
+        <div class="trust">
+          <span>⚡ Installé en <b>5 minutes</b></span>
+          <span>📱 <b>Sans appli</b> à télécharger</span>
+          <span>🎁 <b>14 jours offerts</b></span>
+        </div>
+      </div>
+
+      <div class="wheel-panel hero-panel-first">
+        <div class="wheel-wrap">
+          <div class="pointer" aria-hidden="true"></div>
+          <canvas class="wheel" id="wheel" width="600" height="600" role="img" aria-label="Roue des cadeaux Kado"></canvas>
+          <div class="hub" aria-hidden="true">🎡</div>
+        </div>
+        <button class="spin-btn" id="spin">Tourner la roue</button>
+        <p class="try-note">👆 Essayez, c'est exactement ce que verront vos clients.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMMENT -->
+  <section id="comment">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Trois étapes, zéro effort</h2>
+        <p>Vous affichez un QR code. Vos clients font le reste.</p>
+      </div>
+      <div class="steps">
+        <div class="step"><span class="step-n"></span><div class="step-e">📱</div><h3>Le client scanne</h3><p>Un QR code sur la table, au comptoir ou en vitrine. Aucune appli à installer.</p></div>
+        <div class="step"><span class="step-n"></span><div class="step-e">🎡</div><h3>Il tourne la roue</h3><p>Pour jouer, il s'abonne à votre Instagram (ou rejoint votre carte de fidélité).</p></div>
+        <div class="step"><span class="step-n"></span><div class="step-e">🎁</div><h3>Il gagne un cadeau</h3><p>Un lot que vous choisissez (café, -10 %…), à récupérer en caisse avec un code.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BENEFICES -->
+  <section>
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Ce que Kado vous rapporte</h2>
+        <p>De vrais résultats visibles, sans y passer du temps.</p>
+      </div>
+      <div class="benefits">
+        <div class="bene"><span class="ic">⭐</span><div><h3>Plus d'avis Google</h3><p>Plus d'avis = mieux référencé, plus de clients qui vous trouvent et vous font confiance.</p></div></div>
+        <div class="bene"><span class="ic">📸</span><div><h3>Plus d'abonnés Instagram</h3><p>Chaque partie peut demander un abonnement : votre communauté grandit toute seule.</p></div></div>
+        <div class="bene"><span class="ic">🎟️</span><div><h3>Des clients qui reviennent</h3><p>Carte de fidélité digitale et offres d'anniversaire pour faire revenir vos habitués.</p></div></div>
+        <div class="bene"><span class="ic">🙌</span><div><h3>Aucun effort côté commerçant</h3><p>Vous validez le cadeau en caisse, c'est tout. Tout le reste est automatique.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TARIFS -->
+  <section id="tarifs">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Des formules simples</h2>
+        <p>Sans engagement, résiliable quand vous voulez. 14 jours offerts pour tester.</p>
+      </div>
+      <div class="plans">
+        <div class="plan">
+          <h3>Jeux</h3>
+          <div class="price">29 €<small> / mois</small></div>
+          <ul>
+            <li>La roue à cadeaux (+ carte à gratter, machine à sous)</li>
+            <li>Plus d'avis Google</li>
+            <li>Plus d'abonnés Instagram</li>
+            <li>QR code + validation en caisse</li>
+          </ul>
+          <a class="btn" href="https://calendly.com/vbalasena-instant-events/15min" target="_blank" rel="noopener">Choisir Jeux</a>
+        </div>
+        <div class="plan pop">
+          <span class="tag">Le plus choisi</span>
+          <h3>Complet</h3>
+          <div class="price">44 €<small> / mois</small></div>
+          <ul>
+            <li>Tout « Jeux » inclus</li>
+            <li>+ Carte de fidélité digitale</li>
+            <li>+ Offres anniversaire & relances</li>
+            <li>+ Tirage au sort</li>
+          </ul>
+          <a class="btn" href="https://calendly.com/vbalasena-instant-events/15min" target="_blank" rel="noopener">Choisir Complet</a>
+        </div>
+        <div class="plan">
+          <h3>Fidélité</h3>
+          <div class="price">19 €<small> / mois</small></div>
+          <ul>
+            <li>Carte de fidélité digitale</li>
+            <li>Sans appli, un simple lien</li>
+            <li>Offres anniversaire & relances</li>
+            <li>Validation en caisse</li>
+          </ul>
+          <a class="btn" href="https://calendly.com/vbalasena-instant-events/15min" target="_blank" rel="noopener">Choisir Fidélité</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RASSURANCE -->
+  <section>
+    <div class="wrap reassure">
+      <span class="chip">📱 <b>Sans appli</b> pour vos clients</span>
+      <span class="chip">⚡ <b>5 min</b> d'installation</span>
+      <span class="chip">🔓 <b>Sans engagement</b></span>
+      <span class="chip">🎁 <b>14 jours offerts</b></span>
+      <span class="chip">🇫🇷 Fait en France</span>
+    </div>
+  </section>
+
+  <!-- CTA FINAL -->
+  <section id="contact">
+    <div class="wrap">
+      <div class="final">
+        <h2>Prêt à faire tourner la roue ?</h2>
+        <p>Testez Kado gratuitement pendant 14 jours. On s'occupe de tout mettre en place avec vous.</p>
+        <a class="btn" href="https://calendly.com/vbalasena-instant-events/15min" target="_blank" rel="noopener" id="cta-final">Réserver 15 min — 14 jours offerts</a>
+        <p style="margin-top:18px;font-size:13.5px;">
+          Une question ? Écrivez-nous sur Instagram ·
+          <a href="https://instagram.com/kado_app.fr" target="_blank" rel="noopener" style="color:var(--gold);font-weight:600;text-decoration:none;">@kado_app.fr</a>
+        </p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  🎡 Kado · La solution qui aide les commerces de proximité à récolter des avis Google, des abonnés Instagram et de la fidélité.
+</footer>
+
+<!-- Abonnement Instagram -->
+<div class="overlay" id="gate">
+  <div class="card">
+    <div class="prize-big">📸</div>
+    <h2>Débloquez votre tour</h2>
+    <p>Dans la vraie version, le client s'abonne à votre Instagram pour jouer. (Ceci est une démo.)</p>
+    <div class="cta"><button class="btn-insta" id="follow">S'abonner et jouer</button></div>
+  </div>
+</div>
+
+<!-- Résultat -->
+<div class="overlay" id="result">
+  <div class="card">
+    <div class="prize-big" id="r-emoji">🎁</div>
+    <h2 id="r-title">Bravo !</h2>
+    <div class="prize-name" id="r-name">Café offert</div>
+    <p id="r-lead">Montrez ce code en caisse :</p>
+    <div class="code" id="r-code">KADO-000</div>
+    <div class="valid" id="r-valid">Valable 14 jours</div>
+    <div class="cta">
+      <a class="btn-insta" href="#tarifs" id="r-cta" onclick="document.getElementById('result').classList.remove('show')">Je veux ça pour mon commerce</a>
+      <button class="btn-ghost" id="replay">Rejouer</button>
+    </div>
+  </div>
+</div>
+
+<canvas class="confetti" id="confetti"></canvas>
+
+<script>
+  "use strict";
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const PRIZES = [
+    { emoji: "☕", name: "Café", color: "#ff5d73", weight: 20 },
+    { emoji: "🍰", name: "Dessert", color: "#8b6cff", weight: 12 },
+    { emoji: "😅", name: "Presque…", color: "#2c1e52", weight: 24, none: true },
+    { emoji: "🎁", name: "-10 %", color: "#4fc3f7", weight: 18 },
+    { emoji: "🥐", name: "Viennoiserie", color: "#ff8a5c", weight: 12 },
+    { emoji: "⭐", name: "Boisson", color: "#39d98a", weight: 14 },
+  ];
+  const N = PRIZES.length, SEG = (Math.PI * 2) / N;
+  const cv = document.getElementById("wheel"), ctx = cv.getContext("2d"), R = cv.width / 2;
+
+  function draw(rot) {
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    ctx.save(); ctx.translate(R, R); ctx.rotate(rot);
+    for (let i = 0; i < N; i++) {
+      const a0 = i * SEG;
+      ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, R - 6, a0, a0 + SEG); ctx.closePath();
+      ctx.fillStyle = PRIZES[i].color; ctx.fill();
+      ctx.strokeStyle = "rgba(18,10,36,0.55)"; ctx.lineWidth = 4; ctx.stroke();
+      ctx.save(); ctx.rotate(a0 + SEG / 2); ctx.textAlign = "right";
+      ctx.fillStyle = PRIZES[i].none ? "rgba(253,244,227,0.75)" : "#150c29";
+      ctx.font = "600 40px 'Fredoka', sans-serif"; ctx.fillText(PRIZES[i].emoji, R - 40, 6);
+      ctx.font = "600 20px 'Manrope', sans-serif"; ctx.fillText(PRIZES[i].name, R - 92, 5);
+      ctx.restore();
+    }
+    for (let i = 0; i < N; i++) {
+      const a = i * SEG, x = Math.cos(a) * (R - 16), y = Math.sin(a) * (R - 16);
+      ctx.beginPath(); ctx.arc(x, y, 4.5, 0, Math.PI * 2); ctx.fillStyle = "rgba(255,248,230,0.95)"; ctx.fill();
+    }
+    ctx.restore();
+    const g = ctx.createRadialGradient(R, R * 0.72, R * 0.1, R, R, R);
+    g.addColorStop(0, "rgba(255,255,255,0.16)"); g.addColorStop(0.55, "rgba(255,255,255,0.03)"); g.addColorStop(1, "rgba(0,0,0,0.18)");
+    ctx.beginPath(); ctx.arc(R, R, R - 6, 0, Math.PI * 2); ctx.fillStyle = g; ctx.fill();
+  }
+  draw(0);
+
+  function pickIndex() {
+    const total = PRIZES.reduce((s, p) => s + p.weight, 0);
+    let r = Math.random() * total;
+    for (let i = 0; i < N; i++) { r -= PRIZES[i].weight; if (r < 0) return i; }
+    return N - 1;
+  }
+
+  const spinBtn = document.getElementById("spin");
+  const gate = document.getElementById("gate"), result = document.getElementById("result");
+  let unlocked = false, spinning = false, current = 0;
+  const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+
+  function spin() {
+    if (spinning) return;
+    if (!unlocked) { gate.classList.add("show"); return; }
+    spinning = true; spinBtn.disabled = true;
+    const idx = pickIndex();
+    const segCenter = idx * SEG + SEG / 2;
+    const turns = 6 + Math.floor(Math.random() * 2);
+    const target = turns * Math.PI * 2 - Math.PI / 2 - segCenter;
+    const start = current, delta = target - (start % (Math.PI * 2));
+    const dur = reduce ? 400 : 4600, t0 = performance.now();
+    (function frame(now) {
+      const t = Math.min(1, (now - t0) / dur);
+      current = start + delta * easeOutCubic(t); draw(current);
+      if (t < 1) requestAnimationFrame(frame);
+      else { current = ((target % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2); draw(current); spinning = false; showResult(idx); }
+    })(t0);
+  }
+
+  function showResult(idx) {
+    const p = PRIZES[idx], win = !p.none;
+    document.getElementById("r-emoji").textContent = p.emoji;
+    document.getElementById("r-title").textContent = win ? "Bravo ! 🎉" : "Presque !";
+    document.getElementById("r-name").textContent = win ? p.name + " offert" : p.name;
+    document.getElementById("r-lead").textContent = win ? "Montrez ce code en caisse :" : "Rien cette fois — revenez vite retenter votre chance !";
+    const code = document.getElementById("r-code"), valid = document.getElementById("r-valid");
+    if (win) { code.style.display = ""; valid.style.display = ""; code.textContent = "KADO-" + Math.random().toString(36).slice(2, 6).toUpperCase(); }
+    else { code.style.display = "none"; valid.style.display = "none"; }
+    result.classList.add("show");
+    if (win && !reduce) burst();
+  }
+
+  spinBtn.addEventListener("click", spin);
+  document.getElementById("follow").addEventListener("click", () => { unlocked = true; gate.classList.remove("show"); setTimeout(spin, 250); });
+  document.getElementById("replay").addEventListener("click", () => { result.classList.remove("show"); spinBtn.disabled = false; });
+  result.addEventListener("click", (e) => { if (e.target === result) { result.classList.remove("show"); spinBtn.disabled = false; } });
+  gate.addEventListener("click", (e) => { if (e.target === gate) gate.classList.remove("show"); });
+
+  const conf = document.getElementById("confetti"), cctx = conf.getContext("2d");
+  function burst() {
+    conf.style.display = "block"; conf.width = innerWidth; conf.height = innerHeight;
+    const colors = ["#ffc24d", "#ff5d73", "#8b6cff", "#39d98a", "#4fc3f7", "#ff8a5c"];
+    const parts = Array.from({ length: 140 }, () => ({
+      x: innerWidth / 2, y: innerHeight * 0.3, vx: (Math.random() - 0.5) * 14, vy: Math.random() * -14 - 4,
+      s: Math.random() * 7 + 4, c: colors[(Math.random() * colors.length) | 0], rot: Math.random() * 6.28, vr: (Math.random() - 0.5) * 0.4,
+    }));
+    const t0 = performance.now();
+    (function frame(now) {
+      const el = now - t0; cctx.clearRect(0, 0, conf.width, conf.height);
+      parts.forEach((p) => { p.vy += 0.35; p.x += p.vx; p.y += p.vy; p.vx *= 0.99; p.rot += p.vr;
+        cctx.save(); cctx.translate(p.x, p.y); cctx.rotate(p.rot); cctx.fillStyle = p.c; cctx.fillRect(-p.s/2, -p.s/2, p.s, p.s*0.6); cctx.restore(); });
+      if (el < 2600) requestAnimationFrame(frame); else { cctx.clearRect(0, 0, conf.width, conf.height); conf.style.display = "none"; }
+    })(t0);
+  }
+</script>
+</body>
+</html>

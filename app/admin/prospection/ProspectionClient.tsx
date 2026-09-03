@@ -8,6 +8,7 @@ import {
   type ProspectStatus,
 } from "@/lib/prospection/types";
 import { mapCsv } from "@/lib/prospection/csv";
+import CityInput from "./CityInput";
 import type {
   DeliverabilityReport,
   DeliverabilityCheck,
@@ -40,6 +41,68 @@ const SEGMENT_LABEL: Record<ProspectSegment, string> = {
   autre: "Autre",
 };
 
+/** Options du filtre « contact » (présence email / Instagram). */
+const CONTACT_FILTERS: { value: string; label: string }[] = [
+  { value: "", label: "Tous les contacts" },
+  { value: "email", label: "Avec email" },
+  { value: "no_email", label: "Sans email" },
+  { value: "insta", label: "Avec Instagram" },
+  { value: "no_insta", label: "Sans Instagram" },
+  { value: "any", label: "Avec email OU Insta" },
+  { value: "both", label: "Avec email ET Insta" },
+  { value: "none", label: "Sans aucun contact" },
+];
+
+/** Options du filtre « date d'ajout ». */
+const ADDED_FILTERS: { value: string; label: string }[] = [
+  { value: "", label: "Ajouté : tout" },
+  { value: "today", label: "Ajouté aujourd'hui" },
+  { value: "7d", label: "Ajouté : 7 derniers jours" },
+  { value: "30d", label: "Ajouté : 30 derniers jours" },
+];
+
+/** Vrai si le prospect a été ajouté dans la fenêtre choisie (created_at). */
+function matchAdded(p: { created_at: string }, f: string): boolean {
+  if (!f) return true;
+  const days = f === "today" ? 1 : f === "7d" ? 7 : f === "30d" ? 30 : 0;
+  if (!days) return true;
+  const t = new Date(p.created_at).getTime();
+  if (Number.isNaN(t)) return true; // date illisible → on n'exclut pas
+  if (f === "today") {
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    return t >= start.getTime();
+  }
+  return t >= Date.now() - days * 864e5;
+}
+
+/** Vrai si le prospect correspond au filtre de contact choisi. */
+function matchContact(
+  p: { email: string | null; instagram_handle: string | null },
+  f: string
+): boolean {
+  const hasEmail = Boolean(p.email);
+  const hasInsta = Boolean(p.instagram_handle);
+  switch (f) {
+    case "email":
+      return hasEmail;
+    case "no_email":
+      return !hasEmail;
+    case "insta":
+      return hasInsta;
+    case "no_insta":
+      return !hasInsta;
+    case "any":
+      return hasEmail || hasInsta;
+    case "both":
+      return hasEmail && hasInsta;
+    case "none":
+      return !hasEmail && !hasInsta;
+    default:
+      return true;
+  }
+}
+
 const STATUS_LABEL: Record<ProspectStatus, string> = {
   new: "Nouveau",
   queued: "En file",
@@ -71,7 +134,7 @@ const PIPELINE_COLUMNS: {
   { key: "excluded", label: "Exclus", emoji: "🚫", statuses: ["excluded"], accent: "#999" },
 ];
 
-type SortKey = "score" | "reviews" | "rating" | "name";
+type SortKey = "score" | "reviews" | "rating" | "name" | "recent";
 
 /** Vrai sur petit écran (mobile) — pour basculer tableau ↔ cartes. */
 function useIsMobile(breakpoint = 720): boolean {
@@ -101,6 +164,8 @@ export type Stats = {
   bouncedTotal: number;
   /** Performance par variante d'objet : envoyés vs réponses. */
   subjectPerf: { label: string; sent: number; replied: number }[];
+  /** Performance par angle A/B (email IA) : envoyés vs réponses. */
+  anglePerf: { label: string; sent: number; replied: number }[];
   /** Conversion par ville : contactés / réponses / clients. */
   byCity: ConversionRow[];
   /** Conversion par secteur : contactés / réponses / clients. */
@@ -114,6 +179,27 @@ export type ConversionRow = {
   replied: number;
   clients: number;
 };
+
+/** Vue Prospection mémorisée (filtres, tri, page) pour la restaurer au retour. */
+type SavedUi = {
+  fSegment?: string;
+  fStatus?: string;
+  fContact?: string;
+  fAdded?: string;
+  maxReviews?: string;
+  sort?: SortKey;
+  view?: "list" | "pipeline";
+  page?: number;
+};
+const UI_KEY = "kado_prospection_ui";
+function readSavedUi(): SavedUi {
+  if (typeof window === "undefined") return {};
+  try {
+    return JSON.parse(sessionStorage.getItem(UI_KEY) || "{}") as SavedUi;
+  } catch {
+    return {};
+  }
+}
 
 export default function ProspectionClient({
   prospects,
@@ -137,6 +223,8 @@ export default function ProspectionClient({
   // --- Filtres/tri (côté client) ---
   const [fSegment, setFSegment] = useState<string>("");
   const [fStatus, setFStatus] = useState<string>("");
+  const [fContact, setFContact] = useState<string>("");
+  const [fAdded, setFAdded] = useState<string>("");
   const [maxReviews, setMaxReviews] = useState<string>("");
   const [sort, setSort] = useState<SortKey>("score");
 
@@ -146,8 +234,52 @@ export default function ProspectionClient({
   // --- Pagination (côté client) ---
   const PAGE_SIZE = 50;
   const [page, setPage] = useState(0);
-  // Revenir à la 1ʳᵉ page quand un filtre/tri change.
-  useEffect(() => setPage(0), [fSegment, fStatus, maxReviews, sort]);
+
+  // --- Mémorisation de la vue (filtres/tri/page) : on la restaure au retour
+  // (ex. après avoir ouvert une fiche puis « précédent »). ---
+  const [restored, setRestored] = useState(false);
+  // Tant que la restauration n'est pas faite, on n'exécute pas le reset de page.
+  const skipReset = useRef(true);
+
+  useEffect(() => {
+    const s = readSavedUi();
+    if (s.fSegment != null) setFSegment(s.fSegment);
+    if (s.fStatus != null) setFStatus(s.fStatus);
+    if (s.fContact != null) setFContact(s.fContact);
+    if (s.fAdded != null) setFAdded(s.fAdded);
+    if (s.maxReviews != null) setMaxReviews(s.maxReviews);
+    if (s.sort != null) setSort(s.sort);
+    if (s.view === "list" || s.view === "pipeline") setView(s.view);
+    if (typeof s.page === "number" && s.page >= 0) setPage(s.page);
+    setRestored(true);
+  }, []);
+
+  // Revenir à la 1ʳᵉ page quand un filtre/tri change (sauf pendant la restauration).
+  // Déclaré AVANT l'effet qui réautorise le reset, pour qu'au rendu issu de la
+  // restauration ce reset soit encore ignoré (page mémorisée préservée).
+  useEffect(() => {
+    if (skipReset.current) return;
+    setPage(0);
+  }, [fSegment, fStatus, fContact, fAdded, maxReviews, sort]);
+
+  // Une fois la restauration terminée, on réautorise le reset de page.
+  useEffect(() => {
+    if (restored) skipReset.current = false;
+  }, [restored]);
+
+  // Sauvegarde la vue courante (après restauration, pour ne pas écraser le state
+  // mémorisé au 1er rendu par défaut).
+  useEffect(() => {
+    if (!restored) return;
+    try {
+      sessionStorage.setItem(
+        UI_KEY,
+        JSON.stringify({ fSegment, fStatus, fContact, fAdded, maxReviews, sort, view, page })
+      );
+    } catch {
+      /* stockage indisponible : on ignore */
+    }
+  }, [restored, fSegment, fStatus, fContact, fAdded, maxReviews, sort, view, page]);
 
   const isMobile = useIsMobile();
 
@@ -174,13 +306,36 @@ export default function ProspectionClient({
       if (!res.ok) {
         setMessage(`Erreur : ${data.error ?? "inconnue"}`);
       } else {
+        const errs = Array.isArray(data.errors) ? data.errors : [];
         const nbVilles = Array.isArray(data.cities) ? data.cities.length : 1;
-        setMessage(
-          `${data.inserted} nouveau(x) prospect(s) ajouté(s)` +
-            (nbVilles > 1 ? ` sur ${nbVilles} villes` : "") +
-            (data.duplicates ? `, ${data.duplicates} doublon(s) ignoré(s)` : "") +
-            (data.mock ? " — mode démo (pas de clé Google Places)" : "")
-        );
+        if (errs.length > 0) {
+          // Google a renvoyé une erreur (quota, clé, réseau…) : on le dit.
+          const codes = [...new Set(errs.map((e: { error: string }) => e.error))].join(", ");
+          const isQuota = codes.includes("429");
+          setMessage(
+            `⚠️ Google Places a renvoyé une erreur (${codes})` +
+              (isQuota
+                ? " — quota atteint. Réessaie dans quelques minutes ou demain."
+                : ". Réessaie dans un instant.") +
+              (data.inserted ? ` ${data.inserted} prospect(s) tout de même ajouté(s).` : "")
+          );
+        } else if (data.found === 0) {
+          setMessage(
+            "0 résultat renvoyé par Google pour cette recherche. Essaie une autre ville ou un autre secteur."
+          );
+        } else if (data.inserted === 0) {
+          setMessage(
+            `0 nouveau — ${data.duplicates || data.found} commerce(s) déjà dans ta liste. ` +
+              "Rien n'est supprimé. Change de ville ou de secteur pour en ajouter d'autres."
+          );
+        } else {
+          setMessage(
+            `✅ ${data.inserted} nouveau(x) prospect(s) ajouté(s)` +
+              (nbVilles > 1 ? ` sur ${nbVilles} villes` : "") +
+              (data.duplicates ? ` · ${data.duplicates} déjà en liste (ignoré(s))` : "") +
+              (data.mock ? " — mode démo (pas de clé Google Places)" : "")
+          );
+        }
         router.refresh();
       }
     } catch {
@@ -374,25 +529,50 @@ export default function ProspectionClient({
     }
   }
 
-  async function runEnrich() {
+  async function runEnrich(rescan = false) {
+    if (rescan && !confirm(
+      "Re-scanner TOUTE la liste (y compris les fiches déjà tentées) ?\n\n" +
+        "Utile après avoir activé Serper. Aucune donnée n'est supprimée — on ne " +
+        "remplit que ce qui manque. Si Serper est configuré, ça consomme des crédits Serper."
+    )) return;
     setEnriching(true);
     setMessage(null);
+    // Enchaîne automatiquement les lots (15/appel) jusqu'à avoir tout tenté,
+    // pour couvrir TOUTE la liste en un seul clic (chaque appel reste court).
+    let totalScanned = 0;
+    let totalEmails = 0;
+    let totalInsta = 0;
+    const MAX_ROUNDS = 40; // garde-fou (≈600 fiches) contre toute boucle infinie
     try {
-      const res = await fetch("/api/admin/prospection/enrich", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setMessage(`Erreur : ${data.error ?? "inconnue"}`);
-      } else {
+      for (let round = 0; round < MAX_ROUNDS; round++) {
+        const res = await fetch("/api/admin/prospection/enrich", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          // Le re-scan (oubli des « déjà tentées ») ne doit se faire qu'au 1ᵉʳ tour.
+          body: JSON.stringify(rescan && round === 0 ? { rescan: true } : {}),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setMessage(`Erreur : ${data.error ?? "inconnue"}`);
+          break;
+        }
+        totalScanned += data.scanned ?? 0;
+        totalEmails += data.emails_found ?? 0;
+        totalInsta += data.instagram_found ?? 0;
+        const remaining = data.remaining ?? 0;
+        // Progression en direct pendant l'enchaînement.
         setMessage(
-          `${data.enriched} fiche(s) enrichie(s) sur ${data.scanned} analysée(s) — ` +
-            `${data.emails_found ?? 0} email(s), ${data.instagram_found ?? 0} Instagram trouvé(s).`
+          `Enrichissement en cours… ${totalScanned} fiche(s) analysée(s), ` +
+            `${totalEmails} email(s) et ${totalInsta} Instagram trouvés` +
+            (remaining > 0 ? ` · ${remaining} restante(s)…` : "")
         );
-        router.refresh();
+        if ((data.scanned ?? 0) === 0 || remaining === 0) break;
       }
+      setMessage(
+        `✅ Enrichissement terminé — ${totalScanned} fiche(s) analysée(s) : ` +
+          `${totalEmails} nouvel(s) email(s) et ${totalInsta} Instagram trouvés.`
+      );
+      router.refresh();
     } catch {
       setMessage("Erreur réseau pendant l'enrichissement.");
     } finally {
@@ -507,6 +687,46 @@ export default function ProspectionClient({
   const [importing, setImporting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  // --- Import rapide de comptes Instagram (collage libre) ---
+  const [showInsta, setShowInsta] = useState(false);
+  const [instaText, setInstaText] = useState("");
+  const [instaCity, setInstaCity] = useState("");
+  const [instaImporting, setInstaImporting] = useState(false);
+
+  async function runInstaImport() {
+    if (!instaText.trim()) {
+      setMessage("Colle au moins un compte Instagram.");
+      return;
+    }
+    setInstaImporting(true);
+    setMessage(null);
+    try {
+      const res = await fetch("/api/admin/prospection/import-instagram", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: instaText, city: instaCity.trim() || undefined }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setMessage(`Erreur : ${data.error ?? "inconnue"}`);
+      } else if (data.found === 0) {
+        setMessage("Aucun compte Instagram valide détecté dans le texte collé.");
+      } else {
+        setMessage(
+          `✅ ${data.inserted} compte(s) ajouté(s)` +
+            (data.duplicates ? ` · ${data.duplicates} déjà en liste (ignoré(s))` : "") +
+            (data.capped ? " · limite de 100 par import atteinte" : "")
+        );
+        setInstaText("");
+        router.refresh();
+      }
+    } catch {
+      setMessage("Erreur réseau pendant l'import Instagram.");
+    } finally {
+      setInstaImporting(false);
+    }
+  }
+
   // --- Test de délivrabilité (SPF/DKIM/DMARC/MX) ---
   const [deliv, setDeliv] = useState<DeliverabilityReport | null>(null);
   const [delivLoading, setDelivLoading] = useState(false);
@@ -574,6 +794,8 @@ export default function ProspectionClient({
     const rows = prospects.filter((p) => {
       if (fSegment && p.category !== fSegment) return false;
       if (fStatus && p.status !== fStatus) return false;
+      if (!matchContact(p, fContact)) return false;
+      if (!matchAdded(p, fAdded)) return false;
       if (max != null && (p.google_reviews_count ?? Infinity) > max) return false;
       return true;
     });
@@ -585,12 +807,16 @@ export default function ProspectionClient({
           return (b.google_rating ?? 0) - (a.google_rating ?? 0);
         case "name":
           return a.name.localeCompare(b.name);
+        case "recent":
+          return (
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          );
         default:
           return (b.score ?? 0) - (a.score ?? 0);
       }
     });
     return rows;
-  }, [prospects, fSegment, fStatus, maxReviews, sort]);
+  }, [prospects, fSegment, fStatus, fContact, fAdded, maxReviews, sort]);
 
   // Lignes pour la vue pipeline : mêmes filtres SAUF le statut (le board
   // regroupe justement par statut), triées par score décroissant.
@@ -599,11 +825,13 @@ export default function ProspectionClient({
     return prospects
       .filter((p) => {
         if (fSegment && p.category !== fSegment) return false;
+        if (!matchContact(p, fContact)) return false;
+        if (!matchAdded(p, fAdded)) return false;
         if (max != null && (p.google_reviews_count ?? Infinity) > max) return false;
         return true;
       })
       .sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
-  }, [prospects, fSegment, maxReviews]);
+  }, [prospects, fSegment, fContact, fAdded, maxReviews]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const clampedPage = Math.min(page, totalPages - 1);
@@ -618,6 +846,7 @@ export default function ProspectionClient({
       </p>
 
       {stats && <StatsBand stats={stats} />}
+      {stats && <AnglePerf perf={stats.anglePerf} />}
       {stats && <SubjectPerf perf={stats.subjectPerf} />}
       {stats && <ConversionTables byCity={stats.byCity} bySegment={stats.bySegment} />}
 
@@ -649,13 +878,12 @@ export default function ProspectionClient({
       >
         <h3 style={{ marginTop: 0 }}>Lancer un sourcing</h3>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-          <input
-            type="text"
-            placeholder="Ville(s) — ex. Versailles, Le Chesnay"
+          <CityInput
             value={city}
-            onChange={(e) => setCity(e.target.value)}
-            title="Une ou plusieurs villes séparées par des virgules (5 max par passage)"
-            style={{ padding: "8px 10px", borderRadius: 8, border: "1px solid #ccc", minWidth: 240 }}
+            onChange={setCity}
+            placeholder="Ville(s) — ex. Versailles, Le Chesnay"
+            title="Commence à taper : les villes sont proposées automatiquement. Plusieurs villes séparées par des virgules (5 max)."
+            style={{ padding: "8px 10px", borderRadius: 8, border: "1px solid #ccc", minWidth: 240, width: "100%", boxSizing: "border-box" }}
           />
           <label style={{ fontSize: 14 }}>
             Limite&nbsp;
@@ -677,13 +905,22 @@ export default function ProspectionClient({
             {sourcing ? "Sourcing…" : "Lancer le sourcing"}
           </button>
           <button
-            onClick={runEnrich}
+            onClick={() => runEnrich(false)}
             disabled={enriching}
             className="dash-signout"
             style={{ opacity: enriching ? 0.6 : 1 }}
-            title="Devine les emails et comptes Instagram depuis les sites web"
+            title="Cherche les emails et comptes Instagram réellement publiés sur les sites (jamais deviné). Passe toute la liste automatiquement."
           >
             {enriching ? "Enrichissement…" : "Enrichir (email / Insta)"}
+          </button>
+          <button
+            onClick={() => runEnrich(true)}
+            disabled={enriching}
+            className="dash-signout"
+            style={{ opacity: enriching ? 0.6 : 1 }}
+            title="Re-scanne TOUTE la liste, même les fiches déjà tentées (utile après avoir activé Serper). Ne supprime rien."
+          >
+            {enriching ? "…" : "🔄 Tout ré-enrichir"}
           </button>
           <select
             value={aiTone}
@@ -809,6 +1046,58 @@ export default function ProspectionClient({
         >
           {importing ? "Import…" : "📥 Importer un CSV"}
         </button>
+        <button
+          onClick={() => setShowInsta((v) => !v)}
+          className="dash-signout"
+          style={{ fontSize: 13 }}
+          title="Coller une liste de comptes Instagram trouvés à la main (un par ligne)"
+        >
+          {showInsta ? "Annuler" : "📸 Coller des comptes Instagram"}
+        </button>
+        {showInsta && (
+          <div
+            style={{
+              border: "1px solid #eee",
+              borderRadius: 10,
+              padding: 14,
+              marginTop: 8,
+              width: "100%",
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+            }}
+          >
+            <div style={{ fontSize: 13, color: "#555" }}>
+              Colle les comptes trouvés sur Instagram — <strong>un par ligne</strong>{" "}
+              (@nom, nom, ou lien instagram.com/nom). 100 max par import. Les doublons
+              sont ignorés, rien n'est écrasé.
+            </div>
+            <textarea
+              value={instaText}
+              onChange={(e) => setInstaText(e.target.value)}
+              rows={6}
+              placeholder={"@le.bouillon.versailles\n@cafe.des.amis\ninstagram.com/salon.marie"}
+              style={{ width: "100%", padding: 10, borderRadius: 8, border: "1px solid #ccc", fontFamily: "inherit", fontSize: 14, boxSizing: "border-box" }}
+            />
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+              <input
+                type="text"
+                value={instaCity}
+                onChange={(e) => setInstaCity(e.target.value)}
+                placeholder="Ville (facultatif)"
+                style={{ padding: "8px 10px", borderRadius: 8, border: "1px solid #ccc", minWidth: 180 }}
+              />
+              <button
+                onClick={runInstaImport}
+                disabled={instaImporting}
+                className="dash-signout"
+                style={{ fontSize: 13, opacity: instaImporting ? 0.6 : 1 }}
+              >
+                {instaImporting ? "Import…" : "Importer les comptes"}
+              </button>
+            </div>
+          </div>
+        )}
         {showAdd && (
           <div
             style={{
@@ -853,6 +1142,26 @@ export default function ProspectionClient({
             <option key={s} value={s}>{STATUS_LABEL[s]}</option>
           ))}
         </select>
+        <select
+          value={fContact}
+          onChange={(e) => setFContact(e.target.value)}
+          style={selectStyle}
+          title="Filtrer selon la présence d'un email et/ou d'un compte Instagram"
+        >
+          {CONTACT_FILTERS.map((c) => (
+            <option key={c.value} value={c.value}>{c.label}</option>
+          ))}
+        </select>
+        <select
+          value={fAdded}
+          onChange={(e) => setFAdded(e.target.value)}
+          style={selectStyle}
+          title="Filtrer selon la date d'ajout du prospect"
+        >
+          {ADDED_FILTERS.map((c) => (
+            <option key={c.value} value={c.value}>{c.label}</option>
+          ))}
+        </select>
         <label style={{ fontSize: 14 }}>
           Avis max&nbsp;
           <input
@@ -869,6 +1178,7 @@ export default function ProspectionClient({
           <option value="reviews">Tri : moins d'avis</option>
           <option value="rating">Tri : meilleure note</option>
           <option value="name">Tri : nom</option>
+          <option value="recent">Tri : ajout récent</option>
         </select>
         {/* Bascule Liste / Pipeline */}
         <div style={{ display: "inline-flex", borderRadius: 8, overflow: "hidden", border: "1px solid #ccc" }}>
@@ -1176,6 +1486,90 @@ function ConversionTables({
       </div>
       <p style={{ color: "#999", fontSize: 12, marginBottom: 0 }}>
         Un taux n'est fiable qu'à partir de ~10 contactés. 🏆 = meilleur taux à ce stade.
+      </p>
+    </div>
+  );
+}
+
+/**
+ * Tableau « Test A/B des emails » : compare le taux de réponse des deux angles
+ * d'accroche (Question curieuse vs Approche directe). Chaque prospect reçoit un
+ * angle de façon automatique (~50/50) ; on garde ensuite celui qui répond le mieux.
+ */
+function AnglePerf({ perf }: { perf: Stats["anglePerf"] }) {
+  const totalSent = perf.reduce((s, p) => s + p.sent, 0);
+  // On affiche TOUJOURS le tableau (même à 0 envoi) pour montrer que le test A/B
+  // est actif ; il se remplira dès les premiers emails partis.
+
+  const eligible = perf.filter((p) => p.sent >= 5);
+  const best =
+    eligible.length > 0
+      ? eligible.reduce((a, b) => (b.replied / b.sent > a.replied / a.sent ? b : a))
+      : null;
+
+  return (
+    <div style={{ border: "1px solid #eee", borderRadius: 10, padding: 14, margin: "0 0 16px" }}>
+      <h3 style={{ margin: "0 0 2px" }}>🧪 Test A/B des emails (IA)</h3>
+      <p style={{ color: "#666", marginTop: 0, fontSize: 13 }}>
+        Deux façons d&apos;aborder le prospect sont testées automatiquement (une
+        moitié chacune). On garde celle qui obtient le plus de réponses.
+      </p>
+      {totalSent === 0 && (
+        <p
+          style={{
+            background: "#eef2ff",
+            border: "1px solid #e0e7ff",
+            borderRadius: 8,
+            padding: "8px 10px",
+            fontSize: 13,
+            color: "#3730a3",
+            margin: "0 0 10px",
+          }}
+        >
+          ✅ Le test A/B est <strong>actif</strong>. Les chiffres ci-dessous se
+          rempliront dès que tu auras <strong>envoyé des emails</strong> (colonne
+          « Envoyés »), et le taux de réponse s&apos;affichera au fil des retours.
+        </p>
+      )}
+      <div style={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
+          <thead>
+            <tr style={{ textAlign: "left", borderBottom: "2px solid #eee" }}>
+              <th style={th}>Variante</th>
+              <th style={th}>Envoyés</th>
+              <th style={th}>Réponses</th>
+              <th style={th}>Taux</th>
+            </tr>
+          </thead>
+          <tbody>
+            {perf.map((p) => {
+              const rate = p.sent > 0 ? Math.round((p.replied / p.sent) * 100) : 0;
+              const isBest = Boolean(best && p.label === best.label && p.sent >= 5);
+              return (
+                <tr
+                  key={p.label}
+                  style={{
+                    borderBottom: "1px solid #f0f0f0",
+                    background: isBest ? "#e6f4ea" : undefined,
+                  }}
+                >
+                  <td style={td}>
+                    {p.label} {isBest && "🏆"}
+                  </td>
+                  <td style={td}>{p.sent}</td>
+                  <td style={td}>{p.replied}</td>
+                  <td style={td}>{p.sent > 0 ? `${rate}%` : "—"}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <p style={{ color: "#999", fontSize: 12, marginBottom: 0 }}>
+        <strong>Question curieuse</strong> = on pose une vraie question sans dire
+        tout de suite qu&apos;on vend un outil. <strong>Approche directe</strong> =
+        on annonce Kado dès la 1ʳᵉ phrase. Un taux devient fiable à partir de
+        ~15–20 envois par variante. 🏆 = meilleure variante à ce stade.
       </p>
     </div>
   );

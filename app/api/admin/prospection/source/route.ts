@@ -91,16 +91,33 @@ export const POST = adminRoute({
     let duplicates = 0;
     let mock = false;
     const perCity: { city: string; inserted: number; duplicates: number }[] = [];
+    const errors: { city: string; error: string }[] = [];
 
     for (const city of cities) {
-      const r = await sourceOneCity(db, city, body.segments, body.limit);
-      found += r.found;
-      inserted += r.inserted;
-      duplicates += r.duplicates;
-      mock = mock || r.mock;
-      perCity.push({ city, inserted: r.inserted, duplicates: r.duplicates });
+      try {
+        const r = await sourceOneCity(db, city, body.segments, body.limit);
+        found += r.found;
+        inserted += r.inserted;
+        duplicates += r.duplicates;
+        mock = mock || r.mock;
+        perCity.push({ city, inserted: r.inserted, duplicates: r.duplicates });
+      } catch (err) {
+        // Échec Google Places (quota, clé, réseau…) : on ne casse pas tout le
+        // passage, on remonte un code court et sûr (jamais la clé API).
+        const msg = err instanceof Error ? err.message : String(err);
+        const code = /Places API (\d{3})/.exec(msg)?.[1] ?? "erreur";
+        errors.push({ city, error: code });
+      }
     }
 
-    return Response.json({ ok: true, mock, found, inserted, duplicates, cities: perCity });
+    return Response.json({
+      ok: true,
+      mock,
+      found,
+      inserted,
+      duplicates,
+      cities: perCity,
+      errors,
+    });
   },
 });

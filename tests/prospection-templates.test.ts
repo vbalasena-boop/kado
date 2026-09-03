@@ -141,16 +141,20 @@ describe("RDV téléphonique (lien de réservation)", () => {
     expect(body).toContain(UNSUBSCRIBE_MARKER);
   });
 
-  it("insère le lien dans la relance quand il est fourni", () => {
-    const url = "https://cal.com/kado/10min";
-    const { body } = renderFollowupEmail(ctx({ bookingUrl: url }));
-    expect(body).toContain(url);
+  it("insère le lien de la page de vente (selon le secteur) dans la relance", () => {
+    // category "resto" → /pro/jeux
+    const { body } = renderFollowupEmail(ctx());
+    expect(body).toContain("https://kado-app.fr/pro/jeux");
   });
 
-  it("insère le lien dans le dernier email quand il est fourni", () => {
-    const url = "https://cal.com/kado/10min";
-    const { body } = renderLastEmail(ctx({ bookingUrl: url }));
-    expect(body).toContain(url);
+  it("insère le lien de la page de vente dans le dernier email", () => {
+    const { body } = renderLastEmail(ctx());
+    expect(body).toContain("https://kado-app.fr/pro/jeux");
+  });
+
+  it("adapte la page de vente au secteur (beauté → /pro/fidelite)", () => {
+    const { body } = renderFollowupEmail(ctx({ category: "beaute" }));
+    expect(body).toContain("https://kado-app.fr/pro/fidelite");
   });
 });
 

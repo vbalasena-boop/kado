@@ -14,7 +14,13 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const schema = z
-  .object({ limit: z.number().int().min(1).max(30).optional() })
+  .object({
+    limit: z.number().int().min(1).max(30).optional(),
+    // Repart de zéro : oublie les fiches déjà tentées pour re-scanner TOUTE la
+    // liste (utile après avoir activé Serper). L'enrichissement ne remplit que
+    // ce qui manque — jamais d'écrasement.
+    rescan: z.boolean().optional(),
+  })
   .optional();
 
 type Row = {
@@ -42,6 +48,21 @@ export const POST = adminRoute({
     const limit = body?.limit ?? 15;
     const db = getAdminClient();
 
+    // Re-scan complet demandé : on efface les marqueurs « déjà tentée » pour que
+    // toute la liste soit re-traitée (ex. après activation de Serper).
+    if (body?.rescan) {
+      await db.from("prospect_events").delete().eq("type", "enrich_scanned");
+    }
+
+    // Prospects déjà tentés (marqueur `enrich_scanned`) — on ne les repasse pas,
+    // pour AVANCER dans la liste à chaque clic au lieu de tourner sur les mêmes.
+    const { data: scannedEvents } = await db
+      .from("prospect_events")
+      .select("prospect_id")
+      .eq("type", "enrich_scanned")
+      .limit(20000);
+    const scannedIds = new Set((scannedEvents ?? []).map((e) => e.prospect_id as string));
+
     // Prospects avec un site, à qui il manque l'email OU l'Instagram.
     // Avec l'étage payant (Serper), on peut aussi enrichir des prospects SANS
     // site (recherche du compte/du site). Sinon, on se limite à ceux qui ont un site.
@@ -52,12 +73,14 @@ export const POST = adminRoute({
         "id, name, city, website, email, instagram_handle, google_rating, google_reviews_count, google_last_review_at"
       )
       .or("email.is.null,instagram_handle.is.null")
-      .limit(limit);
+      .limit(1000);
     if (!useSerper) q = q.not("website", "is", null);
     const { data, error } = await q;
     if (error) return Response.json({ error: "db_error" }, { status: 500 });
 
-    const rows = (data ?? []) as Row[];
+    // On écarte les fiches déjà tentées, puis on prend le prochain lot.
+    const candidates = ((data ?? []) as Row[]).filter((r) => !scannedIds.has(r.id));
+    const rows = candidates.slice(0, limit);
     let enriched = 0;
     let emailsFound = 0;
     let instaFound = 0;
@@ -95,7 +118,14 @@ export const POST = adminRoute({
       const newEmail = !r.email && contact.email ? contact.email : null;
       const newInsta =
         !r.instagram_handle && contact.instagram ? contact.instagram : null;
-      if (!newEmail && !newInsta) continue;
+      if (!newEmail && !newInsta) {
+        // Rien trouvé : on marque quand même la fiche « tentée » pour ne pas la
+        // reprendre au prochain clic (sinon on tourne en rond).
+        await db
+          .from("prospect_events")
+          .insert({ prospect_id: r.id, type: "enrich_scanned", meta: { found: false } });
+        continue;
+      }
 
       const email = r.email ?? newEmail;
       const instagram_handle = r.instagram_handle ?? newInsta;
@@ -126,16 +156,20 @@ export const POST = adminRoute({
       if (newEmail) emailsFound++;
       if (newInsta) instaFound++;
 
-      // Traçabilité de la source (comme les "etage" du workflow d'inspiration).
-      await db.from("prospect_events").insert({
-        prospect_id: r.id,
-        type: "enriched",
-        meta: {
-          email_found: Boolean(newEmail),
-          instagram_found: Boolean(newInsta),
-          source,
+      // Traçabilité de la source (comme les "etage" du workflow d'inspiration)
+      // + marqueur « tentée » pour ne pas la reprendre au prochain clic.
+      await db.from("prospect_events").insert([
+        {
+          prospect_id: r.id,
+          type: "enriched",
+          meta: {
+            email_found: Boolean(newEmail),
+            instagram_found: Boolean(newInsta),
+            source,
+          },
         },
-      });
+        { prospect_id: r.id, type: "enrich_scanned", meta: { found: true } },
+      ]);
     }
 
     return Response.json({
@@ -144,6 +178,8 @@ export const POST = adminRoute({
       enriched,
       emails_found: emailsFound,
       instagram_found: instaFound,
+      // Fiches restant à tenter après ce lot (pour enchaîner automatiquement).
+      remaining: Math.max(0, candidates.length - rows.length),
     });
   },
 });

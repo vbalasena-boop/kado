@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Kado Jeux — la roue à cadeaux qui transforme vos clients en avis Google 5★ et en abonnés Instagram. Sans appli, 14 jours offerts.">
+<title>Kado Jeux — la roue à cadeaux</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="/pro/kado.css">
+</head>
+<body>
+<header class="nav">
+  <div class="nav-in">
+    <a class="logo" href="/pro"><span>🎡</span> Kado</a>
+    <a class="btn sm" href="https://calendly.com/vbalasena-instant-events/15min" target="_blank" rel="noopener">Réserver 15 min</a>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="eyebrow">Formule Jeux · 29 €/mois</span>
+        <h1>La roue qui vous ramène des <em>avis Google</em> et des <em>abonnés</em>.</h1>
+        <p class="lead">Vos clients scannent un QR code, tournent la roue et gagnent un cadeau. Pour jouer, ils vous laissent un avis ou s'abonnent à votre Instagram. Sans effort, sans appli.</p>
+        <div class="price-solo"><span class="n">29 €</span><span class="u">/ mois · 14 jours offerts</span></div>
+        <div class="hero-cta">
+          <a class="btn" href="https://calendly.com/vbalasena-instant-events/15min" target="_blank" rel="noopener">Je veux la roue</a>
+          <a class="link-ghost" href="#comment">Comment ça marche →</a>
+        </div>
+        <div class="trust">
+          <span>⚡ Installé en <b>5 minutes</b></span>
+          <span>📱 <b>Sans appli</b></span>
+          <span>🎡 Roue, carte à gratter ou machine à sous</span>
+        </div>
+      </div>
+      <div class="wheel-panel hero-panel-first">
+        <div class="wheel-wrap">
+          <div class="pointer" aria-hidden="true"></div>
+          <canvas class="wheel" id="wheel" width="600" height="600" role="img" aria-label="Roue des cadeaux Kado"></canvas>
+          <div class="hub" aria-hidden="true">🎡</div>
+        </div>
+        <button class="spin-btn" id="spin">Tourner la roue</button>
+        <p class="try-note">👆 Essayez — c'est ce que verront vos clients.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="comment">
+    <div class="wrap">
+      <div class="sec-head"><h2>Trois étapes, zéro effort</h2><p>Vous affichez un QR code. Vos clients font le reste.</p></div>
+      <div class="steps">
+        <div class="step"><span class="step-n"></span><div class="step-e">📱</div><h3>Le client scanne</h3><p>Un QR sur la table, au comptoir ou en vitrine. Aucune appli.</p></div>
+        <div class="step"><span class="step-n"></span><div class="step-e">🎡</div><h3>Il tourne la roue</h3><p>Pour jouer, il laisse un avis Google ou s'abonne à votre Instagram.</p></div>
+        <div class="step"><span class="step-n"></span><div class="step-e">🎁</div><h3>Il gagne un cadeau</h3><p>Un lot que vous choisissez, à récupérer en caisse avec un code.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="sec-head"><h2>Ce que la roue vous rapporte</h2></div>
+      <div class="benefits">
+        <div class="bene"><span class="ic">⭐</span><div><h3>Plus d'avis Google</h3><p>Mieux référencé, plus de clients qui vous trouvent et vous font confiance.</p></div></div>
+        <div class="bene"><span class="ic">📸</span><div><h3>Plus d'abonnés Instagram</h3><p>Chaque partie peut demander un abonnement : votre communauté grandit.</p></div></div>
+        <div class="bene"><span class="ic">🎮</span><div><h3>3 jeux au choix</h3><p>Roue de la fortune, carte à gratter ou machine à sous — mêmes cadeaux.</p></div></div>
+        <div class="bene"><span class="ic">🙌</span><div><h3>Aucun effort</h3><p>Vous validez le cadeau en caisse, c'est tout. Le reste est automatique.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact">
+    <div class="wrap"><div class="final">
+      <h2>Prêt à faire tourner la roue ?</h2>
+      <p>Testez Kado Jeux gratuitement 14 jours. On met tout en place avec vous.</p>
+      <a class="btn" href="https://calendly.com/vbalasena-instant-events/15min" target="_blank" rel="noopener">Réserver 15 min — 14 jours offerts</a>
+      <p class="more-link">Besoin aussi de la fidélité ? → <a href="/pro/complet">Formule Complet</a> · <a href="/pro">Toutes les formules</a></p>
+      <p style="margin-top:10px;font-size:13.5px;">Une question ? <a href="https://instagram.com/kado_app.fr" target="_blank" rel="noopener" style="color:var(--gold);font-weight:600;text-decoration:none;">@kado_app.fr</a></p>
+    </div></div>
+  </section>
+</main>
+
+<footer>🎡 Kado · Plus d'avis Google, d'abonnés Instagram et de fidélité pour les commerces de proximité.</footer>
+
+<div class="overlay" id="gate">
+  <div class="card">
+    <div class="prize-big">📸</div>
+    <h2>Débloquez votre tour</h2>
+    <p>Dans la vraie version, le client s'abonne à votre Instagram pour jouer. (Démo.)</p>
+    <div class="cta"><button class="btn-insta" id="follow">S'abonner et jouer</button></div>
+  </div>
+</div>
+<div class="overlay" id="result">
+  <div class="card">
+    <div class="prize-big" id="r-emoji">🎁</div>
+    <h2 id="r-title">Bravo !</h2>
+    <div class="prize-name" id="r-name">Café offert</div>
+    <p id="r-lead">Montrez ce code en caisse :</p>
+    <div class="code" id="r-code">KADO-000</div>
+    <div class="valid" id="r-valid">Valable 14 jours</div>
+    <div class="cta">
+      <a class="btn-insta" href="https://calendly.com/vbalasena-instant-events/15min" target="_blank" rel="noopener">Je veux ça pour mon commerce</a>
+      <button class="btn-ghost" id="replay">Rejouer</button>
+    </div>
+  </div>
+</div>
+<canvas class="confetti" id="confetti"></canvas>
+<script src="/pro/wheel.js"></script>
+</body>
+</html>
