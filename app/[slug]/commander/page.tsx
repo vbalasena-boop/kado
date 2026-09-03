@@ -1,5 +1,5 @@
 import { getAdminClient } from "@/lib/supabase/admin";
-import { hasAccess } from "@/lib/auth";
+import { hasAccess, hasClickCollect } from "@/lib/auth";
 import { isOpenNow, nextOpeningLabel, type OrderHours } from "@/lib/hours";
 import { buildTheme } from "@/lib/theme";
 import OrderClient from "./OrderClient";
@@ -55,11 +55,11 @@ export default async function CommanderPage({
   }
   const payOnline = !!biz?.online_payment && !!biz?.stripe_account_ready;
 
-  // Option activée, essai gratuit, ou formule « Complet » (tout inclus).
-  const orderOn =
-    !!biz?.click_collect ||
-    biz?.subscription_status === "trial" ||
-    biz?.plan === "complet";
+  // Règle UNIQUE (lib/auth) : essai, formules « Comptoir »/« Complet », ou
+  // option `click_collect`. Ne pas dupliquer la condition ici — la formule
+  // « Comptoir » est vendue avec « Commande en ligne incluse » et était
+  // refusée par une copie incomplète de la règle.
+  const orderOn = !!biz && hasClickCollect(biz);
   if (!biz || !orderOn) {
     return (
       <Unavailable message="Ce commerce ne propose pas la commande en ligne." />

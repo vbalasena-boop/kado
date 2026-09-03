@@ -3,7 +3,7 @@ import { getAdminClient } from "@/lib/supabase/admin";
 import { reportError } from "@/lib/report";
 import { isMissingColumnError } from "@/lib/db-errors";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
-import { hasAccess } from "@/lib/auth";
+import { hasAccess, hasClickCollect } from "@/lib/auth";
 import { sendEmail, getOwnerContact } from "@/lib/email";
 import { isOpenNow, nextOpeningLabel, type OrderHours } from "@/lib/hours";
 import { sendPushToBusiness } from "@/lib/push";
@@ -88,11 +88,9 @@ export async function POST(req: NextRequest) {
 
   const db = getAdminClient();
   const biz = await loadOrderableBusiness(db, body.slug);
-  // Commande ouverte si l'option est activée, pendant l'essai, ou en Complet.
-  const orderOn =
-    !!biz?.click_collect ||
-    biz?.subscription_status === "trial" ||
-    biz?.plan === "complet";
+  // Règle UNIQUE (lib/auth) : essai, formules « Comptoir »/« Complet », ou
+  // option `click_collect`. Miroir exact du garde de la page /commander.
+  const orderOn = !!biz && hasClickCollect(biz);
   if (!biz || !orderOn) {
     return Response.json({ error: "not_found" }, { status: 404 });
   }
