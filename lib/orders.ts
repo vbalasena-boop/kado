@@ -15,6 +15,88 @@ export type OrderLine = { name: string; qty: number; price_cents: number };
 
 type Db = SupabaseClient;
 
+/**
+ * Numéro du jour d'un commerce, annoncé au comptoir (« commande n°12 »).
+ *
+ * Attribution ATOMIQUE via la RPC `next_buzzer_no` (migration 0067) : deux
+ * clients qui commandent en même temps ne peuvent pas obtenir le même numéro.
+ * Malgré son nom, cette RPC est le compteur quotidien GÉNÉRIQUE du commerce
+ * (table `buzzer_counters`, remis à zéro chaque jour) : bipeur et click &
+ * collect la partagent volontairement, pour que deux clients d'un même
+ * commerce ne portent jamais le même numéro le même jour.
+ *
+ * Renvoie `null` si le numéro n'a pas pu être attribué (RPC absente et repli
+ * impossible) : l'appelant continue alors SANS numéro — une commande sans
+ * numéro reste parfaitement exploitable via son code de retrait.
+ */
+export async function nextOrderNumber(
+  db: Db,
+  businessId: string
+): Promise<number | null> {
+  const { data, error } = await db.rpc("next_buzzer_no", { biz: businessId });
+  if (!error && typeof data === "number") return data;
+  // Repli pré-migration 0067 : max+1 sur la journée, non atomique.
+  const startOfDay = new Date();
+  startOfDay.setUTCHours(0, 0, 0, 0);
+  try {
+    const { data: last, error: selErr } = await db
+      .from("orders")
+      .select("order_no")
+      .eq("business_id", businessId)
+      .gte("created_at", startOfDay.toISOString())
+      .not("order_no", "is", null)
+      .order("order_no", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (selErr) return null;
+    return (((last as { order_no?: number | null } | null)?.order_no) ?? 0) + 1;
+  } catch {
+    return null; // colonne 0076 absente
+  }
+}
+
+/** Minuscules + accents retirés, pour une recherche tolérante à la frappe. */
+function foldText(v: string): string {
+  return v
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+/**
+ * La commande correspond-elle à ce que le commerçant tape au comptoir ?
+ *
+ * Le client annonce son NOM ou son NUMÉRO — rarement son code de retrait. On
+ * accepte les quatre entrées (nom, numéro, code, téléphone) pour que le scan
+ * du QR reste facultatif. Recherche insensible à la casse ET aux accents :
+ * « rozenn » doit trouver « Rozenn », « eloise » doit trouver « Éloïse ».
+ *
+ * Le numéro est comparé à l'IDENTIQUE (et non en « contient ») : taper « 1 »
+ * ne doit pas remonter les commandes 1, 12, 13, 21… Le préfixe « n° » est
+ * toléré. Requête vide → toutes les commandes.
+ */
+export function orderMatchesQuery(
+  order: {
+    customer_name?: string | null;
+    customer_phone?: string | null;
+    code?: string | null;
+    order_no?: number | null;
+    buzzer_no?: number | null;
+  },
+  query: string
+): boolean {
+  const q = foldText((query ?? "").trim());
+  if (!q) return true;
+  if (foldText(order.customer_name ?? "").includes(q)) return true;
+  if (foldText(order.code ?? "").includes(q)) return true;
+  const num = order.order_no ?? order.buzzer_no ?? null;
+  if (num != null && String(num) === q.replace(/^n°?\s*/, "")) return true;
+  const phone = (order.customer_phone ?? "").replace(/\s/g, "");
+  if (phone && q.replace(/\s/g, "").length >= 3 && phone.includes(q.replace(/\s/g, "")))
+    return true;
+  return false;
+}
+
 /** Code de retrait court, sans caractères ambigus. */
 export function pickupCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -241,6 +323,7 @@ export function buildCustomerOrderEmail(o: {
   lines: OrderLine[];
   total: number;
   paid?: boolean;
+  orderNo?: number | null;
 }) {
   const paid = o.paid === true;
   return {
@@ -257,6 +340,11 @@ export function buildCustomerOrderEmail(o: {
         <p style="margin:0 0 14px;">Votre commande chez <b>${escapeHtml(
           o.bizName
         )}</b> est bien enregistrée. Présentez ce code au retrait :</p>
+        ${
+          o.orderNo != null
+            ? `<p style="margin:0 0 10px;text-align:center;font-size:20px;">Commande <b style="font-size:1.4em;">n°${o.orderNo}</b></p>`
+            : ""
+        }
         <p style="margin:0 0 16px;text-align:center;"><span style="display:inline-block;font-family:monospace;font-size:30px;font-weight:800;letter-spacing:0.15em;background:#f7f5fb;border:2px dashed #cfc5e5;border-radius:14px;padding:12px 22px;">${o.code}</span></p>
         <p style="margin:0 0 12px;">🕒 Retrait : <b>${
           o.pickup ? escapeHtml(o.pickup) : "dès que possible"

@@ -208,6 +208,24 @@ export async function POST(req: NextRequest) {
                 // un client qui a payé ne recevait aucun e-mail avec son code
                 // de retrait (il n'avait que l'onglet de suivi, perdu s'il le
                 // fermait). Variante `paid` : ne réclame aucun règlement.
+                // Numéro lisible (0076) lu À PART : l'ajouter au select de la
+                // transition ci-dessus ferait échouer TOUTE la mise à jour si
+                // la colonne manque — la commande payée resterait bloquée en
+                // « en attente de paiement ». Ici, au pire, l'e-mail n'affiche
+                // pas le numéro.
+                let paidOrderNo: number | null = null;
+                try {
+                  const { data: no } = await db
+                    .from("orders")
+                    .select("order_no")
+                    .eq("business_id", bizId)
+                    .eq("code", order.code)
+                    .maybeSingle();
+                  paidOrderNo =
+                    (no as { order_no?: number | null } | null)?.order_no ?? null;
+                } catch {
+                  paidOrderNo = null;
+                }
                 try {
                   if (order.customer_email) {
                     await sendEmail(
@@ -219,6 +237,7 @@ export async function POST(req: NextRequest) {
                         pickup: order.pickup_at || "",
                         lines: order.items,
                         total: order.total_cents,
+                        orderNo: paidOrderNo,
                         paid: true,
                       })
                     );

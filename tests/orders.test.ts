@@ -5,6 +5,7 @@ import {
   recalcCart,
   buildCustomerOrderEmail,
   orderApplicationFee,
+  orderMatchesQuery,
   type OrderItemInput,
 } from "@/lib/orders";
 
@@ -139,5 +140,84 @@ describe("orderApplicationFee", () => {
   it("arrondit au centime", () => {
     // 2,5 % de 17,50 € = 43,75 c → 44 c
     expect(orderApplicationFee(1750, { bps: 250 })).toBe(44);
+  });
+});
+
+describe("orderMatchesQuery", () => {
+  const o = {
+    customer_name: "Rozenn Aubin",
+    customer_phone: "06 12 34 56 78",
+    code: "K7XM3",
+    order_no: 12,
+  };
+
+  it("requête vide → tout passe", () => {
+    expect(orderMatchesQuery(o, "")).toBe(true);
+    expect(orderMatchesQuery(o, "   ")).toBe(true);
+  });
+
+  it("par nom, insensible à la casse et aux accents", () => {
+    expect(orderMatchesQuery(o, "rozenn")).toBe(true);
+    expect(orderMatchesQuery(o, "AUBIN")).toBe(true);
+    expect(
+      orderMatchesQuery({ ...o, customer_name: "Éloïse" }, "eloise")
+    ).toBe(true);
+  });
+
+  it("par numéro, avec ou sans « n° »", () => {
+    expect(orderMatchesQuery(o, "12")).toBe(true);
+    expect(orderMatchesQuery(o, "n°12")).toBe(true);
+    expect(orderMatchesQuery(o, "n12")).toBe(true);
+  });
+
+  it("le numéro est comparé à l'identique, jamais en « contient »", () => {
+    // Taper « 1 » ne doit PAS remonter la commande 12.
+    expect(orderMatchesQuery(o, "1")).toBe(false);
+    expect(orderMatchesQuery(o, "2")).toBe(false);
+    expect(orderMatchesQuery({ ...o, order_no: 1 }, "1")).toBe(true);
+  });
+
+  it("par code de retrait", () => {
+    expect(orderMatchesQuery(o, "k7xm3")).toBe(true);
+    expect(orderMatchesQuery(o, "K7X")).toBe(true);
+  });
+
+  it("retombe sur buzzer_no si order_no est absent", () => {
+    expect(
+      orderMatchesQuery({ code: "AB1", buzzer_no: 7, order_no: null }, "7")
+    ).toBe(true);
+  });
+
+  it("aucune correspondance → false", () => {
+    expect(orderMatchesQuery(o, "dupont")).toBe(false);
+  });
+
+  it("champs absents : ne jette pas", () => {
+    expect(orderMatchesQuery({}, "x")).toBe(false);
+    expect(orderMatchesQuery({}, "")).toBe(true);
+  });
+});
+
+describe("buildCustomerOrderEmail — numéro de commande", () => {
+  const base = {
+    to: "c@example.com",
+    name: "Rozenn",
+    code: "K7XM3",
+    bizName: "QUSTOS",
+    pickup: "12h30",
+    lines: [{ name: "Menu mini", qty: 1, price_cents: 1800 }],
+    total: 1800,
+  };
+
+  it("affiche « Commande n°12 » quand le numéro existe", () => {
+    expect(buildCustomerOrderEmail({ ...base, orderNo: 12 }).html).toContain(
+      "n°12"
+    );
+  });
+
+  it("sans numéro : aucune mention vide", () => {
+    const html = buildCustomerOrderEmail(base).html;
+    expect(html).not.toContain("Commande <b");
+    expect(html).toContain("K7XM3");
   });
 });

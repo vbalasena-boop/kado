@@ -5812,6 +5812,19 @@ html { scroll-behavior: smooth; }
 }
 .uber-done-emoji { font-size: 44px; margin-bottom: 8px; }
 .uber-done h1 { font-family: var(--font-display, inherit); font-size: 24px; margin: 0 0 10px; }
+/* Numéro de commande annoncé au comptoir (« n°12 »). Placé au-dessus du code
+   de retrait : c'est lui que le client donne à l'oral, le code ne sert qu'au
+   scan ou à la saisie. */
+.uber-done-no {
+  font-size: clamp(18px, 5vw, 24px);
+  font-weight: 700;
+  margin: 0 0 10px;
+}
+.uber-done-no b {
+  font-size: 1.35em;
+  font-weight: 900;
+}
+
 .uber-done-code {
   font-family: ui-monospace, monospace;
   /* Taille fluide + retour à la ligne : un code long à 40px débordait sous ~340px. */
@@ -6857,3 +6870,27 @@ summary:focus-visible,
   line-height: 1.55;
 }
 .empty-state .btn { display: inline-block; }
+
+/* Recherche de commande au comptoir (nom, n°, code) — le client annonce son
+   nom, le commerçant n'a pas à faire défiler la liste. */
+.order-search-card {
+  padding: 12px 14px;
+}
+.order-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.order-search input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+  font-size: 16px; /* < 16px : iOS zoome au focus */
+  border: 1px solid #d8d2e8;
+  border-radius: 12px;
+  background: #fff;
+}
+.order-search input:focus {
+  outline: 2px solid #ffc24d;
+  outline-offset: 1px;
+}

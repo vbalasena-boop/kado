@@ -15,6 +15,7 @@ import {
   recalcCart,
   insertOrderTolerant,
   createOrderCheckout,
+  nextOrderNumber,
   buildCustomerOrderEmail,
   buildMerchantOrderEmail,
 } from "@/lib/orders";
@@ -144,7 +145,13 @@ export async function POST(req: NextRequest) {
     // chez le commerçant. Sinon, directement « à préparer ».
     status: wantsOnline ? "awaiting_payment" : "new",
   };
+  // Numéro lisible annoncé au comptoir (0076). Dans `optional` uniquement :
+  // si la colonne manque, `insertOrderTolerant` retombe sur le socle et la
+  // commande est créée sans numéro plutôt que de rater.
+  const orderNo = await nextOrderNumber(db, biz.id);
+
   const optional: Record<string, unknown> = { ...baseInsert };
+  if (orderNo != null) optional.order_no = orderNo;
   if (email) optional.customer_email = email;
   if (notifyPush) optional.notify_push = notifyPush;
   optional.service_mode = serviceMode;
@@ -206,6 +213,7 @@ export async function POST(req: NextRequest) {
       return Response.json({
         ok: true,
         code,
+        order_no: orderNo,
         total_cents: total,
         checkoutUrl: session.url,
       });
@@ -257,6 +265,7 @@ export async function POST(req: NextRequest) {
           pickup,
           lines,
           total,
+          orderNo,
         })
       );
     } catch {
@@ -285,5 +294,5 @@ export async function POST(req: NextRequest) {
     /* l'e-mail ne doit pas bloquer la commande */
   }
 
-  return Response.json({ ok: true, code, total_cents: total });
+  return Response.json({ ok: true, code, order_no: orderNo, total_cents: total });
 }

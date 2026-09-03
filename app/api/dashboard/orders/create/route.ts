@@ -2,6 +2,7 @@ import { z } from "zod";
 import { merchantRoute } from "@/lib/api";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { sendPushToBusiness } from "@/lib/push";
+import { nextOrderNumber } from "@/lib/orders";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -87,9 +88,14 @@ export const POST = merchantRoute({
       total_cents: total,
       status: "new",
     };
+    // Numéro lisible annoncé au comptoir (0076) — même compteur quotidien que
+    // les commandes en ligne, pour qu'aucun numéro ne soit servi deux fois.
+    const orderNo = await nextOrderNumber(db, business.id);
+
     const optional: Record<string, unknown> = {
       ...baseInsert,
       service_mode: serviceMode,
+      ...(orderNo != null ? { order_no: orderNo } : {}),
     };
     if (tableLabel) optional.table_label = tableLabel;
     let { error } = await db.from("orders").insert(optional);
