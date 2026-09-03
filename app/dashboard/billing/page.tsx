@@ -9,7 +9,7 @@ export default async function BillingPage({
 }: {
   searchParams: { success?: string; setup_ok?: string };
 }) {
-  const { business } = await getMyBusiness();
+  const { user, business } = await getMyBusiness();
   if (!business) return null;
 
   const hasSubscription = !!business.stripe_subscription_id;
@@ -56,6 +56,7 @@ export default async function BillingPage({
       slug={business.slug}
       initialAddress={address}
       initialPhone={phone}
+      email={user?.email ?? ""}
     />
   );
 }
