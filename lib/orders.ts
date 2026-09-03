@@ -133,8 +133,35 @@ export async function insertOrderTolerant(
 
 /**
  * Crée la session Stripe Checkout (Connect) : l'argent est transféré au compte
- * du commerçant, commission plateforme optionnelle (KADO_ORDER_FEE_BPS).
+ * du commerçant, commission plateforme optionnelle
+ * (KADO_ORDER_FEE_BPS + KADO_ORDER_FEE_FIXED_CENTS, cf. orderApplicationFee).
  */
+/**
+ * Commission plateforme prélevée sur une commande payée en ligne, en centimes.
+ *
+ * Deux parts, cumulables :
+ *  - `bps` : pourcentage en points de base (250 = 2,5 %) ;
+ *  - `fixedCents` : part fixe par commande (25 = 0,25 €).
+ *
+ * La part fixe n'est pas un détail : en charge « destination », les frais
+ * Stripe sont prélevés sur la PLATEFORME et comportent eux-mêmes un fixe
+ * (~0,25 € + ~1,5 %). Une commission purement proportionnelle est donc
+ * DÉFICITAIRE sous un certain panier (≈ 25 € à 2,5 %) — d'où ce fixe.
+ *
+ * La commission est bornée au total : Stripe refuse une session dont la
+ * commission dépasse le montant encaissé (petit panier + gros fixe).
+ */
+export function orderApplicationFee(
+  totalCents: number,
+  opts: { bps?: number; fixedCents?: number }
+): number {
+  const total = Number.isFinite(totalCents) ? Math.max(0, totalCents) : 0;
+  const bps = Math.max(0, opts.bps ?? 0);
+  const fixed = Math.max(0, opts.fixedCents ?? 0);
+  const fee = Math.round((total * bps) / 10000) + fixed;
+  return Math.max(0, Math.min(fee, total));
+}
+
 export function createOrderCheckout(opts: {
   stripe: Stripe;
   origin: string;
@@ -145,8 +172,11 @@ export function createOrderCheckout(opts: {
   email: string | null;
 }): Promise<Stripe.Checkout.Session> {
   const { stripe, origin, biz, code, lines, total, email } = opts;
-  const feeBps = parseInt(process.env.KADO_ORDER_FEE_BPS || "0", 10) || 0;
-  const appFee = feeBps > 0 ? Math.round((total * feeBps) / 10000) : 0;
+  const appFee = orderApplicationFee(total, {
+    bps: parseInt(process.env.KADO_ORDER_FEE_BPS || "0", 10) || 0,
+    fixedCents:
+      parseInt(process.env.KADO_ORDER_FEE_FIXED_CENTS || "0", 10) || 0,
+  });
   return stripe.checkout.sessions.create({
     mode: "payment",
     line_items: lines.map((l) => ({
