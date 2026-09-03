@@ -4,6 +4,7 @@ import {
   formatEuros,
   recalcCart,
   buildCustomerOrderEmail,
+  orderApplicationFee,
   type OrderItemInput,
 } from "@/lib/orders";
 
@@ -102,5 +103,41 @@ describe("buildCustomerOrderEmail — mention de paiement", () => {
     expect(buildCustomerOrderEmail({ ...base, paid: true }).html).toContain(
       "AB12C"
     );
+  });
+});
+
+describe("orderApplicationFee", () => {
+  it("sans configuration : aucune commission", () => {
+    expect(orderApplicationFee(1800, {})).toBe(0);
+  });
+
+  it("pourcentage seul : 2,5 % de 18 € = 0,45 €", () => {
+    expect(orderApplicationFee(1800, { bps: 250 })).toBe(45);
+  });
+
+  it("part fixe cumulée au pourcentage", () => {
+    // 2,5 % de 18 € (45 c) + 25 c = 70 c — couvre les frais Stripe (~52 c).
+    expect(orderApplicationFee(1800, { bps: 250, fixedCents: 25 })).toBe(70);
+  });
+
+  it("part fixe seule", () => {
+    expect(orderApplicationFee(1800, { fixedCents: 25 })).toBe(25);
+  });
+
+  it("ne dépasse JAMAIS le total (Stripe refuserait la session)", () => {
+    // Panier de 0,10 € avec un fixe de 0,25 € : borné à 0,10 €.
+    expect(orderApplicationFee(10, { fixedCents: 25 })).toBe(10);
+    expect(orderApplicationFee(0, { bps: 250, fixedCents: 25 })).toBe(0);
+  });
+
+  it("valeurs négatives ou invalides neutralisées", () => {
+    expect(orderApplicationFee(-100, { bps: 250 })).toBe(0);
+    expect(orderApplicationFee(1800, { bps: -250, fixedCents: -25 })).toBe(0);
+    expect(orderApplicationFee(NaN, { bps: 250 })).toBe(0);
+  });
+
+  it("arrondit au centime", () => {
+    // 2,5 % de 17,50 € = 43,75 c → 44 c
+    expect(orderApplicationFee(1750, { bps: 250 })).toBe(44);
   });
 });
