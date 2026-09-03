@@ -180,7 +180,13 @@ function lineRows(lines: OrderLine[]): string {
     .join("");
 }
 
-/** Bon de commande e-mail pour le client (paiement sur place). */
+/**
+ * Bon de commande e-mail pour le client.
+ *
+ * `paid` distingue les deux tunnels : règlement au comptoir (défaut) ou
+ * commande DÉJÀ payée en ligne (Stripe). Sans cette variante, un client ayant
+ * payé recevait « à régler sur place » et pouvait croire devoir payer deux fois.
+ */
 export function buildCustomerOrderEmail(o: {
   to: string;
   name: string;
@@ -189,13 +195,17 @@ export function buildCustomerOrderEmail(o: {
   pickup: string;
   lines: OrderLine[];
   total: number;
+  paid?: boolean;
 }) {
+  const paid = o.paid === true;
   return {
     to: o.to,
     subject: `Votre commande ${o.code} chez ${o.bizName}`,
     fromName: `${o.bizName} via Kado`,
     html: emailLayout({
-      preview: `Bon de commande — à régler sur place au retrait.`,
+      preview: paid
+        ? `Commande payée — présentez votre code au retrait.`
+        : `Bon de commande — à régler sur place au retrait.`,
       emoji: "🛒",
       heading: `Merci ${escapeHtml(o.name)} !`,
       bodyHtml: `
@@ -209,15 +219,20 @@ export function buildCustomerOrderEmail(o: {
         <table role="presentation" cellpadding="4" cellspacing="0" style="width:100%;font-size:15px;border-collapse:collapse;">${lineRows(
           o.lines
         )}
-        <tr><td style="border-top:1px solid #eee;padding-top:8px;"><b>Total à régler sur place</b></td><td align="right" style="border-top:1px solid #eee;padding-top:8px;"><b>${formatEuros(
+        <tr><td style="border-top:1px solid #eee;padding-top:8px;"><b>${
+          paid ? "Total payé en ligne" : "Total à régler sur place"
+        }</b></td><td align="right" style="border-top:1px solid #eee;padding-top:8px;"><b>${formatEuros(
           o.total
         )}&nbsp;€</b></td></tr></table>`,
-      footnote:
-        "Aucun paiement en ligne : vous réglez au comptoir lors du retrait.",
+      footnote: paid
+        ? "Commande déjà réglée en ligne : rien à payer au retrait."
+        : "Aucun paiement en ligne : vous réglez au comptoir lors du retrait.",
     }),
     text: `Votre commande ${o.code} chez ${o.bizName} est enregistrée. Retrait : ${
       o.pickup || "dès que possible"
-    }. Total à régler sur place : ${formatEuros(o.total)} €.`,
+    }. ${
+      paid ? "Total payé en ligne" : "Total à régler sur place"
+    } : ${formatEuros(o.total)} €.`,
   };
 }
 

@@ -3,6 +3,7 @@ import {
   pickupCode,
   formatEuros,
   recalcCart,
+  buildCustomerOrderEmail,
   type OrderItemInput,
 } from "@/lib/orders";
 
@@ -61,5 +62,45 @@ describe("formatEuros", () => {
     expect(formatEuros(1234)).toBe("12,34");
     expect(formatEuros(500)).toBe("5,00");
     expect(formatEuros(0)).toBe("0,00");
+  });
+});
+
+describe("buildCustomerOrderEmail — mention de paiement", () => {
+  const base = {
+    to: "client@example.com",
+    name: "Rozenn",
+    code: "AB12C",
+    bizName: "QUSTOS",
+    pickup: "12h30",
+    lines: [{ name: "Menu mini", qty: 1, price_cents: 1800 }],
+    total: 1800,
+  };
+
+  it("paiement sur place (défaut) : réclame le règlement au comptoir", () => {
+    const mail = buildCustomerOrderEmail(base);
+    expect(mail.html).toContain("Total à régler sur place");
+    expect(mail.html).toContain(
+      "Aucun paiement en ligne : vous réglez au comptoir lors du retrait."
+    );
+    expect(mail.text).toContain("Total à régler sur place");
+  });
+
+  it("payée en ligne : ne réclame JAMAIS de règlement au retrait", () => {
+    const mail = buildCustomerOrderEmail({ ...base, paid: true });
+    expect(mail.html).toContain("Total payé en ligne");
+    expect(mail.html).toContain(
+      "Commande déjà réglée en ligne : rien à payer au retrait."
+    );
+    expect(mail.html).not.toContain("à régler sur place");
+    expect(mail.html).not.toContain("Aucun paiement en ligne");
+    expect(mail.text).toContain("Total payé en ligne");
+    expect(mail.text).not.toContain("à régler sur place");
+  });
+
+  it("le code de retrait est présent dans les deux cas", () => {
+    expect(buildCustomerOrderEmail(base).html).toContain("AB12C");
+    expect(buildCustomerOrderEmail({ ...base, paid: true }).html).toContain(
+      "AB12C"
+    );
   });
 });
