@@ -61,6 +61,24 @@ export const POST = merchantRoute({
     }
     if (!order) return Response.json({ error: "not_found" }, { status: 404 });
 
+    // Compte de la charge directe (0075), lu À PART : le select ci-dessus est
+    // volontairement fail-closed, l'y ajouter bloquerait tout remboursement
+    // tant que la migration n'est pas appliquée. Absent → `performOrderRefund`
+    // retombe sur sa détection automatique.
+    try {
+      const { data: acc } = await db
+        .from("orders")
+        .select("stripe_account_id")
+        .eq("id", id)
+        .eq("business_id", business.id)
+        .maybeSingle();
+      order.stripe_account_id =
+        (acc as { stripe_account_id?: string | null } | null)
+          ?.stripe_account_id ?? null;
+    } catch {
+      /* colonne 0075 absente : détection automatique côté performOrderRefund */
+    }
+
     // Cœur d'effets partagé (extrait pour la story 11.2) : éligibilité →
     // PaymentIntent → refund plateforme idempotent → drapeau remboursé. Ne jette
     // jamais ; on mappe l'`outcome` structuré vers la sémantique HTTP inchangée.

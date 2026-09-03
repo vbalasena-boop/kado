@@ -105,7 +105,14 @@ async function applySubscription(sub: Stripe.Subscription) {
 
 export async function POST(req: NextRequest) {
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
-  if (!secret) {
+  // Le click & collect est encaissé en charge DIRECTE : ses événements
+  // (`checkout.session.completed`…) proviennent du COMPTE CONNECTÉ et sont
+  // signés par un endpoint Stripe de type « Connect », doté de son propre
+  // secret. Les abonnements, eux, restent sur le compte plateforme. On accepte
+  // donc les deux signatures — sinon, tous les paiements de commandes
+  // resteraient bloqués en « en attente de paiement ».
+  const connectSecret = process.env.STRIPE_CONNECT_WEBHOOK_SECRET;
+  if (!secret && !connectSecret) {
     return Response.json({ error: "no_webhook_secret" }, { status: 500 });
   }
   const sig = req.headers.get("stripe-signature");
@@ -113,10 +120,17 @@ export async function POST(req: NextRequest) {
 
   const stripe = getStripe();
   const raw = await req.text();
-  let event: Stripe.Event;
-  try {
-    event = stripe.webhooks.constructEvent(raw, sig, secret);
-  } catch {
+  let event: Stripe.Event | null = null;
+  for (const candidate of [secret, connectSecret]) {
+    if (!candidate) continue;
+    try {
+      event = stripe.webhooks.constructEvent(raw, sig, candidate);
+      break;
+    } catch {
+      /* on essaie le secret suivant */
+    }
+  }
+  if (!event) {
     return Response.json({ error: "bad_signature" }, { status: 400 });
   }
 

@@ -185,6 +185,24 @@ export async function POST(req: NextRequest) {
       } catch (e) {
         reportError(e, { where: "order.session", code });
       }
+      // Écriture SÉPARÉE et tolérante de `stripe_account_id` (0075) : le compte
+      // connecté sur lequel la charge DIRECTE a été créée, indispensable pour
+      // rembourser (le refund doit repasser le même `{ stripeAccount }`).
+      // Isolée exprès — groupée avec `stripe_session_id`, une colonne 0075
+      // absente ferait échouer TOUTE la mise à jour et le refund deviendrait
+      // impossible faute de session enregistrée.
+      try {
+        const { error } = await db
+          .from("orders")
+          .update({ stripe_account_id: biz.stripe_account_id })
+          .eq("business_id", biz.id)
+          .eq("code", code);
+        if (error && !isMissingColumnError(error)) {
+          reportError(error, { where: "order.account", code });
+        }
+      } catch (e) {
+        reportError(e, { where: "order.account", code });
+      }
       return Response.json({
         ok: true,
         code,

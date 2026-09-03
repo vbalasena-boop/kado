@@ -135,6 +135,18 @@ export async function insertOrderTolerant(
  * Crée la session Stripe Checkout (Connect) : l'argent est transféré au compte
  * du commerçant, commission plateforme optionnelle
  * (KADO_ORDER_FEE_BPS + KADO_ORDER_FEE_FIXED_CENTS, cf. orderApplicationFee).
+ *
+ * CHARGE DIRECTE (`{ stripeAccount }`) : le paiement est créé SUR le compte
+ * Stripe du commerçant. L'argent ne transite JAMAIS par la plateforme — seule
+ * la commission lui est versée. Conséquences voulues : les frais Stripe et le
+ * risque d'impayé sont portés par le commerçant, et la plateforme n'encaisse
+ * pas pour le compte d'un tiers (elle ne déclare que sa commission).
+ *
+ * Contreparties à ne pas oublier :
+ *  - les événements Stripe arrivent du COMPTE CONNECTÉ : le webhook doit
+ *    accepter la signature d'un endpoint Connect (STRIPE_CONNECT_WEBHOOK_SECRET) ;
+ *  - tout appel Stripe ultérieur sur ce paiement (lecture de session, refund)
+ *    doit repasser `{ stripeAccount }` — d'où `orders.stripe_account_id` (0075).
  */
 /**
  * Commission plateforme prélevée sur une commande payée en ligne, en centimes.
@@ -188,7 +200,8 @@ export function createOrderCheckout(opts: {
       },
     })),
     payment_intent_data: {
-      transfer_data: { destination: biz.stripe_account_id },
+      // Charge DIRECTE : aucun `transfer_data`. La commission plateforme reste
+      // prélevée par Stripe et versée au compte plateforme.
       ...(appFee > 0 ? { application_fee_amount: appFee } : {}),
       description: `Commande ${code} · ${biz.name}`,
     },
@@ -196,7 +209,9 @@ export function createOrderCheckout(opts: {
     success_url: `${origin}/${biz.slug}/suivi/${code}`,
     cancel_url: `${origin}/${biz.slug}/commander?canceled=1`,
     metadata: { kind: "order", order_code: code, business_id: biz.id },
-  });
+  },
+  // ↓ LA bascule : la session est créée SUR le compte du commerçant.
+  { stripeAccount: biz.stripe_account_id });
 }
 
 function lineRows(lines: OrderLine[]): string {

@@ -8,12 +8,20 @@ import { refundEligibility } from "@/lib/orders";
  * réutilisé tel quel à l'annulation (story 11.2) — zéro duplication du chemin
  * argent.
  *
- * Le paiement C&C est une charge « destination » : le refund est émis sur le
- * compte PLATEFORME (`stripe` sans `{ stripeAccount }`) avec
- * `reverse_transfer: true` (reprend l'argent chez le commerçant) et
- * `refund_application_fee: true` (rend la commission plateforme). Clé
- * d'idempotence dérivée de `order.id` → un rejeu (clic manuel « Rembourser »
- * après l'annulation, retry réseau…) ne double-rembourse jamais.
+ * DEUX SCHÉMAS DE PAIEMENT cohabitent, distingués par `order.stripe_account_id`
+ * (migration 0075) :
+ *
+ *  - **charge DIRECTE** (colonne renseignée — schéma actuel) : le paiement vit
+ *    sur le compte DU COMMERÇANT. Session et refund doivent donc repasser
+ *    `{ stripeAccount }`. Pas de `reverse_transfer` : aucun transfert n'a eu
+ *    lieu, l'argent n'a jamais quitté son compte. `refund_application_fee`
+ *    rend la commission encaissée par la plateforme.
+ *  - **charge « destination »** (colonne vide — commandes antérieures) : le
+ *    refund est émis sur le compte PLATEFORME avec `reverse_transfer: true`
+ *    (reprend l'argent chez le commerçant).
+ *
+ * Clé d'idempotence dérivée de `order.id` → un rejeu (clic manuel
+ * « Rembourser » après l'annulation, retry réseau…) ne double-rembourse jamais.
  *
  * Ordre strict (anti-corruption d'état) :
  *   1. éligibilité (payée en ligne, pas déjà remboursée) ;
@@ -41,6 +49,7 @@ export async function performOrderRefund(
     business_id: string;
     paid?: boolean | null;
     stripe_session_id?: string | null;
+    stripe_account_id?: string | null;
     refunded?: boolean | null;
   }
 ): Promise<RefundOutcome> {
@@ -49,33 +58,74 @@ export async function performOrderRefund(
   const elig = refundEligibility(order);
   if (!elig.ok) return { status: "skipped", code: elig.code };
 
+  // Compte candidat pour une charge DIRECTE : la colonne 0075 si elle est
+  // renseignée, sinon le compte Stripe actuel du commerçant. Ce repli comble la
+  // fenêtre où 0075 n'est pas encore appliquée : sans lui, une commande payée
+  // pendant cette fenêtre serait DÉFINITIVEMENT non remboursable depuis Kado.
+  let candidate = order.stripe_account_id || null;
+  if (!candidate) {
+    try {
+      const { data } = await db
+        .from("businesses")
+        .select("stripe_account_id")
+        .eq("id", order.business_id)
+        .maybeSingle();
+      candidate =
+        (data as { stripe_account_id?: string | null } | null)
+          ?.stripe_account_id || null;
+    } catch {
+      candidate = null;
+    }
+  }
+
   // 2. Récupérer le PaymentIntent depuis la Checkout Session (seul le
-  // stripe_session_id est stocké côté Kado).
+  // stripe_session_id est stocké côté Kado). La session vit sur le compte du
+  // commerçant en charge directe, sur celui de la plateforme en charge
+  // « destination » : on tente le compte connecté puis on retombe sur la
+  // plateforme. Le compte qui répond IDENTIFIE le schéma de façon certaine —
+  // le refund est ensuite émis sur ce même compte.
+  const sessionId = String(order.stripe_session_id);
   let paymentIntent: string | null = null;
-  try {
-    const session = await stripe.checkout.sessions.retrieve(
-      String(order.stripe_session_id)
-    );
-    paymentIntent =
-      typeof session.payment_intent === "string"
-        ? session.payment_intent
-        : session.payment_intent?.id ?? null;
-  } catch (e) {
+  let acct: string | null = null;
+  let lastErr: unknown = null;
+  for (const tryAcct of candidate ? [candidate, null] : [null]) {
+    try {
+      const session = await stripe.checkout.sessions.retrieve(
+        sessionId,
+        undefined,
+        tryAcct ? { stripeAccount: tryAcct } : undefined
+      );
+      paymentIntent =
+        typeof session.payment_intent === "string"
+          ? session.payment_intent
+          : session.payment_intent?.id ?? null;
+      acct = tryAcct;
+      lastErr = null;
+      break;
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  if (lastErr) {
     return {
       status: "failed",
-      detail: e instanceof Error ? e.message : "session introuvable",
+      detail:
+        lastErr instanceof Error ? lastErr.message : "session introuvable",
     };
   }
   if (!paymentIntent) return { status: "no_payment_intent" };
+  const onAccount = acct ? { stripeAccount: acct } : undefined;
 
-  // 3. Créer le refund PLATEFORME avec reverse_transfer (jamais
-  // { stripeAccount } : le C&C est une charge destination).
+  // 3. Créer le refund sur le bon compte. En charge directe, `reverse_transfer`
+  // est OMIS : il n'existe aucun transfert à annuler, et Stripe rejetterait le
+  // paramètre. `refund_application_fee` s'applique dans les deux schémas et
+  // restitue la commission prélevée par la plateforme.
   let refund: Stripe.Refund;
   try {
     refund = await stripe.refunds.create(
       {
         payment_intent: paymentIntent,
-        reverse_transfer: true,
+        ...(acct ? {} : { reverse_transfer: true }),
         refund_application_fee: true,
         // Lien fiable événement→commande pour la réconciliation par webhook
         // (`reconcileRefundEvent`) : dans le cas record_failed, `stripe_refund_id`
@@ -83,7 +133,7 @@ export async function performOrderRefund(
         // le seul moyen de retrouver la commande. `order.id` (UUID PK) suffit.
         metadata: { order_id: order.id },
       },
-      { idempotencyKey: `order-refund-${order.id}` }
+      { idempotencyKey: `order-refund-${order.id}`, ...(onAccount ?? {}) }
     );
   } catch (e) {
     return {
