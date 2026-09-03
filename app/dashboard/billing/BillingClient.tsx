@@ -75,6 +75,7 @@ export default function BillingClient({
   slug = "",
   initialAddress = "",
   initialPhone = "",
+  email = "",
 }: {
   hasSubscription: boolean;
   statusLabel: string;
@@ -89,6 +90,7 @@ export default function BillingClient({
   slug?: string;
   initialAddress?: string;
   initialPhone?: string;
+  email?: string;
 }) {
   const [loading, setLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(currentPlan);
@@ -125,6 +127,55 @@ export default function BillingClient({
       setProfBusy(false);
     }
   }
+  // E-mail de connexion modifiable (sans créer de doublon de compte)
+  const [currentEmail, setCurrentEmail] = useState(email);
+  const [newEmail, setNewEmail] = useState("");
+  const [newEmail2, setNewEmail2] = useState("");
+  const [emailBusy, setEmailBusy] = useState(false);
+  const [emailMsg, setEmailMsg] = useState<string | null>(null);
+  const [emailErr, setEmailErr] = useState<string | null>(null);
+
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail.trim());
+  const emailsMatch =
+    newEmail.trim().toLowerCase() === newEmail2.trim().toLowerCase();
+  const emailDifferent =
+    newEmail.trim().toLowerCase() !== currentEmail.trim().toLowerCase();
+  const canChangeEmail = emailValid && emailsMatch && emailDifferent;
+
+  async function changeEmail() {
+    setEmailBusy(true);
+    setEmailMsg(null);
+    setEmailErr(null);
+    try {
+      const res = await fetch("/api/dashboard/account/email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: newEmail.trim() }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (res.ok && d?.ok) {
+        setCurrentEmail(d.email || newEmail.trim().toLowerCase());
+        setNewEmail("");
+        setNewEmail2("");
+        setEmailMsg(
+          "✅ E-mail de connexion mis à jour. Dès votre prochaine connexion, utilisez cette nouvelle adresse."
+        );
+      } else if (d?.error === "email_taken") {
+        setEmailErr("Cette adresse est déjà utilisée par un autre compte.");
+      } else if (d?.error === "same_email") {
+        setEmailErr("C'est déjà votre adresse actuelle.");
+      } else if (d?.error === "rate_limited") {
+        setEmailErr("Trop de tentatives. Réessayez dans un moment.");
+      } else {
+        setEmailErr("Échec de la modification. Réessayez.");
+      }
+    } catch {
+      setEmailErr("Connexion impossible.");
+    } finally {
+      setEmailBusy(false);
+    }
+  }
+
   const [changingPlan, setChangingPlan] = useState(false);
   const [planMsg, setPlanMsg] = useState<string | null>(null);
   const [confirm, setConfirm] = useState("");
@@ -394,6 +445,67 @@ export default function BillingClient({
         {profMsg && (
           <p className="save-msg" style={{ marginTop: 10 }}>
             {profMsg}
+          </p>
+        )}
+      </div>
+
+      <div className="dash-card" style={{ maxWidth: 520 }}>
+        <h2>✉️ Mon e-mail de connexion</h2>
+        <p className="muted" style={{ marginBottom: 12 }}>
+          C'est l'adresse où vous recevez votre code pour vous connecter.
+          {currentEmail && (
+            <>
+              {" "}
+              Actuellement : <b>{currentEmail}</b>.
+            </>
+          )}
+        </p>
+        <p className="muted" style={{ marginBottom: 12 }}>
+          Vos établissements et vos données restent inchangés — seule l'adresse
+          de connexion change. <b>Ne vous reconnectez pas avec une autre adresse
+          pour la changer</b> : cela créerait un compte séparé. Utilisez ce
+          formulaire.
+        </p>
+        <label className="field">
+          <span>Nouvelle adresse e-mail</span>
+          <input
+            type="email"
+            inputMode="email"
+            autoComplete="off"
+            placeholder="nouvelle@commerce.fr"
+            value={newEmail}
+            onChange={(e) => setNewEmail(e.target.value)}
+            maxLength={200}
+          />
+        </label>
+        <label className="field">
+          <span>Confirmez la nouvelle adresse</span>
+          <input
+            type="email"
+            inputMode="email"
+            autoComplete="off"
+            placeholder="nouvelle@commerce.fr"
+            value={newEmail2}
+            onChange={(e) => setNewEmail2(e.target.value)}
+            maxLength={200}
+          />
+        </label>
+        {newEmail2.trim() !== "" && !emailsMatch && (
+          <p className="muted" style={{ margin: "0 0 10px", color: "#c0392b" }}>
+            Les deux adresses ne correspondent pas.
+          </p>
+        )}
+        <button
+          className="btn"
+          onClick={changeEmail}
+          disabled={emailBusy || !canChangeEmail}
+        >
+          {emailBusy ? "…" : "Changer mon e-mail de connexion"}
+        </button>
+        {emailErr && <p className="onboarding-err">{emailErr}</p>}
+        {emailMsg && (
+          <p className="save-msg" style={{ marginTop: 10 }}>
+            {emailMsg}
           </p>
         )}
       </div>
