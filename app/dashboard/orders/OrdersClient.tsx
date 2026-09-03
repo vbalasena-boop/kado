@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/icons";
 import { subscribeWithCurrentKey } from "@/lib/push-client";
+import { orderMatchesQuery } from "@/lib/orders";
 
 /** Scanner de QR de retrait (caméra + jsQR), rendu dans un volet plein écran. */
 function QrScanner({
@@ -162,6 +163,7 @@ export type Order = {
   service_mode?: string | null;
   table_label?: string | null;
   buzzer_no?: number | null;
+  order_no?: number | null;
   paid?: boolean | null;
   refunded?: boolean | null;
 };
@@ -225,6 +227,7 @@ export default function OrdersClient({
   const [pPrice, setPPrice] = useState("");
   const [pDesc, setPDesc] = useState("");
   const [scanning, setScanning] = useState(false);
+  const [orderQuery, setOrderQuery] = useState("");
   const [scanResult, setScanResult] = useState<string | null>(null);
   const [alertsOn, setAlertsOn] = useState(false);
   // Commande en caisse (POS)
@@ -829,9 +832,15 @@ export default function OrdersClient({
     }
   }
 
-  const fresh = orders.filter((o) => o.status === "new");
-  const ready = orders.filter((o) => o.status === "ready");
-  const past = orders.filter((o) => o.status === "done" || o.status === "cancelled");
+  // Recherche au comptoir : le client annonce son NOM ou son NUMÉRO, pas son
+  // code. Logique pure et testée dans lib/orders.
+  const matches = (o: Order) => orderMatchesQuery(o, orderQuery);
+
+  const fresh = orders.filter((o) => o.status === "new" && matches(o));
+  const ready = orders.filter((o) => o.status === "ready" && matches(o));
+  const past = orders.filter(
+    (o) => (o.status === "done" || o.status === "cancelled") && matches(o)
+  );
 
   // ---- Commande en caisse (POS) ----
   const posLines = products.filter((p) => (posQty[p.id] ?? 0) > 0);
@@ -905,7 +914,12 @@ export default function OrdersClient({
           {isBuzzer && o.buzzer_no != null ? (
             <span className="order-buzznum">N° {o.buzzer_no}</span>
           ) : (
-            <span className="order-code">{o.code}</span>
+            <>
+              {o.order_no != null && (
+                <span className="order-buzznum">N° {o.order_no}</span>
+              )}
+              <span className="order-code">{o.code}</span>
+            </>
           )}
           <b>{isBuzzer ? "Suivi client" : o.customer_name}</b>
           {o.customer_phone.trim() && (
@@ -1251,6 +1265,35 @@ export default function OrdersClient({
           </div>
         </div>
       )}
+
+      {/* ---- Recherche : le client annonce son nom ou son numéro ---- */}
+      <div className="dash-card order-search-card">
+        <label className="order-search">
+          <span aria-hidden="true">🔎</span>
+          <input
+            type="search"
+            value={orderQuery}
+            onChange={(e) => setOrderQuery(e.target.value)}
+            placeholder="Chercher : nom, n° de commande, code…"
+            aria-label="Chercher une commande par nom, numéro ou code"
+          />
+          {orderQuery && (
+            <button
+              type="button"
+              className="btn-mini soft"
+              onClick={() => setOrderQuery("")}
+            >
+              Effacer
+            </button>
+          )}
+        </label>
+        {orderQuery.trim() && (
+          <p className="muted" style={{ margin: "8px 0 0" }}>
+            {fresh.length + ready.length + past.length} résultat
+            {fresh.length + ready.length + past.length > 1 ? "s" : ""}
+          </p>
+        )}
+      </div>
 
       {/* ---- Commandes en cours ---- */}
       <div className="dash-card">

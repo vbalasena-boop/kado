@@ -120,7 +120,11 @@ export default function OrderClient({
   const [table, setTable] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [done, setDone] = useState<{ code: string; total: number } | null>(
+  const [done, setDone] = useState<{
+    code: string;
+    total: number;
+    orderNo?: number | null;
+  } | null>(
     null
   );
   const [status, setStatus] = useState<string>("new");
@@ -267,7 +271,7 @@ export default function OrderClient({
         window.location.href = d.checkoutUrl;
         return;
       } else if (res.ok) {
-        setDone({ code: d.code, total: d.total_cents });
+        setDone({ code: d.code, total: d.total_cents, orderNo: d.order_no ?? null });
         setCheckout(false);
       } else if (res.status === 429) {
         setErr("Trop de tentatives — patientez une minute puis réessayez.");
@@ -365,6 +369,11 @@ export default function OrderClient({
               ? <><b>{name}</b> prépare votre commande — <b>restez à votre place</b>, on vous prévient dès que c'est prêt.</>
               : <><b>{name}</b> prépare votre commande. Présentez ce code au retrait :</>}
           </p>
+          {done.orderNo != null && (
+            <div className="uber-done-no">
+              Commande <b>n°{done.orderNo}</b>
+            </div>
+          )}
           <div className="uber-done-code">{done.code}</div>
           {qrUrl && (
             // eslint-disable-next-line @next/next/no-img-element
@@ -374,7 +383,9 @@ export default function OrderClient({
             Total à régler sur place : <b>{euros(done.total)} €</b>
           </p>
           <p className="uber-fine">
-            💡 Le commerçant scanne ce QR (ou tape le code) au retrait.{" "}
+            💡 Au retrait, donnez votre <b>nom</b> et votre{" "}
+            <b>{done.orderNo != null ? "numéro" : "code"}</b> — ou laissez le
+            commerçant scanner le QR.{" "}
             <b>Gardez cette page ouverte</b> pour suivre votre commande en
             direct.
             {notifyReady

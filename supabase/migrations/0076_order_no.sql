@@ -1,0 +1,17 @@
+-- Numéro de commande lisible, annoncé au comptoir (« commande n°12 »).
+--
+-- Alimenté par la MÊME séquence quotidienne que les numéros de bipeur
+-- (fonction `next_buzzer_no`, table `buzzer_counters`, migration 0067) : un
+-- seul compteur par commerce et par jour, remis à zéro chaque jour. Deux
+-- clients d'un même commerce ne peuvent donc jamais porter le même numéro le
+-- même jour, qu'ils soient en click & collect ou au comptoir.
+--
+-- Colonne SÉPARÉE de `buzzer_no` à dessein : `buzzer_no is not null` sert de
+-- détecteur du mode bipeur (page de suivi, fiche commande). La remplir pour
+-- toutes les commandes ferait passer chaque click & collect pour une commande
+-- au comptoir.
+--
+-- Ne remplace PAS `orders.code` : ce dernier reste la clé technique (URL de
+-- suivi, QR, scanner). Un numéro court et séquentiel serait devinable dans une
+-- URL publique ; le code aléatoire, lui, ne l'est pas.
+alter table orders add column if not exists order_no int;

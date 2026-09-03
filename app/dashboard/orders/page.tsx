@@ -112,7 +112,9 @@ export default async function OrdersPage() {
       "id, code, customer_name, customer_phone, pickup_at, note, items, total_cents, status, created_at";
     let { data: o, error: oErr } = (await db
       .from("orders")
-      .select(`${baseCols}, service_mode, table_label, buzzer_no, paid, refunded`)
+      .select(
+        `${baseCols}, service_mode, table_label, buzzer_no, order_no, paid, refunded`
+      )
       .eq("business_id", business.id)
       .order("created_at", { ascending: false })
       .limit(150)) as { data: any[] | null; error: any };
