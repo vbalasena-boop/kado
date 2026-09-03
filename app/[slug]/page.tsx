@@ -2,7 +2,7 @@ import { readPlayerId } from "@/lib/player";
 import { redirect } from "next/navigation";
 import { unstable_cache } from "next/cache";
 import { getAdminClient } from "@/lib/supabase/admin";
-import { hasAccess, hasModule, getSessionUser } from "@/lib/auth";
+import { hasAccess, hasModule, hasClickCollect, getSessionUser } from "@/lib/auth";
 import { isAdminEmail } from "@/lib/admin-guard";
 import { visibleHighlight } from "@/lib/highlight";
 import Game from "./Game";
@@ -146,13 +146,10 @@ export default async function Page({
 
   // Click & collect : issu de la lecture mise en cache ci-dessus.
   let orderEnabled = !!biz.click_collect;
-  // Essai gratuit ou formule « Complet » (tout inclus) : la commande est
-  // ouverte — mais le bouton public n'apparaît que si le commerçant a déjà
-  // mis des produits au catalogue. (Lecture dynamique, hors cache.)
-  if (
-    !orderEnabled &&
-    (biz.subscription_status === "trial" || biz.plan === "complet")
-  ) {
+  // Commande incluse par la formule (essai, « Comptoir », « Complet ») : le
+  // bouton public n'apparaît que si le commerçant a déjà mis des produits au
+  // catalogue. Règle UNIQUE (lib/auth). (Lecture dynamique, hors cache.)
+  if (!orderEnabled && hasClickCollect(bizForPlan)) {
     try {
       const { count } = await getAdminClient()
         .from("products")
