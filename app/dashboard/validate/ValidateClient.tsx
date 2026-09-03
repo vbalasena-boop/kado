@@ -130,12 +130,19 @@ export default function ValidateClient() {
     }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" },
+        // `ideal` (et non une valeur stricte) : repli sur la caméra frontale
+        // si l'appareil n'a pas de caméra arrière, au lieu d'échouer.
+        video: { facingMode: { ideal: "environment" } },
       });
       streamRef.current = stream;
       setScanning(true);
       scanningRef.current = true;
-      const video = videoRef.current!;
+      // Laisse React AFFICHER le <video> avant d'y attacher le flux : sans ça,
+      // videoRef.current est encore null → l'assignation plantait (message
+      // trompeur « Impossible d'ouvrir la caméra »).
+      await new Promise((r) => requestAnimationFrame(() => r(null)));
+      const video = videoRef.current;
+      if (!video) throw new Error("video_not_ready");
       video.srcObject = stream;
       await video.play();
 
@@ -220,21 +227,25 @@ export default function ValidateClient() {
         </button>
       </div>
 
+      {/* Caméra PARTAGÉE : toujours montée (cachée hors scan) → videoRef existe
+          quand on attache le flux, et le scan marche depuis les deux onglets. */}
+      <div className="scan-box" hidden={!scanning} style={{ maxWidth: 520 }}>
+        <video ref={videoRef} playsInline muted className="scan-video" />
+        <button className="btn-secondary" onClick={stopScan}>
+          Arrêter le scan
+        </button>
+      </div>
+      {scanErr && (
+        <p className="err" style={{ maxWidth: 520, marginTop: 10 }}>{scanErr}</p>
+      )}
+
       {tab === "gift" ? (
       <div className="dash-card" style={{ maxWidth: 520 }}>
-        {scanning ? (
-          <div className="scan-box">
-            <video ref={videoRef} playsInline muted className="scan-video" />
-            <button className="btn-secondary" onClick={stopScan}>
-              Arrêter le scan
-            </button>
-          </div>
-        ) : (
+        {!scanning && (
           <button className="btn" onClick={startScan} disabled={loading}>
             <Icon name="qr" size={18} /> Scanner un QR code
           </button>
         )}
-        {scanErr && <p className="err" style={{ marginTop: 10 }}>{scanErr}</p>}
 
         <div className="scan-sep">ou saisir le code</div>
 
