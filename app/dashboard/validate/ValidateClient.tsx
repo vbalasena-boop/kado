@@ -119,6 +119,15 @@ export default function ValidateClient() {
       );
       return;
     }
+    // Contexte non sécurisé (http) ou navigateur sans caméra web : l'API est
+    // absente → message clair au lieu d'une exception opaque.
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setScanErr(
+        "La caméra n'est pas disponible ici (connexion non sécurisée ou " +
+          "navigateur non compatible). Saisissez le code à la main."
+      );
+      return;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "environment" },
@@ -157,8 +166,29 @@ export default function ValidateClient() {
         requestAnimationFrame(tick);
       };
       requestAnimationFrame(tick);
-    } catch {
-      setScanErr("Accès à la caméra refusé.");
+    } catch (e) {
+      // Message PRÉCIS selon la cause : « refusé » ne doit s'afficher que pour
+      // un vrai refus de permission, pas pour une caméra absente/occupée.
+      const name = (e as { name?: string } | null)?.name || "";
+      if (name === "NotAllowedError" || name === "SecurityError") {
+        setScanErr(
+          "Accès à la caméra refusé. Autorisez la caméra pour ce site : icône 🔒 " +
+            "dans la barre d'adresse → Caméra → Autoriser, puis réessayez. " +
+            "Sur Mac : Réglages Système → Confidentialité et sécurité → Caméra → " +
+            "activez votre navigateur."
+        );
+      } else if (name === "NotFoundError" || name === "OverconstrainedError") {
+        setScanErr(
+          "Aucune caméra détectée sur cet appareil. Saisissez le code à la main."
+        );
+      } else if (name === "NotReadableError" || name === "AbortError") {
+        setScanErr(
+          "La caméra est déjà utilisée par une autre application (visio, " +
+            "FaceTime…). Fermez-la puis réessayez."
+        );
+      } else {
+        setScanErr("Impossible d'ouvrir la caméra. Saisissez le code à la main.");
+      }
       stopScan();
     }
   }
