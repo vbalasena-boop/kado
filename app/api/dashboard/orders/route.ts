@@ -98,6 +98,23 @@ export const POST = merchantRoute({
       refundReadable = false;
     }
     if (!order) return Response.json({ error: "not_found" }, { status: 404 });
+
+    // Compte de la charge directe (0075), lu À PART : l'ajouter au select
+    // ci-dessus ferait basculer sur le repli MINIMAL si la colonne manque, et
+    // on perdrait `paid` / `refunded` / `customer_email`. Absent → détection
+    // automatique dans `performOrderRefund`.
+    try {
+      const { data: acc } = await db
+        .from("orders")
+        .select("stripe_account_id")
+        .eq("id", order.id)
+        .maybeSingle();
+      order.stripe_account_id =
+        (acc as { stripe_account_id?: string | null } | null)
+          ?.stripe_account_id ?? null;
+    } catch {
+      /* colonne 0075 absente : détection automatique */
+    }
     if (!(ALLOWED[order.status] ?? []).includes(next)) {
       return Response.json(
         {

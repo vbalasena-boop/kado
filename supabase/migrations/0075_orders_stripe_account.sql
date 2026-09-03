@@ -1,0 +1,12 @@
+-- Compte Stripe connecté sur lequel la commande a été encaissée.
+--
+-- Le click & collect passe en charge DIRECTE : le paiement est créé sur le
+-- compte Stripe DU COMMERÇANT, l'argent ne transite plus par la plateforme.
+-- On mémorise le compte utilisé pour pouvoir rembourser correctement :
+--   - colonne renseignée  -> charge directe  : refund AVEC { stripeAccount },
+--                            sans reverse_transfer (aucun transfert à annuler) ;
+--   - colonne vide (NULL) -> ancienne charge « destination » : refund sur le
+--                            compte plateforme avec reverse_transfer.
+-- Les commandes déjà encaissées avant cette migration restent donc
+-- remboursables selon l'ancien schéma.
+alter table orders add column if not exists stripe_account_id text;

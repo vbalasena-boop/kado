@@ -441,3 +441,72 @@ describe("POST /api/dashboard/orders/refund", () => {
     expect(h.db.updatePayload).toBeNull();
   });
 });
+
+// ---------------------------------------------------------------------------
+// Charge DIRECTE (0075) : le paiement vit sur le compte du commerçant.
+// ---------------------------------------------------------------------------
+describe("performOrderRefund — charge directe", () => {
+  const DIRECT = { ...ELIGIBLE, stripe_account_id: "acct_42" };
+
+  it("session ET refund sont émis SUR le compte du commerçant", async () => {
+    const retrieve = vi.fn().mockResolvedValue({ payment_intent: "pi_9" });
+    const create = vi.fn().mockResolvedValue({ id: "re_9" });
+
+    const out = await performOrderRefund(
+      fakeDb(),
+      fakeStripe(retrieve, create),
+      DIRECT
+    );
+
+    expect(out).toEqual({ status: "refunded", stripeRefundId: "re_9" });
+    // La session vit sur le compte connecté : sans cette option, Stripe
+    // répondrait « No such checkout.session ».
+    expect(retrieve.mock.calls[0][2]).toEqual({ stripeAccount: "acct_42" });
+    const [params, opts] = create.mock.calls[0];
+    // Aucun transfert n'a eu lieu → reverse_transfer doit être ABSENT.
+    expect(params.reverse_transfer).toBeUndefined();
+    expect(params.refund_application_fee).toBe(true);
+    expect(params.payment_intent).toBe("pi_9");
+    expect(opts).toEqual({
+      idempotencyKey: "order-refund-ord-9",
+      stripeAccount: "acct_42",
+    });
+  });
+
+  it("retombe sur la plateforme si la session est introuvable sur le compte", async () => {
+    // Ancienne commande « destination » dont la colonne 0075 serait renseignée
+    // à tort : la session ne répond que côté plateforme.
+    const retrieve = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("No such checkout.session"))
+      .mockResolvedValueOnce({ payment_intent: "pi_9" });
+    const create = vi.fn().mockResolvedValue({ id: "re_9" });
+
+    const out = await performOrderRefund(
+      fakeDb(),
+      fakeStripe(retrieve, create),
+      DIRECT
+    );
+
+    expect(out).toEqual({ status: "refunded", stripeRefundId: "re_9" });
+    expect(retrieve).toHaveBeenCalledTimes(2);
+    const [params, opts] = create.mock.calls[0];
+    // Schéma « destination » retrouvé : reverse_transfer requis, pas de compte.
+    expect(params.reverse_transfer).toBe(true);
+    expect(opts).toEqual({ idempotencyKey: "order-refund-ord-9" });
+  });
+
+  it("échoue proprement si aucun compte ne connaît la session", async () => {
+    const retrieve = vi.fn().mockRejectedValue(new Error("introuvable"));
+    const create = vi.fn();
+
+    const out = await performOrderRefund(
+      fakeDb(),
+      fakeStripe(retrieve, create),
+      DIRECT
+    );
+
+    expect(out.status).toBe("failed");
+    expect(create).not.toHaveBeenCalled();
+  });
+});
