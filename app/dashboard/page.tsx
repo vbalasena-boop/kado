@@ -76,6 +76,7 @@ export default async function DashboardHome() {
     signupsRpc,
     pendingRes,
     segRpc,
+    reviewClicksRes,
   ] = await Promise.all([
     admin
       .from("wheel_configs")
@@ -118,10 +119,23 @@ export default async function DashboardHome() {
           cutoff: segCutoffIso,
         })
       : Promise.resolve({ data: null, error: null }),
+    // Clics sur le lien « Laisser un avis Google » (comptage indexé, table 0077).
+    // Lecture tolérante : si la table n'est pas déployée, on retombe sur 0 sans
+    // faire échouer la page (voir `reviewClicks` plus bas).
+    showRoue
+      ? admin
+          .from("review_clicks")
+          .select("*", { count: "exact", head: true })
+          .eq("business_id", business.id)
+      : Promise.resolve({ count: null, error: null }),
   ]);
 
   const cfg = cfgRes.data;
   const leadsCount = leadsRes.count;
+  // Clics sur le lien avis Google (table 0077). Remplace l'ancien compteur figé
+  // basé sur `play_type = 'review'` (les tours avis n'existent plus depuis
+  // l'epic 9). Tolérant : table absente / erreur → 0.
+  const reviewClicks = reviewClicksRes.error ? 0 : reviewClicksRes.count ?? 0;
 
   let stats = playRpc.error ? null : playStatsFromRpc(playRpc.data);
   if (!stats) {
@@ -345,8 +359,8 @@ export default async function DashboardHome() {
           <h2>🚀 Ce que Kado vous a apporté</h2>
           <div className="hero-recap-grid">
             <div className="hero-recap-item">
-              <b>{review}</b>
-              <span>clients envoyés vers vos avis Google</span>
+              <b>{reviewClicks}</b>
+              <span>clics vers vos avis Google</span>
             </div>
             <div className="hero-recap-item">
               <b>{insta}</b>
@@ -451,8 +465,8 @@ export default async function DashboardHome() {
                 <Icon name="star" size={22} />
               </div>
               <div>
-                <div className="stat-n">{review}</div>
-                <div className="stat-l">via Avis Google</div>
+                <div className="stat-n">{reviewClicks}</div>
+                <div className="stat-l">Clics avis Google</div>
               </div>
             </div>
             <div className="stat">

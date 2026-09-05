@@ -577,6 +577,25 @@ export default function Game({
   // récompense ni de blocage lié à l'avis.
   const [reviewClicked, setReviewClicked] = useState(false);
   const [reviewNudged, setReviewNudged] = useState(false);
+
+  /** Clic sur le lien avis Google : mémorise (pour ne plus relancer) ET
+   *  enregistre le clic côté serveur (mesure commerçant). Best-effort et jamais
+   *  en mode test (« rien n'est enregistré ») : un échec réseau est ignoré,
+   *  le lien s'ouvre de toute façon dans un nouvel onglet. */
+  const onReviewClick = useCallback(() => {
+    setReviewClicked(true);
+    if (preview) return;
+    try {
+      fetch("/api/review-click", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug }),
+        keepalive: true,
+      }).catch(() => {});
+    } catch {
+      /* silencieux : la mesure ne doit jamais gêner le clic */
+    }
+  }, [preview, slug]);
   // Anti-doublon : dernier code auto-envoyé, et dernier e-mail posté à /api/lead.
   const autoSentCodeRef = useRef<string | null>(null);
   const leadSentEmailRef = useRef<string | null>(null);
@@ -1530,7 +1549,7 @@ export default function Game({
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => {
-                    setReviewClicked(true);
+                    onReviewClick();
                     leavePrize();
                   }}
                 >
@@ -1677,7 +1696,7 @@ export default function Game({
                     href={reviewHref}
                     shopName={name}
                     inline
-                    onClick={() => setReviewClicked(true)}
+                    onClick={onReviewClick}
                   />
                 )}
                 <p className="fine">
@@ -1728,7 +1747,7 @@ export default function Game({
                     href={reviewHref}
                     shopName={name}
                     inline
-                    onClick={() => setReviewClicked(true)}
+                    onClick={onReviewClick}
                   />
                 )}
                 <p className="fine">
@@ -1762,7 +1781,7 @@ export default function Game({
           screen !== "prize" &&
           screen !== "done" &&
           screen !== "nudge" && (
-            <ReviewCta href={reviewHref} onClick={() => setReviewClicked(true)} />
+            <ReviewCta href={reviewHref} onClick={onReviewClick} />
           )}
         {orderEnabled && (
           <a className="game-order-cta" href={`/${slug}/commander`}>
