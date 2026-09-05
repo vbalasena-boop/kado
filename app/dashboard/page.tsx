@@ -77,6 +77,7 @@ export default async function DashboardHome() {
     pendingRes,
     segRpc,
     reviewClicksRes,
+    scansRes,
   ] = await Promise.all([
     admin
       .from("wheel_configs")
@@ -128,6 +129,14 @@ export default async function DashboardHome() {
           .select("*", { count: "exact", head: true })
           .eq("business_id", business.id)
       : Promise.resolve({ count: null, error: null }),
+    // Scans de la page de jeu (ouverture du QR, table 0078). 1re marche de
+    // l'entonnoir. Lecture tolérante : table absente / erreur → 0.
+    showRoue
+      ? admin
+          .from("scans")
+          .select("*", { count: "exact", head: true })
+          .eq("business_id", business.id)
+      : Promise.resolve({ count: null, error: null }),
   ]);
 
   const cfg = cfgRes.data;
@@ -136,6 +145,11 @@ export default async function DashboardHome() {
   // basé sur `play_type = 'review'` (les tours avis n'existent plus depuis
   // l'epic 9). Tolérant : table absente / erreur → 0.
   const reviewClicks = reviewClicksRes.error ? 0 : reviewClicksRes.count ?? 0;
+  // Scans du QR (table 0078). Tolérant : table absente / erreur → 0. Comme les
+  // scans ne sont comptés que depuis leur déploiement, ils peuvent être <
+  // aux tours joués (historiques) pendant quelques semaines : l'entonnoir en
+  // tient compte (barres bornées, taux scan→jeu masqué tant qu'il dépasse 100%).
+  const scans = scansRes.error ? 0 : scansRes.count ?? 0;
 
   let stats = playRpc.error ? null : playStatsFromRpc(playRpc.data);
   if (!stats) {
@@ -528,50 +542,70 @@ export default async function DashboardHome() {
             </div>
           )}
 
-          {/* Entonnoir « parcours client » : à partir des données existantes
-              (tours joués → dont via Instagram → clics avis Google). Les barres
-              sont proportionnelles au 1er palier (tours joués) ; largeur bornée
-              à 100 % car les clics avis ne sont pas un sous-ensemble strict des
-              tours. Rendu uniquement s'il y a des tours (total > 0). */}
-          <div className="dash-card">
-            <h2>🔎 Le parcours de vos clients</h2>
-            <p className="muted" style={{ marginBottom: 14 }}>
-              Ce que vos clients font une fois le jeu ouvert — du tour joué au
-              clic vers vos avis Google.
-            </p>
-            <ul className="funnel">
-              {[
-                { key: "plays", emoji: "🎡", label: "Tours joués", n: total, cls: "s1" },
-                { key: "insta", emoji: "📸", label: "dont via Instagram", n: insta, cls: "s2" },
-                { key: "review", emoji: "⭐", label: "Clics vers vos avis Google", n: reviewClicks, cls: "s3" },
-              ].map((step) => {
-                const pct = total > 0 ? Math.round((step.n / total) * 100) : 0;
-                return (
-                  <li key={step.key}>
-                    <span className="funnel-label">
-                      <span aria-hidden="true">{step.emoji}</span> {step.label}
-                    </span>
-                    <span className="funnel-bar">
-                      <span
-                        className={`funnel-fill ${step.cls}`}
-                        style={{ width: `${Math.min(pct, 100)}%` }}
-                      />
-                    </span>
-                    <b className="funnel-n">
-                      {step.n}
-                      {step.key !== "plays" && total > 0 && (
-                        <small className="funnel-pct"> · {pct}%</small>
-                      )}
-                    </b>
-                  </li>
-                );
-              })}
-            </ul>
-            <p className="muted" style={{ marginTop: 10, fontSize: 12.5 }}>
-              Les % sont rapportés au nombre de tours joués. Le lien avis est
-              facultatif et non récompensé.
-            </p>
-          </div>
+          {/* Entonnoir « parcours client » : scan du QR → tour joué → dont via
+              Instagram → clics avis Google. Barres proportionnelles au plus grand
+              palier (scans ou tours) et bornées à 100 %. Les scans n'étant comptés
+              que depuis leur déploiement, le taux « scan → jeu » n'est affiché que
+              lorsqu'il est cohérent (tours ≤ scans) ; les % Instagram/Avis restent
+              rapportés aux tours joués. */}
+          {(total > 0 || scans > 0) && (() => {
+            const base = Math.max(scans, total, 1);
+            const steps = [
+              { key: "scan", emoji: "📱", label: "Scans du QR", n: scans, cls: "s0" },
+              { key: "plays", emoji: "🎡", label: "Tours joués", n: total, cls: "s1" },
+              { key: "insta", emoji: "📸", label: "dont via Instagram", n: insta, cls: "s2" },
+              { key: "review", emoji: "⭐", label: "Clics vers vos avis Google", n: reviewClicks, cls: "s3" },
+            ];
+            return (
+              <div className="dash-card">
+                <h2>🔎 Le parcours de vos clients</h2>
+                <p className="muted" style={{ marginBottom: 14 }}>
+                  Du scan du QR au clic vers vos avis Google — pour voir où vos
+                  clients s'arrêtent.
+                </p>
+                <ul className="funnel">
+                  {steps.map((step) => {
+                    // Taux affiché : « scan → jeu » pour les tours (masqué tant
+                    // qu'il dépasse 100 %), part des tours pour Instagram/Avis.
+                    let pct: number | null = null;
+                    if (step.key === "plays" && scans > 0 && step.n <= scans) {
+                      pct = Math.round((step.n / scans) * 100);
+                    } else if (
+                      (step.key === "insta" || step.key === "review") &&
+                      total > 0
+                    ) {
+                      pct = Math.round((step.n / total) * 100);
+                    }
+                    const width = Math.min(Math.round((step.n / base) * 100), 100);
+                    return (
+                      <li key={step.key}>
+                        <span className="funnel-label">
+                          <span aria-hidden="true">{step.emoji}</span> {step.label}
+                        </span>
+                        <span className="funnel-bar">
+                          <span
+                            className={`funnel-fill ${step.cls}`}
+                            style={{ width: `${width}%` }}
+                          />
+                        </span>
+                        <b className="funnel-n">
+                          {step.n}
+                          {pct !== null && (
+                            <small className="funnel-pct"> · {pct}%</small>
+                          )}
+                        </b>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <p className="muted" style={{ marginTop: 10, fontSize: 12.5 }}>
+                  {scans === 0
+                    ? "Le suivi des scans démarre dès la prochaine visite de la page de jeu."
+                    : "« Scan → jeu » se fiabilise avec le temps (les scans ne sont comptés que depuis leur mise en place). Le lien avis est facultatif et non récompensé."}
+                </p>
+              </div>
+            );
+          })()}
 
           <div className="dash-card">
             <h2>Cadeaux distribués</h2>

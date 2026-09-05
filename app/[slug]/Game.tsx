@@ -616,6 +616,34 @@ export default function Game({
     code: string | null;
   } | null>(null);
 
+  // Scan de la page (≈ ouverture du QR) : enregistré UNE fois par appareil et
+  // par jour (dédup localStorage) pour mesurer la 1re marche de l'entonnoir
+  // « scan → jeu » sans gonfler le volume d'écritures. Jamais en mode test/démo.
+  // Best-effort : un échec (stockage indispo, réseau) n'a aucune conséquence.
+  useEffect(() => {
+    if (preview || demo) return;
+    const today = new Date().toISOString().slice(0, 10);
+    const key = `kado_scan_${slug}_${today}`;
+    try {
+      if (localStorage.getItem(key)) return; // déjà compté aujourd'hui
+      localStorage.setItem(key, "1");
+    } catch {
+      /* stockage indisponible : on compte quand même ce chargement (au plus 1
+         par montage, l'effet ne se rejoue pas), sans dédup inter-chargements. */
+    }
+    try {
+      fetch("/api/scan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug }),
+        keepalive: true,
+      }).catch(() => {});
+    } catch {
+      /* silencieux : la mesure ne doit jamais gêner le joueur */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     let alive = true;
     // Nouveau lot affiché → on réinitialise le formulaire "recevoir par e-mail"
