@@ -1193,6 +1193,45 @@ canvas#confetti {
   height: 100%;
   background: linear-gradient(90deg, #8b6cff, #6b3ff0);
 }
+
+/* Entonnoir « parcours client » (tableau de bord) : barres horizontales
+   proportionnelles au 1er palier, une couleur par étape. */
+.funnel {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.funnel li {
+  display: grid;
+  grid-template-columns: minmax(120px, 1.3fr) 2fr auto;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+}
+.funnel-label { font-weight: 600; }
+.funnel-bar {
+  background: #efeaf9;
+  border-radius: 8px;
+  height: 14px;
+  overflow: hidden;
+}
+.funnel-fill {
+  display: block;
+  height: 100%;
+  border-radius: 8px;
+  min-width: 3px;
+  transition: width 0.4s ease;
+}
+.funnel-fill.s1 { background: linear-gradient(90deg, #8b6cff, #6b3ff0); }
+.funnel-fill.s2 { background: linear-gradient(90deg, #f26bd0, #d63ba6); }
+.funnel-fill.s3 { background: linear-gradient(90deg, #ffc24d, #e0a020); }
+.funnel-n { font-weight: 800; white-space: nowrap; }
+.funnel-pct { font-weight: 600; color: var(--cream-dim, #6b6480); }
+@media (max-width: 520px) {
+  .funnel li { grid-template-columns: 1fr auto; }
+  .funnel-bar { grid-column: 1 / -1; order: 3; }
+}
 /* Graphique de tendance (barres journalières) */
 .trend-chart {
   width: 100%;
