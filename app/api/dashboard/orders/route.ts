@@ -4,6 +4,7 @@ import { getAdminClient } from "@/lib/supabase/admin";
 import { sendEmail, emailLayout } from "@/lib/email";
 import { escapeHtml } from "@/lib/campaigns";
 import { pushToSubscriptionDetailed } from "@/lib/push";
+import { sendSms } from "@/lib/sms";
 import { getStripe } from "@/lib/stripe";
 import { reportError } from "@/lib/report";
 import { isMissingColumnError } from "@/lib/db-errors";
@@ -115,6 +116,21 @@ export const POST = merchantRoute({
     } catch {
       /* colonne 0075 absente : détection automatique */
     }
+    // Téléphone client + numéro lisible, lus À PART (mêmes raisons que ci-dessus)
+    // pour l'éventuel SMS « c'est prêt ». Colonnes toujours présentes pour le
+    // téléphone ; `order_no` peut manquer (0076) → simplement absent du message.
+    try {
+      const { data: extra } = await db
+        .from("orders")
+        .select("customer_phone, order_no")
+        .eq("id", order.id)
+        .maybeSingle();
+      order.customer_phone = (extra as any)?.customer_phone ?? null;
+      order.order_no = (extra as any)?.order_no ?? null;
+    } catch {
+      order.customer_phone = null;
+      order.order_no = null;
+    }
     if (!(ALLOWED[order.status] ?? []).includes(next)) {
       return Response.json(
         {
@@ -209,6 +225,37 @@ export const POST = merchantRoute({
       } catch {
         pushResult = "failed"; // push best effort
         pushReason = "error";
+      }
+      // SMS « c'est prêt » (opt-in par établissement, 0077). Best effort : ne
+      // bloque jamais le passage en « prête ». Uniquement à la transition
+      // « ready » (jamais à l'annulation), et seulement si la clé SMS est
+      // configurée (sinon `sendSms` renvoie « disabled » sans rien facturer).
+      if (!isCancel && order.customer_phone) {
+        let smsOn = false;
+        try {
+          const { data: cfg } = await db
+            .from("businesses")
+            .select("sms_on_ready")
+            .eq("id", business.id)
+            .maybeSingle();
+          smsOn = !!(cfg as { sms_on_ready?: boolean | null } | null)?.sms_on_ready;
+        } catch {
+          smsOn = false; // colonne 0077 absente : SMS désactivé
+        }
+        if (smsOn) {
+          try {
+            const noPart = order.order_no != null ? ` n°${order.order_no}` : "";
+            await sendSms({
+              to: order.customer_phone,
+              sender: business.name,
+              // Sans accents : garde le SMS sur 1 segment (160 car.) et évite
+              // les soucis d'encodage des passerelles.
+              text: `Votre commande${noPart} chez ${business.name} est prete ! Venez la recuperer.`,
+            });
+          } catch {
+            /* le SMS ne doit jamais faire échouer la mise à jour de statut */
+          }
+        }
       }
       // E-mail au client (s'il a laissé son adresse)
       try {
