@@ -330,7 +330,7 @@ function ReviewCta({
           <span>30 secondes qui nous aident énormément 🙏</span>
         </div>
         <a
-          className="btn review-card-btn"
+          className="btn review-card-btn review-pulse"
           href={href}
           target="_blank"
           rel="noopener noreferrer"
@@ -1525,7 +1525,7 @@ export default function Game({
                   libre.
                 </p>
                 <a
-                  className="btn"
+                  className="btn review-pulse"
                   href={reviewHref}
                   target="_blank"
                   rel="noopener noreferrer"
