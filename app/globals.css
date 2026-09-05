@@ -3856,6 +3856,95 @@ canvas#confetti {
 }
 .review-cta .rc-main { font-weight: 700; font-size: 15px; }
 .review-cta .rc-sub { font-size: 12px; opacity: 0.75; font-weight: 500; }
+/* Carte avis « écran de résultat » : même lien neutre (facultatif, non
+   récompensé), mais mis en évidence au nom du commerce, là où le client est
+   le plus réceptif (juste après son lot). */
+.review-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  margin: 18px 0 6px;
+  padding: 16px 14px 14px;
+  background: var(--surface-glass-2, rgba(255, 255, 255, 0.1));
+  border: 1px solid var(--stroke);
+  border-radius: 16px;
+}
+.review-card-head {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  color: var(--cream);
+}
+.review-card-head b { font-size: 16.5px; font-weight: 800; }
+.review-card-head span:not(.review-card-stars) { font-size: 13.5px; opacity: 0.85; }
+.review-card-stars {
+  color: #ffc24d;
+  font-size: 18px;
+  letter-spacing: 3px;
+  line-height: 1;
+}
+.review-card .review-card-btn {
+  width: 100%;
+  margin-top: 4px;
+  text-decoration: none;
+}
+.review-card-sub { font-size: 12px; opacity: 0.7; color: var(--cream); }
+
+/* Relance avis unique (« avant de continuer ») */
+.nudge {
+  text-align: center;
+  padding: 8px 0 0;
+}
+.nudge .big { font-size: 56px; line-height: 1; margin-bottom: 10px; }
+.nudge h2 { margin: 0 0 8px; font-size: 22px; }
+.nudge p { margin: 0 0 18px; font-size: 15px; line-height: 1.5; opacity: 0.9; }
+.nudge .btn { width: 100%; text-decoration: none; }
+.nudge .fine { margin-top: 14px; }
+
+/* Liens stylés en bouton (étape Instagram, carte avis, relance) */
+a.btn {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+}
+
+/* ===== Étape Instagram : ouvrir le compte, puis revenir jouer ===== */
+.ig-step {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 18px;
+}
+.ig-step .btn { width: 100%; }
+.ig-step .btn.ghost {
+  background: transparent;
+  color: var(--cream);
+  border: 1px solid var(--stroke);
+  box-shadow: none;
+  opacity: 0.85;
+}
+.ig-step .btn.ghost:hover { opacity: 1; }
+.ig-hint {
+  margin: -2px 0 0;
+  font-size: 12.5px;
+  opacity: 0.7;
+  text-align: center;
+}
+.link-back {
+  display: block;
+  margin: 12px auto 0;
+  background: none;
+  border: none;
+  color: inherit;
+  opacity: 0.7;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 8px;
+  font: inherit;
+}
+.link-back:hover { opacity: 1; }
 
 /* Boucle produit : CTA discret vers Kado pour les joueurs qui sont
    eux-mêmes commerçants. Volontairement en retrait (pointillés, opacité)

@@ -12,6 +12,8 @@ import { NextRequest } from "next/server";
 let TRIGGER: unknown = ["instagram"];
 // Carte de fidélité active ? (gate de l'action « loyalty », mutable par test).
 let LOYALTY_ENABLED = true;
+// Lien Instagram renseigné ? (gate de l'action « instagram », mutable par test).
+let INSTAGRAM_URL: string | null = "https://instagram.com/cafe";
 
 const PRIZES = [
   {
@@ -49,7 +51,11 @@ function makeClient() {
           if (table === "wheel_configs") {
             if (cols.includes("trigger_actions"))
               return Promise.resolve({
-                data: { trigger_actions: TRIGGER, loyalty_enabled: LOYALTY_ENABLED },
+                data: {
+                  trigger_actions: TRIGGER,
+                  loyalty_enabled: LOYALTY_ENABLED,
+                  instagram_url: INSTAGRAM_URL,
+                },
                 error: null,
               });
             if (cols.includes("play_alerts"))
@@ -93,6 +99,22 @@ describe("POST /api/play — garde des actions déclenchantes", () => {
   beforeEach(() => {
     TRIGGER = ["instagram"];
     LOYALTY_ENABLED = true;
+    INSTAGRAM_URL = "https://instagram.com/cafe";
+  });
+
+  it("instagram sans lien MAIS autre action offerte → 403 (bouton mort évité)", async () => {
+    TRIGGER = ["instagram", "optin"];
+    INSTAGRAM_URL = "";
+    const res = await POST(post("instagram"));
+    expect(res.status).toBe(403);
+    expect((await res.json()).error).toBe("action_not_allowed");
+  });
+
+  it("instagram sans lien, action unique → 200 (le jeu reste jouable)", async () => {
+    TRIGGER = ["instagram"];
+    INSTAGRAM_URL = null;
+    const res = await POST(post("instagram"));
+    expect(res.status).toBe(200);
   });
 
   it("action configurée → 200 + tirage serveur", async () => {

@@ -5,6 +5,7 @@ import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { prizeIsLosing } from "@/lib/draw";
 import { sendEmail, emailLayout } from "@/lib/email";
 import { escapeHtml } from "@/lib/campaigns";
+import { reviewCtaHref } from "@/lib/wheel";
 
 export const dynamic = "force-dynamic";
 
@@ -75,6 +76,26 @@ export async function POST(req: NextRequest) {
 
   const shopName = biz.name || "le commerce";
 
+  // Avis Google : rappel NEUTRE en fin d'e-mail (facultatif, jamais lié au
+  // cadeau, proposé à tous). Lecture tolérante : jamais bloquant pour le code.
+  let reviewHref: string | null = null;
+  try {
+    const { data: rcfg } = await db
+      .from("wheel_configs")
+      .select("review_url, review_enabled")
+      .eq("business_id", biz.id)
+      .maybeSingle();
+    reviewHref = reviewCtaHref((rcfg as any) ?? {});
+  } catch {
+    reviewHref = null;
+  }
+  const reviewHtml = reviewHref
+    ? `<p style="margin:18px 0 0;padding:14px;background:#fff8e6;border-radius:12px;font-size:14px;line-height:1.5;">⭐ <b>Un avis Google pour ${escapeHtml(shopName)}&nbsp;?</b> Ça prend 30&nbsp;secondes et ça nous aide énormément.<br><a href="${escapeHtml(reviewHref)}" style="display:inline-block;margin-top:8px;background:linear-gradient(135deg,#ff6b4a,#ff4e87);color:#fff;text-decoration:none;font-weight:700;padding:10px 18px;border-radius:10px;">Laisser un avis Google</a><br><span style="font-size:12px;color:#9a94b4;">Facultatif — sans incidence sur votre cadeau.</span></p>`
+    : "";
+  const reviewText = reviewHref
+    ? `\n\nUn avis Google pour ${shopName} ? Facultatif, sans incidence sur votre cadeau : ${reviewHref}`
+    : "";
+
   // QR du code (PNG) généré côté serveur, joint en image INLINE via `cid:` —
   // les data:URI sont bloqués par Gmail, donc on passe par une pièce jointe.
   // Best-effort : si la génération échoue, on envoie l'e-mail sans le QR.
@@ -108,9 +129,10 @@ export async function POST(req: NextRequest) {
     bodyHtml: `<p>Voici votre code à présenter chez <b>${escapeHtml(shopName)}</b> :</p>
       <p style="font-size:28px;font-weight:800;letter-spacing:3px;color:#1b1035;background:#f4f0ff;border-radius:12px;padding:14px 10px;text-align:center;">${escapeHtml(code)}</p>
       ${qrHtml}
-      <p>Présentez-le à l'équipe lors de votre prochaine visite. À bientôt&nbsp;!</p>`,
+      <p>Présentez-le à l'équipe lors de votre prochaine visite. À bientôt&nbsp;!</p>
+      ${reviewHtml}`,
   });
-  const text = `Votre cadeau : ${label}\nCode : ${code}\nÀ présenter chez ${shopName}.`;
+  const text = `Votre cadeau : ${label}\nCode : ${code}\nÀ présenter chez ${shopName}.${reviewText}`;
 
   const result = await sendEmail({
     to: email,
