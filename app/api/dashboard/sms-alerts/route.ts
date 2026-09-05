@@ -9,7 +9,7 @@ const Body = z.object({ enabled: z.unknown().optional() });
 
 /**
  * Active / désactive le SMS « votre commande est prête » (drapeau
- * businesses.sms_on_ready, migration 0078).
+ * businesses.sms_on_ready, migration 0077).
  *
  * Tolérant : si la colonne n'existe pas encore, on renvoie une erreur claire
  * plutôt qu'un 500 opaque, pour que l'UI invite à passer la migration.

@@ -60,7 +60,7 @@ export default async function OrdersPage() {
       }
     }
   }
-  // SMS « c'est prêt » (0078) : lecture séparée et tolérante (colonne récente).
+  // SMS « c'est prêt » (0077) : lecture séparée et tolérante (colonne récente).
   try {
     const { data } = await db
       .from("businesses")

@@ -226,7 +226,7 @@ export const POST = merchantRoute({
         pushResult = "failed"; // push best effort
         pushReason = "error";
       }
-      // SMS « c'est prêt » (opt-in par établissement, 0078). Best effort : ne
+      // SMS « c'est prêt » (opt-in par établissement, 0077). Best effort : ne
       // bloque jamais le passage en « prête ». Uniquement à la transition
       // « ready » (jamais à l'annulation), et seulement si la clé SMS est
       // configurée (sinon `sendSms` renvoie « disabled » sans rien facturer).
@@ -240,7 +240,7 @@ export const POST = merchantRoute({
             .maybeSingle();
           smsOn = !!(cfg as { sms_on_ready?: boolean | null } | null)?.sms_on_ready;
         } catch {
-          smsOn = false; // colonne 0078 absente : SMS désactivé
+          smsOn = false; // colonne 0077 absente : SMS désactivé
         }
         if (smsOn) {
           try {
