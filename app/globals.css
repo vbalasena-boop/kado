@@ -3832,17 +3832,19 @@ canvas#confetti {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
   text-align: center;
   color: var(--cream);
   text-decoration: none;
-  padding: 12px;
+  padding: 14px 12px;
   margin-top: 16px;
   background: var(--surface-glass, rgba(255, 255, 255, 0.06));
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
-  border: 1px solid var(--stroke);
-  border-radius: 12px;
+  /* Bordure aux couleurs du commerce : le bandeau ressort du fond au lieu de
+     se fondre dans les autres cartes en verre. */
+  border: 2px solid var(--gold);
+  border-radius: 14px;
   transition: transform 0.12s, background 0.2s;
 }
 .review-cta:hover {
@@ -3851,10 +3853,10 @@ canvas#confetti {
 }
 .review-cta:active { transform: scale(0.98); }
 .review-cta:focus-visible {
-  outline: 2px solid var(--cream);
+  outline: 2px solid var(--gold);
   outline-offset: 2px;
 }
-.review-cta .rc-main { font-weight: 700; font-size: 15px; }
+.review-cta .rc-main { font-weight: 800; font-size: 16px; color: var(--gold-deep); }
 .review-cta .rc-sub { font-size: 12px; opacity: 0.75; font-weight: 500; }
 /* Carte avis « écran de résultat » : même lien neutre (facultatif, non
    récompensé), mais mis en évidence au nom du commerce, là où le client est
@@ -3902,7 +3904,7 @@ canvas#confetti {
   }
   50% {
     transform: scale(1.035);
-    box-shadow: 0 0 0 4px rgba(245, 184, 65, 0.35),
+    box-shadow: 0 0 0 4px var(--gold-glow, rgba(245, 184, 65, 0.35)),
       0 16px 32px -8px var(--gold-deep);
   }
 }

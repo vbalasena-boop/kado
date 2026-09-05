@@ -347,7 +347,7 @@ function ReviewCta({
   }
   return (
     <a
-      className="review-cta"
+      className="review-cta review-pulse"
       href={href}
       target="_blank"
       rel="noopener noreferrer"
