@@ -195,7 +195,15 @@ type Played = Record<string, { label: string; code: string }>;
 // Un tour = une action déclenchante non-avis. L'avis (`review`) n'apparaît
 // jamais ici : il ne débloque plus aucun tour.
 type PlayType = TriggerAction;
-type Screen = "rules" | "hub" | "collect" | "spin" | "prize" | "done";
+type Screen =
+  | "rules"
+  | "hub"
+  | "instagram"
+  | "collect"
+  | "nudge"
+  | "spin"
+  | "prize"
+  | "done";
 
 const FONT =
   '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
@@ -292,6 +300,67 @@ const ACTIONS: Record<TriggerAction, ActionMeta> = {
     url: () => null,
   },
 };
+
+/**
+ * CTA « Laisser un avis Google » — lien NEUTRE, facultatif et non récompensé
+ * (aucun tour ni cadeau lié, affiché à tous sans distinction de lot ni de
+ * satisfaction : pas de *review gating*). Rendu à l'identique en pied de page
+ * et, en variante `inline`, sur les écrans de résultat où le client est le
+ * plus disposé à cliquer.
+ */
+function ReviewCta({
+  href,
+  shopName,
+  inline = false,
+  onClick,
+}: {
+  href: string;
+  shopName?: string;
+  inline?: boolean;
+  onClick?: () => void;
+}) {
+  if (inline) {
+    return (
+      <div className="review-card">
+        <div className="review-card-head">
+          <span className="review-card-stars" aria-hidden="true">
+            ★★★★★
+          </span>
+          <b>Un avis Google pour {shopName || "nous"}&nbsp;?</b>
+          <span>30 secondes qui nous aident énormément 🙏</span>
+        </div>
+        <a
+          className="btn review-card-btn"
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={onClick}
+          aria-label="Laisser un avis Google — facultatif, sans incidence sur vos cadeaux"
+        >
+          ★ Laisser un avis Google
+        </a>
+        <span className="review-card-sub">
+          Facultatif — sans incidence sur vos cadeaux
+        </span>
+      </div>
+    );
+  }
+  return (
+    <a
+      className="review-cta"
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={onClick}
+      aria-label="Laisser un avis Google — facultatif, sans incidence sur vos cadeaux"
+    >
+      <span className="rc-main">
+        <span aria-hidden="true">★ </span>Laisser un avis Google
+      </span>
+      <span className="rc-sub">Facultatif — sans incidence sur vos cadeaux</span>
+    </a>
+  );
+}
 
 /** Carte à gratter : un voile métallisé que l'on efface au doigt. */
 function ScratchCard({
@@ -447,14 +516,21 @@ export default function Game({
   highlight?: Highlight | null;
   feedbackEnabled?: boolean;
 }) {
+  // Lien Instagram sûr (ou null si non renseigné / invalide).
+  const igHref = instagramHref(config);
+
   // Tours du jeu = actions déclenchantes non-avis configurées par le commerçant
   // (⊆ {instagram, loyalty, optin}). Lecture tolérante : `unlockedSpinActions`
   // filtre/replie sur `["instagram"]` si absent, vide ou invalide. L'avis n'est
-  // jamais une action déclenchante. Gate fidélité : « loyalty » est retirée si
-  // la carte est désactivée (`loyalty_enabled` falsy) → jamais de tour vers une
-  // carte inaccessible.
+  // jamais une action déclenchante. Filets de sécurité :
+  //  - « loyalty » retirée si la carte est désactivée (`loyalty_enabled` falsy)
+  //    → jamais de tour vers une carte inaccessible ;
+  //  - « instagram » retirée si aucun lien n'est renseigné ET qu'une autre
+  //    action reste offerte → jamais de bouton qui n'ouvre rien. Si c'est la
+  //    seule action, le tour est offert directement (le jeu reste jouable).
   const enabledActions = unlockedSpinActions(config.trigger_actions, {
     loyaltyEnabled: !!config.loyalty_enabled,
+    instagramLinked: igHref !== null,
   });
   const totalTurns = enabledActions.length;
 
@@ -491,6 +567,16 @@ export default function Game({
   const [capturedEmail, setCapturedEmail] = useState<string | null>(null);
   // Erreur inline de l'étape « collect » (e-mail saisi mais invalide).
   const [collectError, setCollectError] = useState(false);
+  // Étape « instagram » : le lien a-t-il été ouvert ? Sert uniquement à mettre
+  // en avant le bouton « je joue » au retour du client (aucune vérification
+  // d'abonnement : confiance « au clic », Instagram n'offre pas d'API pour ça).
+  const [igOpened, setIgOpened] = useState(false);
+  // Avis Google : le client a-t-il déjà cliqué le lien ? A-t-on déjà relancé ?
+  // La relance « avant de continuer » est UNIQUE par visite, proposée à tous
+  // (gagnant ou perdant, sans distinction) et toujours refusable : jamais de
+  // récompense ni de blocage lié à l'avis.
+  const [reviewClicked, setReviewClicked] = useState(false);
+  const [reviewNudged, setReviewNudged] = useState(false);
   // Anti-doublon : dernier code auto-envoyé, et dernier e-mail posté à /api/lead.
   const autoSentCodeRef = useRef<string | null>(null);
   const leadSentEmailRef = useRef<string | null>(null);
@@ -798,18 +884,20 @@ export default function Game({
       setScreen("collect");
       return;
     }
-    // Instagram : comportement inchangé — ouverture du lien puis tour.
-    // En mode test, on n'ouvre pas les liens de l'action.
-    if (!preview) {
-      const url = ACTIONS[kind].url(config, slug);
-      if (url) {
-        try {
-          window.open(url, "_blank", "noopener");
-        } catch {
-          /* ignore */
-        }
-      }
+    // Instagram : étape intermédiaire « ouvrir Instagram, puis revenir ».
+    // Sur mobile, ouvrir le lien bascule souvent vers l'application : le client
+    // retrouve ainsi une page claire à son retour, avec le bouton pour jouer.
+    // Sans lien renseigné (action unique de repli), le tour est offert direct.
+    if (kind === "instagram" && ACTIONS[kind].url(config, slug)) {
+      setIgOpened(false);
+      setScreen("instagram");
+      return;
     }
+    goSpin();
+  }
+
+  /** Passe à l'écran de jeu (remise à zéro de l'angle de la roue). */
+  function goSpin() {
     rotRef.current = rotRef.current % TAU;
     setScreen("spin");
   }
@@ -1020,6 +1108,18 @@ export default function Game({
   }
 
   function afterPrize() {
+    // Relance avis unique : au moment où le client quitte son lot, s'il n'a
+    // pas encore cliqué le lien. Une seule fois, refusable (« Plus tard »).
+    if (reviewHref && !reviewClicked && !reviewNudged) {
+      setReviewNudged(true);
+      setScreen("nudge");
+      return;
+    }
+    leavePrize();
+  }
+
+  /** Quitte l'écran du lot : retour au HUB s'il reste des chances, sinon récap. */
+  function leavePrize() {
     setCurrent(null);
     setScratchPrize(null);
     setReels(["🎁", "⭐", "🍀"]);
@@ -1200,6 +1300,68 @@ export default function Game({
             </section>
           )}
 
+          {/* INSTAGRAM — ouvrir le compte, puis revenir jouer */}
+          {screen === "instagram" && (
+            <section className="screen active">
+              <div className="center">
+                <span className="badge instagram">
+                  {ACTIONS.instagram.glyph(15)} {ACTIONS.instagram.badge}
+                </span>
+              </div>
+              <div className="wheel-head">
+                <h2>📸 Suivez-nous sur Instagram</h2>
+                <p>
+                  Ouvrez notre compte, abonnez-vous, puis{" "}
+                  <b>revenez sur cette page</b> : votre {T.one} vous attend.
+                </p>
+              </div>
+              <div className="ig-step">
+                {igHref && !preview ? (
+                  <a
+                    className={`btn ig-open${igOpened ? " ghost" : ""}`}
+                    href={igHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setIgOpened(true)}
+                  >
+                    {igOpened ? "Rouvrir Instagram ↗" : "Ouvrir Instagram ↗"}
+                  </a>
+                ) : (
+                  <button
+                    type="button"
+                    className={`btn ig-open${igOpened ? " ghost" : ""}`}
+                    onClick={() => setIgOpened(true)}
+                  >
+                    Ouvrir Instagram ↗
+                  </button>
+                )}
+                {preview && (
+                  <p className="ig-hint">
+                    🧪 En mode test, le lien Instagram ne s'ouvre pas.
+                  </p>
+                )}
+                <button
+                  type="button"
+                  className={`btn ig-continue${igOpened ? "" : " ghost"}`}
+                  onClick={goSpin}
+                >
+                  {igOpened ? "C'est fait, je joue →" : "Je suis déjà abonné·e, je joue →"}
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={() => setScreen("hub")}
+                className="link-back"
+              >
+                ← Retour
+              </button>
+              <p className="fine">
+                {config.compliance_note ||
+                  "Le cadeau n'est pas conditionné à la note laissée."}
+              </p>
+            </section>
+          )}
+
           {/* COLLECT — étape e-mail facultative (Offres / Fidélité) */}
           {screen === "collect" && (
             <section className="screen active">
@@ -1345,6 +1507,43 @@ export default function Game({
             </section>
           )}
 
+          {/* NUDGE — relance avis unique, neutre et refusable */}
+          {screen === "nudge" && reviewHref && (
+            <section className="screen active">
+              <div className="nudge">
+                <div className="big" aria-hidden="true">
+                  ⭐
+                </div>
+                <h2>Un petit avis avant de continuer&nbsp;?</h2>
+                <p>
+                  Un avis Google aide énormément <b>{name}</b> à se faire
+                  connaître. Ça prend 30&nbsp;secondes, et c'est totalement
+                  libre.
+                </p>
+                <a
+                  className="btn"
+                  href={reviewHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => {
+                    setReviewClicked(true);
+                    leavePrize();
+                  }}
+                >
+                  ★ Laisser un avis Google ↗
+                </a>
+                <button type="button" className="link-back" onClick={leavePrize}>
+                  Plus tard
+                </button>
+                <p className="fine">
+                  Facultatif — sans incidence sur vos cadeaux.{" "}
+                  {config.compliance_note ||
+                    "Le cadeau n'est pas conditionné à la note laissée."}
+                </p>
+              </div>
+            </section>
+          )}
+
           {/* PRIZE */}
           {screen === "prize" && prize && (
             <section className="screen active">
@@ -1467,6 +1666,16 @@ export default function Game({
                       </form>
                     );
                   })()}
+                {/* Avis Google : proposé ICI, au moment où le client est le plus
+                    réceptif — gagnant ou perdant, sans distinction (neutre). */}
+                {reviewHref && (
+                  <ReviewCta
+                    href={reviewHref}
+                    shopName={name}
+                    inline
+                    onClick={() => setReviewClicked(true)}
+                  />
+                )}
                 <p className="fine">
                   {config.compliance_note ||
                     "Le cadeau n'est pas conditionné à la note laissée."}
@@ -1510,6 +1719,14 @@ export default function Game({
                     ) : null
                   )}
                 </div>
+                {reviewHref && (
+                  <ReviewCta
+                    href={reviewHref}
+                    shopName={name}
+                    inline
+                    onClick={() => setReviewClicked(true)}
+                  />
+                )}
                 <p className="fine">
                   Présentez vos codes en caisse. À très vite&nbsp;!
                 </p>
@@ -1535,22 +1752,14 @@ export default function Game({
             🎟️ Ma carte de fidélité
           </a>
         )}
-        {reviewHref && (
-          <a
-            className="review-cta"
-            href={reviewHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Laisser un avis Google — facultatif, sans incidence sur vos cadeaux"
-          >
-            <span className="rc-main">
-              <span aria-hidden="true">★ </span>Laisser un avis Google
-            </span>
-            <span className="rc-sub">
-              Facultatif — sans incidence sur vos cadeaux
-            </span>
-          </a>
-        )}
+        {/* Pied de page : masqué sur les écrans de résultat, où le même lien
+            est déjà proposé en évidence (pas de doublon). */}
+        {reviewHref &&
+          screen !== "prize" &&
+          screen !== "done" &&
+          screen !== "nudge" && (
+            <ReviewCta href={reviewHref} onClick={() => setReviewClicked(true)} />
+          )}
         {orderEnabled && (
           <a className="game-order-cta" href={`/${slug}/commander`}>
             <span className="goc-main">🛒 Commander en ligne</span>

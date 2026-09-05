@@ -587,7 +587,8 @@ export default function WheelEditor({
                     {!config.instagram_url?.trim() && (
                       <span className="onboarding-err" style={{ marginTop: 4 }}>
                         L'action Instagram est active mais aucun lien n'est
-                        renseigné : le bouton n'ouvrira rien.
+                        renseigné : elle n'est pas proposée à vos clients (ou
+                        le tour est offert sans action si c'est la seule).
                       </span>
                     )}
                   </label>

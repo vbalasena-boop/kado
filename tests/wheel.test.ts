@@ -117,6 +117,44 @@ describe("unlockedSpinActions", () => {
       unlockedSpinActions(["loyalty", "optin"], { loyaltyEnabled: false })
     ).toEqual(["optin"]);
   });
+
+  it("sans lien Instagram → « instagram » retirée si une autre action reste", () => {
+    expect(
+      unlockedSpinActions(["instagram", "optin"], { instagramLinked: false })
+    ).toEqual(["optin"]);
+    expect(
+      unlockedSpinActions(["instagram", "loyalty", "optin"], {
+        loyaltyEnabled: true,
+        instagramLinked: false,
+      })
+    ).toEqual(["loyalty", "optin"]);
+  });
+
+  it("sans lien Instagram mais action unique → conservée (jeu jamais vide)", () => {
+    expect(
+      unlockedSpinActions(["instagram"], { instagramLinked: false })
+    ).toEqual(["instagram"]);
+    // Repli après retrait de loyalty : instagram reste la seule action.
+    expect(
+      unlockedSpinActions(["instagram", "loyalty"], {
+        loyaltyEnabled: false,
+        instagramLinked: false,
+      })
+    ).toEqual(["instagram"]);
+    expect(unlockedSpinActions(null, { instagramLinked: false })).toEqual([
+      "instagram",
+    ]);
+  });
+
+  it("lien Instagram présent (ou option absente) → aucun retrait", () => {
+    expect(
+      unlockedSpinActions(["instagram", "optin"], { instagramLinked: true })
+    ).toEqual(["instagram", "optin"]);
+    expect(unlockedSpinActions(["instagram", "optin"], {})).toEqual([
+      "instagram",
+      "optin",
+    ]);
+  });
 });
 
 describe("isTriggerActionAllowed", () => {
@@ -182,6 +220,31 @@ describe("isTriggerActionAllowed", () => {
   it("loyalty sans opts → true (rétrocompat, défaut activé)", () => {
     expect(isTriggerActionAllowed("loyalty", ["loyalty"])).toBe(true);
     expect(isTriggerActionAllowed("loyalty", ["loyalty"], {})).toBe(true);
+  });
+
+  it("sans lien Instagram → « instagram » refusée si une autre action reste", () => {
+    expect(
+      isTriggerActionAllowed("instagram", ["instagram", "optin"], {
+        instagramLinked: false,
+      })
+    ).toBe(false);
+    expect(
+      isTriggerActionAllowed("optin", ["instagram", "optin"], {
+        instagramLinked: false,
+      })
+    ).toBe(true);
+  });
+
+  it("sans lien Instagram mais action unique → autorisée (miroir du jeu)", () => {
+    expect(
+      isTriggerActionAllowed("instagram", ["instagram"], { instagramLinked: false })
+    ).toBe(true);
+    expect(
+      isTriggerActionAllowed("instagram", ["loyalty"], {
+        loyaltyEnabled: false,
+        instagramLinked: false,
+      })
+    ).toBe(true);
   });
 
   it("instagram inchangé même si carte désactivée", () => {
