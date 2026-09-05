@@ -330,7 +330,7 @@ function ReviewCta({
           <span>30 secondes qui nous aident énormément 🙏</span>
         </div>
         <a
-          className="btn review-card-btn"
+          className="btn review-card-btn review-pulse"
           href={href}
           target="_blank"
           rel="noopener noreferrer"
@@ -1108,9 +1108,13 @@ export default function Game({
   }
 
   function afterPrize() {
-    // Relance avis unique : au moment où le client quitte son lot, s'il n'a
-    // pas encore cliqué le lien. Une seule fois, refusable (« Plus tard »).
-    if (reviewHref && !reviewClicked && !reviewNudged) {
+    // Relance avis unique, proposée SEULEMENT à la fin du jeu (tous les tours
+    // joués) pour ne jamais couper l'enchaînement entre deux tours. Une seule
+    // fois par visite, si le client n'a pas déjà cliqué le lien, et toujours
+    // refusable (« Plus tard »). En test / démo (rejeu illimité), on ne relance
+    // pas : le jeu ne se « termine » jamais.
+    const finished = !preview && !demo && usedCount >= totalTurns;
+    if (finished && reviewHref && !reviewClicked && !reviewNudged) {
       setReviewNudged(true);
       setScreen("nudge");
       return;
@@ -1521,7 +1525,7 @@ export default function Game({
                   libre.
                 </p>
                 <a
-                  className="btn"
+                  className="btn review-pulse"
                   href={reviewHref}
                   target="_blank"
                   rel="noopener noreferrer"
