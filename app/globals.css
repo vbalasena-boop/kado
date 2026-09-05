@@ -1223,6 +1223,7 @@ canvas#confetti {
   min-width: 3px;
   transition: width 0.4s ease;
 }
+.funnel-fill.s0 { background: linear-gradient(90deg, #37c9e8, #1a73e8); }
 .funnel-fill.s1 { background: linear-gradient(90deg, #8b6cff, #6b3ff0); }
 .funnel-fill.s2 { background: linear-gradient(90deg, #f26bd0, #d63ba6); }
 .funnel-fill.s3 { background: linear-gradient(90deg, #ffc24d, #e0a020); }
