@@ -208,6 +208,7 @@ export default function OrdersClient({
   payConnected = false,
   payReady = false,
   onlinePayment = false,
+  smsOnReady = false,
 }: {
   slug: string;
   shopName?: string;
@@ -219,6 +220,7 @@ export default function OrdersClient({
   payConnected?: boolean;
   payReady?: boolean;
   onlinePayment?: boolean;
+  smsOnReady?: boolean;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -316,6 +318,8 @@ export default function OrdersClient({
   // ---- Paiement en ligne (Stripe Connect) ----
   const [payReadyOn, setPayReadyOn] = useState(payReady);
   const [payOn, setPayOn] = useState(onlinePayment);
+  const [smsOn, setSmsOn] = useState(smsOnReady);
+  const [smsBusy, setSmsBusy] = useState(false);
   const [payBusy, setPayBusy] = useState(false);
   // Au retour de l'onboarding Stripe (?connect=done), on rafraîchit l'état.
   useEffect(() => {
@@ -433,6 +437,29 @@ export default function OrdersClient({
       setMsg("Erreur réseau. Réessayez.");
     } finally {
       setTrackingBusy(false);
+    }
+  }
+  async function toggleSms(next: boolean) {
+    setSmsBusy(true);
+    setMsg(null);
+    try {
+      const res = await fetch("/api/dashboard/sms-alerts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled: next }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setSmsOn(next);
+      } else if (d.error === "migration_required") {
+        setMsg("Lancez d'abord la migration SQL (sms_on_ready) dans Supabase.");
+      } else {
+        setMsg("Impossible de modifier l'option SMS. Réessayez.");
+      }
+    } catch {
+      setMsg("Erreur réseau. Réessayez.");
+    } finally {
+      setSmsBusy(false);
     }
   }
   const [hoursDraft, setHoursDraft] = useState<
@@ -1425,6 +1452,37 @@ export default function OrdersClient({
           <p className="muted" style={{ marginTop: 10, fontSize: 13 }}>
             👉 Utilisez les boutons <b>« 🎫 QR de suivi (comptoir) »</b> et
             <b> « 🧾 Nouvelle commande (caisse) »</b> tout en haut.
+          </p>
+        )}
+      </div>
+
+      {/* ---- Alerte SMS « votre commande est prête » ---- */}
+      <div className={`dash-card opt-card${smsOn ? " on" : ""}`}>
+        <div className="opt-head">
+          <div>
+            <h2>
+              📲 Alerte SMS « c'est prêt »{" "}
+              {smsOn && <span className="opt-badge">Activé</span>}
+            </h2>
+            <p className="muted" style={{ margin: "2px 0 0" }}>
+              Quand vous passez une commande en <b>« prête »</b>, le client reçoit
+              un <b>SMS</b> l'invitant à venir la récupérer — en plus de la
+              notification et de l'e-mail. Idéal pour éviter les commandes qui
+              refroidissent.
+            </p>
+          </div>
+          <button
+            className={smsOn ? "btn-secondary" : "btn"}
+            disabled={smsBusy}
+            onClick={() => toggleSms(!smsOn)}
+          >
+            {smsBusy ? "…" : smsOn ? "Désactiver" : "Activer"}
+          </button>
+        </div>
+        {smsOn && (
+          <p className="muted" style={{ marginTop: 10, fontSize: 13 }}>
+            👉 Le SMS part automatiquement au passage en « prête ». Coût :
+            quelques centimes par SMS.
           </p>
         )}
       </div>

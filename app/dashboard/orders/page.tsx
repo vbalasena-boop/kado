@@ -20,6 +20,7 @@ export default async function OrdersPage() {
   let payConnected = false;
   let payReady = false;
   let onlinePayment = false;
+  let smsOnReady = false;
   let orderHours: Record<string, [string, string] | null> | null = null;
   try {
     const { data } = await db
@@ -59,6 +60,18 @@ export default async function OrdersPage() {
       }
     }
   }
+  // SMS « c'est prêt » (0077) : lecture séparée et tolérante (colonne récente).
+  try {
+    const { data } = await db
+      .from("businesses")
+      .select("sms_on_ready")
+      .eq("id", business.id)
+      .maybeSingle();
+    smsOnReady = !!(data as any)?.sms_on_ready;
+  } catch {
+    smsOnReady = false; // colonne absente : option non disponible
+  }
+
   // Essai gratuit : toutes les options sont ouvertes, commande incluse.
   if (business.subscription_status === "trial") enabled = true;
   // Plans « Comptoir » et « Complet » : commandes + suivi au comptoir inclus.
@@ -236,6 +249,7 @@ export default async function OrdersPage() {
       payConnected={payConnected}
       payReady={payReady}
       onlinePayment={onlinePayment}
+      smsOnReady={smsOnReady}
     />
   );
 }
