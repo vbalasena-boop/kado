@@ -76,6 +76,7 @@ export default async function DashboardHome() {
     signupsRpc,
     pendingRes,
     segRpc,
+    reviewClicksRes,
   ] = await Promise.all([
     admin
       .from("wheel_configs")
@@ -118,10 +119,23 @@ export default async function DashboardHome() {
           cutoff: segCutoffIso,
         })
       : Promise.resolve({ data: null, error: null }),
+    // Clics sur le lien « Laisser un avis Google » (comptage indexé, table 0077).
+    // Lecture tolérante : si la table n'est pas déployée, on retombe sur 0 sans
+    // faire échouer la page (voir `reviewClicks` plus bas).
+    showRoue
+      ? admin
+          .from("review_clicks")
+          .select("*", { count: "exact", head: true })
+          .eq("business_id", business.id)
+      : Promise.resolve({ count: null, error: null }),
   ]);
 
   const cfg = cfgRes.data;
   const leadsCount = leadsRes.count;
+  // Clics sur le lien avis Google (table 0077). Remplace l'ancien compteur figé
+  // basé sur `play_type = 'review'` (les tours avis n'existent plus depuis
+  // l'epic 9). Tolérant : table absente / erreur → 0.
+  const reviewClicks = reviewClicksRes.error ? 0 : reviewClicksRes.count ?? 0;
 
   let stats = playRpc.error ? null : playStatsFromRpc(playRpc.data);
   if (!stats) {
@@ -345,8 +359,8 @@ export default async function DashboardHome() {
           <h2>🚀 Ce que Kado vous a apporté</h2>
           <div className="hero-recap-grid">
             <div className="hero-recap-item">
-              <b>{review}</b>
-              <span>clients envoyés vers vos avis Google</span>
+              <b>{reviewClicks}</b>
+              <span>clics vers vos avis Google</span>
             </div>
             <div className="hero-recap-item">
               <b>{insta}</b>
@@ -451,8 +465,8 @@ export default async function DashboardHome() {
                 <Icon name="star" size={22} />
               </div>
               <div>
-                <div className="stat-n">{review}</div>
-                <div className="stat-l">via Avis Google</div>
+                <div className="stat-n">{reviewClicks}</div>
+                <div className="stat-l">Clics avis Google</div>
               </div>
             </div>
             <div className="stat">
@@ -513,6 +527,51 @@ export default async function DashboardHome() {
               <TrendChart series={trendSeries} label="tours" />
             </div>
           )}
+
+          {/* Entonnoir « parcours client » : à partir des données existantes
+              (tours joués → dont via Instagram → clics avis Google). Les barres
+              sont proportionnelles au 1er palier (tours joués) ; largeur bornée
+              à 100 % car les clics avis ne sont pas un sous-ensemble strict des
+              tours. Rendu uniquement s'il y a des tours (total > 0). */}
+          <div className="dash-card">
+            <h2>🔎 Le parcours de vos clients</h2>
+            <p className="muted" style={{ marginBottom: 14 }}>
+              Ce que vos clients font une fois le jeu ouvert — du tour joué au
+              clic vers vos avis Google.
+            </p>
+            <ul className="funnel">
+              {[
+                { key: "plays", emoji: "🎡", label: "Tours joués", n: total, cls: "s1" },
+                { key: "insta", emoji: "📸", label: "dont via Instagram", n: insta, cls: "s2" },
+                { key: "review", emoji: "⭐", label: "Clics vers vos avis Google", n: reviewClicks, cls: "s3" },
+              ].map((step) => {
+                const pct = total > 0 ? Math.round((step.n / total) * 100) : 0;
+                return (
+                  <li key={step.key}>
+                    <span className="funnel-label">
+                      <span aria-hidden="true">{step.emoji}</span> {step.label}
+                    </span>
+                    <span className="funnel-bar">
+                      <span
+                        className={`funnel-fill ${step.cls}`}
+                        style={{ width: `${Math.min(pct, 100)}%` }}
+                      />
+                    </span>
+                    <b className="funnel-n">
+                      {step.n}
+                      {step.key !== "plays" && total > 0 && (
+                        <small className="funnel-pct"> · {pct}%</small>
+                      )}
+                    </b>
+                  </li>
+                );
+              })}
+            </ul>
+            <p className="muted" style={{ marginTop: 10, fontSize: 12.5 }}>
+              Les % sont rapportés au nombre de tours joués. Le lien avis est
+              facultatif et non récompensé.
+            </p>
+          </div>
 
           <div className="dash-card">
             <h2>Cadeaux distribués</h2>

@@ -16,6 +16,12 @@ let updateError: any = null;
 // Si true, la chaîne update().eq() REJETTE (simulte un throw réseau) au lieu de
 // résoudre `{ error }` → doit passer par le `catch` du bloc tolérant.
 let updateReject = false;
+// Erreur simulée sur la SUPPRESSION des lots (delete().eq()) : null par défaut.
+let deleteError: any = null;
+// Erreur simulée sur le PREMIER upsert (config) uniquement, puis effacée — sert
+// à tester le repli `decor_emojis` (colonne absente) : le 1er upsert échoue, le
+// retry sans décor réussit.
+let upsertErrorFirst: any = null;
 
 function makeBuilder() {
   const b: any = {};
@@ -24,13 +30,18 @@ function makeBuilder() {
   b.maybeSingle = () => Promise.resolve({ data: {}, error: null });
   b.upsert = (payload: any) => {
     upsertCalls.push(payload);
+    if (upsertErrorFirst) {
+      const e = upsertErrorFirst;
+      upsertErrorFirst = null;
+      return Promise.resolve({ error: e });
+    }
     return Promise.resolve({ error: null });
   };
   b.update = (payload: any) => {
     updateCalls.push(payload);
     return b;
   };
-  b.delete = () => b;
+  b.delete = () => ({ eq: () => Promise.resolve({ error: deleteError }) });
   // rend le builder « awaitable » pour les chaînes update().eq() / delete().eq()
   b.then = (resolve: any, reject: any) =>
     updateReject ? reject(new Error("network down")) : resolve({ error: updateError });
@@ -166,5 +177,50 @@ describe("POST /api/dashboard/wheel — tolérance des erreurs Supabase", () => 
     const res = await POST(post({ trigger_actions: ["loyalty"] }));
     expect(res.status).toBe(500);
     expect(await res.json()).toMatchObject({ error: "save_failed" });
+  });
+});
+
+describe("POST /api/dashboard/wheel — erreurs silencieuses résiduelles", () => {
+  beforeEach(() => {
+    updateCalls.length = 0;
+    upsertCalls.length = 0;
+    updateError = null;
+    updateReject = false;
+    deleteError = null;
+    upsertErrorFirst = null;
+  });
+
+  it("colonne decor_emojis absente (code 42703) → retry sans décor, route { ok: true }", async () => {
+    upsertErrorFirst = { code: "42703", message: "column decor_emojis does not exist" };
+    const res = await POST(post({ decor_emojis: "🍕🍅" }));
+    expect(res.status).toBe(200);
+    expect((await res.json()).ok).toBe(true);
+    // Deux upserts : le 1er AVEC décor, le 2e SANS.
+    expect(upsertCalls.length).toBe(2);
+    expect("decor_emojis" in upsertCalls[0]).toBe(true);
+    expect("decor_emojis" in upsertCalls[1]).toBe(false);
+  });
+
+  it("vraie erreur sur l'upsert config (RLS 42501) → 500, PAS de faux ok", async () => {
+    upsertErrorFirst = { code: "42501", message: "permission denied" };
+    const res = await POST(post({}));
+    expect(res.status).toBe(500);
+    expect((await res.json()).error).toBe("config_error");
+    // On ne retente pas (ce n'est pas une colonne absente) : un seul upsert.
+    expect(upsertCalls.length).toBe(1);
+  });
+
+  it("échec de la suppression des lots → 500 (plus de doublon silencieux)", async () => {
+    deleteError = { code: "23505", message: "delete failed" };
+    const res = await POST(post({}));
+    expect(res.status).toBe(500);
+    expect((await res.json()).error).toBe("prizes_error");
+  });
+
+  it("suppression des lots OK (aucune erreur) → route { ok: true }", async () => {
+    deleteError = null;
+    const res = await POST(post({}));
+    expect(res.status).toBe(200);
+    expect((await res.json()).ok).toBe(true);
   });
 });

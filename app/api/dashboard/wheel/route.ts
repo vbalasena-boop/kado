@@ -152,8 +152,10 @@ export async function POST(req: NextRequest) {
   let { error: cfgErr } = await admin
     .from("wheel_configs")
     .upsert({ ...basePayload, ...appearance }, { onConflict: "business_id" });
-  if (cfgErr && /decor_emojis/.test(cfgErr.message)) {
-    // Migration 0027 absente : réessaie sans le décor.
+  if (cfgErr && isMissingColumnError(cfgErr)) {
+    // Migration 0027 absente (colonne `decor_emojis`) : réessaie sans le décor.
+    // Détection par CODE d'erreur (42703/42P01/PGRST204), plus fiable que le
+    // message localisé — une vraie panne (RLS, contrainte) n'est jamais avalée.
     const { decor_emojis, ...appNoDecor } = appearance as any;
     ({ error: cfgErr } = await admin
       .from("wheel_configs")
@@ -424,7 +426,20 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "no_prizes" }, { status: 400 });
   }
 
-  await admin.from("prizes").delete().eq("business_id", business.id);
+  // Suppression des anciens lots avant réinsertion : on VÉRIFIE l'erreur — un
+  // échec silencieux laisserait les lots ré-insérés en doublon tout en renvoyant
+  // « ok ». Table de base (0001), donc toute erreur est réelle → 500.
+  const { error: delErr } = await admin
+    .from("prizes")
+    .delete()
+    .eq("business_id", business.id);
+  if (delErr) {
+    reportError(delErr, { where: "dashboard/wheel", field: "prizes_delete" });
+    return Response.json(
+      { error: "prizes_error", detail: delErr.message },
+      { status: 500 }
+    );
+  }
   const { error: insErr } = await insertPrizes(
     admin,
     prizes.map((p, i) => ({

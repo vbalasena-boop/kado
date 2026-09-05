@@ -90,25 +90,32 @@ export function nextTriggerActions(
 }
 
 /**
- * Set EFFECTIF des tours débloqués côté JEU compte tenu de l'activation réelle
- * de la carte de fidélité (`loyaltyEnabled`), logique pure. Normalise
- * (`sanitizeTriggerActions`) PUIS, si `opts.loyaltyEnabled === false`, retire
- * « loyalty » (la carte est désactivée → un tour fidélité mènerait à une carte
- * inaccessible), avec repli `["instagram"]`.
+ * Set EFFECTIF des tours débloqués côté JEU (logique pure). Normalise
+ * (`sanitizeTriggerActions`) PUIS applique deux filets de sécurité :
+ *  - `opts.loyaltyEnabled === false` → retire « loyalty » (la carte est
+ *    désactivée → un tour fidélité mènerait à une carte inaccessible), avec
+ *    repli `["instagram"]` ;
+ *  - `opts.instagramLinked === false` → retire « instagram » (aucun lien
+ *    Instagram renseigné : le bouton n'ouvrirait rien), SAUF si c'est la
+ *    dernière action restante — le jeu ne doit jamais se retrouver sans tour,
+ *    le tour est alors offert sans lien (comportement historique).
  *
- * Rétrocompatible : `opts` absent (ou `loyaltyEnabled` non passé) → comportement
- * strictement identique à `sanitizeTriggerActions` (« loyalty » conservée).
+ * Rétrocompatible : `opts` absent (ou option non passée) → comportement
+ * strictement identique à `sanitizeTriggerActions`.
  */
 export function unlockedSpinActions(
   triggerActions: unknown,
-  opts?: { loyaltyEnabled?: boolean }
+  opts?: { loyaltyEnabled?: boolean; instagramLinked?: boolean }
 ): TriggerAction[] {
-  const base = sanitizeTriggerActions(triggerActions);
+  let eff: TriggerAction[] = sanitizeTriggerActions(triggerActions);
   if (opts?.loyaltyEnabled === false) {
-    const eff = base.filter((a) => a !== "loyalty");
-    return eff.length > 0 ? eff : ["instagram"];
+    eff = eff.filter((a) => a !== "loyalty");
+    if (eff.length === 0) eff = ["instagram"];
   }
-  return base;
+  if (opts?.instagramLinked === false && eff.length > 1) {
+    eff = eff.filter((a) => a !== "instagram");
+  }
+  return eff;
 }
 
 /**
@@ -117,26 +124,24 @@ export function unlockedSpinActions(
  *  - `review` n'est JAMAIS autorisé (l'avis ne débloque plus rien) ;
  *  - lecture tolérante : `triggerActions` est normalisé par
  *    `sanitizeTriggerActions` (repli `["instagram"]` si absent/vide/invalide) ;
- *  - autorisé ⟺ le type figure dans la liste normalisée ;
- *  - filet de sécurité fidélité : si `opts.loyaltyEnabled === false`, « loyalty »
- *    est refusée (carte désactivée → tour impossible). Rétrocompatible : `opts`
- *    absent (défaut `loyaltyEnabled = true`) → comportement inchangé.
+ *  - autorisé ⟺ le type figure dans le set EFFECTIF (`unlockedSpinActions`),
+ *    c.-à-d. après les mêmes filets que côté jeu : « loyalty » refusée si
+ *    `opts.loyaltyEnabled === false` (carte désactivée), « instagram » refusée
+ *    si `opts.instagramLinked === false` ET qu'une autre action reste offerte.
+ *  Rétrocompatible : `opts` absent → comportement inchangé.
  */
 export function isTriggerActionAllowed(
   playType: unknown,
   triggerActions: unknown,
-  opts?: { loyaltyEnabled?: boolean }
+  opts?: { loyaltyEnabled?: boolean; instagramLinked?: boolean }
 ): boolean {
   if (typeof playType !== "string") return false;
   // L'avis n'est jamais une action déclenchante (défense en profondeur : il
   // n'appartient de toute façon pas à TRIGGER_ACTIONS après sanitisation).
   if (playType === "review") return false;
-  const allowed = sanitizeTriggerActions(triggerActions);
-  if (!allowed.includes(playType as TriggerAction)) return false;
-  // Filet de sécurité : la carte désactivée interdit le tour fidélité même si
-  // « loyalty » figure encore dans la config (donnée existante / payload forgé).
-  if (playType === "loyalty" && opts?.loyaltyEnabled === false) return false;
-  return true;
+  return unlockedSpinActions(triggerActions, opts).includes(
+    playType as TriggerAction
+  );
 }
 
 /**

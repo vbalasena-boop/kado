@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { adminRoute } from "@/lib/api";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { isMissingColumnError } from "@/lib/db-errors";
 
 export const dynamic = "force-dynamic";
 
@@ -49,14 +50,18 @@ export const POST = adminRoute({
     let { error } = await db
       .from("wheel_configs")
       .upsert(payload, { onConflict: "business_id" });
-    // Migrations récentes absentes : réessaie sans les colonnes manquantes.
-    if (error && /decor_emojis/.test(error.message)) {
+    // Migrations récentes absentes : réessaie sans les colonnes optionnelles.
+    // Détection par CODE (42703/42P01/PGRST204) plutôt que par message localisé,
+    // pour ne jamais avaler une vraie panne (RLS, contrainte, connectivité). On
+    // retire d'abord `decor_emojis` (0027) puis `theme_locked` (0022) : si une
+    // seule manque, un seul retrait suffit ; sinon les deux s'enchaînent.
+    if (error && isMissingColumnError(error) && "decor_emojis" in payload) {
       delete payload.decor_emojis;
       ({ error } = await db
         .from("wheel_configs")
         .upsert(payload, { onConflict: "business_id" }));
     }
-    if (error && /theme_locked/.test(error.message)) {
+    if (error && isMissingColumnError(error) && "theme_locked" in payload) {
       delete payload.theme_locked;
       ({ error } = await db
         .from("wheel_configs")

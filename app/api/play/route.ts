@@ -4,7 +4,7 @@ import { getAdminClient } from "@/lib/supabase/admin";
 import { getOrCreatePlayerId } from "@/lib/player";
 import { weightedIndex, generateCode, prizeIsLosing } from "@/lib/draw";
 import { sendPushToBusiness } from "@/lib/push";
-import { isTriggerActionAllowed } from "@/lib/wheel";
+import { isTriggerActionAllowed, instagramHref } from "@/lib/wheel";
 import { isValidDeviceHash } from "@/lib/device-hash";
 
 export const dynamic = "force-dynamic";
@@ -126,7 +126,7 @@ export const POST = publicRoute({
       // quotidien). Lecture tolérante → repli `["instagram"]` via la garde.
       supa
         .from("wheel_configs")
-        .select("trigger_actions, loyalty_enabled")
+        .select("trigger_actions, loyalty_enabled, instagram_url")
         .eq("business_id", biz.id)
         .maybeSingle(),
     ]);
@@ -136,14 +136,19 @@ export const POST = publicRoute({
     }
 
     // Action non déclenchante (non configurée, ou avis) → tour non autorisé.
-    // Filet de sécurité fidélité : si la carte est désactivée (`loyalty_enabled`
-    // falsy), « loyalty » est refusée même si elle figure encore dans la config.
+    // Mêmes filets de sécurité que côté jeu (miroir de `unlockedSpinActions`) :
+    //  - carte désactivée (`loyalty_enabled` falsy) → « loyalty » refusée ;
+    //  - aucun lien Instagram renseigné → « instagram » refusée, sauf si c'est
+    //    la seule action offerte (le jeu reste jouable).
     const triggerActions = taRes.error
       ? undefined
       : (taRes.data as any)?.trigger_actions;
     if (
       !isTriggerActionAllowed(playType, triggerActions, {
         loyaltyEnabled: !!(taRes.data as any)?.loyalty_enabled,
+        instagramLinked: taRes.error
+          ? true
+          : instagramHref((taRes.data as any) ?? {}) !== null,
       })
     ) {
       return Response.json({ error: "action_not_allowed" }, { status: 403 });

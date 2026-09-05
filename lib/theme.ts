@@ -51,6 +51,7 @@ export function buildTheme(
 :root{
   --gold:${primary};
   --gold-deep:${darken(primary, 0.16)};
+  --gold-glow:${rgba(primary, 0.42)};
   --coral:${accent};
   --night:${bg};
   --night-2:${darken(bg, 0.03)};
@@ -68,6 +69,7 @@ export function buildTheme(
 :root{
   --gold:${primary};
   --gold-deep:${darken(primary, 0.16)};
+  --gold-glow:${rgba(primary, 0.5)};
   --coral:${accent};
   --night:${lighten(bg, 0.05)};
   --night-2:${bg};
