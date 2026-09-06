@@ -7149,7 +7149,7 @@ summary:focus-visible,
   vertical-align: middle;
 }
 .uber-item.is-soldout { opacity: 0.62; }
-.order-list li.is-soldout .product-info b::after {
+.product-list li.is-soldout .product-info b::after {
   content: " · Épuisé";
   color: #b42318;
   font-weight: 800;
