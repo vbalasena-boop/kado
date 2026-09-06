@@ -2,6 +2,7 @@
 """Réels Kado 2 à 6 — même template/police que le Réel 1, méthode BMAD."""
 import sys, math
 from kado_reels_lib import *
+from kado_reels_lib import _card_shadow
 
 # helper générique : écran texte (chaque bloc apparaît à son t0)
 def text_scene(t, blocks, cy=None):
@@ -30,6 +31,8 @@ COLD={
  'reel8':_co([("1er mois ",WHITE),("OFFERT",GOLD)],"Offre de lancement"),
  'reel9':_co([("Vous perdez",WHITE),(" des clients",GOLD)],"…et vous ne le voyez pas."),
  'reel10':_co([("x2 d'avis.",GOLD)],"0 € de pub."),
+ 'reel11':_co([("3 erreurs",GOLD)],"qui tuent vos avis Google."),
+ 'reel12':_co([("+5 avis / jour",GOLD)],"…sans rien faire."),
 }
 CO_DUR=0.9  # durée de base (x SCALE ensuite)
 def with_cold(name,TL):
@@ -259,7 +262,71 @@ def r10_how(t):
 REEL10=[(0,2.4,r10_hook),(2.4,6.4,r10_count),(6.4,10.0,r10_how),
         (10.0,14.0,lambda t: cta(t,"Doublez vos avis Google",q="Vous en êtes à combien ?"))]
 
-_BASE={"reel2":REEL2,"reel3":REEL3,"reel4":REEL4,"reel5":REEL5,"reel6":REEL6,"reel7":REEL7,"reel8":REEL8,"reel9":REEL9,"reel10":REEL10}
+# =================== RÉEL 11 — « 3 erreurs » (format liste) ===================
+def _erow(img,num,txt,y,t,t0):
+    op=int(255*ease(clamp((t-t0)/0.3)))
+    if op<=0: return
+    dx=int((1-eob(clamp((t-t0)/0.4)))*60)
+    x=int(W*0.12)-dx; bs=96
+    badge=Image.new("RGBA",(bs,bs),(0,0,0,0)); bd=ImageDraw.Draw(badge)
+    bd.ellipse([0,0,bs,bs],fill=RED); bd.text((bs/2-bd.textlength(num,font=BOLD(54))/2,16),num,font=BOLD(54),fill=WHITE)
+    if op<255: badge.putalpha(badge.getchannel("A").point(lambda v:int(v*op/255)))
+    img.alpha_composite(badge,(x,y))
+    layer=Image.new("RGBA",img.size,(0,0,0,0)); ld=ImageDraw.Draw(layer)
+    ld.text((x+bs+34,y+18),txt,font=BOLD(54),fill=(255,255,255,op))
+    img.alpha_composite(layer)
+def r11_list(t):
+    img=bg_violet(int(H*0.42))
+    para(img,[("Ce qui tue vos avis :",WHITE)],BOLD(64),W//2,int(H*0.10),int(W*0.85))
+    _erow(img,"1","Attendre qu'ils y pensent",int(H*0.28),t,0.05)
+    _erow(img,"2","Demander à l'oral",int(H*0.44),t,0.35)
+    _erow(img,"3","Un lien trop compliqué",int(H*0.60),t,0.65)
+    return img
+def r11_sol(t):
+    img=bg_violet()
+    para(img,[("La solution : un ",WHITE),("jeu",GOLD),(" + un ",WHITE),("cadeau",GOLD)],BOLD(58),W//2,int(H*0.13),int(W*0.9))
+    ws=560; ang=-(360*2.3*ease(clamp(t/0.7))+35); img.alpha_composite(wheel(ws,ang),((W-ws)//2,int(H*0.34)))
+    op=int(255*ease(clamp((t-0.55)/0.4)))
+    if op>0: para(img,[("Ils jouent, l'avis vient tout seul.",WHITE)],BODYB(46),W//2,int(H*0.80),int(W*0.88),opacity=op)
+    return img
+REEL11=[(0,4.4,r11_list),(4.4,8.0,r11_sol),
+        (8.0,12.0,lambda t: cta(t,"Arrêtez de perdre des avis",q="Vous faites laquelle ?"))]
+
+# =================== RÉEL 12 — « +5 avis / jour » (notifs qui s'empilent) ===================
+def notif_card(w):
+    h=150; base=_card_shadow(w,h,28); d=ImageDraw.Draw(base); d.rounded_rectangle([0,0,w,h],radius=28,fill=WHITE)
+    ic=68; cx=44+ic//2; cy=h//2
+    d.ellipse([44,cy-ic//2,44+ic,cy+ic//2],fill=GOLD)
+    base.alpha_composite(star(int(ic*0.6),WHITE),(int(cx-ic*0.3),int(cy-ic*0.3)))
+    d.text((44+ic+28,32),"Nouvel avis Google",font=BODYB(40),fill=CARDTX)
+    base.alpha_composite(stars_row(5,30,GOLD),(44+ic+28,92))
+    d.text((44+ic+28+5*30+4*int(30*0.14)+16,94),"il y a 1 min",font=BODY(30),fill=GREY)
+    return base
+def r12_stack(t):
+    img=bg_violet(int(H*0.42))
+    para(img,[("Et si chaque jour ressemblait à ça ?",WHITE)],BOLD(54),W//2,int(H*0.10),int(W*0.86))
+    cw=int(W*0.84); card=notif_card(cw)
+    for i in range(5):
+        t0=0.1+i*0.16; op=ease(clamp((t-t0)/0.25))
+        if op<=0: continue
+        dy=int((1-eob(clamp((t-t0)/0.35)))*-40)
+        y=int(H*0.26)+i*175+dy
+        c=card.copy()
+        if op<1: c.putalpha(c.getchannel("A").point(lambda v:int(v*op)))
+        img.alpha_composite(c,((W-cw)//2,y))
+    pop(img,pill("+5 avis aujourd'hui",BOLD(52),NAVY,GOLD),W//2,int(H*0.86),t,0.9)
+    return img
+def r12_kado(t):
+    img=bg_violet()
+    para(img,[("Avec Kado, c'est ",WHITE),("chaque jour.",GOLD)],BOLD(64),W//2,int(H*0.13),int(W*0.9))
+    ws=560; ang=-(360*2.3*ease(clamp(t/0.7))+35); img.alpha_composite(wheel(ws,ang),((W-ws)//2,int(H*0.34)))
+    op=int(255*ease(clamp((t-0.55)/0.4)))
+    if op>0: para(img,[("Vos clients jouent → ils laissent un avis.",WHITE)],BODYB(44),W//2,int(H*0.80),int(W*0.9),opacity=op)
+    return img
+REEL12=[(0,4.6,r12_stack),(4.6,8.2,r12_kado),
+        (8.2,12.2,lambda t: cta(t,"Des avis, tous les jours",q="Combien vous en voulez ?"))]
+
+_BASE={"reel2":REEL2,"reel3":REEL3,"reel4":REEL4,"reel5":REEL5,"reel6":REEL6,"reel7":REEL7,"reel8":REEL8,"reel9":REEL9,"reel10":REEL10,"reel11":REEL11,"reel12":REEL12}
 REELS={n:with_cold(n,tl) for n,tl in _BASE.items()}
 
 if __name__=="__main__":
