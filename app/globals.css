@@ -7117,3 +7117,18 @@ summary:focus-visible,
 @media (prefers-reduced-motion: reduce) {
   .track-ahead.next-cue { animation: none; }
 }
+
+/* Badge « client arrivé » sur le tableau des commandes (Click & Collect). */
+.order-arrived {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #0a7d3b;
+  background: #e6f6ec;
+  border: 1px solid #b7e3c6;
+  border-radius: 999px;
+  padding: 2px 9px;
+  white-space: nowrap;
+}

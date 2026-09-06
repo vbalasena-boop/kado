@@ -123,22 +123,19 @@ export default async function OrdersPage() {
     // encore (migration 0037 non appliquée).
     const baseCols =
       "id, code, customer_name, customer_phone, pickup_at, note, items, total_cents, status, created_at";
-    let { data: o, error: oErr } = (await db
-      .from("orders")
-      .select(
-        `${baseCols}, service_mode, table_label, buzzer_no, order_no, paid, refunded`
-      )
-      .eq("business_id", business.id)
-      .order("created_at", { ascending: false })
-      .limit(150)) as { data: any[] | null; error: any };
-    if (oErr) {
-      ({ data: o } = (await db
+    // `arrived_at` (0080) est la colonne la plus récente : tolérance à 3 niveaux
+    // pour ne pas perdre service_mode/buzzer si seule 0080 manque.
+    const wideCols = `${baseCols}, service_mode, table_label, buzzer_no, order_no, paid, refunded`;
+    const fetchBoard = (cols: string) =>
+      db
         .from("orders")
-        .select(baseCols)
+        .select(cols)
         .eq("business_id", business.id)
         .order("created_at", { ascending: false })
-        .limit(150)) as { data: any[] | null; error: any });
-    }
+        .limit(150) as unknown as Promise<{ data: any[] | null; error: any }>;
+    let { data: o, error: oErr } = await fetchBoard(`${wideCols}, arrived_at`);
+    if (oErr) ({ data: o, error: oErr } = await fetchBoard(wideCols));
+    if (oErr) ({ data: o } = await fetchBoard(baseCols));
     orders = (o as Order[]) ?? [];
 
     // Toutes les commandes servies, pour les statistiques (2000 max).

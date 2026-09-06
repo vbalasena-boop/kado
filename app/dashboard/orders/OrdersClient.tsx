@@ -163,6 +163,7 @@ export type Order = {
   service_mode?: string | null;
   table_label?: string | null;
   buzzer_no?: number | null;
+  arrived_at?: string | null;
   order_no?: number | null;
   paid?: boolean | null;
   refunded?: boolean | null;
@@ -955,6 +956,9 @@ export default function OrdersClient({
             </a>
           )}
           <span className="order-time">{fmtTime(o.created_at)}</span>
+          {o.arrived_at && (o.status === "new" || o.status === "ready") && (
+            <span className="order-arrived">🙋 Client arrivé</span>
+          )}
         </div>
         <div className="order-body">
           {isBuzzer ? (
