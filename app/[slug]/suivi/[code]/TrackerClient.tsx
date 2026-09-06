@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { subscribeWithCurrentKey } from "@/lib/push-client";
-import { readyClockLabel } from "@/lib/wait-estimate";
+import { readyClockLabel, shouldAlertNext } from "@/lib/wait-estimate";
 
 function euros(cents: number) {
   return (cents / 100).toLocaleString("fr-FR", {
@@ -45,6 +45,8 @@ export default function TrackerClient({
   const audioRef = useRef<AudioContext | null>(null);
   const lastStatusRef = useRef(initialStatus);
   const alertedRef = useRef(false);
+  const nextAlertedRef = useRef(false);
+  const [nextCue, setNextCue] = useState(false);
 
   // Débloque l'audio dès la 1re interaction (iOS l'exige) + détecte iPhone.
   useEffect(() => {
@@ -115,6 +117,20 @@ export default function TrackerClient({
     setTimeout(() => setBuzzing(false), 8000);
   }
 
+  /** Alerte DOUCE « vous êtes le prochain » : courte vibration + surbrillance
+   *  temporaire. Distincte du buzz « prêt » (plus léger) et jouée une seule fois. */
+  function fireNextCue() {
+    if (nextAlertedRef.current) return;
+    nextAlertedRef.current = true;
+    try {
+      (navigator as any).vibrate?.([120, 60, 120]);
+    } catch {
+      /* pas de vibration (iOS) */
+    }
+    setNextCue(true);
+    window.setTimeout(() => setNextCue(false), 6000);
+  }
+
   const onsite = serviceMode === "sur_place";
   const cancelled = status === "cancelled";
   const reached = status === "done" ? 3 : status === "ready" ? 2 : 1;
@@ -138,7 +154,13 @@ export default function TrackerClient({
           }
           lastStatusRef.current = d.status;
           setStatus(d.status);
-          setAhead(typeof d.ahead === "number" ? d.ahead : null);
+          const nextAhead = typeof d.ahead === "number" ? d.ahead : null;
+          setAhead((prevAhead) => {
+            if (shouldAlertNext(prevAhead, nextAhead, d.status, nextAlertedRef.current)) {
+              fireNextCue();
+            }
+            return nextAhead;
+          });
           setWaitMin(typeof d.waitMin === "number" ? d.waitMin : null);
         }
         if (alive && !["ready", "done", "cancelled"].includes(d?.status)) {
@@ -332,7 +354,7 @@ export default function TrackerClient({
               </div>
             )}
             {status === "new" && ahead != null && (
-              <p className="track-ahead">
+              <p className={`track-ahead${nextCue ? " next-cue" : ""}`}>
                 {ahead === 0 ? (
                   <>🙌 Vous êtes le prochain !</>
                 ) : (
