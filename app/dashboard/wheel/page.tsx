@@ -138,6 +138,16 @@ export default async function WheelPage() {
     ? false
     : !!(rvi as any)?.review_invite;
 
+  // Invitation avis élargie aux leads (lecture tolérante si migration 0079 absente)
+  const { data: rvl, error: rvlErr } = await admin
+    .from("wheel_configs")
+    .select("review_invite_leads")
+    .eq("business_id", business.id)
+    .maybeSingle();
+  const reviewInviteLeads: boolean = rvlErr
+    ? false
+    : !!(rvl as any)?.review_invite_leads;
+
   // Relance de conversion (lecture tolérante si migration 0066 absente)
   const { data: cvn, error: cvnErr } = await admin
     .from("wheel_configs")
@@ -197,6 +207,7 @@ export default async function WheelPage() {
         reengage_inactive_days: reengageInactiveDays,
         reengage_reward: reengageReward,
         review_invite: reviewInvite,
+        review_invite_leads: reviewInviteLeads,
         convert_nudge: convertNudge,
         feedback_enabled: feedbackEnabled,
         ...highlight,

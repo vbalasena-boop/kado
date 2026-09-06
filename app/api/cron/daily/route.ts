@@ -17,7 +17,10 @@ import {
 import { unsubToken } from "@/lib/unsub";
 import { isAlmostNudgeEligible, isInactiveNudgeEligible } from "@/lib/reengage";
 import { recapDeltaLabel, parseRecapRows } from "@/lib/recap";
-import { isReviewInviteEligible } from "@/lib/review-invite";
+import {
+  isReviewInviteEligible,
+  isLeadReviewInviteEligible,
+} from "@/lib/review-invite";
 import {
   isConvertNudgeEligible,
   CONVERT_MIN_AGE_DAYS,
@@ -65,6 +68,7 @@ export async function GET(req: NextRequest) {
     reengageAlmost: 0,
     reengageInactive: 0,
     reviewInvites: 0,
+    reviewInvitesLeads: 0,
     convertNudges: 0,
     emailsSent: 0,
     errors: [] as string[],
@@ -450,6 +454,103 @@ export async function GET(req: NextRequest) {
     }
   } catch (e: any) {
     out.errors.push(`review_invite: ${e?.message ?? "error"}`);
+  }
+
+  // ── 2d-bis. Invitation avis élargie (tous les clients / leads) ──
+  // Commerces ayant activé `review_invite_leads` ET renseigné un lien d'avis :
+  // on invite les clients ayant simplement laissé leur e-mail (leads), en PLUS
+  // des fidèles (bloc précédent). E-mail neutre, non récompensé, envoi unique
+  // (`review_invite_leads_at`), respect de la désinscription. Les leads déjà
+  // FIDÈLES sont exclus (couverts par l'invitation fidèles) → pas de doublon.
+  const REVIEW_INVITE_LEADS_MAX_PER_RUN = 200; // garde-fou anti-rafale
+  try {
+    const { data: lcfgs, error: lcErr } = await db
+      .from("wheel_configs")
+      .select("business_id, review_url, review_enabled")
+      .eq("review_invite_leads", true);
+    if (lcErr) {
+      // Colonne 0079 absente → fonctionnalité pas déployée : on ignore.
+      if (!isMissingColumnError(lcErr)) {
+        out.errors.push(`review_invite_leads: ${lcErr.message}`);
+      }
+    } else if ((lcfgs ?? []).length) {
+      const ids = [...new Set((lcfgs as any[]).map((c) => c.business_id))];
+      const { data: bizs } = await db
+        .from("businesses")
+        .select("id, name, status")
+        .in("id", ids);
+      const bizBy = new Map((bizs ?? []).map((b: any) => [b.id, b]));
+
+      for (const cfg of lcfgs as any[]) {
+        const biz: any = bizBy.get(cfg.business_id);
+        if (!biz || biz.status !== "active") continue;
+        if (cfg.review_enabled === false) continue;
+        const reviewHref = hardenExternalUrl(cfg.review_url);
+        if (!reviewHref) continue;
+
+        const { data: leads } = await db
+          .from("leads")
+          .select("id, email, unsubscribed_at, review_invite_leads_at")
+          .eq("business_id", cfg.business_id)
+          .is("unsubscribed_at", null)
+          .is("review_invite_leads_at", null)
+          .not("email", "is", null);
+
+        const candidates = (leads ?? []).filter((l: any) =>
+          isLeadReviewInviteEligible(l)
+        );
+        if (!candidates.length) continue;
+
+        // Exclut les leads DÉJÀ fidèles (invités par le bloc fidèles) : pas de
+        // doublon. Comparaison insensible à la casse (cartes en minuscules).
+        const emailsLower = [
+          ...new Set(candidates.map((c: any) => c.email.toLowerCase())),
+        ];
+        const { data: cards } = await db
+          .from("loyalty_cards")
+          .select("email")
+          .eq("business_id", cfg.business_id)
+          .in("email", emailsLower);
+        const hasCard = new Set(
+          (cards ?? []).map((c: any) => (c.email || "").toLowerCase())
+        );
+
+        const eligible = candidates
+          .filter((c: any) => !hasCard.has(c.email.toLowerCase()))
+          .slice(0, REVIEW_INVITE_LEADS_MAX_PER_RUN);
+        const shop = escapeHtml(biz.name || "votre commerce");
+        const safeHref = escapeHtml(reviewHref);
+
+        await mapLimit(eligible, 5, async (l: any) => {
+          const unsub = `${SITE}/api/unsubscribe?b=${cfg.business_id}&e=${encodeURIComponent(
+            Buffer.from(l.email).toString("base64url")
+          )}&t=${unsubToken(cfg.business_id, l.email)}`;
+          const ok = await queueOrSend({
+            businessId: cfg.business_id,
+            to: l.email,
+            subject: `Un petit avis pour ${biz.name} ?`,
+            fromName: `${biz.name} via Kado`,
+            marketing: true,
+            html: emailLayout({
+              preview: "Votre avis nous aiderait beaucoup.",
+              heading: "Un petit avis pour nous ? 🙏",
+              emoji: "⭐",
+              bodyHtml: `Merci d'être passé chez <b>${shop}</b> !<br><br>Si vous avez un instant, un avis sur Google nous aiderait énormément à nous faire connaître. C'est totalement libre et sans obligation.<br><br><a href="${safeHref}" style="display:inline-block;background:linear-gradient(135deg,#ff6b4a,#ff4e87);color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:12px;">Laisser un avis Google</a>`,
+              footnote: `Message envoyé une seule fois. <a href="${unsub}" style="color:#9a94b4;">Ne plus recevoir ces e-mails</a>`,
+            }),
+          });
+          if (ok) {
+            await db
+              .from("leads")
+              .update({ review_invite_leads_at: new Date().toISOString() })
+              .eq("id", l.id);
+            out.reviewInvitesLeads++;
+          }
+        });
+      }
+    }
+  } catch (e: any) {
+    out.errors.push(`review_invite_leads: ${e?.message ?? "error"}`);
   }
 
   // ── 2e. Relance de conversion « a joué, pas de carte » ──────────

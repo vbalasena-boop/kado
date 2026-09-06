@@ -45,6 +45,7 @@ export async function POST(req: NextRequest) {
       reengage_inactive_days?: number;
       reengage_reward?: boolean;
       review_invite?: boolean;
+      review_invite_leads?: boolean;
       convert_nudge?: boolean;
       feedback_enabled?: boolean;
       play_alerts?: boolean;
@@ -332,6 +333,27 @@ export async function POST(req: NextRequest) {
     }
   } catch (e) {
     reportError(e, { where: "dashboard/wheel", field: "review_invite" });
+    return Response.json({ error: "save_failed" }, { status: 500 });
+  }
+
+  // Invitation avis élargie aux leads (0079) : mise à jour isolée et tolérante.
+  try {
+    const { error } = await admin
+      .from("wheel_configs")
+      .update({ review_invite_leads: !!cfg.review_invite_leads })
+      .eq("business_id", business.id);
+    if (error && !isMissingColumnError(error)) {
+      reportError(error, {
+        where: "dashboard/wheel",
+        field: "review_invite_leads",
+      });
+      return Response.json(
+        { error: "save_failed", detail: error.message },
+        { status: 500 }
+      );
+    }
+  } catch (e) {
+    reportError(e, { where: "dashboard/wheel", field: "review_invite_leads" });
     return Response.json({ error: "save_failed" }, { status: 500 });
   }
 
