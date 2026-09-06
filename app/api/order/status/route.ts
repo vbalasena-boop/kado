@@ -48,39 +48,46 @@ export async function GET(req: NextRequest) {
     const o = order as any;
     const status = o.status ?? "new";
 
-    // Bipeur : position dans la file — nombre de commandes du jour encore « à
-    // préparer » avec un numéro INFÉRIEUR (donc devant celle-ci). Tolérant.
+    // Estimation d'attente pour toute commande encore « à préparer » (status
+    // « new ») : temps de préparation médian récent, extrapolé à la position.
+    //  - BIPEUR : on ajoute la position dans la file (nombre de commandes du
+    //    jour avec un numéro inférieur), et on affiche aussi cette position ;
+    //  - À EMPORTER (non-bipeur) : pas de file numérotée → on estime la seule
+    //    préparation de cette commande (position 0). Tolérant : colonne absente
+    //    ou pas assez d'historique → on n'affiche rien.
     let ahead: number | null = null;
     let waitMin: number | null = null;
     const isBuzzer = o.service_mode === "buzzer" || o.buzzer_no != null;
-    if (status === "new" && isBuzzer && typeof o.buzzer_no === "number") {
+    if (status === "new") {
       try {
-        const startOfDay = new Date();
-        startOfDay.setUTCHours(0, 0, 0, 0);
-        const [aheadRes, recentRes] = await Promise.all([
-          db
+        // Temps de préparation récent (commandes déjà passées « prêtes »).
+        const recentRes = await db
+          .from("orders")
+          .select("created_at, notified_ready_at")
+          .eq("business_id", biz.id)
+          .not("notified_ready_at", "is", null)
+          .order("notified_ready_at", { ascending: false })
+          .limit(20);
+        const avgPrep = recentRes.error
+          ? null
+          : averagePrepMs((recentRes.data as any[]) ?? []);
+
+        if (isBuzzer && typeof o.buzzer_no === "number") {
+          const startOfDay = new Date();
+          startOfDay.setUTCHours(0, 0, 0, 0);
+          const aheadRes = await db
             .from("orders")
             .select("*", { count: "exact", head: true })
             .eq("business_id", biz.id)
             .eq("status", "new")
             .gte("created_at", startOfDay.toISOString())
             .not("buzzer_no", "is", null)
-            .lt("buzzer_no", o.buzzer_no),
-          // Temps de préparation récent (commandes déjà passées « prêtes »).
-          db
-            .from("orders")
-            .select("created_at, notified_ready_at")
-            .eq("business_id", biz.id)
-            .not("notified_ready_at", "is", null)
-            .order("notified_ready_at", { ascending: false })
-            .limit(20),
-        ]);
-        ahead = aheadRes.count ?? 0;
-        if (!recentRes.error) {
-          waitMin = estimateWaitMinutes(
-            averagePrepMs((recentRes.data as any[]) ?? []),
-            ahead
-          );
+            .lt("buzzer_no", o.buzzer_no);
+          ahead = aheadRes.count ?? 0;
+          waitMin = estimateWaitMinutes(avgPrep, ahead);
+        } else if (!isBuzzer) {
+          // À emporter : seule la préparation de cette commande (position 0).
+          waitMin = estimateWaitMinutes(avgPrep, 0);
         }
       } catch {
         ahead = null; // colonne absente : on n'affiche ni position ni attente

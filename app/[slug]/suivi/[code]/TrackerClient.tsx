@@ -382,6 +382,15 @@ export default function TrackerClient({
         ) : (
           <>
             <div className="uber-done-code">{code}</div>
+            {status === "new" && waitMin != null && (
+              <p className="track-ahead">
+                ⏳ Prête dans ~<b>{waitMin} min</b>
+                {(() => {
+                  const at = readyClockLabel(waitMin);
+                  return at ? <span className="track-eta">vers {at}</span> : null;
+                })()}
+              </p>
+            )}
             {items.length > 0 && (
               <ul className="order-items" style={{ width: "100%", maxWidth: 420 }}>
                 {items.map((l, i) => (
