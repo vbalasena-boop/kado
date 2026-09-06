@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { subscribeWithCurrentKey } from "@/lib/push-client";
+import { readyClockLabel } from "@/lib/wait-estimate";
 
 function euros(cents: number) {
   return (cents / 100).toLocaleString("fr-FR", {
@@ -310,6 +311,10 @@ export default function TrackerClient({
                 {waitMin != null && (
                   <span className="track-eta">
                     ~{waitMin} min d'attente estimée
+                    {(() => {
+                      const at = readyClockLabel(waitMin);
+                      return at ? <> · prête vers <b>{at}</b></> : null;
+                    })()}
                   </span>
                 )}
               </p>

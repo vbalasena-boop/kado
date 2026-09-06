@@ -50,3 +50,20 @@ export function estimateWaitMinutes(
   const totalMin = (avgPrepMs * (ahead + 1)) / 60000;
   return friendlyMinutes(Math.round(totalMin));
 }
+
+/**
+ * Heure estimée de disponibilité (« prête vers »), au format français « 12h35 »,
+ * ou null si pas d'estimation. Logique pure : l'heure de référence `now` est
+ * injectée (par défaut l'heure courante). Arrondi déjà « lisible » en amont via
+ * `estimateWaitMinutes` ; ici on ajoute simplement `waitMin` à `now`.
+ */
+export function readyClockLabel(
+  waitMin: number | null,
+  now: Date = new Date()
+): string | null {
+  if (waitMin == null || waitMin <= 0) return null;
+  const t = new Date(now.getTime() + waitMin * 60000);
+  const h = t.getHours();
+  const m = t.getMinutes();
+  return `${h}h${String(m).padStart(2, "0")}`;
+}

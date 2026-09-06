@@ -3,6 +3,7 @@ import {
   averagePrepMs,
   friendlyMinutes,
   estimateWaitMinutes,
+  readyClockLabel,
 } from "@/lib/wait-estimate";
 
 const at = (min: number) => new Date(min * 60000).toISOString();
@@ -52,5 +53,20 @@ describe("estimateWaitMinutes", () => {
   });
   it("null sans base de calcul", () => {
     expect(estimateWaitMinutes(null, 2)).toBeNull();
+  });
+});
+
+describe("readyClockLabel", () => {
+  it("ajoute waitMin à l'heure de référence, format « 12h35 »", () => {
+    const now = new Date("2026-09-06T12:20:00");
+    expect(readyClockLabel(15, now)).toBe("12h35");
+  });
+  it("minutes zéro-paddées et passage d'heure", () => {
+    const now = new Date("2026-09-06T12:55:00");
+    expect(readyClockLabel(10, now)).toBe("13h05");
+  });
+  it("null si pas d'estimation", () => {
+    expect(readyClockLabel(null, new Date("2026-09-06T12:00:00"))).toBeNull();
+    expect(readyClockLabel(0, new Date("2026-09-06T12:00:00"))).toBeNull();
   });
 });
