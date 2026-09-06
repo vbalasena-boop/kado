@@ -37,7 +37,7 @@ export const POST = publicRoute({
     // Commande existante + statut/numéro pour un message utile au comptoir.
     const { data: order } = await db
       .from("orders")
-      .select("status, buzzer_no")
+      .select("id, status, buzzer_no")
       .eq("business_id", (biz as any).id)
       .eq("code", code)
       .order("created_at", { ascending: false })
@@ -50,6 +50,18 @@ export const POST = publicRoute({
     if (!(await rateLimit(`oarrived:code:${code}`, 1, 120))) {
       // Déjà signalé récemment : on renvoie « ok » sans re-pusher (idempotent doux).
       return Response.json({ ok: true, throttled: true });
+    }
+
+    // Persistance de l'arrivée (0080) : tolérant si la colonne n'existe pas
+    // encore (42703) — le signalement fonctionne alors en push seul.
+    try {
+      await db
+        .from("orders")
+        .update({ arrived_at: new Date().toISOString() })
+        .eq("id", (order as any).id)
+        .eq("business_id", (biz as any).id);
+    } catch {
+      /* la persistance ne doit jamais faire échouer le signalement */
     }
 
     const buzzer = (order as any).buzzer_no;
