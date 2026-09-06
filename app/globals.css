@@ -5305,6 +5305,27 @@ html { scroll-behavior: smooth; }
   background: rgba(24, 128, 56, 0.04);
 }
 .order-card.muted-card { opacity: 0.75; }
+/* Ancienneté des commandes à préparer : escalade additive (le rouge « new »
+   existant reste, on ajoute un liseré et un badge selon l'urgence). */
+.order-card.age-aging { border-left: 4px solid #e0a020; }
+.order-card.age-late { border-left: 4px solid #d93025; }
+.order-age {
+  font-size: 12px;
+  font-weight: 800;
+  border-radius: 999px;
+  padding: 2px 9px;
+  white-space: nowrap;
+}
+.order-age.age-fresh { background: #eef0f3; color: #5f6368; }
+.order-age.age-aging { background: #fff2d9; color: #8a5a00; }
+.order-age.age-late { background: #fde0de; color: #a12626; }
+@media (prefers-reduced-motion: no-preference) {
+  .order-card.age-late { animation: order-late-pulse 2.4s ease-in-out infinite; }
+  @keyframes order-late-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(217, 48, 37, 0); }
+    50% { box-shadow: 0 0 0 3px rgba(217, 48, 37, 0.14); }
+  }
+}
 .order-head {
   display: flex;
   align-items: center;
