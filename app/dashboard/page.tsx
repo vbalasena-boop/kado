@@ -10,6 +10,7 @@ import {
   loyaltyRewardRate,
 } from "@/lib/dashboard-stats";
 import { avisMigrationNoticeNeeded } from "@/lib/wheel";
+import { onboardingSteps, onboardingProgress } from "@/lib/onboarding";
 import { summarizeSegments, segmentsFromRpc } from "@/lib/segments";
 import {
   parseTrendRpc,
@@ -220,43 +221,23 @@ export default async function DashboardHome() {
       year: "2-digit",
     });
 
-  // --- Premiers pas (checklist d'installation) ---
+  // --- Premiers pas (checklist de 1re configuration, roadmap G3) ---
+  // Chaque étape a un VRAI signal de complétion. « Affiche déployée » est
+  // déduite d'un comportement : si des clients scannent ou jouent déjà, l'affiche
+  // est forcément posée. L'étape fidélité n'apparaît que si la formule l'inclut.
   const hasLinks = !!(cfg?.instagram_url || cfg?.review_url);
   const hasPlays = total > 0;
-  const steps = [
-    {
-      done: true,
-      title: "Votre espace est créé",
-      desc: "Votre roue et vos cadeaux sont déjà pré-remplis.",
-      href: "/dashboard/wheel",
-      cta: "Personnaliser ma roue",
-    },
-    {
-      done: hasLinks,
-      title: "Ajoutez vos liens Instagram & Google",
-      desc: "Indispensable pour rediriger vos clients vers votre profil et vos avis.",
-      href: "/dashboard/wheel",
-      cta: hasLinks ? "Modifier mes liens" : "Ajouter mes liens",
-    },
-    {
-      done: false,
-      title: "Imprimez votre affiche avec le QR code",
-      desc: "À poser sur vos tables, votre comptoir ou votre vitrine.",
-      href: "/dashboard/qr",
-      cta: "Voir mon affiche",
-    },
-    {
-      done: hasPlays,
-      title: "Recevez votre premier tour de roue",
-      desc: hasPlays
-        ? "Bravo, vos clients jouent déjà !"
-        : "Testez votre roue puis lancez-vous en boutique.",
-      href: `/${business.slug}?preview=1`,
-      cta: "Tester ma roue",
-    },
-  ];
-  const doneCount = steps.filter((s) => s.done).length;
-  const showChecklist = !(hasLinks && hasPlays);
+  const steps = onboardingSteps({
+    hasLogo: !!business.logo_url,
+    hasLinks,
+    loyaltyAvailable: showFid,
+    loyaltyActive: !!(cfg as any)?.loyalty_enabled,
+    afficheDeployed: hasPlays || scans > 0,
+    hasPlays,
+    slug: business.slug,
+  });
+  const { done: doneCount, allDone } = onboardingProgress(steps);
+  const showChecklist = !allDone;
 
   // Accueil dédié « Comptoir » : quelques chiffres de commandes.
   const isComptoir = (business as any).plan === "comptoir";
@@ -424,7 +405,7 @@ export default async function DashboardHome() {
           </div>
           <ol className="setup-steps">
             {steps.map((s) => (
-              <li key={s.title} className={s.done ? "done" : ""}>
+              <li key={s.key} className={s.done ? "done" : ""}>
                 <span className="setup-check">{s.done ? "✓" : ""}</span>
                 <div className="setup-txt">
                   <b>{s.title}</b>
@@ -433,7 +414,7 @@ export default async function DashboardHome() {
                 <Link
                   href={s.href}
                   className="setup-cta"
-                  {...(s.href.includes("preview") ? { target: "_blank" } : {})}
+                  {...(s.external ? { target: "_blank" } : {})}
                 >
                   {s.cta} →
                 </Link>
