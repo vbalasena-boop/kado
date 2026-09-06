@@ -45,6 +45,7 @@ type Config = {
   reengage_inactive_days?: number | null;
   reengage_reward?: boolean | null;
   review_invite?: boolean | null;
+  review_invite_leads?: boolean | null;
   convert_nudge?: boolean | null;
   feedback_enabled?: boolean | null;
   play_alerts?: boolean | null;
@@ -640,6 +641,32 @@ export default function WheelEditor({
                       un e-mail neutre, envoyé une seule fois aux clients ayant
                       complété au moins une carte. <b>Aucune récompense liée à
                       l'avis</b> (conforme aux règles Google).
+                    </span>
+                  </label>
+                ) : (
+                  <p className="muted" style={{ marginTop: 6 }}>
+                    Renseignez votre <b>lien d'avis Google</b> ci-dessus pour
+                    pouvoir inviter vos clients fidèles à laisser un avis.
+                  </p>
+                )}
+
+                {(config.review_url ?? "").trim() !== "" ? (
+                  <label className="toggle-field" style={{ marginTop: 6 }}>
+                    <input
+                      type="checkbox"
+                      checked={!!config.review_invite_leads}
+                      onChange={(e) =>
+                        setConfig({
+                          ...config,
+                          review_invite_leads: e.target.checked,
+                        })
+                      }
+                    />
+                    <span>
+                      <b>⭐ Inviter aussi tous mes clients (e-mail laissé)</b> —
+                      le même e-mail neutre, envoyé une seule fois aux clients
+                      ayant laissé leur e-mail (au-delà des fidèles). Respecte la
+                      désinscription. <b>Aucune récompense liée à l'avis.</b>
                     </span>
                   </label>
                 ) : (
