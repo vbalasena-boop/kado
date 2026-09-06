@@ -5,7 +5,7 @@ import { NextRequest } from "next/server";
 //  - slug valide → 200 (insertion) ;
 //  - slug absent → 400 ;
 //  - commerce inconnu → 404 ;
-//  - table 0077 absente (42P01) → 200 (tolérant, la mesure ne bloque jamais).
+//  - table 0082 absente (42P01) → 200 (tolérant, la mesure ne bloque jamais).
 
 let BIZ: any = { id: "biz1" };
 let INSERT_ERROR: any = null;
@@ -78,7 +78,7 @@ describe("POST /api/review-click", () => {
     expect(res.status).toBe(404);
   });
 
-  it("table 0077 absente (42P01) → 200 (tolérant)", async () => {
+  it("table 0082 absente (42P01) → 200 (tolérant)", async () => {
     INSERT_ERROR = { code: "42P01" };
     const res = await POST(post({ slug: "cafe" }));
     expect(res.status).toBe(200);

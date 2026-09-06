@@ -29,7 +29,7 @@ export const POST = publicRoute({
       .maybeSingle();
     if (!biz) return Response.json({ error: "not_found" }, { status: 404 });
 
-    // Insertion tolérante : si la table 0077 n'est pas encore déployée (42P01),
+    // Insertion tolérante : si la table 0082 n'est pas encore déployée (42P01),
     // on n'échoue pas — la mesure est un confort, jamais un blocage.
     const { error } = await db
       .from("review_clicks")

@@ -1,4 +1,8 @@
--- Kado 0077 — Clics sur le lien « Laisser un avis Google ».
+-- Kado 0082 — Clics sur le lien « Laisser un avis Google ».
+--
+-- (Renumérotée de 0077 → 0082 : le préfixe 0077 était déjà pris par
+--  0077_sms_on_ready.sql d'un autre chantier. Le CLI Supabase indexe les
+--  migrations par ce préfixe — deux fichiers « 0077 » cassaient `db push`.)
 --
 -- Le lien avis est NEUTRE (facultatif, non récompensé) mais on veut mesurer
 -- s'il est réellement cliqué — l'ancien compteur du tableau de bord comptait

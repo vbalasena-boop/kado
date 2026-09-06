@@ -121,7 +121,7 @@ export default async function DashboardHome() {
           cutoff: segCutoffIso,
         })
       : Promise.resolve({ data: null, error: null }),
-    // Clics sur le lien « Laisser un avis Google » (comptage indexé, table 0077).
+    // Clics sur le lien « Laisser un avis Google » (comptage indexé, table 0082).
     // Lecture tolérante : si la table n'est pas déployée, on retombe sur 0 sans
     // faire échouer la page (voir `reviewClicks` plus bas).
     showRoue
@@ -142,7 +142,7 @@ export default async function DashboardHome() {
 
   const cfg = cfgRes.data;
   const leadsCount = leadsRes.count;
-  // Clics sur le lien avis Google (table 0077). Remplace l'ancien compteur figé
+  // Clics sur le lien avis Google (table 0082). Remplace l'ancien compteur figé
   // basé sur `play_type = 'review'` (les tours avis n'existent plus depuis
   // l'epic 9). Tolérant : table absente / erreur → 0.
   const reviewClicks = reviewClicksRes.error ? 0 : reviewClicksRes.count ?? 0;
