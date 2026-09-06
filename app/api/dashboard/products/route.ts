@@ -83,6 +83,27 @@ export const POST = merchantRoute({
       return Response.json({ ok: true });
     }
 
+    if (body.action === "soldout" && body.id) {
+      // Rupture temporaire (0081). Tolérant : si la colonne n'existe pas encore,
+      // on renvoie une erreur douce plutôt qu'un 500.
+      const { data: p, error } = await db
+        .from("products")
+        .select("id, sold_out")
+        .eq("id", body.id)
+        .eq("business_id", business.id)
+        .maybeSingle();
+      if (error) {
+        return Response.json({ error: "unavailable" }, { status: 400 });
+      }
+      if (!p) return Response.json({ error: "not_found" }, { status: 404 });
+      await db
+        .from("products")
+        .update({ sold_out: !(p as any).sold_out })
+        .eq("id", (p as any).id)
+        .eq("business_id", business.id);
+      return Response.json({ ok: true });
+    }
+
     if (body.action === "remove_image" && body.id) {
       await db
         .from("products")

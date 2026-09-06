@@ -175,18 +175,27 @@ export async function recalcCart(
   | { ok: false; error: string }
 > {
   const ids = items.map((i) => i.id as string);
-  const { data: products } = await db
-    .from("products")
-    .select("id, name, price_cents, active")
-    .eq("business_id", businessId)
-    .in("id", ids);
+  // Lecture tolérante : `sold_out` (0081) peut ne pas exister encore → repli
+  // sans la colonne (le rejet « épuisé » est alors simplement inactif).
+  const sel = (cols: string) =>
+    db.from("products").select(cols).eq("business_id", businessId).in("id", ids);
+  let { data: products, error } = (await sel(
+    "id, name, price_cents, active, sold_out"
+  )) as { data: any[] | null; error: any };
+  if (error) {
+    ({ data: products } = (await sel("id, name, price_cents, active")) as {
+      data: any[] | null;
+      error: any;
+    });
+  }
   const byId = new Map((products ?? []).map((p: any) => [p.id, p]));
 
   const lines: OrderLine[] = [];
   let total = 0;
   for (const it of items) {
     const p: any = byId.get(it.id as string);
-    if (!p || !p.active) {
+    // Indisponible : inconnu, masqué (`active` faux) OU épuisé du jour.
+    if (!p || !p.active || p.sold_out) {
       return { ok: false, error: "product_unavailable" };
     }
     const qty = Math.min(it.qty as number, 20);

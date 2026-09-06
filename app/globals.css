@@ -7132,3 +7132,26 @@ summary:focus-visible,
   padding: 2px 9px;
   white-space: nowrap;
 }
+
+/* Produit épuisé (Click & Collect) — côté client et côté commerçant. */
+.uber-soldout {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #b42318;
+  background: #fdeceb;
+  border: 1px solid #f5c6c2;
+  border-radius: 999px;
+  padding: 1px 8px;
+  vertical-align: middle;
+}
+.uber-item.is-soldout { opacity: 0.62; }
+.order-list li.is-soldout .product-info b::after {
+  content: " · Épuisé";
+  color: #b42318;
+  font-weight: 800;
+  font-size: 12px;
+}
