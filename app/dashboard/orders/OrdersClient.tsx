@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Icon } from "@/components/icons";
 import { subscribeWithCurrentKey } from "@/lib/push-client";
 import { orderMatchesQuery } from "@/lib/orders";
+import { orderAge } from "@/lib/order-age";
 
 /** Scanner de QR de retrait (caméra + jsQR), rendu dans un volet plein écran. */
 function QrScanner({
@@ -227,6 +228,16 @@ export default function OrdersClient({
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  // Horloge qui « tique » (30 s) pour rafraîchir l'ancienneté affichée des
+  // commandes — les dates viennent des props (statiques). Initialisée à null
+  // et remplie APRÈS le montage : on évite tout écart d'hydratation SSR/CSR
+  // (le badge n'apparaît qu'une fois côté client).
+  const [nowMs, setNowMs] = useState<number | null>(null);
+  useEffect(() => {
+    setNowMs(Date.now());
+    const id = setInterval(() => setNowMs(Date.now()), 30000);
+    return () => clearInterval(id);
+  }, []);
   const [pName, setPName] = useState("");
   const [pPrice, setPPrice] = useState("");
   const [pDesc, setPDesc] = useState("");
@@ -937,8 +948,16 @@ export default function OrdersClient({
 
   function OrderCard({ o }: { o: Order }) {
     const isBuzzer = o.service_mode === "buzzer" || o.buzzer_no != null;
+    // Ancienneté : uniquement pour les commandes À PRÉPARER (« new »), pour
+    // qu'aucune ne soit oubliée en coup de feu. null tant que l'horloge client
+    // n'a pas tiqué (évite l'écart d'hydratation).
+    const age = o.status === "new" && nowMs != null ? orderAge(o.created_at, nowMs) : null;
     return (
-      <li className={`order-card is-${o.status}${isBuzzer ? " is-buzzer" : ""}`}>
+      <li
+        className={`order-card is-${o.status}${isBuzzer ? " is-buzzer" : ""}${
+          age ? ` age-${age.level}` : ""
+        }`}
+      >
         <div className="order-head">
           {isBuzzer && o.buzzer_no != null ? (
             <span className="order-buzznum">N° {o.buzzer_no}</span>
@@ -957,6 +976,12 @@ export default function OrdersClient({
             </a>
           )}
           <span className="order-time">{fmtTime(o.created_at)}</span>
+          {age && (
+            <span className={`order-age age-${age.level}`}>
+              ⏱ {age.label}
+              {age.level === "late" ? " · à traiter" : ""}
+            </span>
+          )}
           {o.arrived_at && (o.status === "new" || o.status === "ready") && (
             <span className="order-arrived">🙋 Client arrivé</span>
           )}
