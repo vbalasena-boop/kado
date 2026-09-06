@@ -416,6 +416,36 @@ export default function Home({
       </section>
 
       <section className="v-section">
+        <h2>Vos avis Google, sans prendre de risque</h2>
+        <div className="v-compare">
+          <div className="v-compare-col risk">
+            <div className="v-compare-head">
+              <span className="v-compare-badge risk" aria-hidden="true">✕</span>
+              <h3>Les systèmes « un avis&nbsp;= une récompense »</h3>
+            </div>
+            <ul>
+              <li>Le cadeau est lié à l’avis&nbsp;: c’est du «&nbsp;review gating&nbsp;», interdit par Google.</li>
+              <li>Vos avis peuvent être supprimés rétroactivement.</li>
+              <li>Votre fiche Google est exposée à une sanction.</li>
+              <li>Souvent, seuls les clients contents sont incités (biaisé).</li>
+            </ul>
+          </div>
+          <div className="v-compare-col ok">
+            <div className="v-compare-head">
+              <span className="v-compare-badge ok" aria-hidden="true">✓</span>
+              <h3>Avec Kado</h3>
+            </div>
+            <ul>
+              <li>Le cadeau récompense le <b>jeu</b>, jamais l’avis.</li>
+              <li>Aucun review gating&nbsp;: votre fiche reste <b>protégée</b>.</li>
+              <li>L’avis Google reste un lien <b>libre et facultatif</b>.</li>
+              <li>Proposé à <b>tous</b> les clients, sans tri par satisfaction.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section className="v-section">
         <h2>Des tarifs simples</h2>
         <p className="v-audience-note" style={{ marginTop: -6, marginBottom: 22 }}>
           Choisissez votre formule — sans engagement, résiliable à tout moment.

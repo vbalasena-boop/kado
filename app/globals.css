@@ -1930,6 +1930,58 @@ canvas#confetti {
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 14px;
 }
+
+/* Comparatif « avis en sécurité » : systèmes rémunérés vs Kado */
+.v-compare {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+.v-compare-col {
+  border: 1px solid var(--stroke);
+  border-radius: 20px;
+  padding: 22px 22px 20px;
+  background: linear-gradient(180deg, var(--surface), var(--surface-2));
+}
+.v-compare-col.ok {
+  border-color: var(--gold);
+  box-shadow: 0 12px 30px -18px var(--gold-deep);
+}
+.v-compare-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.v-compare-head h3 { font-size: 16.5px; line-height: 1.25; }
+.v-compare-badge {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 14px;
+}
+.v-compare-badge.risk { background: rgba(220, 68, 68, 0.16); color: #ff6b6b; }
+.v-compare-badge.ok { background: var(--gold); color: var(--night); }
+.v-compare-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.v-compare-col li {
+  position: relative;
+  padding-left: 22px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--cream-dim);
+}
+.v-compare-col li::before {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.v-compare-col.risk li::before { content: "✕"; color: #ff6b6b; }
+.v-compare-col.ok li::before { content: "✓"; color: var(--gold); }
+.v-compare-col.ok li b { color: var(--cream); }
 .v-benefit {
   display: flex;
   gap: 14px;
