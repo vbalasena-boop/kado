@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type Stripe from "stripe";
 import { emailLayout } from "@/lib/email";
 import { escapeHtml } from "@/lib/campaigns";
+import { selectTolerant } from "@/lib/db-errors";
 
 /**
  * Logique métier des commandes (click & collect), extraite de la route
@@ -177,17 +178,10 @@ export async function recalcCart(
   const ids = items.map((i) => i.id as string);
   // Lecture tolérante : `sold_out` (0081) peut ne pas exister encore → repli
   // sans la colonne (le rejet « épuisé » est alors simplement inactif).
-  const sel = (cols: string) =>
-    db.from("products").select(cols).eq("business_id", businessId).in("id", ids);
-  let { data: products, error } = (await sel(
-    "id, name, price_cents, active, sold_out"
-  )) as { data: any[] | null; error: any };
-  if (error) {
-    ({ data: products } = (await sel("id, name, price_cents, active")) as {
-      data: any[] | null;
-      error: any;
-    });
-  }
+  const { data: products } = await selectTolerant<any>(
+    (cols) => db.from("products").select(cols).eq("business_id", businessId).in("id", ids),
+    ["id, name, price_cents, active, sold_out", "id, name, price_cents, active"]
+  );
   const byId = new Map((products ?? []).map((p: any) => [p.id, p]));
 
   const lines: OrderLine[] = [];

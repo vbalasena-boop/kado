@@ -1,5 +1,6 @@
 import { getMyBusiness } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { selectTolerant } from "@/lib/db-errors";
 import OrdersClient, {
   type Product,
   type Order,
@@ -114,23 +115,19 @@ export default async function OrdersPage() {
   }[] = [];
   try {
     // Lecture tolérante : `sold_out` (0081) peut ne pas exister encore.
-    const fetchProducts = (cols: string) =>
-      db
-        .from("products")
-        .select(cols)
-        .eq("business_id", business.id)
-        .order("created_at", { ascending: true }) as unknown as Promise<{
-        data: any[] | null;
-        error: any;
-      }>;
-    let { data: p, error: pErr } = await fetchProducts(
-      "id, name, price_cents, active, image_url, description, sold_out",
-    );
-    if (pErr)
-      ({ data: p } = await fetchProducts(
+    const { data: p } = await selectTolerant<Product>(
+      (cols) =>
+        db
+          .from("products")
+          .select(cols)
+          .eq("business_id", business.id)
+          .order("created_at", { ascending: true }),
+      [
+        "id, name, price_cents, active, image_url, description, sold_out",
         "id, name, price_cents, active, image_url, description",
-      ));
-    products = (p as Product[]) ?? [];
+      ],
+    );
+    products = p ?? [];
     // Lecture tolérante : service_mode / table_label peuvent ne pas exister
     // encore (migration 0037 non appliquée).
     const baseCols =
@@ -138,17 +135,17 @@ export default async function OrdersPage() {
     // `arrived_at` (0080) est la colonne la plus récente : tolérance à 3 niveaux
     // pour ne pas perdre service_mode/buzzer si seule 0080 manque.
     const wideCols = `${baseCols}, service_mode, table_label, buzzer_no, order_no, paid, refunded`;
-    const fetchBoard = (cols: string) =>
-      db
-        .from("orders")
-        .select(cols)
-        .eq("business_id", business.id)
-        .order("created_at", { ascending: false })
-        .limit(150) as unknown as Promise<{ data: any[] | null; error: any }>;
-    let { data: o, error: oErr } = await fetchBoard(`${wideCols}, arrived_at`);
-    if (oErr) ({ data: o, error: oErr } = await fetchBoard(wideCols));
-    if (oErr) ({ data: o } = await fetchBoard(baseCols));
-    orders = (o as Order[]) ?? [];
+    const { data: o } = await selectTolerant<Order>(
+      (cols) =>
+        db
+          .from("orders")
+          .select(cols)
+          .eq("business_id", business.id)
+          .order("created_at", { ascending: false })
+          .limit(150),
+      [`${wideCols}, arrived_at`, wideCols, baseCols],
+    );
+    orders = o ?? [];
 
     // Toutes les commandes servies, pour les statistiques (2000 max).
     // Lecture tolérante : service_mode / notified_ready_at peuvent manquer.
