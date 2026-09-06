@@ -1229,6 +1229,31 @@ canvas#confetti {
 .funnel-fill.s3 { background: linear-gradient(90deg, #ffc24d, #e0a020); }
 .funnel-n { font-weight: 800; white-space: nowrap; }
 .funnel-pct { font-weight: 600; color: var(--cream-dim, #6b6480); }
+/* Reco actionnable sous l'entonnoir : encadré coloré selon le ton. */
+.funnel-insight {
+  margin-top: 14px;
+  padding: 11px 13px;
+  border-radius: 10px;
+  border-left: 4px solid;
+  font-size: 13.5px;
+  line-height: 1.45;
+  font-weight: 600;
+}
+.funnel-insight.good {
+  background: #eef8f0;
+  border-left-color: #2fa15a;
+  color: #1f6b3c;
+}
+.funnel-insight.tip {
+  background: #fff6e6;
+  border-left-color: #e0a020;
+  color: #8a5a00;
+}
+.funnel-insight.warn {
+  background: #fdecec;
+  border-left-color: #d64545;
+  color: #a12626;
+}
 @media (max-width: 520px) {
   .funnel li { grid-template-columns: 1fr auto; }
   .funnel-bar { grid-column: 1 / -1; order: 3; }
