@@ -26,9 +26,17 @@ import TrendChart from "@/components/TrendChart";
 
 export const dynamic = "force-dynamic";
 
-export default async function DashboardHome() {
+export default async function DashboardHome({
+  searchParams,
+}: {
+  searchParams?: { parcours?: string };
+}) {
   const { business } = await getMyBusiness();
   if (!business) return null;
+
+  // Entonnoir : 30 derniers jours par défaut (plus actionnable), « tout
+  // l'historique » via ?parcours=tout.
+  const funnelAll = searchParams?.parcours === "tout";
 
   const admin = getAdminClient();
 
@@ -80,6 +88,9 @@ export default async function DashboardHome() {
     segRpc,
     reviewClicksRes,
     scansRes,
+    scans30Res,
+    reviewClicks30Res,
+    insta30Res,
   ] = await Promise.all([
     admin
       .from("wheel_configs")
@@ -139,6 +150,31 @@ export default async function DashboardHome() {
           .select("*", { count: "exact", head: true })
           .eq("business_id", business.id)
       : Promise.resolve({ count: null, error: null }),
+    // Versions 30 jours pour l'entonnoir (période par défaut). Comptages bornés
+    // à `since`, dans le MÊME lot pour éviter un aller-retour DB en plus. Inutile
+    // quand on affiche « tout l'historique ». Instagram 30 j = tours récents.
+    showRoue && !funnelAll
+      ? admin
+          .from("scans")
+          .select("*", { count: "exact", head: true })
+          .eq("business_id", business.id)
+          .gte("created_at", since)
+      : Promise.resolve({ count: null, error: null }),
+    showRoue && !funnelAll
+      ? admin
+          .from("review_clicks")
+          .select("*", { count: "exact", head: true })
+          .eq("business_id", business.id)
+          .gte("created_at", since)
+      : Promise.resolve({ count: null, error: null }),
+    showRoue && !funnelAll
+      ? admin
+          .from("plays")
+          .select("*", { count: "exact", head: true })
+          .eq("business_id", business.id)
+          .eq("play_type", "instagram")
+          .gte("created_at", since)
+      : Promise.resolve({ count: null, error: null }),
   ]);
 
   const cfg = cfgRes.data;
@@ -163,6 +199,18 @@ export default async function DashboardHome() {
   }
   const { total, insta, review, last30, won, redeemed, redemptionRate, distribution } =
     stats;
+
+  // Entonnoir sur 30 jours (défaut) : comptages bornés à `since`, déjà récupérés
+  // dans le lot ci-dessus (tolérants : table absente / erreur → 0). Les tours
+  // joués 30 j réutilisent `last30` (aucune requête dédiée).
+  const scans30 = scans30Res.error ? 0 : scans30Res.count ?? 0;
+  const reviewClicks30 = reviewClicks30Res.error ? 0 : reviewClicks30Res.count ?? 0;
+  const insta30 = insta30Res.error ? 0 : insta30Res.count ?? 0;
+  // Valeurs affichées dans l'entonnoir selon la période choisie.
+  const fScans = funnelAll ? scans : scans30;
+  const fPlays = funnelAll ? total : last30;
+  const fInsta = funnelAll ? insta : insta30;
+  const fReviewClicks = funnelAll ? reviewClicks : reviewClicks30;
 
   // Stats fidélité (même schéma RPC-puis-repli).
   let fidStats: { cards: number; stamps: number; rewards: number } = {
@@ -548,41 +596,61 @@ export default async function DashboardHome() {
               lorsqu'il est cohérent (tours ≤ scans) ; les % Instagram/Avis restent
               rapportés aux tours joués. */}
           {(total > 0 || scans > 0) && (() => {
-            const base = Math.max(scans, total, 1);
+            // Valeurs de la période choisie (30 j par défaut, ou tout l'historique).
+            const base = Math.max(fScans, fPlays, 1);
             const steps = [
-              { key: "scan", emoji: "📱", label: "Scans du QR", n: scans, cls: "s0" },
-              { key: "plays", emoji: "🎡", label: "Tours joués", n: total, cls: "s1" },
-              { key: "insta", emoji: "📸", label: "dont via Instagram", n: insta, cls: "s2" },
-              { key: "review", emoji: "⭐", label: "Clics vers vos avis Google", n: reviewClicks, cls: "s3" },
+              { key: "scan", emoji: "📱", label: "Scans du QR", n: fScans, cls: "s0" },
+              { key: "plays", emoji: "🎡", label: "Tours joués", n: fPlays, cls: "s1" },
+              { key: "insta", emoji: "📸", label: "dont via Instagram", n: fInsta, cls: "s2" },
+              { key: "review", emoji: "⭐", label: "Clics vers vos avis Google", n: fReviewClicks, cls: "s3" },
             ];
-            // Reco actionnable : où le parcours « fuit » et quel levier conforme.
+            // Reco actionnable : où le parcours « fuit » et quel levier conforme,
+            // calculée sur la période affichée pour rester pertinente.
             const insight = funnelInsight({
-              scans,
-              plays: total,
-              insta,
-              reviewClicks,
+              scans: fScans,
+              plays: fPlays,
+              insta: fInsta,
+              reviewClicks: fReviewClicks,
               reviewLinkReady: !!cfg?.review_url && cfg?.review_enabled !== false,
               instagramReady: !!cfg?.instagram_url,
             });
             return (
               <div className="dash-card">
-                <h2>🔎 Le parcours de vos clients</h2>
+                <div className="funnel-head">
+                  <h2>🔎 Le parcours de vos clients</h2>
+                  <div className="funnel-period" role="group" aria-label="Période">
+                    <a
+                      href="/dashboard"
+                      className={!funnelAll ? "is-active" : ""}
+                      aria-current={!funnelAll ? "true" : undefined}
+                    >
+                      30 jours
+                    </a>
+                    <a
+                      href="/dashboard?parcours=tout"
+                      className={funnelAll ? "is-active" : ""}
+                      aria-current={funnelAll ? "true" : undefined}
+                    >
+                      Tout l'historique
+                    </a>
+                  </div>
+                </div>
                 <p className="muted" style={{ marginBottom: 14 }}>
                   Du scan du QR au clic vers vos avis Google — pour voir où vos
-                  clients s'arrêtent.
+                  clients s'arrêtent{funnelAll ? "" : " (30 derniers jours)"}.
                 </p>
                 <ul className="funnel">
                   {steps.map((step) => {
                     // Taux affiché : « scan → jeu » pour les tours (masqué tant
                     // qu'il dépasse 100 %), part des tours pour Instagram/Avis.
                     let pct: number | null = null;
-                    if (step.key === "plays" && scans > 0 && step.n <= scans) {
-                      pct = Math.round((step.n / scans) * 100);
+                    if (step.key === "plays" && fScans > 0 && step.n <= fScans) {
+                      pct = Math.round((step.n / fScans) * 100);
                     } else if (
                       (step.key === "insta" || step.key === "review") &&
-                      total > 0
+                      fPlays > 0
                     ) {
-                      pct = Math.round((step.n / total) * 100);
+                      pct = Math.round((step.n / fPlays) * 100);
                     }
                     const width = Math.min(Math.round((step.n / base) * 100), 100);
                     return (
@@ -608,8 +676,8 @@ export default async function DashboardHome() {
                 </ul>
                 <p className={`funnel-insight ${insight.tone}`}>{insight.message}</p>
                 <p className="muted" style={{ marginTop: 10, fontSize: 12.5 }}>
-                  {scans === 0
-                    ? "Le suivi des scans démarre dès la prochaine visite de la page de jeu."
+                  {fScans === 0 && !funnelAll
+                    ? "Aucun scan sur 30 jours — le suivi démarre dès la prochaine visite de la page de jeu."
                     : "« Scan → jeu » se fiabilise avec le temps (les scans ne sont comptés que depuis leur mise en place). Le lien avis est facultatif et non récompensé."}
                 </p>
               </div>

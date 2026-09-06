@@ -143,7 +143,12 @@ export default async function OrdersPage() {
           .eq("business_id", business.id)
           .order("created_at", { ascending: false })
           .limit(150),
-      [`${wideCols}, arrived_at`, wideCols, baseCols],
+      [
+        `${wideCols}, arrived_at, notified_ready_at`,
+        `${wideCols}, arrived_at`,
+        wideCols,
+        baseCols,
+      ],
     );
     orders = o ?? [];
 

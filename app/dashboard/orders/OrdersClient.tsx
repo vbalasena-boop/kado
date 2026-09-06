@@ -166,6 +166,7 @@ export type Order = {
   table_label?: string | null;
   buzzer_no?: number | null;
   arrived_at?: string | null;
+  notified_ready_at?: string | null;
   order_no?: number | null;
   paid?: boolean | null;
   refunded?: boolean | null;
@@ -948,10 +949,18 @@ export default function OrdersClient({
 
   function OrderCard({ o }: { o: Order }) {
     const isBuzzer = o.service_mode === "buzzer" || o.buzzer_no != null;
-    // Ancienneté : uniquement pour les commandes À PRÉPARER (« new »), pour
-    // qu'aucune ne soit oubliée en coup de feu. null tant que l'horloge client
-    // n'a pas tiqué (évite l'écart d'hydratation).
-    const age = o.status === "new" && nowMs != null ? orderAge(o.created_at, nowMs) : null;
+    // Ancienneté, pour qu'aucune commande ne soit oubliée en coup de feu :
+    //  - « à préparer » (new) : depuis la création ;
+    //  - « prête » (ready) : depuis la mise à dispo (notified_ready_at), pour
+    //    repérer une commande prête qui n'est pas récupérée.
+    // null tant que l'horloge client n'a pas tiqué (évite l'écart d'hydratation).
+    const ageAnchor =
+      o.status === "new"
+        ? o.created_at
+        : o.status === "ready"
+        ? o.notified_ready_at
+        : null;
+    const age = ageAnchor && nowMs != null ? orderAge(ageAnchor, nowMs) : null;
     return (
       <li
         className={`order-card is-${o.status}${isBuzzer ? " is-buzzer" : ""}${
@@ -978,8 +987,13 @@ export default function OrdersClient({
           <span className="order-time">{fmtTime(o.created_at)}</span>
           {age && (
             <span className={`order-age age-${age.level}`}>
-              ⏱ {age.label}
-              {age.level === "late" ? " · à traiter" : ""}
+              ⏱ {o.status === "ready" ? "prête depuis " : ""}
+              {age.label}
+              {age.level === "late"
+                ? o.status === "ready"
+                  ? " · à récupérer"
+                  : " · à traiter"
+                : ""}
             </span>
           )}
           {o.arrived_at && (o.status === "new" || o.status === "ready") && (
