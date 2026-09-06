@@ -132,6 +132,7 @@ export type Product = {
   name: string;
   price_cents: number;
   active: boolean;
+  sold_out?: boolean | null;
   image_url?: string | null;
   description?: string | null;
 };
@@ -1767,7 +1768,7 @@ export default function OrdersClient({
         {products.length > 0 && (
           <ul className="product-list">
             {products.map((p) => (
-              <li key={p.id} className={p.active ? "" : "is-off"}>
+              <li key={p.id} className={`${p.active ? "" : "is-off"}${p.sold_out ? " is-soldout" : ""}`}>
                 {p.image_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -1811,6 +1812,13 @@ export default function OrdersClient({
                       Sans photo
                     </button>
                   )}
+                  <button
+                    className="btn-mini soft"
+                    disabled={busy}
+                    onClick={() => productAction({ action: "soldout", id: p.id })}
+                  >
+                    {p.sold_out ? "↩︎ Remettre dispo" : "⛔ Épuisé du jour"}
+                  </button>
                   <button
                     className="btn-mini soft"
                     disabled={busy}

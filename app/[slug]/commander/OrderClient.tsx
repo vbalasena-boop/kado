@@ -38,6 +38,7 @@ type Product = {
   price_cents: number;
   image_url?: string | null;
   description?: string | null;
+  sold_out?: boolean | null;
 };
 
 function euros(cents: number) {
@@ -432,9 +433,17 @@ export default function OrderClient({
         {products.map((p) => {
           const n = qty[p.id] ?? 0;
           return (
-            <article key={p.id} className={`uber-item${n > 0 ? " in-cart" : ""}`}>
+            <article
+              key={p.id}
+              className={`uber-item${n > 0 ? " in-cart" : ""}${
+                p.sold_out ? " is-soldout" : ""
+              }`}
+            >
               <div className="uber-item-info">
-                <h3>{p.name}</h3>
+                <h3>
+                  {p.name}
+                  {p.sold_out && <span className="uber-soldout">Épuisé</span>}
+                </h3>
                 {p.description && <p>{p.description}</p>}
                 <span className="uber-price">{euros(p.price_cents)} €</span>
               </div>
@@ -453,7 +462,7 @@ export default function OrderClient({
                 {/* Commerce fermé : menu en consultation seule (pas de +/- qui
                     menaient à une impasse — la barre panier est masquée quand
                     c'est fermé, le client ne pouvait pas commander). */}
-                {open &&
+                {open && !p.sold_out &&
                   (n === 0 ? (
                     <button
                       type="button"

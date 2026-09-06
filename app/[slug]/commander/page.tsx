@@ -78,28 +78,21 @@ export default async function CommanderPage({
     image_url?: string | null;
     description?: string | null;
   }[] = [];
-  try {
-    const { data } = await db
+  // Lecture tolérante à 3 niveaux (Supabase ne « throw » pas : on inspecte
+  // l'erreur). Avec `sold_out` (0081) → sans → socle sans photo (0020 absente).
+  const selP = (cols: string) =>
+    db
       .from("products")
-      .select("id, name, price_cents, image_url, description")
+      .select(cols)
       .eq("business_id", biz.id)
       .eq("active", true)
       .order("created_at", { ascending: true });
-    products = data ?? [];
-  } catch {
-    // colonnes photo absentes (migration 0020 pas encore passée)
-    try {
-      const { data } = await db
-        .from("products")
-        .select("id, name, price_cents")
-        .eq("business_id", biz.id)
-        .eq("active", true)
-        .order("created_at", { ascending: true });
-      products = data ?? [];
-    } catch {
-      products = [];
-    }
-  }
+  let pr = (await selP(
+    "id, name, price_cents, image_url, description, sold_out"
+  )) as { data: any[] | null; error: any };
+  if (pr.error) pr = (await selP("id, name, price_cents, image_url, description")) as any;
+  if (pr.error) pr = (await selP("id, name, price_cents")) as any;
+  products = pr.data ?? [];
 
   if (products.length === 0) {
     return (

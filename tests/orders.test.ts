@@ -23,6 +23,15 @@ function mockDb(products: any[]) {
 }
 
 describe("recalcCart — anti-fraude prix", () => {
+  it("produit épuisé (sold_out) → product_unavailable", async () => {
+    const db = mockDb([
+      { id: "a", name: "Café", price_cents: 250, active: true, sold_out: true },
+    ]);
+    const r = await recalcCart(db, "biz", [{ id: "a", qty: 1 }]);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toBe("product_unavailable");
+  });
+
   it("recalcule le total depuis le catalogue (prix client ignoré) et plafonne qty à 20", async () => {
     const db = mockDb([
       { id: "a", name: "Café", price_cents: 250, active: true },
