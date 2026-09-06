@@ -166,6 +166,18 @@ const FAQ = [
     q: "Est-ce que je maîtrise les cadeaux distribués ?",
     a: "Oui. Vous fixez la probabilité de chaque lot, un plafond de cadeaux par jour, et chaque gain doit être validé par un code en caisse. Vous gardez le contrôle total sur vos coûts.",
   },
+  {
+    q: "Comment mes clients récupèrent-ils leur cadeau ?",
+    a: "À la fin du jeu, votre client obtient un code (et un QR code). Il le présente en caisse lors de sa visite : vous le validez d'un scan ou en saisissant le code. Chaque code n'est utilisable qu'une seule fois.",
+  },
+  {
+    q: "Puis-je changer de formule ou résilier ?",
+    a: "Oui, à tout moment et sans engagement. Vous changez de formule ou résiliez en quelques clics depuis votre espace commerçant.",
+  },
+  {
+    q: "Ai-je besoin d'un compte Google ou Instagram particulier ?",
+    a: "Non. Il suffit d'avoir une fiche Google et un compte Instagram publics : vous collez simplement leurs liens dans votre espace. Aucun accès spécial ni configuration technique à prévoir.",
+  },
 ];
 
 // Données structurées (schema.org) : améliorent l'affichage dans Google
