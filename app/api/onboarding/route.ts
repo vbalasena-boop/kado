@@ -179,12 +179,19 @@ export const POST = publicRoute({
     }
 
     // Config (thème) — nécessaire aussi pour les pages commande/suivi.
-    await db.from("wheel_configs").insert({
-      business_id: biz.id,
-      primary_color: "#ffc24d",
-      compliance_note: "Le cadeau n'est pas conditionné à la note laissée.",
-      loyalty_enabled: plan === "fidelite" || plan === "complet",
-    });
+    // On NE bloque PAS l'inscription si elle échoue (l'établissement existe
+    // déjà, les pages ont un repli de config par défaut, et le prochain
+    // enregistrement depuis le tableau de bord fait un upsert qui la recrée) —
+    // mais on ne gobe plus une vraie panne en silence (observabilité).
+    {
+      const { error } = await db.from("wheel_configs").insert({
+        business_id: biz.id,
+        primary_color: "#ffc24d",
+        compliance_note: "Le cadeau n'est pas conditionné à la note laissée.",
+        loyalty_enabled: plan === "fidelite" || plan === "complet",
+      });
+      if (error) reportError(error, { where: "onboarding.wheel_config" });
+    }
     // Le plan « Comptoir » n'a pas de jeu : on active directement le suivi au
     // comptoir et on ne crée aucun cadeau (pas de roue).
     if (plan === "comptoir") {
@@ -204,10 +211,15 @@ export const POST = publicRoute({
       }
     } else {
       const prizes = prizesForCategory(body.category);
-      await insertPrizes(
+      // Écriture primaire mais non bloquante : sans lots, le jeu affichera
+      // « no_prizes » côté joueur, mais l'établissement existe et le commerçant
+      // peut (re)créer ses cadeaux depuis le tableau de bord. On surface une
+      // vraie panne au lieu de la gober.
+      const { error: przErr } = await insertPrizes(
         db,
         prizes.map((p, i) => ({ ...p, business_id: biz.id, position: i }))
       );
+      if (przErr) reportError(przErr, { where: "onboarding.prizes" });
     }
 
     return Response.json({ ok: true, slug });
