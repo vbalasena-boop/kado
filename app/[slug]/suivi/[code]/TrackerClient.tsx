@@ -161,6 +161,22 @@ export default function TrackerClient({
   }, [slug, code, initialStatus, isBuzzer]);
 
   const [pickup, setPickup] = useState<"idle" | "busy" | "done">("idle");
+  // « Je suis arrivé » : prévient le comptoir par push (best-effort). Sans effet
+  // sur le statut ; bouton désactivé après envoi pour éviter le spam.
+  const [arrived, setArrived] = useState<"idle" | "busy" | "done">("idle");
+  async function signalArrived() {
+    setArrived("busy");
+    try {
+      const r = await fetch("/api/order/arrived", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug, code }),
+      });
+      setArrived(r.ok ? "done" : "idle");
+    } catch {
+      setArrived("idle");
+    }
+  }
   async function confirmPickup() {
     setPickup("busy");
     try {
@@ -271,6 +287,22 @@ export default function TrackerClient({
           >
             {pickup === "busy" ? "Un instant…" : "✅ J'ai récupéré ma commande"}
           </button>
+        )}
+
+        {(status === "new" || status === "ready") && (
+          arrived === "done" ? (
+            <p className="track-arrived-ok">✅ Le comptoir est prévenu de votre arrivée.</p>
+          ) : (
+            <button
+              type="button"
+              className="btn-secondary"
+              style={{ maxWidth: 420, marginTop: 4, textDecoration: "none" }}
+              onClick={signalArrived}
+              disabled={arrived === "busy"}
+            >
+              {arrived === "busy" ? "Un instant…" : "🙋 Je suis arrivé·e — prévenir le comptoir"}
+            </button>
+          )
         )}
 
         {!cancelled && !awaiting && (
