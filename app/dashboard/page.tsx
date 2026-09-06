@@ -11,6 +11,7 @@ import {
 } from "@/lib/dashboard-stats";
 import { avisMigrationNoticeNeeded } from "@/lib/wheel";
 import { onboardingSteps, onboardingProgress } from "@/lib/onboarding";
+import { funnelInsight } from "@/lib/funnel-insight";
 import { summarizeSegments, segmentsFromRpc } from "@/lib/segments";
 import {
   parseTrendRpc,
@@ -554,6 +555,15 @@ export default async function DashboardHome() {
               { key: "insta", emoji: "📸", label: "dont via Instagram", n: insta, cls: "s2" },
               { key: "review", emoji: "⭐", label: "Clics vers vos avis Google", n: reviewClicks, cls: "s3" },
             ];
+            // Reco actionnable : où le parcours « fuit » et quel levier conforme.
+            const insight = funnelInsight({
+              scans,
+              plays: total,
+              insta,
+              reviewClicks,
+              reviewLinkReady: !!cfg?.review_url && cfg?.review_enabled !== false,
+              instagramReady: !!cfg?.instagram_url,
+            });
             return (
               <div className="dash-card">
                 <h2>🔎 Le parcours de vos clients</h2>
@@ -596,6 +606,7 @@ export default async function DashboardHome() {
                     );
                   })}
                 </ul>
+                <p className={`funnel-insight ${insight.tone}`}>{insight.message}</p>
                 <p className="muted" style={{ marginTop: 10, fontSize: 12.5 }}>
                   {scans === 0
                     ? "Le suivi des scans démarre dès la prochaine visite de la page de jeu."
