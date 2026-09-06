@@ -4,6 +4,7 @@ import {
   friendlyMinutes,
   estimateWaitMinutes,
   readyClockLabel,
+  shouldAlertNext,
 } from "@/lib/wait-estimate";
 
 const at = (min: number) => new Date(min * 60000).toISOString();
@@ -68,5 +69,21 @@ describe("readyClockLabel", () => {
   it("null si pas d'estimation", () => {
     expect(readyClockLabel(null, new Date("2026-09-06T12:00:00"))).toBeNull();
     expect(readyClockLabel(0, new Date("2026-09-06T12:00:00"))).toBeNull();
+  });
+});
+
+describe("shouldAlertNext", () => {
+  it("passe le prochain (>0 → 0) en file → alerte", () => {
+    expect(shouldAlertNext(2, 0, "new", false)).toBe(true);
+    expect(shouldAlertNext(null, 0, "new", false)).toBe(true);
+  });
+  it("déjà à 0, ou déjà alerté, ou pas en file → pas d'alerte", () => {
+    expect(shouldAlertNext(0, 0, "new", false)).toBe(false); // déjà prochain
+    expect(shouldAlertNext(2, 0, "new", true)).toBe(false); // déjà alerté
+    expect(shouldAlertNext(2, 0, "ready", false)).toBe(false); // plus en file
+  });
+  it("position non nulle ou inconnue → pas d'alerte", () => {
+    expect(shouldAlertNext(3, 1, "new", false)).toBe(false);
+    expect(shouldAlertNext(3, null, "new", false)).toBe(false);
   });
 });

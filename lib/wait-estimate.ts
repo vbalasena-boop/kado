@@ -67,3 +67,22 @@ export function readyClockLabel(
   const m = t.getMinutes();
   return `${h}h${String(m).padStart(2, "0")}`;
 }
+
+/**
+ * Faut-il déclencher l'alerte « vous êtes le prochain » ? (logique pure)
+ * Vrai ⟺ la commande est encore en file (`status === "new"`), la position passe
+ * À 0 (`next === 0`) alors qu'elle ne l'était pas déjà (`prev !== 0`), et
+ * l'alerte n'a pas encore été jouée (`alreadyAlerted === false`).
+ * Toute position non numérique (null) côté `next` → pas d'alerte.
+ */
+export function shouldAlertNext(
+  prev: number | null,
+  next: number | null,
+  status: string,
+  alreadyAlerted: boolean
+): boolean {
+  if (alreadyAlerted) return false;
+  if (status !== "new") return false;
+  if (next !== 0) return false;
+  return prev !== 0;
+}
