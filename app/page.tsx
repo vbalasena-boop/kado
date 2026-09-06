@@ -55,6 +55,8 @@ function Ico({ name }: { name: string }) {
       return <svg {...c}><rect x="3" y="9" width="18" height="4" /><path d="M5 13v7h14v-7" /><path d="M12 9v11" /><path d="M12 9c-4 0-5.5-2-5-3.5C7.6 3.7 10 4.5 12 9zm0 0c4 0 5.5-2 5-3.5C16.4 3.7 14 4.5 12 9z" /></svg>;
     case "check":
       return <svg {...c} width={18} height={18}><path d="M4 12l5 5L20 6" /></svg>;
+    case "lock":
+      return <svg {...c}><rect x="4" y="10" width="16" height="10" rx="2" /><path d="M8 10V7a4 4 0 018 0v3" /><path d="M12 14v2" /></svg>;
     default:
       return null;
   }
@@ -62,7 +64,7 @@ function Ico({ name }: { name: string }) {
 
 const STEPS = [
   { n: "1", t: "Vos clients scannent", d: "Un QR code sur la table, le ticket ou un sticker. Aucune application à installer." },
-  { n: "2", t: "Ils suivent & laissent un avis", d: "Un tour de roue pour un suivi Instagram, un tour pour un avis Google." },
+  { n: "2", t: "Ils réalisent une action & jouent", d: "Un tour de roue pour un suivi Instagram (ou l’inscription à votre fidélité). L’avis Google reste proposé, libre et sans obligation." },
   { n: "3", t: "Ils gagnent, vous fidélisez", d: "Un cadeau à récupérer en boutique. Plus d'avis, plus d'abonnés, plus de visites." },
 ];
 
@@ -75,6 +77,7 @@ const BENEFITS = [
   { i: "star", t: "Plus d'avis Google", d: "Transformez chaque client satisfait en avis 5 étoiles." },
   { i: "insta", t: "Plus d'abonnés Insta", d: "Faites grandir votre communauté à chaque visite." },
   { i: "repeat", t: "Plus de visites", d: "Le cadeau donne une bonne raison de revenir vous voir." },
+  { i: "lock", t: "Vos avis Google en sécurité", d: "Le cadeau n’est jamais lié à l’avis : pas de « review gating », donc aucun risque de voir vos avis supprimés par Google." },
   { i: "mail", t: "Campagnes e-mail & notifs (option)", d: "Envoyez vos offres par e-mail et notification sur le téléphone de vos clients — +15 €/mois." },
   { i: "gift", t: "Anniversaires & parrainage", d: "E-mail automatique le jour J, et +1 tampon quand un ami parrainé passe en caisse." },
   { i: "palette", t: "À vos couleurs", d: "Logo, photo de fond et lots entièrement personnalisables." },
@@ -137,7 +140,11 @@ const PLANS = [
 const FAQ = [
   {
     q: "C'est légal d'offrir un cadeau contre un avis ?",
-    a: "Le cadeau récompense la participation au jeu, jamais le contenu ou la note de l'avis. Le client est libre de laisser l'avis qu'il souhaite — ou aucun — et gagne quand même sa chance de tourner la roue. Kado respecte les règles de Google et le droit français de la consommation.",
+    a: "Oui, car le cadeau récompense la participation au jeu (une action comme suivre votre Instagram), jamais le contenu ou la note de l'avis. Le client est libre de laisser l'avis qu'il souhaite — ou aucun — et gagne sa chance quoi qu'il arrive. Kado respecte les règles de Google et le droit français de la consommation.",
+  },
+  {
+    q: "Kado met-il mes avis Google en danger ?",
+    a: "Non. Contrairement aux systèmes « un avis = une récompense », que Google peut sanctionner jusqu'à la suppression des avis, avec Kado le cadeau n'est jamais lié à l'avis. L'avis Google est un simple lien facultatif : votre fiche reste protégée.",
   },
   {
     q: "Mes clients doivent-ils installer une application ?",
