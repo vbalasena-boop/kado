@@ -493,6 +493,23 @@ export default async function DashboardHome() {
             </div>
           </div>
 
+          <div className="dash-card" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+            <div>
+              <b>Exporter vos données</b>
+              <div className="muted" style={{ fontSize: 13 }}>
+                Le détail de chaque tour (date, action, lot, résultat, code,
+                récupération) au format CSV — à ouvrir dans Excel.
+              </div>
+            </div>
+            <a
+              className="btn-secondary"
+              href="/api/dashboard/stats/export"
+              style={{ whiteSpace: "nowrap", textDecoration: "none" }}
+            >
+              <Icon name="download" size={16} /> Exporter en CSV
+            </a>
+          </div>
+
           {trendSeries && (
             <div className="dash-card">
               <h2>Activité des 30 derniers jours</h2>
