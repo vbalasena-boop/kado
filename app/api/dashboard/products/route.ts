@@ -96,11 +96,14 @@ export const POST = merchantRoute({
         return Response.json({ error: "unavailable" }, { status: 400 });
       }
       if (!p) return Response.json({ error: "not_found" }, { status: 404 });
-      await db
+      const { error: upErr } = await db
         .from("products")
         .update({ sold_out: !(p as any).sold_out })
         .eq("id", (p as any).id)
         .eq("business_id", business.id);
+      if (upErr) {
+        return Response.json({ error: "unavailable" }, { status: 400 });
+      }
       return Response.json({ ok: true });
     }
 

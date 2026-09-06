@@ -113,11 +113,23 @@ export default async function OrdersPage() {
     notified_ready_at?: string | null;
   }[] = [];
   try {
-    const { data: p } = await db
-      .from("products")
-      .select("id, name, price_cents, active, image_url, description")
-      .eq("business_id", business.id)
-      .order("created_at", { ascending: true });
+    // Lecture tolérante : `sold_out` (0081) peut ne pas exister encore.
+    const fetchProducts = (cols: string) =>
+      db
+        .from("products")
+        .select(cols)
+        .eq("business_id", business.id)
+        .order("created_at", { ascending: true }) as unknown as Promise<{
+        data: any[] | null;
+        error: any;
+      }>;
+    let { data: p, error: pErr } = await fetchProducts(
+      "id, name, price_cents, active, image_url, description, sold_out",
+    );
+    if (pErr)
+      ({ data: p } = await fetchProducts(
+        "id, name, price_cents, active, image_url, description",
+      ));
     products = (p as Product[]) ?? [];
     // Lecture tolérante : service_mode / table_label peuvent ne pas exister
     // encore (migration 0037 non appliquée).
