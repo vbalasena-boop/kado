@@ -1,4 +1,5 @@
 import { getAdminClient } from "@/lib/supabase/admin";
+import { selectTolerant } from "@/lib/db-errors";
 import { hasAccess, hasClickCollect } from "@/lib/auth";
 import { isOpenNow, nextOpeningLabel, type OrderHours } from "@/lib/hours";
 import { buildTheme } from "@/lib/theme";
@@ -80,19 +81,21 @@ export default async function CommanderPage({
   }[] = [];
   // Lecture tolérante à 3 niveaux (Supabase ne « throw » pas : on inspecte
   // l'erreur). Avec `sold_out` (0081) → sans → socle sans photo (0020 absente).
-  const selP = (cols: string) =>
-    db
-      .from("products")
-      .select(cols)
-      .eq("business_id", biz.id)
-      .eq("active", true)
-      .order("created_at", { ascending: true });
-  let pr = (await selP(
-    "id, name, price_cents, image_url, description, sold_out"
-  )) as { data: any[] | null; error: any };
-  if (pr.error) pr = (await selP("id, name, price_cents, image_url, description")) as any;
-  if (pr.error) pr = (await selP("id, name, price_cents")) as any;
-  products = pr.data ?? [];
+  const { data: pr } = await selectTolerant(
+    (cols) =>
+      db
+        .from("products")
+        .select(cols)
+        .eq("business_id", biz.id)
+        .eq("active", true)
+        .order("created_at", { ascending: true }),
+    [
+      "id, name, price_cents, image_url, description, sold_out",
+      "id, name, price_cents, image_url, description",
+      "id, name, price_cents",
+    ]
+  );
+  products = (pr as typeof products) ?? [];
 
   if (products.length === 0) {
     return (

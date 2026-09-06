@@ -20,3 +20,37 @@ export function isMissingColumnError(error: unknown): boolean {
   const code = (error as { code?: unknown }).code;
   return typeof code === "string" && MISSING_COLUMN_CODES.has(code);
 }
+
+/** Résultat d'un SELECT supabase-js (jamais un `throw` : l'erreur est dans `error`). */
+type SelectResult = { data: unknown; error: unknown };
+
+/**
+ * Lecture SELECT tolérante à une migration en retard.
+ *
+ * Plusieurs blocs recopiaient à la main le même échafaudage : essayer un SELECT
+ * avec les colonnes récentes, et si la colonne n'existe pas encore, retenter
+ * avec un jeu de colonnes plus étroit. Recopié, ce motif a fini par diverger
+ * (une copie oubliait une colonne). Ce helper le centralise.
+ *
+ * `build(cols)` construit la requête pour un jeu de colonnes donné ; on lui passe
+ * les paliers du plus large au plus étroit. On ne rétrograde vers le palier
+ * suivant QUE si l'erreur est « colonne/table absente » (via isMissingColumnError) :
+ * toute autre erreur (RLS, contrainte, connectivité) est renvoyée telle quelle,
+ * sans masquer la panne en retentant avec moins de colonnes.
+ *
+ * @returns `{ data, error: null }` au premier palier qui passe ; sinon
+ *          `{ data: null, error }` avec la dernière erreur rencontrée.
+ */
+export async function selectTolerant<T = unknown>(
+  build: (cols: string) => PromiseLike<SelectResult>,
+  colsTiers: readonly string[]
+): Promise<{ data: T[] | null; error: unknown }> {
+  let result: SelectResult = { data: null, error: null };
+  for (const cols of colsTiers) {
+    result = await build(cols);
+    if (!result.error) return { data: (result.data as T[] | null) ?? null, error: null };
+    // Erreur non « colonne absente » → on s'arrête, inutile de tenter plus étroit.
+    if (!isMissingColumnError(result.error)) break;
+  }
+  return { data: null, error: result.error };
+}
