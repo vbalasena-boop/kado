@@ -166,7 +166,51 @@ export function reviewCtaHref(cfg: {
   review_url?: unknown;
 }): string | null {
   if (cfg.review_enabled === false) return null;
+  // On rend le lien du commerçant TEL QUEL (durci anti-XSS) : jamais de
+  // réécriture silencieuse — un `place_id` copié pourrait pointer un lieu voisin
+  // et router les avis vers le mauvais établissement. L'incitation à utiliser un
+  // lien direct passe par une astuce côté commerçant (isLikelyDirectReviewLink).
   return hardenExternalUrl(cfg.review_url);
+}
+
+/** Suffixes de 2e niveau connus (google.co.uk, google.com.au…). */
+const GOOGLE_SLD = new Set(["co", "com", "org", "net", "gouv", "gov"]);
+
+/** L'hôte est-il un domaine Google (google.com, google.fr, www.google.co.uk…) ?
+ *  Basé sur les labels : `google` doit précéder immédiatement le suffixe public,
+ *  ce qui rejette les sosies `evilgoogle.com` ET `google.evil.com`. */
+function isGoogleHost(host: string): boolean {
+  const labels = host.toLowerCase().split(".");
+  const i = labels.indexOf("google");
+  if (i < 0) return false;
+  const after = labels.length - 1 - i; // labels après « google »
+  if (after === 1) return true; // google.com, google.fr, google.de…
+  // google.<sld>.<cc> (ex. google.co.uk) : le SLD doit être connu, sinon
+  // « google.evil.com » passerait pour un domaine Google.
+  if (after === 2) return GOOGLE_SLD.has(labels[i + 1]);
+  return false;
+}
+
+/**
+ * Le lien avis est-il DÉJÀ un lien « écrire un avis » direct (formulaire d'avis :
+ * writereview sur un domaine Google, ou g.page/…/review) ? Sert à proposer une
+ * astuce au commerçant (dashboard) sans jamais bloquer : un lien de fiche
+ * fonctionne, il convertit juste un peu moins (le joueur doit chercher le bouton
+ * « Écrire un avis »). Faux ⟹ on affiche l'astuce.
+ */
+export function isLikelyDirectReviewLink(url: string): boolean {
+  let u: URL;
+  try {
+    u = new URL(url);
+  } catch {
+    return false;
+  }
+  const host = u.hostname.toLowerCase();
+  const path = u.pathname.toLowerCase();
+  if (isGoogleHost(host) && path.includes("/writereview")) return true;
+  // g.page/…/review, avec ou sans slash final.
+  if (host === "g.page" && /\/review\/?$/.test(path)) return true;
+  return false;
 }
 
 /**
