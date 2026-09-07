@@ -1259,6 +1259,28 @@ canvas#confetti {
   color: #4b2fd0;
   box-shadow: 0 1px 3px rgba(36, 27, 61, 0.18);
 }
+/* Comparaison N vs N-1 sous l'entonnoir (vue 30 jours). */
+.funnel-compare {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px 14px;
+  flex-wrap: wrap;
+  font-size: 13px;
+}
+.funnel-compare .cmp { font-weight: 700; }
+.funnel-compare .cmp-up { color: #1f6b3c; }
+.funnel-compare .cmp-down { color: #a12626; }
+.funnel-compare .cmp-flat { color: #6b6480; }
+/* Pied de l'entonnoir : légende + bouton d'export. */
+.funnel-foot {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
 /* Reco actionnable sous l'entonnoir : encadré coloré selon le ton. */
 .funnel-insight {
   margin-top: 14px;

@@ -12,6 +12,7 @@ import {
 import { avisMigrationNoticeNeeded } from "@/lib/wheel";
 import { onboardingSteps, onboardingProgress } from "@/lib/onboarding";
 import { funnelInsight } from "@/lib/funnel-insight";
+import { recapDelta, recapDeltaLabel } from "@/lib/recap";
 import { summarizeSegments, segmentsFromRpc } from "@/lib/segments";
 import {
   parseTrendRpc,
@@ -54,6 +55,8 @@ export default async function DashboardHome({
     bizRef = null;
   }
   const since = new Date(Date.now() - 30 * 864e5).toISOString();
+  // Période précédente (jours 30→60) pour la comparaison N vs N-1 de l'entonnoir.
+  const prevSince = new Date(Date.now() - 60 * 864e5).toISOString();
   // Seuil « à réveiller » : dernier tampon plus ancien que 60 jours.
   const SEGMENT_DORMANT_DAYS = 60;
   const segCutoffIso = new Date(
@@ -91,6 +94,8 @@ export default async function DashboardHome({
     scans30Res,
     reviewClicks30Res,
     insta30Res,
+    playsPrevRes,
+    reviewClicksPrevRes,
   ] = await Promise.all([
     admin
       .from("wheel_configs")
@@ -175,6 +180,24 @@ export default async function DashboardHome({
           .eq("play_type", "instagram")
           .gte("created_at", since)
       : Promise.resolve({ count: null, error: null }),
+    // Période PRÉCÉDENTE (jours 30→60) : 2 métriques phares pour la comparaison
+    // N vs N-1 (tours joués & clics avis). Bornées [prevSince, since).
+    showRoue && !funnelAll
+      ? admin
+          .from("plays")
+          .select("*", { count: "exact", head: true })
+          .eq("business_id", business.id)
+          .gte("created_at", prevSince)
+          .lt("created_at", since)
+      : Promise.resolve({ count: null, error: null }),
+    showRoue && !funnelAll
+      ? admin
+          .from("review_clicks")
+          .select("*", { count: "exact", head: true })
+          .eq("business_id", business.id)
+          .gte("created_at", prevSince)
+          .lt("created_at", since)
+      : Promise.resolve({ count: null, error: null }),
   ]);
 
   const cfg = cfgRes.data;
@@ -211,6 +234,14 @@ export default async function DashboardHome({
   const fPlays = funnelAll ? total : last30;
   const fInsta = funnelAll ? insta : insta30;
   const fReviewClicks = funnelAll ? reviewClicks : reviewClicks30;
+  // Comparaison N vs N-1 (uniquement en vue 30 jours) sur les 2 métriques
+  // phares : tours joués & clics avis.
+  const playsPrev = playsPrevRes.error ? 0 : playsPrevRes.count ?? 0;
+  const reviewClicksPrev = reviewClicksPrevRes.error ? 0 : reviewClicksPrevRes.count ?? 0;
+  const playsDelta = recapDelta(last30, playsPrev);
+  const reviewDelta = recapDelta(reviewClicks30, reviewClicksPrev);
+  const playsDeltaLabel = recapDeltaLabel(last30, playsPrev);
+  const reviewDeltaLabel = recapDeltaLabel(reviewClicks30, reviewClicksPrev);
 
   // Stats fidélité (même schéma RPC-puis-repli).
   let fidStats: { cards: number; stamps: number; rewards: number } = {
@@ -674,12 +705,28 @@ export default async function DashboardHome({
                     );
                   })}
                 </ul>
+                {!funnelAll && (
+                  <p className="funnel-compare">
+                    <span className="muted">vs 30 jours précédents :</span>{" "}
+                    <span className={`cmp cmp-${playsDelta.dir}`}>
+                      🎡 tours {playsDeltaLabel ?? "—"}
+                    </span>
+                    <span className={`cmp cmp-${reviewDelta.dir}`}>
+                      ⭐ clics avis {reviewDeltaLabel ?? "—"}
+                    </span>
+                  </p>
+                )}
                 <p className={`funnel-insight ${insight.tone}`}>{insight.message}</p>
-                <p className="muted" style={{ marginTop: 10, fontSize: 12.5 }}>
-                  {fScans === 0 && !funnelAll
-                    ? "Aucun scan sur 30 jours — le suivi démarre dès la prochaine visite de la page de jeu."
-                    : "« Scan → jeu » se fiabilise avec le temps (les scans ne sont comptés que depuis leur mise en place). Le lien avis est facultatif et non récompensé."}
-                </p>
+                <div className="funnel-foot">
+                  <p className="muted" style={{ margin: 0, fontSize: 12.5 }}>
+                    {fScans === 0 && !funnelAll
+                      ? "Aucun scan sur 30 jours — le suivi démarre dès la prochaine visite de la page de jeu."
+                      : "« Scan → jeu » se fiabilise avec le temps (les scans ne sont comptés que depuis leur mise en place). Le lien avis est facultatif et non récompensé."}
+                  </p>
+                  <a className="btn-mini soft" href="/api/dashboard/parcours/export">
+                    ⬇️ Journal du parcours jour par jour (CSV, 60 j)
+                  </a>
+                </div>
               </div>
             );
           })()}
