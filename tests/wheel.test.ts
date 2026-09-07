@@ -8,6 +8,7 @@ import {
   nextTriggerActions,
   shouldShowReviewCta,
   reviewCtaHref,
+  isLikelyDirectReviewLink,
   instagramHref,
   avisMigrationNoticeNeeded,
   TRIGGER_ACTIONS,
@@ -475,6 +476,52 @@ describe("reviewCtaHref", () => {
     expect(reviewCtaHref({ review_url: "" })).toBeNull();
     expect(reviewCtaHref({ review_url: "   " })).toBeNull();
     expect(reviewCtaHref({})).toBeNull();
+  });
+
+  it("lien du commerçant rendu TEL QUEL — jamais de réécriture (anti-misrouting)", () => {
+    // Même avec un place_id présent, on ne réécrit pas le CTA joueur.
+    expect(
+      reviewCtaHref({
+        review_url: "https://www.google.com/maps?place_id=ChIJ123",
+      })
+    ).toBe("https://www.google.com/maps?place_id=ChIJ123");
+  });
+});
+
+describe("isLikelyDirectReviewLink", () => {
+  it("lien « écrire un avis » direct (writereview / g.page…/review) → true", () => {
+    expect(
+      isLikelyDirectReviewLink("https://search.google.com/local/writereview?placeid=ChIJx")
+    ).toBe(true);
+    // writereview sur un domaine Google pays (google.fr) aussi.
+    expect(
+      isLikelyDirectReviewLink("https://search.google.fr/local/writereview?placeid=ChIJx")
+    ).toBe(true);
+    expect(isLikelyDirectReviewLink("https://g.page/r/abc/review")).toBe(true);
+    // slash final toléré.
+    expect(isLikelyDirectReviewLink("https://g.page/r/abc/review/")).toBe(true);
+    // google.co.uk (suffixe 2 niveaux connu).
+    expect(
+      isLikelyDirectReviewLink("https://www.google.co.uk/local/writereview?placeid=x")
+    ).toBe(true);
+  });
+
+  it("fiche / Maps / placeid seul → false (astuce proposée)", () => {
+    // Un place_id ne suffit pas : la fiche s'ouvre, pas le formulaire.
+    expect(isLikelyDirectReviewLink("https://www.google.com/maps?place_id=ChIJx")).toBe(false);
+    expect(isLikelyDirectReviewLink("https://maps.app.goo.gl/abc")).toBe(false);
+    expect(isLikelyDirectReviewLink("https://g.page/mon-resto")).toBe(false);
+    expect(isLikelyDirectReviewLink("pas une url")).toBe(false);
+  });
+
+  it("domaines sosies → false (pas un hôte Google)", () => {
+    expect(
+      isLikelyDirectReviewLink("https://evilgoogle.com/local/writereview?placeid=x")
+    ).toBe(false);
+    // google en sous-domaine d'un autre domaine.
+    expect(
+      isLikelyDirectReviewLink("https://google.evil.com/local/writereview?placeid=x")
+    ).toBe(false);
   });
 });
 

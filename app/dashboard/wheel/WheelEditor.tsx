@@ -8,6 +8,8 @@ import {
   isTriggerActionSelectable,
   resolveTriggerActions,
   nextTriggerActions,
+  hardenExternalUrl,
+  isLikelyDirectReviewLink,
 } from "@/lib/wheel";
 
 type Prize = {
@@ -626,6 +628,35 @@ export default function WheelEditor({
                     />
                   </label>
                 )}
+
+                {/* Astuce conversion : un lien « écrire un avis » DIRECT ouvre le
+                    formulaire d'un coup (moins d'abandons). On ne bloque jamais :
+                    un lien de fiche fonctionne, il convertit juste moins. */}
+                {rvEnabled &&
+                  (() => {
+                    const safe = hardenExternalUrl(config.review_url);
+                    if (!safe) return null;
+                    // Attendre une URL « plausible » (hôte avec un point) pour ne
+                    // pas faire clignoter l'astuce pendant la frappe.
+                    let host = "";
+                    try {
+                      host = new URL(safe).hostname;
+                    } catch {
+                      return null;
+                    }
+                    if (!host.includes(".") || isLikelyDirectReviewLink(safe)) {
+                      return null;
+                    }
+                    return (
+                      <p className="review-hint" style={{ marginTop: 6 }}>
+                        💡 <b>Astuce&nbsp;:</b> utilisez votre lien d'avis{" "}
+                        <b>direct</b> pour ouvrir le formulaire d'un seul clic —
+                        vos clients laissent bien plus d'avis. Dans votre fiche
+                        Google&nbsp;: <i>Demander des avis</i> → copiez le lien
+                        (de la forme <code>g.page/r/…/review</code>).
+                      </p>
+                    );
+                  })()}
 
                 {(config.review_url ?? "").trim() !== "" ? (
                   <label className="toggle-field" style={{ marginTop: 6 }}>
