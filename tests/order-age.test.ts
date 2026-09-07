@@ -4,6 +4,7 @@ import {
   orderAgeLevel,
   orderAgeLabel,
   orderAge,
+  isReadyUncollectedLate,
   AGING_MIN,
   LATE_MIN,
 } from "@/lib/order-age";
@@ -67,5 +68,27 @@ describe("orderAge", () => {
   });
   it("date invalide → null (badge masqué, jamais cassé)", () => {
     expect(orderAge("nope", T0)).toBeNull();
+  });
+});
+
+describe("isReadyUncollectedLate", () => {
+  const ready = "2026-09-06T12:00:00Z";
+  it("prête depuis ≥ 20 min → true (à alerter)", () => {
+    expect(isReadyUncollectedLate("ready", ready, at(LATE_MIN))).toBe(true);
+    expect(isReadyUncollectedLate("ready", ready, at(45))).toBe(true);
+  });
+  it("prête depuis < 20 min → false", () => {
+    expect(isReadyUncollectedLate("ready", ready, at(LATE_MIN - 1))).toBe(false);
+  });
+  it("autre statut → false (même si ancienne)", () => {
+    expect(isReadyUncollectedLate("new", ready, at(60))).toBe(false);
+    expect(isReadyUncollectedLate("done", ready, at(60))).toBe(false);
+  });
+  it("sans horodatage de mise à dispo → false", () => {
+    expect(isReadyUncollectedLate("ready", null, at(60))).toBe(false);
+    expect(isReadyUncollectedLate("ready", undefined, at(60))).toBe(false);
+  });
+  it("horodatage invalide → false", () => {
+    expect(isReadyUncollectedLate("ready", "nope", at(60))).toBe(false);
   });
 });

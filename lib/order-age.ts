@@ -54,3 +54,18 @@ export function orderAge(iso: string, now: number = Date.now()): OrderAge | null
   if (minutes == null) return null;
   return { minutes, label: orderAgeLabel(minutes), level: orderAgeLevel(minutes) };
 }
+
+/**
+ * Une commande « prête » l'est-elle depuis trop longtemps (≥ LATE_MIN) sans
+ * avoir été récupérée ? Sert l'alerte sonore/notification au comptoir. Vrai
+ * uniquement pour un statut « ready » horodaté `notified_ready_at`.
+ */
+export function isReadyUncollectedLate(
+  status: string,
+  notifiedReadyAt: string | null | undefined,
+  now: number = Date.now()
+): boolean {
+  if (status !== "ready" || !notifiedReadyAt) return false;
+  const mins = minutesSince(notifiedReadyAt, now);
+  return mins != null && mins >= LATE_MIN;
+}
