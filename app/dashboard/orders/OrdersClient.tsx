@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Icon } from "@/components/icons";
 import { subscribeWithCurrentKey } from "@/lib/push-client";
 import { orderMatchesQuery } from "@/lib/orders";
-import { orderAge } from "@/lib/order-age";
+import { orderAge, minutesSince, isReadyUncollectedLate, LATE_MIN } from "@/lib/order-age";
 
 /** Scanner de QR de retrait (caméra + jsQR), rendu dans un volet plein écran. */
 function QrScanner({
@@ -651,6 +651,64 @@ export default function OrdersClient({
       clearInterval(t);
     };
   }, [alertsOn, router]);
+
+  // Alerte « commande PRÊTE non récupérée » : commande passée « prête » depuis
+  // ≥ LATE_MIN et toujours pas remise. Pilotée par l'horloge qui tique (nowMs),
+  // donc se déclenche même sans nouvelle commande. Le badge rouge pulsé reste le
+  // repère visuel ; ceci ajoute le son + la notification.
+  //  - On CONSOLIDE : une seule alerte même si plusieurs commandes basculent en
+  //    même temps (au chargement notamment) → pas de rafale.
+  //  - On ne marque « signalée » QUE si le son est actif : une commande devenue
+  //    en retard alors que le son était coupé se re-signalera dès son activation.
+  //  - Le set est élagué aux commandes encore en retard : les récupérées sortent.
+  const lateNotifiedRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (nowMs == null) return;
+    const late = orders.filter((o) =>
+      isReadyUncollectedLate(o.status, o.notified_ready_at, nowMs)
+    );
+    const lateIds = new Set(late.map((o) => o.id));
+    const known = lateNotifiedRef.current;
+    for (const id of [...known]) if (!lateIds.has(id)) known.delete(id);
+    const fresh = late.filter((o) => !known.has(o.id));
+    if (fresh.length === 0 || !alertsOn) return;
+    for (const o of fresh) known.add(o.id);
+    chime();
+    if (navigator.vibrate) navigator.vibrate([200, 80, 200]);
+    let title = "⏱ Commande prête à récupérer";
+    let body: string;
+    if (fresh.length === 1) {
+      const o = fresh[0];
+      const who =
+        o.buzzer_no != null
+          ? `N° ${o.buzzer_no}`
+          : o.code || o.customer_name || "Commande";
+      const mins = minutesSince(o.notified_ready_at!, nowMs);
+      body = `${who} — prête depuis ${mins} min, toujours pas récupérée.`;
+    } else {
+      title = "⏱ Commandes prêtes à récupérer";
+      body = `${fresh.length} commandes prêtes depuis plus de ${LATE_MIN} min, non récupérées.`;
+    }
+    (async () => {
+      try {
+        if (
+          "Notification" in window &&
+          Notification.permission === "granted" &&
+          "serviceWorker" in navigator
+        ) {
+          const reg = await navigator.serviceWorker.ready;
+          reg.showNotification(title, {
+            body,
+            tag: "kado-late-ready",
+            icon: "/logo.svg",
+          });
+        }
+      } catch {
+        /* notification indisponible : le son a suffi */
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nowMs, orders, alertsOn]);
 
   async function productAction(payload: Record<string, unknown>) {
     setBusy(true);
