@@ -7627,3 +7627,74 @@ summary:focus-visible,
 @media (prefers-reduced-motion: reduce) {
   .v-marquee-track { animation: none; }
 }
+
+/* ============================================================
+   HERO WAHOO — parallaxe curseur, lancement de roue, titre 3D
+   ============================================================ */
+
+/* Halo réactif au curseur, tapissé derrière le hero. */
+.v-hero-glow {
+  position: absolute;
+  top: 8%;
+  left: 50%;
+  width: min(760px, 92vw);
+  height: min(520px, 60vh);
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(42% 46% at 50% 32%, rgba(245, 184, 65, 0.34), transparent 70%),
+    radial-gradient(46% 52% at 32% 68%, rgba(255, 93, 115, 0.26), transparent 72%),
+    radial-gradient(46% 52% at 70% 66%, rgba(139, 108, 255, 0.28), transparent 72%);
+  filter: blur(18px);
+  opacity: 0.9;
+  animation: hero-glow-pulse 9s ease-in-out infinite;
+  will-change: transform;
+}
+@keyframes hero-glow-pulse {
+  0%, 100% { opacity: 0.72; transform: translateX(-50%) scale(1); }
+  50% { opacity: 1; transform: translateX(-50%) scale(1.06); }
+}
+
+/* Couche de parallaxe/lévitation autour de la roue. */
+.v-wheel-stage {
+  width: -moz-fit-content;
+  width: fit-content;
+  margin: 6px auto 24px;
+  will-change: transform;
+}
+.v-wheel-stage .v-wheel {
+  margin: 0;
+}
+/* La roue contient désormais une couche de lévitation qui remplit le disque. */
+.v-wheel-float {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  will-change: transform;
+}
+
+/* Titre géant + bascule 3D mot par mot. */
+.v-hero h1 {
+  perspective: 900px;
+}
+.v-title-line {
+  display: inline;
+}
+.v-word-mask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  padding: 0 0.04em 0.12em;
+  margin: 0 0.06em -0.12em -0.02em;
+  perspective: 900px;
+}
+.v-word {
+  display: inline-block;
+  transform-origin: 50% 100%;
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .v-hero-glow { animation: none; }
+}

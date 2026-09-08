@@ -1,12 +1,18 @@
 "use client";
 
-// Hero « cinématographique » (Framer Motion) : entrée en cascade au chargement,
-// roue en lévitation continue, et PARALLAXE au scroll (le contenu dérive vers le
-// haut et s'estompe quand on descend). Respecte prefers-reduced-motion.
+// Hero « cinématographique » (Framer Motion) — effet wahoo :
+//  • lancement spectaculaire de la roue (elle surgit en tournant + rebond),
+//  • parallaxe qui suit le curseur (profondeur : roue, lueur, halo),
+//  • titre géant qui bascule mot par mot (flip 3D),
+//  • bouton magnétique qui vient vers la souris,
+//  • parallaxe au scroll (le hero dérive et s'estompe).
+// Tout est désactivé proprement si prefers-reduced-motion.
 import {
   motion,
+  useMotionValue,
   useReducedMotion,
   useScroll,
+  useSpring,
   useTransform,
   type Variants,
 } from "motion/react";
@@ -34,6 +40,9 @@ function InstagramGlyph({ size = 20 }: { size?: number }) {
 
 const EASE = [0.16, 1, 0.3, 1] as const; // « expo out » — sensation cinéma
 
+// Titre découpé en mots pour la bascule 3D individuelle.
+const TITLE_LEAD = ["Transformez", "vos", "clients", "en"];
+
 export default function HeroCinematic() {
   const reduce = useReducedMotion();
   const ref = useRef<HTMLElement>(null);
@@ -41,20 +50,60 @@ export default function HeroCinematic() {
     target: ref,
     offset: ["start start", "end start"],
   });
-  // Parallaxe : le contenu monte et s'estompe quand on descend.
-  const y = useTransform(scrollYProgress, [0, 1], [0, reduce ? 0 : -80]);
-  const opacity = useTransform(scrollYProgress, [0, 0.75], [1, reduce ? 1 : 0]);
+  // Parallaxe au scroll : le contenu monte et s'estompe quand on descend.
+  const y = useTransform(scrollYProgress, [0, 1], [0, reduce ? 0 : -90]);
+  const opacity = useTransform(scrollYProgress, [0, 0.78], [1, reduce ? 1 : 0]);
+
+  // --- Parallaxe curseur (profondeur) ---
+  const px = useMotionValue(0);
+  const py = useMotionValue(0);
+  const sx = useSpring(px, { stiffness: 120, damping: 18, mass: 0.4 });
+  const sy = useSpring(py, { stiffness: 120, damping: 18, mass: 0.4 });
+  // Chaque couche bouge à une amplitude différente => sensation de relief.
+  const wheelX = useTransform(sx, (v) => v * 26);
+  const wheelY = useTransform(sy, (v) => v * 26);
+  const glowX = useTransform(sx, (v) => v * 48);
+  const glowY = useTransform(sy, (v) => v * 48);
+  const titleX = useTransform(sx, (v) => v * -10);
+
+  function onPointer(e: React.PointerEvent<HTMLElement>) {
+    if (reduce) return;
+    const r = ref.current?.getBoundingClientRect();
+    if (!r) return;
+    px.set((e.clientX - r.left) / r.width - 0.5);
+    py.set((e.clientY - r.top) / r.height - 0.5);
+  }
+  function onLeave() {
+    px.set(0);
+    py.set(0);
+  }
+
+  // --- Bouton magnétique ---
+  const mx = useMotionValue(0);
+  const my = useMotionValue(0);
+  const magX = useSpring(mx, { stiffness: 260, damping: 16 });
+  const magY = useSpring(my, { stiffness: 260, damping: 16 });
+  function onMagnet(e: React.PointerEvent<HTMLAnchorElement>) {
+    if (reduce) return;
+    const r = e.currentTarget.getBoundingClientRect();
+    mx.set((e.clientX - (r.left + r.width / 2)) * 0.35);
+    my.set((e.clientY - (r.top + r.height / 2)) * 0.4);
+  }
+  function onMagnetLeave() {
+    mx.set(0);
+    my.set(0);
+  }
 
   const container: Variants = {
     hidden: {},
     show: {
-      transition: { staggerChildren: reduce ? 0 : 0.09, delayChildren: 0.05 },
+      transition: { staggerChildren: reduce ? 0 : 0.08, delayChildren: 0.15 },
     },
   };
   const item: Variants = reduce
     ? { hidden: { opacity: 1 }, show: { opacity: 1 } }
     : {
-        hidden: { opacity: 0, y: 24, filter: "blur(6px)" },
+        hidden: { opacity: 0, y: 26, filter: "blur(8px)" },
         show: {
           opacity: 1,
           y: 0,
@@ -62,9 +111,33 @@ export default function HeroCinematic() {
           transition: { duration: 0.8, ease: EASE },
         },
       };
+  // Mot du titre : bascule verticale 3D (flip up).
+  const word: Variants = reduce
+    ? { hidden: { opacity: 1 }, show: { opacity: 1 } }
+    : {
+        hidden: { opacity: 0, y: "0.7em", rotateX: -75 },
+        show: {
+          opacity: 1,
+          y: "0em",
+          rotateX: 0,
+          transition: { duration: 0.85, ease: EASE },
+        },
+      };
 
   return (
-    <section className="v-hero" ref={ref}>
+    <section
+      className="v-hero"
+      ref={ref}
+      onPointerMove={onPointer}
+      onPointerLeave={onLeave}
+    >
+      {/* Halo réactif au curseur, derrière tout le hero */}
+      <motion.div
+        className="v-hero-glow"
+        aria-hidden="true"
+        style={reduce ? undefined : { x: glowX, y: glowY }}
+      />
+
       <motion.div
         className="v-hero-inner"
         style={{ y, opacity }}
@@ -76,28 +149,66 @@ export default function HeroCinematic() {
           🎁 Avis · Abonnés · Fidélité
         </motion.div>
 
+        {/* Lancement spectaculaire : la roue surgit en tournant, avec rebond,
+            puis dérive avec le curseur + lévite doucement. */}
         <motion.div
-          className="v-wheel"
-          aria-hidden="true"
-          variants={item}
-          animate={
-            reduce
-              ? undefined
-              : { y: [0, -10, 0], rotate: [0, 1.5, 0] }
-          }
-          transition={
-            reduce
-              ? undefined
-              : { duration: 6, repeat: Infinity, ease: "easeInOut" }
-          }
+          className="v-wheel-stage"
+          style={reduce ? undefined : { x: wheelX, y: wheelY }}
         >
-          <span className="v-wheel-disc" />
-          <span className="v-wheel-pin" />
+          <motion.div
+            className="v-wheel"
+            aria-hidden="true"
+            initial={
+              reduce ? false : { scale: 0.2, rotate: -260, opacity: 0 }
+            }
+            animate={
+              reduce
+                ? undefined
+                : { scale: 1, rotate: 0, opacity: 1 }
+            }
+            transition={
+              reduce
+                ? undefined
+                : {
+                    duration: 1.5,
+                    ease: EASE,
+                    delay: 0.25,
+                    scale: { type: "spring", stiffness: 140, damping: 11, delay: 0.25 },
+                  }
+            }
+          >
+            <motion.span
+              className="v-wheel-float"
+              animate={
+                reduce ? undefined : { y: [0, -9, 0], rotate: [0, 1.4, 0] }
+              }
+              transition={
+                reduce
+                  ? undefined
+                  : { duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1.6 }
+              }
+            >
+              <span className="v-wheel-disc" />
+              <span className="v-wheel-pin" />
+            </motion.span>
+          </motion.div>
         </motion.div>
 
-        <motion.h1 variants={item}>
-          Transformez vos clients en{" "}
-          <span className="v-serif">avis &amp; abonnés</span>
+        <motion.h1 style={reduce ? undefined : { x: titleX }}>
+          <motion.span className="v-title-line" variants={container}>
+            {TITLE_LEAD.map((w) => (
+              <span className="v-word-mask" key={w}>
+                <motion.span className="v-word" variants={word}>
+                  {w}
+                </motion.span>
+              </span>
+            ))}
+          </motion.span>{" "}
+          <span className="v-word-mask">
+            <motion.span className="v-word v-serif" variants={word}>
+              avis &amp; abonnés
+            </motion.span>
+          </span>
         </motion.h1>
 
         <motion.p className="v-lede" variants={item}>
@@ -120,9 +231,15 @@ export default function HeroCinematic() {
         </motion.div>
 
         <motion.div className="v-cta" variants={item}>
-          <a className="v-btn primary" href="/login?signup=1">
+          <motion.a
+            className="v-btn primary"
+            href="/login?signup=1"
+            style={reduce ? undefined : { x: magX, y: magY }}
+            onPointerMove={onMagnet}
+            onPointerLeave={onMagnetLeave}
+          >
             Créer mon compte gratuit →
-          </a>
+          </motion.a>
           <a className="v-btn ghost" href="/cafe-lumiere">
             🎡 Essayer la démo
           </a>
