@@ -7707,3 +7707,63 @@ summary:focus-visible,
   vertical-align: -0.15em;
   flex: none;
 }
+
+/* ============================================================
+   REFONTE JEU — accents éditoriaux (serif) + moment de gain
+   plus cinématographique. Entièrement piloté par les tokens de
+   thème du commerçant (aucune couleur codée en dur).
+   ============================================================ */
+
+/* Mot mis en avant dans les titres du jeu : italique serif façon vitrine. */
+.card .accent {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+/* Titre d'accueil un peu plus ample. */
+.card h1 {
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+/* Nom du lot gagné : signature éditoriale (serif italique) + halo doux. */
+.prize h2 {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 34px;
+  text-shadow: 0 0 26px var(--gold-glow, rgba(255, 194, 77, 0.35));
+}
+
+/* Emoji du lot : plus grand, avec un halo lumineux (le pic émotionnel). */
+.prize .emoji {
+  font-size: 72px;
+  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.45))
+    drop-shadow(0 0 30px var(--gold-glow, rgba(255, 194, 77, 0.45)));
+}
+
+/* Bandeau « Bravo » : un peu plus présent. */
+.prize .win {
+  font-size: 12.5px;
+  letter-spacing: 0.2em;
+}
+
+/* Étoiles de l'avis : teinte or de la marque. */
+.review-card-stars {
+  color: var(--gold);
+  letter-spacing: 0.12em;
+}
+
+/* Icônes Phosphor du jeu : alignées sur la ligne de base du texte. */
+.card .ico,
+.preview-banner .ico,
+.fid-link .ico,
+.goc-main .ico {
+  vertical-align: -0.15em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .prize .emoji { animation: none; }
+}
