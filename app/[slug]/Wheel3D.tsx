@@ -105,9 +105,11 @@ export default function Wheel3D({
       // (bas de l'écran). Le pointeur est au bord opposé (haut de l'écran).
       // Hôte au format large (le disque incliné est une ellipse) : la caméra
       // cadre serré pour ne pas laisser de vide au-dessus/en dessous.
+      // Caméra plus haute et plus proche : vue davantage « de face » (plongée
+      // moins rasante) pour que les lots restent lisibles.
       const camera = new THREE.PerspectiveCamera(24, 1.5, 0.1, 50);
-      camera.position.set(0, 2.55, 3.05);
-      camera.lookAt(0, -0.08, 0);
+      camera.position.set(0, 3.15, 2.4);
+      camera.lookAt(0, -0.05, 0);
 
       // ---- Lumières ------------------------------------------------------
       scene.add(new THREE.AmbientLight(0xffffff, 0.75));

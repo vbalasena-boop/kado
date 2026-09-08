@@ -514,7 +514,7 @@ h1 .accent {
    l'épaisseur, une ombre au sol ancre la roue, et un reflet conique suit la
    rotation via --wheel-rot (posée chaque frame par le canvas). */
 .wheel-3d {
-  --tilt: 26deg;
+  --tilt: 18deg;
   --wheel-rot: 0rad;
   position: relative;
   width: 100%;
