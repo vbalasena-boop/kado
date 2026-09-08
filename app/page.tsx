@@ -15,6 +15,7 @@ import Reveal from "@/components/Reveal";
 import HeroCinematic from "@/components/HeroCinematic";
 import Marquee from "@/components/Marquee";
 import ScrollProgress from "@/components/ScrollProgress";
+import ScrollWheel from "@/components/ScrollWheel";
 import HomeGames from "@/components/HomeGames";
 import HomeLoyalty from "@/components/HomeLoyalty";
 import SupportButton from "@/components/SupportButton";
@@ -245,6 +246,7 @@ export default function Home({
   return (
     <main className="vitrine">
       <ScrollProgress />
+      <ScrollWheel />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}

@@ -7809,3 +7809,65 @@ summary:focus-visible,
   border-radius: 50%;
   will-change: transform;
 }
+
+/* ============================================================
+   ROUES EN FILIGRANE — tournent au rythme du scroll de toute la page.
+   Couche de fond (z 0) : au-dessus de l'aurora, sous le grain, sous le
+   contenu. Cadre fixe plein écran avec overflow hidden → jamais de
+   débordement horizontal, même avec les roues partiellement hors champ.
+   ============================================================ */
+.v-scrollwheel {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.v-sw {
+  position: absolute;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  will-change: transform;
+  opacity: 0.14;
+}
+.v-sw-disc {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    repeating-conic-gradient(rgba(10, 4, 24, 0.55) 0 1.2deg, transparent 1.2deg 60deg),
+    conic-gradient(
+      #ff5d73 0 60deg,
+      #ffc24d 60deg 120deg,
+      #39d98a 120deg 180deg,
+      #4fc3f7 180deg 240deg,
+      #8b6cff 240deg 300deg,
+      #ff8a5c 300deg 360deg
+    );
+  box-shadow:
+    0 0 0 10px rgba(245, 184, 65, 0.55),
+    0 0 0 15px rgba(17, 9, 46, 0.6);
+}
+.v-sw-hub {
+  position: absolute;
+  inset: 38%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #fff6df, var(--gold) 72%);
+}
+/* Grande roue : bas-droite, partiellement hors champ (arc majestueux). */
+.v-sw-a {
+  width: min(88vw, 720px);
+  right: -22vw;
+  bottom: -22vw;
+}
+/* Petite roue : haut-gauche, plus discrète, en contre-rotation. */
+.v-sw-b {
+  width: min(46vw, 340px);
+  left: -12vw;
+  top: 14vh;
+  opacity: 0.09;
+}
+@media (max-width: 640px) {
+  .v-sw-a { width: 118vw; right: -50vw; bottom: -34vw; }
+  .v-sw-b { display: none; }
+}
