@@ -1,0 +1,74 @@
+<!doctype html><html><head><meta charset="utf-8">
+<style>html,body{margin:0;padding:0;overflow:hidden;background:#17091f}canvas{display:block}</style>
+<script src="./three.min.js"></script></head>
+<body>
+<script>
+const W=1080,H=1920;
+const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});
+renderer.setSize(W,H); renderer.setPixelRatio(1);
+document.body.appendChild(renderer.domElement);
+
+const scene=new THREE.Scene();
+// fond violet dégradé (CanvasTexture)
+(function(){const c=document.createElement('canvas');c.width=8;c.height=H;const g=c.getContext('2d');
+ const gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#33194a');gr.addColorStop(1,'#17091f');
+ g.fillStyle=gr;g.fillRect(0,0,8,H);const tx=new THREE.CanvasTexture(c);scene.background=tx;})();
+
+const cam=new THREE.PerspectiveCamera(32,W/H,0.1,100);
+cam.position.set(0,0,21); cam.lookAt(0,0,0);
+
+scene.add(new THREE.AmbientLight(0xffffff,0.62));
+const key=new THREE.DirectionalLight(0xffffff,0.55); key.position.set(-4,6,8); scene.add(key);
+
+const COLORS=[0xff3d94,0xffb400,0x8a3ffe,0xff5a3c,0xe63aa0,0xffc21f];
+const R=3.0, TH=0.55, N=6, step=Math.PI*2/N;
+const wheel=new THREE.Group();
+
+// segments extrudés
+for(let i=0;i<N;i++){
+  const a0=i*step, a1=a0+step;
+  const sh=new THREE.Shape();
+  sh.moveTo(0,0);
+  sh.absarc(0,0,R,a0,a1,false);
+  sh.lineTo(0,0);
+  const geo=new THREE.ExtrudeGeometry(sh,{depth:TH,bevelEnabled:true,bevelThickness:0.06,bevelSize:0.06,bevelSegments:2,curveSegments:48});
+  const mat=new THREE.MeshStandardMaterial({color:COLORS[i],metalness:0.15,roughness:0.5});
+  const m=new THREE.Mesh(geo,mat); m.position.z=-TH/2; wheel.add(m);
+}
+// jante or (torus)
+const rimGeo=new THREE.TorusGeometry(R+0.02,0.16,24,120);
+const rimMat=new THREE.MeshStandardMaterial({color:0xf4c235,metalness:0.9,roughness:0.25});
+const rimMesh=new THREE.Mesh(rimGeo,rimMat); rimMesh.position.z=TH/2; wheel.add(rimMesh);
+// moyeu navy
+const hub=new THREE.Mesh(new THREE.CylinderGeometry(0.62,0.62,TH+0.5,48),
+  new THREE.MeshStandardMaterial({color:0x1e1b3a,metalness:0.3,roughness:0.4}));
+hub.rotation.x=Math.PI/2; hub.position.z=0; wheel.add(hub);
+// petit cadeau or au centre
+const box=new THREE.Mesh(new THREE.BoxGeometry(0.55,0.55,0.55),
+  new THREE.MeshStandardMaterial({color:0xfff2d6,metalness:0.2,roughness:0.5}));
+box.position.z=TH/2+0.35; wheel.add(box);
+const ribV=new THREE.Mesh(new THREE.BoxGeometry(0.12,0.58,0.58),new THREE.MeshStandardMaterial({color:0xf4c235,metalness:0.6,roughness:0.3}));
+ribV.position.z=TH/2+0.35; wheel.add(ribV);
+const ribH=new THREE.Mesh(new THREE.BoxGeometry(0.58,0.12,0.58),new THREE.MeshStandardMaterial({color:0xf4c235,metalness:0.6,roughness:0.3}));
+ribH.position.z=TH/2+0.35; wheel.add(ribH);
+
+wheel.rotation.x=-0.32;   // perspective 3D
+scene.add(wheel);
+
+// pointeur (cône) en haut, pointe vers le bas
+const ptr=new THREE.Mesh(new THREE.ConeGeometry(0.28,0.6,32),
+  new THREE.MeshStandardMaterial({color:0xf0f0f5,metalness:0.4,roughness:0.3}));
+ptr.position.set(0,R+0.28,TH/2+0.2); ptr.rotation.z=Math.PI; ptr.rotation.x=-0.32; scene.add(ptr);
+
+function easeOut(t){t=Math.max(0,Math.min(1,t));return 1-Math.pow(1-t,3);}
+window.renderAt=function(t){
+  // spin: 3.25 tours sur 4.5s, décélération, léger flottement
+  const spin=-(Math.PI*2*3.25)*easeOut(Math.min(1,t/4.5)) - 0.4;
+  wheel.rotation.z=spin;
+  wheel.position.y=0.15+Math.sin(t*1.2)*0.05;
+  renderer.render(scene,cam);
+};
+window.renderAt(0);
+window.__ready=true;
+</script>
+</body></html>
