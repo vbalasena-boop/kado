@@ -108,8 +108,8 @@ export default function Wheel3D({
       // Caméra plus haute et plus proche : vue davantage « de face » (plongée
       // moins rasante) pour que les lots restent lisibles.
       const camera = new THREE.PerspectiveCamera(24, 1.5, 0.1, 50);
-      camera.position.set(0, 3.15, 2.4);
-      camera.lookAt(0, -0.05, 0);
+      camera.position.set(0, 3.35, 2.15);
+      camera.lookAt(0, -0.04, 0);
 
       // ---- Lumières ------------------------------------------------------
       scene.add(new THREE.AmbientLight(0xffffff, 0.75));
