@@ -33,6 +33,8 @@ COLD={
  'reel10':_co([("x2 d'avis.",GOLD)],"0 € de pub."),
  'reel11':_co([("3 erreurs",GOLD)],"qui tuent vos avis Google."),
  'reel12':_co([("+5 avis / jour",GOLD)],"…sans rien faire."),
+ 'reel14':_co([("Pas qu'une roue.",WHITE)],"3 jeux au choix."),
+ 'reel15':_co([("La fidélité",WHITE),(" digitale",GOLD)],"qui ne se perd jamais."),
 }
 CO_DUR=0.9  # durée de base (x SCALE ensuite)
 def with_cold(name,TL):
@@ -326,7 +328,72 @@ def r12_kado(t):
 REEL12=[(0,4.6,r12_stack),(4.6,8.2,r12_kado),
         (8.2,12.2,lambda t: cta(t,"Des avis, tous les jours",q="Combien vous en voulez ?"))]
 
-_BASE={"reel2":REEL2,"reel3":REEL3,"reel4":REEL4,"reel5":REEL5,"reel6":REEL6,"reel7":REEL7,"reel8":REEL8,"reel9":REEL9,"reel10":REEL10,"reel11":REEL11,"reel12":REEL12}
+# =================== RÉEL 14 — « 3 jeux » (roue / grattage / machine à sous) ===================
+def _grow(img,ch,txt,y,t,t0):
+    op=int(255*ease(clamp((t-t0)/0.3)))
+    if op<=0: return
+    dx=int((1-eob(clamp((t-t0)/0.4)))*55); x=int(W*0.16)-dx; bs=104
+    ic=emoji_img(ch,bs)
+    if op<255: ic=ic.copy(); ic.putalpha(ic.getchannel("A").point(lambda v:int(v*op/255)))
+    img.alpha_composite(ic,(x,y))
+    layer=Image.new("RGBA",img.size,(0,0,0,0)); ImageDraw.Draw(layer).text((x+bs+34,y+22),txt,font=BOLD(58),fill=(255,255,255,op))
+    img.alpha_composite(layer)
+def r14_games(t):
+    img=bg_violet(int(H*0.42))
+    para(img,[("Kado, ce n'est pas qu'une roue :",WHITE)],BOLD(58),W//2,int(H*0.11),int(W*0.86))
+    _grow(img,"🎡","La roue",int(H*0.28),t,0.05)
+    _grow(img,"🎫","Le grattage",int(H*0.44),t,0.35)
+    _grow(img,"🎰","La machine à sous",int(H*0.60),t,0.65)
+    op=int(255*ease(clamp((t-0.95)/0.3)))
+    if op>0: para(img,[("Changez de jeu quand vous voulez.",GOLD)],BOLD(50),W//2,int(H*0.76),int(W*0.88),opacity=op)
+    return img
+def r14_why(t):
+    return text_scene(t,[([("Un jeu = une raison de",WHITE)],BOLD(64),0.34,0.0),
+                         ([("laisser un avis 🎁",GOLD)],BOLD(70),0.50,0.4)]) if False else _r14_why(t)
+def _r14_why(t):
+    img=text_scene(t,[([("Un jeu, un cadeau,",WHITE)],BOLD(72),0.34,0.0),
+                      ([("un avis Google.",GOLD)],BOLD(80),0.50,0.4)])
+    return img
+REEL14=[(0,4.6,r14_games),(4.6,8.0,_r14_why),
+        (8.0,12.0,lambda t: cta(t,"3 jeux, plus d'avis & d'abonnés",q="Lequel vous tente ?"))]
+
+# =================== RÉEL 15 — « Fidélité digitale » (carte à tampons) ===================
+def loyalty_card(w,filled):
+    h=int(w*0.62); base=_card_shadow(w,h,34); d=ImageDraw.Draw(base); d.rounded_rectangle([0,0,w,h],radius=34,fill=WHITE)
+    d.text((44,36),"Carte de fidélité",font=BODYB(46),fill=CARDTX)
+    d.text((44,96),"Café Lumière",font=BODY(34),fill=GREY)
+    cols=5; rows=2; r=int(w*0.066); gapx=(w-2*70-cols*2*r)/(cols-1); x0=70; y0=170
+    n=0
+    for row in range(rows):
+        for c in range(cols):
+            cx=int(x0+r+c*(2*r+gapx)); cy=int(y0+r+row*(2*r+56))
+            if n<filled:
+                d.ellipse([cx-r,cy-r,cx+r,cy+r],fill=GOLD)
+                base.alpha_composite(star(int(r*1.1),WHITE),(int(cx-r*0.55),int(cy-r*0.55)))
+            else:
+                d.ellipse([cx-r,cy-r,cx+r,cy+r],outline=(210,210,220),width=5)
+            n+=1
+    d.text((44,h-70),"10 tampons = 1 cadeau offert 🎁".replace(" 🎁",""),font=BODYB(38),fill=CARDTX)
+    return base
+def r15_card(t):
+    img=bg_violet(int(H*0.40))
+    para(img,[("La carte à tampons digitale",WHITE)],BOLD(56),W//2,int(H*0.12),int(W*0.88))
+    filled=int(round(9*ease(clamp((t-0.15)/0.6))))
+    cw=int(W*0.80); card=loyalty_card(cw,filled)
+    img.alpha_composite(card,((W-cw)//2,int(H*0.28)))
+    op=int(255*ease(clamp((t-0.8)/0.3)))
+    if op>0: para(img,[("Identifiée par e-mail — ",WHITE),("jamais perdue.",GOLD)],BODYB(46),W//2,int(H*0.72),int(W*0.9),opacity=op)
+    return img
+def r15_feats(t):
+    img=bg_violet()
+    para(img,[("Et en plus :",WHITE)],BOLD(60),W//2,int(H*0.14),int(W*0.85))
+    _grow(img,"🎂","Anniversaires automatiques",int(H*0.32),t,0.05)
+    _grow(img,"🤝","Parrainage entre clients",int(H*0.50),t,0.4)
+    return img
+REEL15=[(0,4.6,r15_card),(4.6,8.0,r15_feats),
+        (8.0,12.0,lambda t: cta(t,"Vos habitués reviennent",q="Vous fidélisez comment ?"))]
+
+_BASE={"reel2":REEL2,"reel3":REEL3,"reel4":REEL4,"reel5":REEL5,"reel6":REEL6,"reel7":REEL7,"reel8":REEL8,"reel9":REEL9,"reel10":REEL10,"reel11":REEL11,"reel12":REEL12,"reel14":REEL14,"reel15":REEL15}
 REELS={n:with_cold(n,tl) for n,tl in _BASE.items()}
 
 if __name__=="__main__":
