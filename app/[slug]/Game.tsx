@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import Wheel3D from "./Wheel3D";
+import type { Prize } from "@/lib/draw";
+import { paintWheelFace, WHEEL_FONT as FONT } from "@/lib/wheel-face";
 import { labelIsLosing } from "@/lib/draw";
 import { deviceHash } from "@/lib/device-hash";
 import { buildTheme } from "@/lib/theme";
@@ -15,14 +18,6 @@ import {
   type TriggerAction,
 } from "@/lib/wheel";
 
-type Prize = {
-  id: string;
-  label: string;
-  emoji: string;
-  weight: number;
-  color: string;
-  position: number;
-};
 type Config = {
   primary_color: string;
   accent_color?: string | null;
@@ -205,9 +200,8 @@ type Screen =
   | "prize"
   | "done";
 
-const FONT =
-  '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
 const TAU = Math.PI * 2;
+
 
 function isNoWin(label: string) {
   return labelIsLosing(label);
@@ -559,6 +553,20 @@ export default function Game({
     code: string | null;
   } | null>(null);
   const [spinning, setSpinning] = useState(false);
+  // Roue en vraie 3D (WebGL / Three.js) par défaut ; repli sur la roue 2D +
+  // scène CSS si WebGL ou le chargement de Three.js est indisponible.
+  const [wheelGl, setWheelGl] = useState(true);
+  const wheelGlOff = useCallback(() => setWheelGl(false), []);
+  // Rebond 3D à l'arrêt de la roue : classe CSS éphémère, posée uniquement à la
+  // fin RÉELLE d'un spin (jamais sur une erreur réseau).
+  const [settling, setSettling] = useState(false);
+  const settleTimerRef = useRef<number | null>(null);
+  useEffect(
+    () => () => {
+      if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
+    },
+    []
+  );
   const [error, setError] = useState<string | null>(null);
   const [leadEmail, setLeadEmail] = useState("");
   const [leadConsent, setLeadConsent] = useState(false);
@@ -807,72 +815,18 @@ export default function Game({
     (rot: number) => {
       const cv = canvasRef.current;
       if (!cv || prizes.length === 0) return;
-      const ctx = cv.getContext("2d");
-      if (!ctx) return;
-      const R = cv.width / 2;
-      const seg = TAU / prizes.length;
-      ctx.clearRect(0, 0, cv.width, cv.height);
-      ctx.save();
-      ctx.translate(R, R);
-      ctx.rotate(rot);
-      prizes.forEach((p, i) => {
-        const a0 = i * seg;
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.arc(0, 0, R - 6, a0, a0 + seg);
-        ctx.closePath();
-        ctx.fillStyle = p.color || "#ff5d73";
-        ctx.fill();
-        ctx.strokeStyle = "rgba(21,12,41,.55)";
-        ctx.lineWidth = 3;
-        ctx.stroke();
-        ctx.save();
-        ctx.rotate(a0 + seg / 2);
-        ctx.textAlign = "right";
-        ctx.fillStyle = "#150c29";
-        ctx.font = `700 27px ${FONT}`;
-        ctx.fillText(p.emoji || "🎁", R - 30, -6);
-        ctx.font = `800 20px ${FONT}`;
-        const l =
-          p.label.length > 13 ? p.label.slice(0, 12) + "…" : p.label;
-        ctx.fillText(l, R - 30, 20);
-        ctx.restore();
-      });
-      // petites lumières sur le pourtour (tournent avec la roue)
-      for (let i = 0; i < prizes.length; i++) {
-        const a = i * seg;
-        const x = Math.cos(a) * (R - 15);
-        const y = Math.sin(a) * (R - 15);
-        ctx.beginPath();
-        ctx.arc(x, y, 3.4, 0, TAU);
-        ctx.fillStyle = "rgba(255,248,230,0.92)";
-        ctx.fill();
-      }
-      ctx.restore();
-
-      // brillance fixe (effet vernis) + assombrissement du bord
-      const gloss = ctx.createRadialGradient(
-        R,
-        R * 0.72,
-        R * 0.1,
-        R,
-        R,
-        R
-      );
-      gloss.addColorStop(0, "rgba(255,255,255,0.18)");
-      gloss.addColorStop(0.55, "rgba(255,255,255,0.04)");
-      gloss.addColorStop(1, "rgba(0,0,0,0.16)");
-      ctx.beginPath();
-      ctx.arc(R, R, R - 6, 0, TAU);
-      ctx.fillStyle = gloss;
-      ctx.fill();
+      paintWheelFace(cv, prizes, rot);
+      // Reflet CSS synchronisé (repli 2D) : rotation exposée au groupe 3D CSS.
+      cv.parentElement?.style.setProperty("--wheel-rot", `${rot}rad`);
     },
     [prizes]
   );
 
+  // `wheelGl` dans les dépendances : si WebGL tombe APRÈS le montage (import
+  // asynchrone), le canvas 2D de repli est monté tard et doit être peint.
   useEffect(() => {
     draw(rotRef.current);
-  }, [draw, screen]);
+  }, [draw, screen, wheelGl]);
 
   // ---------- Confetti ----------
   const burst = useCallback(() => {
@@ -1125,6 +1079,9 @@ export default function Game({
     if (reduce) {
       rotRef.current = to;
       draw(to);
+      // Comme la machine à sous : libérer le bouton, sinon le tour suivant
+      // resterait bloqué (`spinning` jamais remis à false).
+      setSpinning(false);
       setTimeout(done, 300);
       return;
     }
@@ -1139,6 +1096,8 @@ export default function Game({
       else {
         rotRef.current = to;
         setSpinning(false);
+        setSettling(true);
+        settleTimerRef.current = window.setTimeout(() => setSettling(false), 850);
         setTimeout(done, 450);
       }
     };
@@ -1504,11 +1463,34 @@ export default function Game({
                 <p>{T.sub}</p>
               </div>
 
-              {gameType === "wheel" && (
+              {gameType === "wheel" && wheelGl && (
+                <div className="wheel-wrap wheel-gl">
+                  <Wheel3D
+                    prizes={prizes}
+                    rotRef={rotRef}
+                    spinning={spinning}
+                    settling={settling}
+                    onUnavailable={wheelGlOff}
+                  />
+                </div>
+              )}
+
+              {gameType === "wheel" && !wheelGl && (
                 <div className="wheel-wrap">
-                  <div className="pointer" />
-                  <canvas id="wheel" ref={canvasRef} width={680} height={680} />
-                  <div className="hub-dot">Spin</div>
+                  {/* Repli sans WebGL : le canvas 2D (dessin + alignement
+                      lot/pointeur inchangés) est incliné en perspective CSS,
+                      avec jante, ombre au sol et reflet synchronisé. */}
+                  <div
+                    className={`wheel-3d${spinning ? " is-spinning" : ""}${
+                      settling ? " is-settling" : ""
+                    }`}
+                  >
+                    <div className="wheel-rim" aria-hidden="true" />
+                    <div className="pointer" />
+                    <canvas id="wheel" ref={canvasRef} width={680} height={680} />
+                    <div className="wheel-sheen" aria-hidden="true" />
+                    <div className="hub-dot">Spin</div>
+                  </div>
                 </div>
               )}
 
