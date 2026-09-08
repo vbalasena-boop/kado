@@ -1,3 +1,15 @@
+import {
+  Gift,
+  Play,
+  CursorClick,
+  Coffee,
+  Ticket,
+  Sparkle,
+  CalendarBlank,
+  Robot,
+  ArrowsClockwise,
+  CheckCircle,
+} from "@phosphor-icons/react/dist/ssr";
 import { Logo } from "@/components/Logo";
 import Reveal from "@/components/Reveal";
 import HeroCinematic from "@/components/HeroCinematic";
@@ -239,7 +251,7 @@ export default function Home({
       />
       {searchParams?.deleted === "1" && (
         <div className="v-flash" role="status">
-          ✅ Votre compte a bien été supprimé. Merci d'avoir utilisé Kado.
+          <CheckCircle className="ico" size={18} weight="fill" /> Votre compte a bien été supprimé. Merci d'avoir utilisé Kado.
         </div>
       )}
       <header className="v-topbar">
@@ -269,7 +281,7 @@ export default function Home({
 
       <section className="v-section v-preview">
         <div className="pv-copy">
-          <h2>3 jeux au choix, essayez-les 👇</h2>
+          <h2>3 jeux au choix, essayez-les <CursorClick className="ico" size={26} weight="bold" /></h2>
           <p className="pv-lede">
             Roue de la fortune, carte à gratter ou machine à sous : vous
             choisissez le jeu qui colle à votre commerce. Testez les trois
@@ -286,7 +298,7 @@ export default function Home({
         <div className="pv-phone" aria-label="Aperçu interactif des jeux">
           <div className="pv-notch" />
           <div className="pv-screen">
-            <div className="pv-brand">☕ Café Lumière</div>
+            <div className="pv-brand"><Coffee className="ico" size={18} weight="fill" /> Café Lumière</div>
             <HomeGames />
             <div className="pv-foot">Suivez-nous · Laissez un avis</div>
           </div>
@@ -298,8 +310,8 @@ export default function Home({
           <HomeLoyalty />
         </div>
         <div className="pv-copy">
-          <div className="v-badge" style={{ marginBottom: 14 }}>🎟️ Fidélité digitale</div>
-          <h2>Tamponnez la carte 👇</h2>
+          <div className="v-badge" style={{ marginBottom: 14 }}><Ticket className="ico" size={16} weight="bold" /> Fidélité digitale</div>
+          <h2>Tamponnez la carte <CursorClick className="ico" size={26} weight="bold" /></h2>
           <p className="pv-lede">
             Cliquez pour ajouter un tampon et débloquer la récompense. Vos
             clients cumulent à chaque passage : une carte digitale retrouvée par
@@ -335,7 +347,7 @@ export default function Home({
 
       <section className="v-section">
         <div className="v-concours">
-          <span className="v-concours-badge">🎲 Nouveau</span>
+          <span className="v-concours-badge"><Sparkle className="ico" size={15} weight="fill" /> Nouveau</span>
           <h2 style={{ marginBottom: 10 }}>
             Lancez un <span className="v-hl">concours</span> qui fait revenir
             vos clients
@@ -348,17 +360,17 @@ export default function Home({
           </p>
           <div className="v-concours-grid">
             <div className="v-concours-item">
-              <span>🗓️</span>
+              <span><CalendarBlank size={28} weight="bold" color="var(--gold)" /></span>
               <b>Fréquence au choix</b>
               <small>Hebdomadaire, mensuel… vous programmez la date.</small>
             </div>
             <div className="v-concours-item">
-              <span>🤖</span>
+              <span><Robot size={28} weight="bold" color="var(--gold)" /></span>
               <b>100 % automatique</b>
               <small>Le gagnant est tiré et prévenu par e-mail, sans effort.</small>
             </div>
             <div className="v-concours-item">
-              <span>🔁</span>
+              <span><ArrowsClockwise size={28} weight="bold" color="var(--gold)" /></span>
               <b>Ils reviennent</b>
               <small>Un vrai levier de fidélité, sans obligation d'achat.</small>
             </div>
@@ -441,7 +453,7 @@ export default function Home({
           ))}
         </Reveal>
         <p className="v-audience-note" style={{ marginTop: 18 }}>
-          🎁 14 jours d'essai gratuit, sans carte bancaire, toutes fonctionnalités incluses.
+          <Gift className="ico" size={16} weight="bold" color="var(--gold)" /> 14 jours d'essai gratuit, sans carte bancaire, toutes fonctionnalités incluses.
         </p>
       </section>
 
@@ -472,7 +484,7 @@ export default function Home({
         <p>Créez votre compte gratuit et lancez votre première roue en quelques minutes.</p>
         <div className="v-cta">
           <a className="v-btn primary" href="/login?signup=1">Créer mon compte gratuit →</a>
-          <a className="v-btn ghost" href="/cafe-lumiere">🎡 Essayer la démo</a>
+          <a className="v-btn ghost" href="/cafe-lumiere"><Play className="ico" size={18} weight="fill" /> Essayer la démo</a>
         </div>
       </section>
 

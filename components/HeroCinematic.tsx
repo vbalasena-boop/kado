@@ -17,6 +17,7 @@ import {
   type Variants,
 } from "motion/react";
 import { useRef } from "react";
+import { Gift, Play } from "@phosphor-icons/react/dist/ssr";
 
 function GoogleGlyph({ size = 18 }: { size?: number }) {
   return (
@@ -146,7 +147,8 @@ export default function HeroCinematic() {
         animate="show"
       >
         <motion.div className="v-badge" variants={item}>
-          🎁 Avis, abonnés &amp; fidélité
+          <Gift className="ico" size={16} weight="bold" /> Avis, abonnés &amp;
+          fidélité
         </motion.div>
 
         {/* Lancement spectaculaire : la roue surgit en tournant, avec rebond,
@@ -236,7 +238,7 @@ export default function HeroCinematic() {
             Créer mon compte gratuit →
           </motion.a>
           <a className="v-btn ghost" href="/cafe-lumiere">
-            🎡 Essayer la démo
+            <Play className="ico" size={18} weight="fill" /> Essayer la démo
           </a>
         </motion.div>
       </motion.div>

@@ -7700,3 +7700,10 @@ summary:focus-visible,
 @media (prefers-reduced-motion: reduce) {
   .v-hero-glow { animation: none; }
 }
+
+/* Icônes Phosphor en flux inline (badges, boutons, titres) : alignées sur
+   la ligne de base du texte. Le gap avec le libellé vient de l'espace JSX. */
+.ico {
+  vertical-align: -0.15em;
+  flex: none;
+}
