@@ -1,4 +1,5 @@
 import { Logo } from "@/components/Logo";
+import Reveal from "@/components/Reveal";
 import HomeGames from "@/components/HomeGames";
 import HomeLoyalty from "@/components/HomeLoyalty";
 import SupportButton from "@/components/SupportButton";
@@ -304,7 +305,7 @@ export default function Home({
       <section className="v-section">
         <span className="v-eyebrow">EN 3 ÉTAPES</span>
           <h2>Comment ça marche</h2>
-        <div className="v-steps">
+        <Reveal className="v-steps">
           {STEPS.map((s) => (
             <div className="v-step" key={s.n}>
               <div className="v-step-n">{s.n}</div>
@@ -312,7 +313,7 @@ export default function Home({
               <p>{s.d}</p>
             </div>
           ))}
-        </div>
+        </Reveal>
       </section>
 
       <section className="v-section v-preview">
@@ -420,7 +421,7 @@ export default function Home({
       <section className="v-section">
         <span className="v-eyebrow">LES BÉNÉFICES</span>
           <h2>Pourquoi Kado</h2>
-        <div className="v-benefits">
+        <Reveal className="v-benefits">
           {BENEFITS.map((b) => (
             <div className="v-benefit" key={b.t}>
               <div className="v-ico"><Ico name={b.i} /></div>
@@ -430,13 +431,13 @@ export default function Home({
               </div>
             </div>
           ))}
-        </div>
+        </Reveal>
       </section>
 
       <section className="v-section">
         <span className="v-eyebrow">CONFORMITÉ</span>
           <h2>Vos avis Google, sans prendre de risque</h2>
-        <div className="v-compare">
+        <Reveal className="v-compare">
           <div className="v-compare-col risk">
             <div className="v-compare-head">
               <span className="v-compare-badge risk" aria-hidden="true">✕</span>
@@ -461,7 +462,7 @@ export default function Home({
               <li>Proposé à <b>tous</b> les clients, sans tri par satisfaction.</li>
             </ul>
           </div>
-        </div>
+        </Reveal>
       </section>
 
       <section className="v-section">
@@ -470,7 +471,7 @@ export default function Home({
         <p className="v-audience-note" style={{ marginTop: -6, marginBottom: 22 }}>
           Choisissez votre formule — sans engagement, résiliable à tout moment.
         </p>
-        <div className="v-plans-row">
+        <Reveal className="v-plans-row">
           {PLANS.map((p) => (
             <div className={`v-plan${p.popular ? " popular" : ""}`} key={p.id}>
               {p.popular && <div className="v-plan-pop">Le plus populaire</div>}
@@ -493,7 +494,7 @@ export default function Home({
               </a>
             </div>
           ))}
-        </div>
+        </Reveal>
         <p className="v-audience-note" style={{ marginTop: 18 }}>
           🎁 14 jours d'essai gratuit — sans carte bancaire — toutes fonctionnalités incluses.
         </p>
