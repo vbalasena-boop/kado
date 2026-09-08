@@ -6,66 +6,89 @@
 const W=1080,H=1920;
 const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});
 renderer.setSize(W,H); renderer.setPixelRatio(1);
+renderer.physicallyCorrectLights=true;
+renderer.outputEncoding=THREE.sRGBEncoding;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=0.92;
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
 
 const scene=new THREE.Scene();
-// fond violet dégradé (CanvasTexture)
+// fond violet dégradé
 (function(){const c=document.createElement('canvas');c.width=8;c.height=H;const g=c.getContext('2d');
- const gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#33194a');gr.addColorStop(1,'#17091f');
+ const gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#3a1c52');gr.addColorStop(1,'#150720');
  g.fillStyle=gr;g.fillRect(0,0,8,H);const tx=new THREE.CanvasTexture(c);scene.background=tx;})();
 
-const cam=new THREE.PerspectiveCamera(32,W/H,0.1,100);
-cam.position.set(0,0,21); cam.lookAt(0,0,0);
+// ---- environnement studio (reflets réalistes) via PMREM sur une equirect canvas ----
+(function(){
+  const c=document.createElement('canvas');c.width=1024;c.height=512;const g=c.getContext('2d');
+  const gr=g.createLinearGradient(0,0,0,512);
+  gr.addColorStop(0.0,'#fff6e8');gr.addColorStop(0.35,'#c9b7d6');gr.addColorStop(0.6,'#4b3960');gr.addColorStop(1.0,'#140a1e');
+  g.fillStyle=gr;g.fillRect(0,0,1024,512);
+  // softbox lumineux
+  g.fillStyle='rgba(255,255,255,0.95)';g.beginPath();g.ellipse(320,150,260,110,0,0,7);g.fill();
+  g.fillStyle='rgba(255,210,150,0.6)';g.beginPath();g.ellipse(760,180,180,90,0,0,7);g.fill();
+  const tex=new THREE.CanvasTexture(c);tex.mapping=THREE.EquirectangularReflectionMapping;
+  const pmrem=new THREE.PMREMGenerator(renderer);pmrem.compileEquirectangularShader();
+  scene.environment=pmrem.fromEquirectangular(tex).texture;
+})();
 
-scene.add(new THREE.AmbientLight(0xffffff,0.62));
-const key=new THREE.DirectionalLight(0xffffff,0.55); key.position.set(-4,6,8); scene.add(key);
+const cam=new THREE.PerspectiveCamera(30,W/H,0.1,100);
+cam.position.set(0,1.4,21); cam.lookAt(0,0.1,0);
 
-const COLORS=[0xff3d94,0xffb400,0x8a3ffe,0xff5a3c,0xe63aa0,0xffc21f];
-const R=3.0, TH=0.55, N=6, step=Math.PI*2/N;
+scene.add(new THREE.AmbientLight(0xffffff,0.18));
+const key=new THREE.DirectionalLight(0xffffff,1.5); key.position.set(-5,9,7);
+key.castShadow=true; key.shadow.mapSize.set(2048,2048);
+key.shadow.camera.left=-8;key.shadow.camera.right=8;key.shadow.camera.top=8;key.shadow.camera.bottom=-8;
+key.shadow.camera.near=1;key.shadow.camera.far=40;key.shadow.bias=-0.0004; scene.add(key);
+const fill=new THREE.DirectionalLight(0xffd9b0,0.45); fill.position.set(6,2,6); scene.add(fill);
+
+function C(hex){return new THREE.Color(hex).convertSRGBToLinear();}
+const COLORS=[0xff2f8e,0xffb400,0x8a3ffe,0xff5330,0xe22e9a,0xffc21f].map(C);
+const R=3.0, TH=0.62, N=6, step=Math.PI*2/N;
 const wheel=new THREE.Group();
 
-// segments extrudés
 for(let i=0;i<N;i++){
-  const a0=i*step, a1=a0+step;
-  const sh=new THREE.Shape();
-  sh.moveTo(0,0);
-  sh.absarc(0,0,R,a0,a1,false);
-  sh.lineTo(0,0);
-  const geo=new THREE.ExtrudeGeometry(sh,{depth:TH,bevelEnabled:true,bevelThickness:0.06,bevelSize:0.06,bevelSegments:2,curveSegments:48});
-  const mat=new THREE.MeshStandardMaterial({color:COLORS[i],metalness:0.15,roughness:0.5});
-  const m=new THREE.Mesh(geo,mat); m.position.z=-TH/2; wheel.add(m);
+  const a0=i*step,a1=a0+step;
+  const sh=new THREE.Shape(); sh.moveTo(0,0); sh.absarc(0,0,R,a0,a1,false); sh.lineTo(0,0);
+  const geo=new THREE.ExtrudeGeometry(sh,{depth:TH,bevelEnabled:true,bevelThickness:0.08,bevelSize:0.07,bevelSegments:3,curveSegments:64});
+  const mat=new THREE.MeshPhysicalMaterial({color:COLORS[i],metalness:0.0,roughness:0.42,clearcoat:0.6,clearcoatRoughness:0.25,envMapIntensity:0.32});
+  const m=new THREE.Mesh(geo,mat); m.position.z=-TH/2; m.castShadow=true; m.receiveShadow=true; wheel.add(m);
 }
-// jante or (torus)
-const rimGeo=new THREE.TorusGeometry(R+0.02,0.16,24,120);
-const rimMat=new THREE.MeshStandardMaterial({color:0xf4c235,metalness:0.9,roughness:0.25});
-const rimMesh=new THREE.Mesh(rimGeo,rimMat); rimMesh.position.z=TH/2; wheel.add(rimMesh);
-// moyeu navy
-const hub=new THREE.Mesh(new THREE.CylinderGeometry(0.62,0.62,TH+0.5,48),
-  new THREE.MeshStandardMaterial({color:0x1e1b3a,metalness:0.3,roughness:0.4}));
-hub.rotation.x=Math.PI/2; hub.position.z=0; wheel.add(hub);
-// petit cadeau or au centre
-const box=new THREE.Mesh(new THREE.BoxGeometry(0.55,0.55,0.55),
-  new THREE.MeshStandardMaterial({color:0xfff2d6,metalness:0.2,roughness:0.5}));
-box.position.z=TH/2+0.35; wheel.add(box);
-const ribV=new THREE.Mesh(new THREE.BoxGeometry(0.12,0.58,0.58),new THREE.MeshStandardMaterial({color:0xf4c235,metalness:0.6,roughness:0.3}));
-ribV.position.z=TH/2+0.35; wheel.add(ribV);
-const ribH=new THREE.Mesh(new THREE.BoxGeometry(0.58,0.12,0.58),new THREE.MeshStandardMaterial({color:0xf4c235,metalness:0.6,roughness:0.3}));
-ribH.position.z=TH/2+0.35; wheel.add(ribH);
+// jante or métal
+const rimMesh=new THREE.Mesh(new THREE.TorusGeometry(R+0.02,0.17,32,160),
+  new THREE.MeshStandardMaterial({color:C(0xf7c94a),metalness:1.0,roughness:0.16,envMapIntensity:1.5}));
+rimMesh.position.z=TH/2; rimMesh.castShadow=true; wheel.add(rimMesh);
+// moyeu navy laqué
+const hub=new THREE.Mesh(new THREE.CylinderGeometry(0.64,0.64,TH+0.55,64),
+  new THREE.MeshPhysicalMaterial({color:C(0x1e1b3a),metalness:0.2,roughness:0.25,clearcoat:0.8}));
+hub.rotation.x=Math.PI/2; hub.castShadow=true; wheel.add(hub);
+// cadeau or 3D
+const gmat=new THREE.MeshPhysicalMaterial({color:C(0xfff2d6),metalness:0.1,roughness:0.35,clearcoat:0.6});
+const rmat=new THREE.MeshStandardMaterial({color:C(0xf7c94a),metalness:0.9,roughness:0.25,envMapIntensity:1.4});
+const box=new THREE.Mesh(new THREE.BoxGeometry(0.58,0.58,0.58),gmat); box.position.z=TH/2+0.36; box.castShadow=true; wheel.add(box);
+const rv=new THREE.Mesh(new THREE.BoxGeometry(0.13,0.62,0.62),rmat); rv.position.z=TH/2+0.36; wheel.add(rv);
+const rh=new THREE.Mesh(new THREE.BoxGeometry(0.62,0.13,0.62),rmat); rh.position.z=TH/2+0.36; wheel.add(rh);
 
-wheel.rotation.x=-0.32;   // perspective 3D
+wheel.rotation.x=-0.30;
 scene.add(wheel);
 
-// pointeur (cône) en haut, pointe vers le bas
-const ptr=new THREE.Mesh(new THREE.ConeGeometry(0.28,0.6,32),
-  new THREE.MeshStandardMaterial({color:0xf0f0f5,metalness:0.4,roughness:0.3}));
-ptr.position.set(0,R+0.28,TH/2+0.2); ptr.rotation.z=Math.PI; ptr.rotation.x=-0.32; scene.add(ptr);
+// sol qui reçoit l'ombre (grounding)
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(60,60),
+  new THREE.ShadowMaterial({opacity:0.38}));
+floor.rotation.x=-Math.PI/2; floor.position.y=-R-0.55; floor.receiveShadow=true; scene.add(floor);
+
+// pointeur métal
+const ptr=new THREE.Mesh(new THREE.ConeGeometry(0.3,0.66,48),
+  new THREE.MeshStandardMaterial({color:C(0xf7c94a),metalness:0.95,roughness:0.2,envMapIntensity:1.4}));
+ptr.position.set(0,R+0.30,TH/2+0.25); ptr.rotation.z=Math.PI; ptr.rotation.x=-0.30; ptr.castShadow=true; scene.add(ptr);
 
 function easeOut(t){t=Math.max(0,Math.min(1,t));return 1-Math.pow(1-t,3);}
 window.renderAt=function(t){
-  // spin: 3.25 tours sur 4.5s, décélération, léger flottement
-  const spin=-(Math.PI*2*3.25)*easeOut(Math.min(1,t/4.5)) - 0.4;
+  const spin=-(Math.PI*2*3.25)*easeOut(Math.min(1,t/4.5)) - 0.4 - Math.max(0,t-4.5)*0.25; // momentum résiduel
   wheel.rotation.z=spin;
-  wheel.position.y=0.15+Math.sin(t*1.2)*0.05;
+  wheel.position.y=0.12+Math.sin(t*1.1)*0.05;
   renderer.render(scene,cam);
 };
 window.renderAt(0);
