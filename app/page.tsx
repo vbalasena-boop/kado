@@ -271,10 +271,10 @@ export default function Home({
 
       <section className="v-hero">
         <div className="v-badge">🎁 Avis · Abonnés · Fidélité</div>
-        <div className="v-wheel" aria-hidden="true">
+        <Reveal className="v-wheel" y={16}>
           <span className="v-wheel-disc" />
           <span className="v-wheel-pin" />
-        </div>
+        </Reveal>
         <h1>
           Transformez vos clients en{" "}
           <span className="v-serif">avis &amp; abonnés</span>

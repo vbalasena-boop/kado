@@ -115,6 +115,13 @@ export default function RootLayout({
   return (
     <html lang="fr" className={`${display.variable} ${sans.variable} ${serif.variable} ${mono.variable}`}>
       <body>
+        {/* Sécurité SANS JS : si le JavaScript ne tourne pas, les blocs à
+            révélation restent visibles (l'animation `initial:opacity 0` de
+            Framer Motion ne serait sinon jamais annulée). N'affecte rien
+            quand le JS est actif. */}
+        <noscript>
+          <style>{`[data-reveal]{opacity:1!important;transform:none!important}`}</style>
+        </noscript>
         <RefCapture />
         {children}
         <Analytics />
