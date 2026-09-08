@@ -7800,3 +7800,12 @@ summary:focus-visible,
   color: var(--night-2, #150c29);
   background: var(--gold);
 }
+
+/* Couche de rotation liée au scroll : ne fait tourner QUE le disque de la roue
+   (le pointeur et le moyeu restent fixes). */
+.v-wheel-scroll {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  will-change: transform;
+}
