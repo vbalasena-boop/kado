@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import Wheel3D from "./Wheel3D";
+import { TextEffect } from "@/components/motion/text-effect";
 import type { Prize } from "@/lib/draw";
 import { paintWheelFace, WHEEL_FONT as FONT } from "@/lib/wheel-face";
 import { labelIsLosing } from "@/lib/draw";
@@ -1593,8 +1594,12 @@ export default function Game({
                   </>
                 ) : (
                   <>
-                    <div className="win">Bravo, vous avez gagné</div>
-                    <h2>{prize.label}</h2>
+                    <TextEffect as="div" className="win" per="word" preset="slide">
+                      Bravo, vous avez gagné
+                    </TextEffect>
+                    <TextEffect as="h2" per="char" preset="blur" delay={0.35}>
+                      {prize.label}
+                    </TextEffect>
                     <p>
                       À présenter à l'équipe lors de votre prochaine visite.
                       {prizeValidityDays != null && (
