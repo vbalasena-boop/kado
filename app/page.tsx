@@ -275,7 +275,8 @@ export default function Home({
           <span className="v-wheel-pin" />
         </div>
         <h1>
-          Transformez vos clients en <span>avis &amp; abonnés</span>
+          Transformez vos clients en{" "}
+          <span className="v-serif">avis &amp; abonnés</span>
         </h1>
         <p className="v-lede">
           Le jeu de roue de la fortune qui booste votre réputation Google et
@@ -301,7 +302,8 @@ export default function Home({
       </section>
 
       <section className="v-section">
-        <h2>Comment ça marche</h2>
+        <span className="v-eyebrow">EN 3 ÉTAPES</span>
+          <h2>Comment ça marche</h2>
         <div className="v-steps">
           {STEPS.map((s) => (
             <div className="v-step" key={s.n}>
@@ -315,6 +317,7 @@ export default function Home({
 
       <section className="v-section v-preview">
         <div className="pv-copy">
+          <span className="v-eyebrow">LES JEUX</span>
           <h2>3 jeux au choix — essayez-les 👇</h2>
           <p className="pv-lede">
             Roue de la fortune, carte à gratter ou machine à sous : vous
@@ -345,6 +348,7 @@ export default function Home({
         </div>
         <div className="pv-copy">
           <div className="v-badge" style={{ marginBottom: 14 }}>🎟️ Fidélité digitale</div>
+          <span className="v-eyebrow">FIDÉLITÉ</span>
           <h2>Tamponnez la carte 👇</h2>
           <p className="pv-lede">
             Cliquez pour ajouter un tampon et débloquer la récompense. Vos
@@ -362,7 +366,8 @@ export default function Home({
       </section>
 
       <section className="v-section">
-        <h2>Pensé pour tous les commerces</h2>
+        <span className="v-eyebrow">POUR QUI</span>
+          <h2>Pensé pour tous les commerces</h2>
         <p className="v-audience-lead">
           Roue de la fortune ou carte de fidélité : Kado s'adapte à votre
           activité, vos couleurs et vos récompenses. Peu importe votre métier,
@@ -413,7 +418,8 @@ export default function Home({
       </section>
 
       <section className="v-section">
-        <h2>Pourquoi Kado</h2>
+        <span className="v-eyebrow">LES BÉNÉFICES</span>
+          <h2>Pourquoi Kado</h2>
         <div className="v-benefits">
           {BENEFITS.map((b) => (
             <div className="v-benefit" key={b.t}>
@@ -428,7 +434,8 @@ export default function Home({
       </section>
 
       <section className="v-section">
-        <h2>Vos avis Google, sans prendre de risque</h2>
+        <span className="v-eyebrow">CONFORMITÉ</span>
+          <h2>Vos avis Google, sans prendre de risque</h2>
         <div className="v-compare">
           <div className="v-compare-col risk">
             <div className="v-compare-head">
@@ -458,7 +465,8 @@ export default function Home({
       </section>
 
       <section className="v-section">
-        <h2>Des tarifs simples</h2>
+        <span className="v-eyebrow">TARIFS</span>
+          <h2>Des tarifs <span className="v-serif">simples</span></h2>
         <p className="v-audience-note" style={{ marginTop: -6, marginBottom: 22 }}>
           Choisissez votre formule — sans engagement, résiliable à tout moment.
         </p>
@@ -492,7 +500,8 @@ export default function Home({
       </section>
 
       <section className="v-section">
-        <h2>Questions fréquentes</h2>
+        <span className="v-eyebrow">FAQ</span>
+          <h2>Questions fréquentes</h2>
         <div className="v-faq">
           {FAQ.map((f) => (
             <details className="v-faq-item" key={f.q}>
@@ -504,7 +513,8 @@ export default function Home({
       </section>
 
       <section className="v-final">
-        <h2>Prêt à faire tourner la roue ?</h2>
+        <span className="v-eyebrow">ON Y VA</span>
+          <h2>Prêt à faire tourner la roue ?</h2>
         <p>Créez votre compte gratuit et lancez votre première roue en quelques minutes.</p>
         <div className="v-cta">
           <a className="v-btn primary" href="/login?signup=1">Créer mon compte gratuit →</a>

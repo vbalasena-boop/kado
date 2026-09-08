@@ -19,6 +19,8 @@
   --font: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI",
     Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-head: var(--font-display), var(--font);
+  --serif: var(--font-serif), Georgia, "Times New Roman", serif;
+  --mono: var(--font-mono), ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
 * {
   box-sizing: border-box;
@@ -7468,3 +7470,68 @@ summary:focus-visible,
 .vitrine h3 { text-wrap: balance; }
 .vitrine p { text-wrap: pretty; }
 .v-pricecard .pc-price { font-variant-numeric: tabular-nums; }
+
+/* =====================================================================
+   Vitrine — signatures « Hyliox » transposées à la marque Kado
+   (serif italique en accent, eyebrows mono, glass, bento). Palette
+   inchangée (prune / or / corail). Additif, pas de refonte structurelle.
+   ===================================================================== */
+
+/* Eyebrow : label mono doré, majuscule, tracking large — au-dessus des titres. */
+.v-eyebrow {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--gold);
+  opacity: 0.9;
+  margin-bottom: 12px;
+}
+/* Accent serif italique dans les titres (mot mis en avant). */
+.v-serif {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+/* Titre hero : échelle « display » plus ample façon Hyliox. */
+.v-hero h1 {
+  font-size: clamp(38px, 6.2vw, 72px);
+  line-height: 1.04;
+  letter-spacing: -0.025em;
+}
+.vitrine h2 {
+  font-size: clamp(26px, 3.4vw, 40px);
+  letter-spacing: -0.02em;
+}
+
+/* Surfaces « glass » : léger flou + liseré fin clair, sur les cartes. */
+.v-benefit,
+.v-pricecard,
+.v-concours,
+.v-compare-col,
+.pv-copy {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+.v-benefit,
+.v-pricecard { border-radius: 16px; }
+
+/* Bento asymétrique : la 1re carte « bénéfices » s'étale sur 2 colonnes. */
+@media (min-width: 780px) {
+  .v-benefits {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+  .v-benefits > .v-benefit:first-child {
+    grid-column: span 2;
+  }
+  .v-benefits > .v-benefit:first-child .v-ico {
+    transform: scale(1.05);
+  }
+}

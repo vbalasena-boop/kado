@@ -1,5 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Bricolage_Grotesque, Plus_Jakarta_Sans } from "next/font/google";
+import {
+  Bricolage_Grotesque,
+  Plus_Jakarta_Sans,
+  Instrument_Serif,
+  JetBrains_Mono,
+} from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import RefCapture from "@/components/RefCapture";
 import "./globals.css";
@@ -15,6 +20,24 @@ const sans = Plus_Jakarta_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   variable: "--font-sans",
+  display: "swap",
+});
+
+// Serif éditoriale en ACCENT (mots mis en avant dans les titres) — signature
+// « premium » façon Hyliox, transposée à la marque Kado.
+const serif = Instrument_Serif({
+  subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
+  variable: "--font-serif",
+  display: "swap",
+});
+
+// Mono pour les eyebrows / labels (uppercase, tracking large).
+const mono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["500", "600"],
+  variable: "--font-mono",
   display: "swap",
 });
 
@@ -90,7 +113,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="fr" className={`${display.variable} ${sans.variable}`}>
+    <html lang="fr" className={`${display.variable} ${sans.variable} ${serif.variable} ${mono.variable}`}>
       <body>
         <RefCapture />
         {children}
