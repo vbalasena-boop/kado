@@ -1,28 +1,23 @@
+import {
+  Gift,
+  Play,
+  CursorClick,
+  Coffee,
+  Ticket,
+  Sparkle,
+  CalendarBlank,
+  Robot,
+  ArrowsClockwise,
+  CheckCircle,
+} from "@phosphor-icons/react/dist/ssr";
 import { Logo } from "@/components/Logo";
+import Reveal from "@/components/Reveal";
+import HeroCinematic from "@/components/HeroCinematic";
+import Marquee from "@/components/Marquee";
+import ScrollProgress from "@/components/ScrollProgress";
 import HomeGames from "@/components/HomeGames";
 import HomeLoyalty from "@/components/HomeLoyalty";
 import SupportButton from "@/components/SupportButton";
-
-/* --- Logos de marque (SVG, rendu côté serveur) --- */
-function InstagramGlyph({ size = 20 }: { size?: number }) {
-  return (
-    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true">
-      <rect x="3" y="3" width="18" height="18" rx="5.4" fill="none" stroke="#fff" strokeWidth="2" />
-      <circle cx="12" cy="12" r="4.2" fill="none" stroke="#fff" strokeWidth="2" />
-      <circle cx="17.3" cy="6.7" r="1.3" fill="#fff" />
-    </svg>
-  );
-}
-function GoogleGlyph({ size = 18 }: { size?: number }) {
-  return (
-    <svg viewBox="0 0 48 48" width={size} height={size} aria-hidden="true">
-      <path fill="#4285F4" d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z" />
-      <path fill="#34A853" d="M24 46c5.94 0 10.92-1.97 14.56-5.33l-7.11-5.52c-1.97 1.32-4.49 2.1-7.45 2.1-5.73 0-10.58-3.87-12.31-9.07H4.34v5.7C7.96 41.07 15.4 46 24 46z" />
-      <path fill="#FBBC05" d="M11.69 28.18C11.25 26.86 11 25.45 11 24s.25-2.86.69-4.18v-5.7H4.34C2.85 17.09 2 20.45 2 24s.85 6.91 2.34 9.88l7.35-5.7z" />
-      <path fill="#EA4335" d="M24 10.75c3.23 0 6.13 1.11 8.41 3.29l6.31-6.31C34.91 4.18 29.93 2 24 2 15.4 2 7.96 6.93 4.34 14.12l7.35 5.7c1.73-5.2 6.58-9.07 12.31-9.07z" />
-    </svg>
-  );
-}
 
 /* --- Icônes atouts (stroke, couleur héritée) --- */
 function Ico({ name }: { name: string }) {
@@ -78,7 +73,7 @@ const BENEFITS = [
   { i: "insta", t: "Plus d'abonnés Insta", d: "Faites grandir votre communauté à chaque visite." },
   { i: "repeat", t: "Plus de visites", d: "Le cadeau donne une bonne raison de revenir vous voir." },
   { i: "lock", t: "Vos avis Google en sécurité", d: "Le cadeau n’est jamais lié à l’avis : pas de « review gating », donc aucun risque de voir vos avis supprimés par Google." },
-  { i: "mail", t: "Campagnes e-mail & notifs (option)", d: "Envoyez vos offres par e-mail et notification sur le téléphone de vos clients — +15 €/mois." },
+  { i: "mail", t: "Campagnes e-mail & notifs (option)", d: "Envoyez vos offres par e-mail et notification sur le téléphone de vos clients (+15 €/mois)." },
   { i: "gift", t: "Anniversaires & parrainage", d: "E-mail automatique le jour J, et +1 tampon quand un ami parrainé passe en caisse." },
   { i: "palette", t: "À vos couleurs", d: "Logo, photo de fond et lots entièrement personnalisables." },
   { i: "shield", t: "Anti-triche", d: "Tirage sécurisé côté serveur, 2 chances maximum par personne." },
@@ -140,7 +135,7 @@ const PLANS = [
 const FAQ = [
   {
     q: "C'est légal d'offrir un cadeau contre un avis ?",
-    a: "Oui, car le cadeau récompense la participation au jeu (une action comme suivre votre Instagram), jamais le contenu ou la note de l'avis. Le client est libre de laisser l'avis qu'il souhaite — ou aucun — et gagne sa chance quoi qu'il arrive. Kado respecte les règles de Google et le droit français de la consommation.",
+    a: "Oui, car le cadeau récompense la participation au jeu (une action comme suivre votre Instagram), jamais le contenu ou la note de l'avis. Le client est libre de laisser l'avis qu'il souhaite, ou aucun, et gagne sa chance quoi qu'il arrive. Kado respecte les règles de Google et le droit français de la consommation.",
   },
   {
     q: "Kado met-il mes avis Google en danger ?",
@@ -218,7 +213,7 @@ const JSON_LD = {
       operatingSystem: "Web",
       inLanguage: "fr-FR",
       description:
-        "Le jeu à scanner en caisse qui transforme vos clients en avis Google 5★ et en abonnés Instagram — avec carte de fidélité digitale, campagnes e-mail et commande en ligne. Sans application.",
+        "Le jeu à scanner en caisse qui transforme vos clients en avis Google 5★ et en abonnés Instagram, avec carte de fidélité digitale, campagnes e-mail et commande en ligne. Sans application.",
       url: "https://kado-app.fr",
       publisher: { "@id": "https://kado-app.fr/#organization" },
       offers: {
@@ -249,13 +244,14 @@ export default function Home({
 }) {
   return (
     <main className="vitrine">
+      <ScrollProgress />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}
       />
       {searchParams?.deleted === "1" && (
         <div className="v-flash" role="status">
-          ✅ Votre compte a bien été supprimé. Merci d'avoir utilisé Kado.
+          <CheckCircle className="ico" size={18} weight="fill" /> Votre compte a bien été supprimé. Merci d'avoir utilisé Kado.
         </div>
       )}
       <header className="v-topbar">
@@ -268,41 +264,11 @@ export default function Home({
         </nav>
       </header>
 
-      <section className="v-hero">
-        <div className="v-badge">🎁 Avis · Abonnés · Fidélité</div>
-        <div className="v-wheel" aria-hidden="true">
-          <span className="v-wheel-disc" />
-          <span className="v-wheel-pin" />
-        </div>
-        <h1>
-          Transformez vos clients en <span>avis &amp; abonnés</span>
-        </h1>
-        <p className="v-lede">
-          Le jeu de roue de la fortune qui booste votre réputation Google et
-          votre Instagram — sans effort, à chaque visite.
-        </p>
-        <p className="v-hero-sectors">
-          Restaurant · Coiffeur · Boutique · Boulangerie · Salle de sport…{" "}
-          <b>Kado s'adapte à votre métier.</b>
-        </p>
-        <div className="v-brands">
-          <span className="v-brand"><GoogleGlyph /> Plus d'avis 5★</span>
-          <span className="v-brand insta"><InstagramGlyph /> Plus d'abonnés</span>
-        </div>
-        <div className="v-cta">
-          <a className="v-btn primary" href="/login?signup=1">Créer mon compte gratuit →</a>
-          <a className="v-btn ghost" href="/cafe-lumiere">🎡 Essayer la démo</a>
-        </div>
-        <div className="v-trust">
-          <span><b>✓</b> Sans application</span>
-          <span><b>✓</b> Installé en 2 minutes</span>
-          <span><b>✓</b> 14 jours d'essai gratuit</span>
-        </div>
-      </section>
+      <HeroCinematic />
 
       <section className="v-section">
         <h2>Comment ça marche</h2>
-        <div className="v-steps">
+        <Reveal className="v-steps">
           {STEPS.map((s) => (
             <div className="v-step" key={s.n}>
               <div className="v-step-n">{s.n}</div>
@@ -310,16 +276,16 @@ export default function Home({
               <p>{s.d}</p>
             </div>
           ))}
-        </div>
+        </Reveal>
       </section>
 
       <section className="v-section v-preview">
         <div className="pv-copy">
-          <h2>3 jeux au choix — essayez-les 👇</h2>
+          <h2>3 jeux au choix, essayez-les <CursorClick className="ico" size={26} weight="bold" /></h2>
           <p className="pv-lede">
             Roue de la fortune, carte à gratter ou machine à sous : vous
             choisissez le jeu qui colle à votre commerce. Testez les trois
-            ici même — vos clients découvrent le vôtre, à vos couleurs, avec
+            ici même : vos clients découvrent le vôtre, à vos couleurs, avec
             vos cadeaux.
           </p>
           <ul className="pv-points">
@@ -332,7 +298,7 @@ export default function Home({
         <div className="pv-phone" aria-label="Aperçu interactif des jeux">
           <div className="pv-notch" />
           <div className="pv-screen">
-            <div className="pv-brand">☕ Café Lumière</div>
+            <div className="pv-brand"><Coffee className="ico" size={18} weight="fill" /> Café Lumière</div>
             <HomeGames />
             <div className="pv-foot">Suivez-nous · Laissez un avis</div>
           </div>
@@ -344,11 +310,11 @@ export default function Home({
           <HomeLoyalty />
         </div>
         <div className="pv-copy">
-          <div className="v-badge" style={{ marginBottom: 14 }}>🎟️ Fidélité digitale</div>
-          <h2>Tamponnez la carte 👇</h2>
+          <div className="v-badge" style={{ marginBottom: 14 }}><Ticket className="ico" size={16} weight="bold" /> Fidélité digitale</div>
+          <h2>Tamponnez la carte <CursorClick className="ico" size={26} weight="bold" /></h2>
           <p className="pv-lede">
             Cliquez pour ajouter un tampon et débloquer la récompense. Vos
-            clients cumulent à chaque passage — une carte digitale retrouvée par
+            clients cumulent à chaque passage : une carte digitale retrouvée par
             e-mail, rien à télécharger, rien à perdre.
           </p>
           <ul className="pv-points">
@@ -366,7 +332,7 @@ export default function Home({
         <p className="v-audience-lead">
           Roue de la fortune ou carte de fidélité : Kado s'adapte à votre
           activité, vos couleurs et vos récompenses. Peu importe votre métier,
-          l'objectif est le même — <b>plus d'avis, plus d'abonnés, plus de
+          l'objectif est le même : <b>plus d'avis, plus d'abonnés, plus de
           clients qui reviennent</b>.
         </p>
         <div className="v-audience">
@@ -381,30 +347,30 @@ export default function Home({
 
       <section className="v-section">
         <div className="v-concours">
-          <span className="v-concours-badge">🎲 Nouveau</span>
+          <span className="v-concours-badge"><Sparkle className="ico" size={15} weight="fill" /> Nouveau</span>
           <h2 style={{ marginBottom: 10 }}>
             Lancez un <span className="v-hl">concours</span> qui fait revenir
             vos clients
           </h2>
           <p className="v-concours-lede">
             En plus des cadeaux instantanés, organisez un <b>tirage au sort</b>{" "}
-            automatique — chaque semaine ou chaque mois, à la date de votre
+            automatique, chaque semaine ou chaque mois, à la date de votre
             choix. Un gagnant est désigné au hasard parmi vos clients&nbsp;: ils
             reviennent pour savoir s'ils ont gagné.
           </p>
           <div className="v-concours-grid">
             <div className="v-concours-item">
-              <span>🗓️</span>
+              <span><CalendarBlank size={28} weight="bold" color="var(--gold)" /></span>
               <b>Fréquence au choix</b>
               <small>Hebdomadaire, mensuel… vous programmez la date.</small>
             </div>
             <div className="v-concours-item">
-              <span>🤖</span>
+              <span><Robot size={28} weight="bold" color="var(--gold)" /></span>
               <b>100 % automatique</b>
               <small>Le gagnant est tiré et prévenu par e-mail, sans effort.</small>
             </div>
             <div className="v-concours-item">
-              <span>🔁</span>
+              <span><ArrowsClockwise size={28} weight="bold" color="var(--gold)" /></span>
               <b>Ils reviennent</b>
               <small>Un vrai levier de fidélité, sans obligation d'achat.</small>
             </div>
@@ -414,7 +380,7 @@ export default function Home({
 
       <section className="v-section">
         <h2>Pourquoi Kado</h2>
-        <div className="v-benefits">
+        <Reveal className="v-benefits">
           {BENEFITS.map((b) => (
             <div className="v-benefit" key={b.t}>
               <div className="v-ico"><Ico name={b.i} /></div>
@@ -424,12 +390,12 @@ export default function Home({
               </div>
             </div>
           ))}
-        </div>
+        </Reveal>
       </section>
 
       <section className="v-section">
         <h2>Vos avis Google, sans prendre de risque</h2>
-        <div className="v-compare">
+        <Reveal className="v-compare">
           <div className="v-compare-col risk">
             <div className="v-compare-head">
               <span className="v-compare-badge risk" aria-hidden="true">✕</span>
@@ -454,15 +420,15 @@ export default function Home({
               <li>Proposé à <b>tous</b> les clients, sans tri par satisfaction.</li>
             </ul>
           </div>
-        </div>
+        </Reveal>
       </section>
 
       <section className="v-section">
-        <h2>Des tarifs simples</h2>
+        <h2>Des tarifs <span className="v-serif">simples</span></h2>
         <p className="v-audience-note" style={{ marginTop: -6, marginBottom: 22 }}>
-          Choisissez votre formule — sans engagement, résiliable à tout moment.
+          Choisissez votre formule, sans engagement, résiliable à tout moment.
         </p>
-        <div className="v-plans-row">
+        <Reveal className="v-plans-row">
           {PLANS.map((p) => (
             <div className={`v-plan${p.popular ? " popular" : ""}`} key={p.id}>
               {p.popular && <div className="v-plan-pop">Le plus populaire</div>}
@@ -485,9 +451,9 @@ export default function Home({
               </a>
             </div>
           ))}
-        </div>
+        </Reveal>
         <p className="v-audience-note" style={{ marginTop: 18 }}>
-          🎁 14 jours d'essai gratuit — sans carte bancaire — toutes fonctionnalités incluses.
+          <Gift className="ico" size={16} weight="bold" color="var(--gold)" /> 14 jours d'essai gratuit, sans carte bancaire, toutes fonctionnalités incluses.
         </p>
       </section>
 
@@ -503,12 +469,22 @@ export default function Home({
         </div>
       </section>
 
+      <Marquee
+        items={[
+          "Plus d'avis Google",
+          "Plus d'abonnés Instagram",
+          "Sans application",
+          "Installé en 2 minutes",
+          "Vos avis en sécurité",
+        ]}
+      />
+
       <section className="v-final">
         <h2>Prêt à faire tourner la roue ?</h2>
         <p>Créez votre compte gratuit et lancez votre première roue en quelques minutes.</p>
         <div className="v-cta">
           <a className="v-btn primary" href="/login?signup=1">Créer mon compte gratuit →</a>
-          <a className="v-btn ghost" href="/cafe-lumiere">🎡 Essayer la démo</a>
+          <a className="v-btn ghost" href="/cafe-lumiere"><Play className="ico" size={18} weight="fill" /> Essayer la démo</a>
         </div>
       </section>
 

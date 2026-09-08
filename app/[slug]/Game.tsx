@@ -1,6 +1,19 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import {
+  Ticket,
+  EnvelopeSimple,
+  TestTube,
+  Sparkle,
+  ShoppingBagOpen,
+  InstagramLogo,
+  CheckCircle,
+  Confetti,
+  Heart,
+  Gift,
+  Star,
+} from "@phosphor-icons/react/dist/ssr";
 import Wheel3D from "./Wheel3D";
 import { TextEffect } from "@/components/motion/text-effect";
 import type { Prize } from "@/lib/draw";
@@ -56,7 +69,7 @@ const GAME_TEXTS: Record<
     two: "2 tours de roue",
     offered: "1 tour de roue offert",
     rule3: "Tournez la roue",
-    head: "Tournez la roue 🎡",
+    head: "Tournez la roue",
     sub: "Un seul tour… croisez les doigts !",
     cta: "Tourner la roue",
     ctaBusy: "La roue tourne…",
@@ -66,7 +79,7 @@ const GAME_TEXTS: Record<
     two: "2 cartes à gratter",
     offered: "1 carte à gratter offerte",
     rule3: "Grattez votre carte",
-    head: "Grattez votre carte 🎫",
+    head: "Grattez votre carte",
     sub: "Frottez la surface avec le doigt… suspense !",
     cta: "Découvrir ma carte",
     ctaBusy: "Préparation…",
@@ -76,7 +89,7 @@ const GAME_TEXTS: Record<
     two: "2 parties",
     offered: "1 partie offerte",
     rule3: "Lancez la machine",
-    head: "Lancez la machine 🎰",
+    head: "Lancez la machine",
     sub: "Trois rouleaux… croisez les doigts !",
     cta: "Lancer la machine",
     ctaBusy: "Ça tourne…",
@@ -266,7 +279,7 @@ const ACTIONS: Record<TriggerAction, ActionMeta> = {
     cls: "insta",
     hubTitle: "Suivre sur Instagram",
     badge: "Tour Instagram",
-    recap: "📸 Suivi Instagram",
+    recap: "Suivi Instagram",
     glyph: (size) => <InstagramGlyph size={size ?? 26} />,
     url: (config) => instagramHref(config),
   },
@@ -274,24 +287,16 @@ const ACTIONS: Record<TriggerAction, ActionMeta> = {
     cls: "loyalty",
     hubTitle: "Prendre la carte de fidélité",
     badge: "Tour Fidélité",
-    recap: "🎟️ Carte de fidélité",
-    glyph: (size) => (
-      <span style={{ fontSize: size ?? 26, lineHeight: 1 }} aria-hidden="true">
-        🎟️
-      </span>
-    ),
+    recap: "Carte de fidélité",
+    glyph: (size) => <Ticket size={size ?? 26} weight="bold" />,
     url: (_config, slug) => `/${slug}/fidelite`,
   },
   optin: {
     cls: "optin",
     hubTitle: "Recevoir les offres par e-mail",
     badge: "Tour Offres",
-    recap: "📧 Offres par e-mail",
-    glyph: (size) => (
-      <span style={{ fontSize: size ?? 26, lineHeight: 1 }} aria-hidden="true">
-        📧
-      </span>
-    ),
+    recap: "Offres par e-mail",
+    glyph: (size) => <EnvelopeSimple size={size ?? 26} weight="bold" />,
     url: () => null,
   },
 };
@@ -322,7 +327,7 @@ function ReviewCta({
             ★★★★★
           </span>
           <b>Un avis Google pour {shopName || "nous"}&nbsp;?</b>
-          <span>30 secondes qui nous aident énormément 🙏</span>
+          <span>30 secondes qui nous aident énormément</span>
         </div>
         <a
           className="btn review-card-btn review-pulse"
@@ -330,12 +335,12 @@ function ReviewCta({
           target="_blank"
           rel="noopener noreferrer"
           onClick={onClick}
-          aria-label="Laisser un avis Google — facultatif, sans incidence sur vos cadeaux"
+          aria-label="Laisser un avis Google, facultatif, sans incidence sur vos cadeaux"
         >
           ★ Laisser un avis Google
         </a>
         <span className="review-card-sub">
-          Facultatif — sans incidence sur vos cadeaux
+          Facultatif, sans incidence sur vos cadeaux
         </span>
       </div>
     );
@@ -347,12 +352,12 @@ function ReviewCta({
       target="_blank"
       rel="noopener noreferrer"
       onClick={onClick}
-      aria-label="Laisser un avis Google — facultatif, sans incidence sur vos cadeaux"
+      aria-label="Laisser un avis Google, facultatif, sans incidence sur vos cadeaux"
     >
       <span className="rc-main">
         <span aria-hidden="true">★ </span>Laisser un avis Google
       </span>
-      <span className="rc-sub">Facultatif — sans incidence sur vos cadeaux</span>
+      <span className="rc-sub">Facultatif, sans incidence sur vos cadeaux</span>
     </a>
   );
 }
@@ -1189,7 +1194,8 @@ export default function Game({
       <div className="app">
         {preview && (
           <div className="preview-banner">
-            🧪 Mode test — illimité, rien n'est enregistré
+            <TestTube className="ico" size={16} weight="bold" /> Mode test,
+            illimité, rien n'est enregistré
           </div>
         )}
         <div className="card">
@@ -1247,8 +1253,9 @@ export default function Game({
               </div>
               {drawPrize && (
                 <div className="draw-note">
-                  🎲 Bonus : tentez aussi de gagner <b>{drawPrize}</b> au tirage
-                  au sort en laissant votre e-mail&nbsp;!
+                  <Sparkle className="ico" size={16} weight="fill" /> Bonus :
+                  tentez aussi de gagner <b>{drawPrize}</b> au tirage au sort en
+                  laissant votre e-mail&nbsp;!
                 </div>
               )}
               <button className="btn" onClick={() => setScreen("hub")}>
@@ -1320,7 +1327,7 @@ export default function Game({
                 </span>
               </div>
               <div className="wheel-head">
-                <h2>📸 Suivez-nous sur Instagram</h2>
+                <h2><InstagramLogo className="ico" size={24} weight="bold" /> Suivez-nous sur Instagram</h2>
                 <p>
                   Ouvrez notre compte, abonnez-vous, puis{" "}
                   <b>revenez sur cette page</b> : votre {T.one} vous attend.
@@ -1348,7 +1355,8 @@ export default function Game({
                 )}
                 {preview && (
                   <p className="ig-hint">
-                    🧪 En mode test, le lien Instagram ne s'ouvre pas.
+                    <TestTube className="ico" size={14} weight="bold" /> En mode
+                    test, le lien Instagram ne s'ouvre pas.
                   </p>
                 )}
                 <button
@@ -1386,9 +1394,9 @@ export default function Game({
                 </span>
               </div>
               <div className="wheel-head">
-                <h2>📧 Laissez votre e-mail</h2>
+                <h2><EnvelopeSimple className="ico" size={24} weight="bold" /> Laissez votre e-mail</h2>
                 <p>
-                  Facultatif —{" "}
+                  Facultatif :{" "}
                   {current === "loyalty"
                     ? "pour votre carte de fidélité"
                     : "pour recevoir vos offres"}
@@ -1546,7 +1554,7 @@ export default function Game({
             <section className="screen active">
               <div className="nudge">
                 <div className="big" aria-hidden="true">
-                  ⭐
+                  <Star size={52} weight="fill" color="var(--gold)" />
                 </div>
                 <h2>Un petit avis avant de continuer&nbsp;?</h2>
                 <p>
@@ -1570,7 +1578,7 @@ export default function Game({
                   Plus tard
                 </button>
                 <p className="fine">
-                  Facultatif — sans incidence sur vos cadeaux.{" "}
+                  Facultatif, sans incidence sur vos cadeaux.{" "}
                   {config.compliance_note ||
                     "Le cadeau n'est pas conditionné à la note laissée."}
                 </p>
@@ -1589,7 +1597,7 @@ export default function Game({
                     <h2>{prize.label}</h2>
                     <p>
                       Ce n'était pas le bon tour ! Il vous reste peut-être une
-                      autre chance. 🙂
+                      autre chance.
                     </p>
                   </>
                 ) : (
@@ -1605,7 +1613,7 @@ export default function Game({
                       {prizeValidityDays != null && (
                         <>
                           {" "}
-                          Valable <b>{prizeValidityDays} jours</b> — jusqu'au{" "}
+                          Valable <b>{prizeValidityDays} jours</b>, jusqu'au{" "}
                           {new Date(
                             Date.now() + prizeValidityDays * 864e5
                           ).toLocaleDateString("fr-FR", {
@@ -1647,11 +1655,11 @@ export default function Game({
                         <>
                           {codeEmailSent && (
                             <p className="lead-ok">
-                              ✅ Code envoyé par e-mail&nbsp;!
+                              <CheckCircle className="ico" size={16} weight="fill" /> Code envoyé par e-mail&nbsp;!
                             </p>
                           )}
                           {leadSent && (
-                            <p className="lead-ok">✅ Merci, à bientôt&nbsp;!</p>
+                            <p className="lead-ok"><CheckCircle className="ico" size={16} weight="fill" /> Merci, à bientôt&nbsp;!</p>
                           )}
                         </>
                       );
@@ -1659,13 +1667,18 @@ export default function Game({
                     return (
                       <form className="lead-form" onSubmit={handlePrizeEmail}>
                         <label className="lead-label">
+                          {drawPrize && !wantCode ? (
+                            <Sparkle className="ico" size={16} weight="fill" />
+                          ) : (
+                            <EnvelopeSimple className="ico" size={16} weight="bold" />
+                          )}{" "}
                           {wantCode && wantLead
-                            ? "📧 Recevez votre code + nos offres par e-mail"
+                            ? "Recevez votre code + nos offres par e-mail"
                             : wantCode
-                              ? "📧 Recevoir mon code par e-mail (pour ne pas le perdre)"
+                              ? "Recevoir mon code par e-mail (pour ne pas le perdre)"
                               : drawPrize
-                                ? `🎲 Laissez votre e-mail et participez au tirage : ${drawPrize} à gagner !`
-                                : "📧 Recevez nos offres par e-mail (facultatif)"}
+                                ? `Laissez votre e-mail et participez au tirage : ${drawPrize} à gagner !`
+                                : "Recevez nos offres par e-mail (facultatif)"}
                         </label>
                         <div className="lead-row">
                           <input
@@ -1731,13 +1744,14 @@ export default function Game({
           {screen === "done" && (
             <section className="screen active">
               <div className="done-screen">
-                <div className="big">🎉</div>
+                <div className="big"><Confetti size={46} weight="fill" color="var(--gold)" /></div>
                 <h2>Vous avez tout joué&nbsp;!</h2>
                 <p>
                   {totalTurns > 1
                     ? `Vos ${totalTurns} chances ont été utilisées.`
                     : "Votre chance a été utilisée."}{" "}
-                  Merci de votre soutien&nbsp;❤️
+                  Merci de votre soutien{" "}
+                  <Heart className="ico" size={15} weight="fill" color="var(--coral)" />
                 </p>
                 <div className="recap">
                   {enabledActions.map((k) =>
@@ -1777,8 +1791,9 @@ export default function Game({
                     target="_blank"
                     rel="noopener"
                   >
-                    🎁 Vous êtes commerçant&nbsp;? Offrez ça à vos clients —
-                    14&nbsp;jours offerts →
+                    <Gift className="ico" size={16} weight="bold" /> Vous êtes
+                    commerçant&nbsp;? Offrez ça à vos clients : 14&nbsp;jours
+                    offerts →
                   </a>
                 )}
               </div>
@@ -1787,7 +1802,8 @@ export default function Game({
         </div>
         {config.loyalty_enabled && (
           <a className="fid-link" href={`/${slug}/fidelite`}>
-            🎟️ Ma carte de fidélité
+            <Ticket className="ico" size={17} weight="bold" /> Ma carte de
+            fidélité
           </a>
         )}
         {/* Pied de page : masqué sur les écrans de résultat, où le même lien
@@ -1800,7 +1816,7 @@ export default function Game({
           )}
         {orderEnabled && (
           <a className="game-order-cta" href={`/${slug}/commander`}>
-            <span className="goc-main">🛒 Commander en ligne</span>
+            <span className="goc-main"><ShoppingBagOpen className="ico" size={18} weight="bold" /> Commander en ligne</span>
             <span className="goc-sub">Retrait &amp; paiement sur place</span>
           </a>
         )}

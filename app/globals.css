@@ -19,6 +19,8 @@
   --font: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI",
     Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-head: var(--font-display), var(--font);
+  --serif: var(--font-serif), Georgia, "Times New Roman", serif;
+  --mono: var(--font-mono), ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
 * {
   box-sizing: border-box;
@@ -7468,3 +7470,332 @@ summary:focus-visible,
 .vitrine h3 { text-wrap: balance; }
 .vitrine p { text-wrap: pretty; }
 .v-pricecard .pc-price { font-variant-numeric: tabular-nums; }
+
+/* =====================================================================
+   Vitrine — signatures « Hyliox » transposées à la marque Kado
+   (serif italique en accent, eyebrows mono, glass, bento). Palette
+   inchangée (prune / or / corail). Additif, pas de refonte structurelle.
+   ===================================================================== */
+
+/* Eyebrow : label mono doré, majuscule, tracking large — au-dessus des titres. */
+.v-eyebrow {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--gold);
+  opacity: 0.9;
+  margin-bottom: 12px;
+}
+/* Accent serif italique dans les titres (mot mis en avant).
+   Playfair Display : réserve de descente (p, y, g) pour l'italique. */
+.v-serif {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 500;
+  letter-spacing: 0;
+  padding-bottom: 0.04em;
+}
+/* Titre hero : échelle « display » plus ample façon Hyliox. */
+.v-hero h1 {
+  font-size: clamp(38px, 6.2vw, 72px);
+  line-height: 1.04;
+  letter-spacing: -0.025em;
+}
+.vitrine h2 {
+  font-size: clamp(26px, 3.4vw, 40px);
+  letter-spacing: -0.02em;
+}
+
+/* Surfaces « glass » : léger flou + liseré fin clair, sur les cartes. */
+.v-benefit,
+.v-pricecard,
+.v-concours,
+.v-compare-col,
+.pv-copy {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+.v-benefit,
+.v-pricecard { border-radius: 16px; }
+
+/* Bento asymétrique : la 1re carte « bénéfices » s'étale sur 2 colonnes. */
+@media (min-width: 780px) {
+  .v-benefits {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+  .v-benefits > .v-benefit:first-child {
+    grid-column: span 2;
+  }
+  .v-benefits > .v-benefit:first-child .v-ico {
+    transform: scale(1.05);
+  }
+}
+
+/* =====================================================================
+   Vitrine — couche « cinématographique » (Framer Motion + CSS)
+   Aurora animée, barre de progression, marquee. Palette Kado.
+   ===================================================================== */
+
+/* Aurora : les halos ambiants dérivent lentement (ambiance cinéma). */
+@media (prefers-reduced-motion: no-preference) {
+  .vitrine::before {
+    animation: aurora-drift 26s ease-in-out infinite alternate;
+  }
+}
+@keyframes aurora-drift {
+  0% {
+    transform: translate3d(-2%, -1%, 0) scale(1.05);
+    filter: hue-rotate(0deg);
+  }
+  50% {
+    transform: translate3d(2%, 1.5%, 0) scale(1.12);
+  }
+  100% {
+    transform: translate3d(-1%, 2%, 0) scale(1.06);
+    filter: hue-rotate(-8deg);
+  }
+}
+
+/* Barre de progression de scroll (dorée, en haut). */
+.v-scrollbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 60;
+  transform-origin: 0 50%;
+  background: linear-gradient(90deg, var(--gold), var(--coral));
+  box-shadow: 0 0 14px -2px var(--gold);
+}
+
+/* Hero : le conteneur animé garde la mise en page centrée d'origine. */
+.v-hero-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  will-change: transform, opacity;
+}
+
+/* Marquee : bandeau défilant infini. */
+.v-marquee {
+  overflow: hidden;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 18px 0;
+  margin: 8px 0 4px;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.v-marquee-track {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  white-space: nowrap;
+  will-change: transform;
+  animation: marquee-scroll 26s linear infinite;
+}
+.v-marquee:hover .v-marquee-track {
+  animation-play-state: paused;
+}
+.v-marquee-item {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: clamp(20px, 3.4vw, 34px);
+  letter-spacing: -0.01em;
+  color: var(--cream);
+  display: inline-flex;
+  align-items: center;
+}
+.v-marquee-dot {
+  color: var(--gold);
+  font-style: normal;
+  margin: 0 26px;
+  font-size: 0.6em;
+  opacity: 0.85;
+}
+@keyframes marquee-scroll {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .v-marquee-track { animation: none; }
+}
+
+/* ============================================================
+   HERO WAHOO — parallaxe curseur, lancement de roue, titre 3D
+   ============================================================ */
+
+/* Halo réactif au curseur, tapissé derrière le hero. */
+.v-hero-glow {
+  position: absolute;
+  top: 8%;
+  left: 50%;
+  width: min(760px, 92vw);
+  height: min(520px, 60vh);
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(42% 46% at 50% 32%, rgba(245, 184, 65, 0.34), transparent 70%),
+    radial-gradient(46% 52% at 32% 68%, rgba(255, 93, 115, 0.26), transparent 72%),
+    radial-gradient(46% 52% at 70% 66%, rgba(139, 108, 255, 0.28), transparent 72%);
+  filter: blur(18px);
+  opacity: 0.9;
+  animation: hero-glow-pulse 9s ease-in-out infinite;
+  will-change: transform;
+}
+@keyframes hero-glow-pulse {
+  0%, 100% { opacity: 0.72; transform: translateX(-50%) scale(1); }
+  50% { opacity: 1; transform: translateX(-50%) scale(1.06); }
+}
+
+/* Couche de parallaxe/lévitation autour de la roue. */
+.v-wheel-stage {
+  width: -moz-fit-content;
+  width: fit-content;
+  margin: 6px auto 24px;
+  will-change: transform;
+}
+.v-wheel-stage .v-wheel {
+  margin: 0;
+}
+/* La roue contient désormais une couche de lévitation qui remplit le disque. */
+.v-wheel-float {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  will-change: transform;
+}
+
+/* Titre géant + bascule 3D mot par mot. */
+.v-hero h1 {
+  perspective: 900px;
+}
+.v-title-line {
+  display: inline;
+}
+.v-word-mask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  padding: 0 0.04em 0.12em;
+  margin: 0 0.06em -0.12em -0.02em;
+  perspective: 900px;
+}
+.v-word {
+  display: inline-block;
+  transform-origin: 50% 100%;
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .v-hero-glow { animation: none; }
+}
+
+/* Icônes Phosphor en flux inline (badges, boutons, titres) : alignées sur
+   la ligne de base du texte. Le gap avec le libellé vient de l'espace JSX. */
+.ico {
+  vertical-align: -0.15em;
+  flex: none;
+}
+
+/* ============================================================
+   REFONTE JEU — accents éditoriaux (serif) + moment de gain
+   plus cinématographique. Entièrement piloté par les tokens de
+   thème du commerçant (aucune couleur codée en dur).
+   ============================================================ */
+
+/* Mot mis en avant dans les titres du jeu : italique serif façon vitrine. */
+.card .accent {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+/* Titre d'accueil un peu plus ample. */
+.card h1 {
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+/* Nom du lot gagné : signature éditoriale (serif italique) + halo doux. */
+.prize h2 {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 34px;
+  text-shadow: 0 0 26px var(--gold-glow, rgba(255, 194, 77, 0.35));
+}
+
+/* Emoji du lot : plus grand, avec un halo lumineux (le pic émotionnel). */
+.prize .emoji {
+  font-size: 72px;
+  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.45))
+    drop-shadow(0 0 30px var(--gold-glow, rgba(255, 194, 77, 0.45)));
+}
+
+/* Bandeau « Bravo » : un peu plus présent. */
+.prize .win {
+  font-size: 12.5px;
+  letter-spacing: 0.2em;
+}
+
+/* Étoiles de l'avis : teinte or de la marque. */
+.review-card-stars {
+  color: var(--gold);
+  letter-spacing: 0.12em;
+}
+
+/* Icônes Phosphor du jeu : alignées sur la ligne de base du texte. */
+.card .ico,
+.preview-banner .ico,
+.fid-link .ico,
+.goc-main .ico {
+  vertical-align: -0.15em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .prize .emoji { animation: none; }
+}
+
+/* Parcours promoteur : liste numérotée avec pastilles dorées (remplace les
+   emojis clavier 1️⃣2️⃣3️⃣). */
+.vendeur-steps {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  counter-reset: vstep;
+  display: grid;
+  gap: 12px;
+}
+.vendeur-steps li {
+  counter-increment: vstep;
+  position: relative;
+  padding-left: 42px;
+  line-height: 1.5;
+}
+.vendeur-steps li::before {
+  content: counter(vstep);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 14px;
+  color: var(--night-2, #150c29);
+  background: var(--gold);
+}

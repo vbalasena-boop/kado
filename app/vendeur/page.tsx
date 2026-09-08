@@ -1,3 +1,10 @@
+import {
+  Gift,
+  Handshake,
+  CurrencyEur,
+  Rocket,
+  Confetti,
+} from "@phosphor-icons/react/dist/ssr";
 import { getSessionUser } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { getAffiliateStats } from "@/lib/affiliates";
@@ -18,10 +25,10 @@ function Pitch({ loggedIn }: { loggedIn: boolean }) {
   return (
     <div className="dash">
       <header className="dash-top">
-        <div className="dash-brand">🎡 Kado · Programme promoteur</div>
+        <div className="dash-brand"><Gift className="ico" size={18} weight="bold" /> Kado · Programme promoteur</div>
       </header>
       <main className="dash-main">
-        <h1 className="dash-h1">🤝 Devenez promoteur Kado</h1>
+        <h1 className="dash-h1"><Handshake className="ico" size={26} weight="bold" /> Devenez promoteur Kado</h1>
         <p className="dash-sub">
           Vous connaissez des commerçants ? Recommandez-leur Kado avec votre
           lien personnel et touchez une commission à chaque abonnement signé.
@@ -30,23 +37,27 @@ function Pitch({ loggedIn }: { loggedIn: boolean }) {
 
         <div className="dash-card">
           <h2>Comment ça marche</h2>
-          <p>
-            1️⃣ Déposez votre candidature — Kado vous contacte, vous signez le
-            contrat et votre lien personnel est activé.
-            <br />
-            2️⃣ Partagez-le aux commerçants (WhatsApp, e-mail, en main
-            propre…).
-            <br />
-            3️⃣ Un commerce s'inscrit via votre lien puis s'abonne : votre
-            commission est validée automatiquement.
-            <br />
-            4️⃣ Vous êtes payé par virement après le 2ᵉ prélèvement de votre
-            client, sur simple facture.
-          </p>
+          <ol className="vendeur-steps">
+            <li>
+              Déposez votre candidature : Kado vous contacte, vous signez le
+              contrat et votre lien personnel est activé.
+            </li>
+            <li>
+              Partagez-le aux commerçants (WhatsApp, e-mail, en main propre…).
+            </li>
+            <li>
+              Un commerce s'inscrit via votre lien puis s'abonne : votre
+              commission est validée automatiquement.
+            </li>
+            <li>
+              Vous êtes payé par virement après le 2ᵉ prélèvement de votre
+              client, sur simple facture.
+            </li>
+          </ol>
         </div>
 
         <div className="dash-card">
-          <h2>💶 Vos commissions</h2>
+          <h2><CurrencyEur className="ico" size={22} weight="bold" /> Vos commissions</h2>
           <p>
             Fidélité (19 €/mois) → <b>20 €</b> · Jeux (29 €/mois) →{" "}
             <b>30 €</b> · Complet (44 €/mois) → <b>45 €</b> par client signé.
@@ -60,14 +71,14 @@ function Pitch({ loggedIn }: { loggedIn: boolean }) {
         <div className="dash-card">
           {loggedIn ? (
             <>
-              <h2>🚀 Déposer ma candidature</h2>
+              <h2><Rocket className="ico" size={22} weight="bold" /> Déposer ma candidature</h2>
               <JoinForm />
             </>
           ) : (
             <>
-              <h2>🚀 Rejoindre le programme</h2>
+              <h2><Rocket className="ico" size={22} weight="bold" /> Rejoindre le programme</h2>
               <p>
-                Créez votre compte (ou connectez-vous) — un simple code reçu
+                Créez votre compte (ou connectez-vous) : un simple code reçu
                 par e-mail, sans mot de passe :
               </p>
               <p>
@@ -129,10 +140,10 @@ export default async function VendeurHome() {
     return (
       <main className="landing">
         <div className="landing-card">
-          <div className="landing-logo">🤝</div>
+          <div className="landing-logo"><Confetti size={54} weight="fill" color="var(--gold)" /></div>
           <h1>Candidature bien reçue !</h1>
           <p>
-            Merci <b>{aff.name}</b> — votre demande est en cours de
+            Merci <b>{aff.name}</b>, votre demande est en cours de
             validation. Nous vous contactons très vite pour finaliser (contrat
             d'apporteur d'affaires), puis votre lien et votre espace seront
             activés. Si votre profil était actif auparavant, contactez Kado.

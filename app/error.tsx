@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { WarningCircle } from "@phosphor-icons/react/dist/ssr";
 
 export default function Error({
   error,
@@ -16,10 +17,10 @@ export default function Error({
   return (
     <main className="landing">
       <div className="landing-card">
-        <div className="landing-logo">😕</div>
+        <div className="landing-logo"><WarningCircle size={54} weight="duotone" color="var(--coral)" /></div>
         <h1>Une erreur est survenue</h1>
         <p>
-          Désolé, quelque chose s'est mal passé. Réessayez dans un instant — si
+          Désolé, quelque chose s'est mal passé. Réessayez dans un instant. Si
           le problème persiste, revenez un peu plus tard.
         </p>
         <div

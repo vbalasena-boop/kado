@@ -1,10 +1,11 @@
 import Link from "next/link";
+import { MagnifyingGlass } from "@phosphor-icons/react/dist/ssr";
 
 export default function NotFound() {
   return (
     <main className="landing">
       <div className="landing-card">
-        <div className="landing-logo">🔍</div>
+        <div className="landing-logo"><MagnifyingGlass size={54} weight="duotone" color="var(--gold)" /></div>
         <h1>Page introuvable</h1>
         <p>
           Cette page n'existe pas ou a été déplacée. Vérifiez le lien, ou

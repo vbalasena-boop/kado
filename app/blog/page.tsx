@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { BookOpen } from "@phosphor-icons/react/dist/ssr";
 import { Logo } from "@/components/Logo";
 import { ARTICLES } from "@/lib/blog";
 
 export const metadata: Metadata = {
-  title: "Blog — Conseils pour votre commerce",
+  title: "Blog | Conseils pour votre commerce",
   description:
     "Avis Google, fidélisation, Instagram, réglementation : nos guides pratiques pour attirer plus de clients et les faire revenir. Par Kado.",
   alternates: { canonical: "/blog" },
@@ -32,7 +33,7 @@ export default function BlogIndex() {
       </header>
 
       <section className="blog-head">
-        <div className="v-badge">📚 Le blog Kado</div>
+        <div className="v-badge"><BookOpen className="ico" size={16} weight="bold" /> Le blog Kado</div>
         <h1>Conseils pour faire grandir votre commerce</h1>
         <p className="v-lede">
           Avis Google, fidélisation, Instagram, réglementation : des guides
