@@ -61,7 +61,7 @@ const BENEFITS = [
   { i: "insta", t: "Plus d'abonnés Insta", d: "Faites grandir votre communauté à chaque visite." },
   { i: "repeat", t: "Plus de visites", d: "Le cadeau donne une bonne raison de revenir vous voir." },
   { i: "lock", t: "Vos avis Google en sécurité", d: "Le cadeau n’est jamais lié à l’avis : pas de « review gating », donc aucun risque de voir vos avis supprimés par Google." },
-  { i: "mail", t: "Campagnes e-mail & notifs (option)", d: "Envoyez vos offres par e-mail et notification sur le téléphone de vos clients — +15 €/mois." },
+  { i: "mail", t: "Campagnes e-mail & notifs (option)", d: "Envoyez vos offres par e-mail et notification sur le téléphone de vos clients (+15 €/mois)." },
   { i: "gift", t: "Anniversaires & parrainage", d: "E-mail automatique le jour J, et +1 tampon quand un ami parrainé passe en caisse." },
   { i: "palette", t: "À vos couleurs", d: "Logo, photo de fond et lots entièrement personnalisables." },
   { i: "shield", t: "Anti-triche", d: "Tirage sécurisé côté serveur, 2 chances maximum par personne." },
@@ -123,7 +123,7 @@ const PLANS = [
 const FAQ = [
   {
     q: "C'est légal d'offrir un cadeau contre un avis ?",
-    a: "Oui, car le cadeau récompense la participation au jeu (une action comme suivre votre Instagram), jamais le contenu ou la note de l'avis. Le client est libre de laisser l'avis qu'il souhaite — ou aucun — et gagne sa chance quoi qu'il arrive. Kado respecte les règles de Google et le droit français de la consommation.",
+    a: "Oui, car le cadeau récompense la participation au jeu (une action comme suivre votre Instagram), jamais le contenu ou la note de l'avis. Le client est libre de laisser l'avis qu'il souhaite, ou aucun, et gagne sa chance quoi qu'il arrive. Kado respecte les règles de Google et le droit français de la consommation.",
   },
   {
     q: "Kado met-il mes avis Google en danger ?",
@@ -201,7 +201,7 @@ const JSON_LD = {
       operatingSystem: "Web",
       inLanguage: "fr-FR",
       description:
-        "Le jeu à scanner en caisse qui transforme vos clients en avis Google 5★ et en abonnés Instagram — avec carte de fidélité digitale, campagnes e-mail et commande en ligne. Sans application.",
+        "Le jeu à scanner en caisse qui transforme vos clients en avis Google 5★ et en abonnés Instagram, avec carte de fidélité digitale, campagnes e-mail et commande en ligne. Sans application.",
       url: "https://kado-app.fr",
       publisher: { "@id": "https://kado-app.fr/#organization" },
       offers: {
@@ -255,8 +255,7 @@ export default function Home({
       <HeroCinematic />
 
       <section className="v-section">
-        <span className="v-eyebrow">EN 3 ÉTAPES</span>
-          <h2>Comment ça marche</h2>
+        <h2>Comment ça marche</h2>
         <Reveal className="v-steps">
           {STEPS.map((s) => (
             <div className="v-step" key={s.n}>
@@ -270,12 +269,11 @@ export default function Home({
 
       <section className="v-section v-preview">
         <div className="pv-copy">
-          <span className="v-eyebrow">LES JEUX</span>
-          <h2>3 jeux au choix — essayez-les 👇</h2>
+          <h2>3 jeux au choix, essayez-les 👇</h2>
           <p className="pv-lede">
             Roue de la fortune, carte à gratter ou machine à sous : vous
             choisissez le jeu qui colle à votre commerce. Testez les trois
-            ici même — vos clients découvrent le vôtre, à vos couleurs, avec
+            ici même : vos clients découvrent le vôtre, à vos couleurs, avec
             vos cadeaux.
           </p>
           <ul className="pv-points">
@@ -301,11 +299,10 @@ export default function Home({
         </div>
         <div className="pv-copy">
           <div className="v-badge" style={{ marginBottom: 14 }}>🎟️ Fidélité digitale</div>
-          <span className="v-eyebrow">FIDÉLITÉ</span>
           <h2>Tamponnez la carte 👇</h2>
           <p className="pv-lede">
             Cliquez pour ajouter un tampon et débloquer la récompense. Vos
-            clients cumulent à chaque passage — une carte digitale retrouvée par
+            clients cumulent à chaque passage : une carte digitale retrouvée par
             e-mail, rien à télécharger, rien à perdre.
           </p>
           <ul className="pv-points">
@@ -319,12 +316,11 @@ export default function Home({
       </section>
 
       <section className="v-section">
-        <span className="v-eyebrow">POUR QUI</span>
-          <h2>Pensé pour tous les commerces</h2>
+        <h2>Pensé pour tous les commerces</h2>
         <p className="v-audience-lead">
           Roue de la fortune ou carte de fidélité : Kado s'adapte à votre
           activité, vos couleurs et vos récompenses. Peu importe votre métier,
-          l'objectif est le même — <b>plus d'avis, plus d'abonnés, plus de
+          l'objectif est le même : <b>plus d'avis, plus d'abonnés, plus de
           clients qui reviennent</b>.
         </p>
         <div className="v-audience">
@@ -346,7 +342,7 @@ export default function Home({
           </h2>
           <p className="v-concours-lede">
             En plus des cadeaux instantanés, organisez un <b>tirage au sort</b>{" "}
-            automatique — chaque semaine ou chaque mois, à la date de votre
+            automatique, chaque semaine ou chaque mois, à la date de votre
             choix. Un gagnant est désigné au hasard parmi vos clients&nbsp;: ils
             reviennent pour savoir s'ils ont gagné.
           </p>
@@ -371,8 +367,7 @@ export default function Home({
       </section>
 
       <section className="v-section">
-        <span className="v-eyebrow">LES BÉNÉFICES</span>
-          <h2>Pourquoi Kado</h2>
+        <h2>Pourquoi Kado</h2>
         <Reveal className="v-benefits">
           {BENEFITS.map((b) => (
             <div className="v-benefit" key={b.t}>
@@ -387,8 +382,7 @@ export default function Home({
       </section>
 
       <section className="v-section">
-        <span className="v-eyebrow">CONFORMITÉ</span>
-          <h2>Vos avis Google, sans prendre de risque</h2>
+        <h2>Vos avis Google, sans prendre de risque</h2>
         <Reveal className="v-compare">
           <div className="v-compare-col risk">
             <div className="v-compare-head">
@@ -418,10 +412,9 @@ export default function Home({
       </section>
 
       <section className="v-section">
-        <span className="v-eyebrow">TARIFS</span>
-          <h2>Des tarifs <span className="v-serif">simples</span></h2>
+        <h2>Des tarifs <span className="v-serif">simples</span></h2>
         <p className="v-audience-note" style={{ marginTop: -6, marginBottom: 22 }}>
-          Choisissez votre formule — sans engagement, résiliable à tout moment.
+          Choisissez votre formule, sans engagement, résiliable à tout moment.
         </p>
         <Reveal className="v-plans-row">
           {PLANS.map((p) => (
@@ -448,13 +441,12 @@ export default function Home({
           ))}
         </Reveal>
         <p className="v-audience-note" style={{ marginTop: 18 }}>
-          🎁 14 jours d'essai gratuit — sans carte bancaire — toutes fonctionnalités incluses.
+          🎁 14 jours d'essai gratuit, sans carte bancaire, toutes fonctionnalités incluses.
         </p>
       </section>
 
       <section className="v-section">
-        <span className="v-eyebrow">FAQ</span>
-          <h2>Questions fréquentes</h2>
+        <h2>Questions fréquentes</h2>
         <div className="v-faq">
           {FAQ.map((f) => (
             <details className="v-faq-item" key={f.q}>
@@ -476,8 +468,7 @@ export default function Home({
       />
 
       <section className="v-final">
-        <span className="v-eyebrow">ON Y VA</span>
-          <h2>Prêt à faire tourner la roue ?</h2>
+        <h2>Prêt à faire tourner la roue ?</h2>
         <p>Créez votre compte gratuit et lancez votre première roue en quelques minutes.</p>
         <div className="v-cta">
           <a className="v-btn primary" href="/login?signup=1">Créer mon compte gratuit →</a>

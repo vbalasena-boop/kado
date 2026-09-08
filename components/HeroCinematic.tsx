@@ -146,7 +146,7 @@ export default function HeroCinematic() {
         animate="show"
       >
         <motion.div className="v-badge" variants={item}>
-          🎁 Avis · Abonnés · Fidélité
+          🎁 Avis, abonnés &amp; fidélité
         </motion.div>
 
         {/* Lancement spectaculaire : la roue surgit en tournant, avec rebond,
@@ -213,12 +213,7 @@ export default function HeroCinematic() {
 
         <motion.p className="v-lede" variants={item}>
           Le jeu de roue de la fortune qui booste votre réputation Google et
-          votre Instagram — sans effort, à chaque visite.
-        </motion.p>
-
-        <motion.p className="v-hero-sectors" variants={item}>
-          Restaurant · Coiffeur · Boutique · Boulangerie · Salle de sport…{" "}
-          <b>Kado s'adapte à votre métier.</b>
+          votre Instagram, sans effort, à chaque visite.
         </motion.p>
 
         <motion.div className="v-brands" variants={item}>
@@ -243,18 +238,6 @@ export default function HeroCinematic() {
           <a className="v-btn ghost" href="/cafe-lumiere">
             🎡 Essayer la démo
           </a>
-        </motion.div>
-
-        <motion.div className="v-trust" variants={item}>
-          <span>
-            <b>✓</b> Sans application
-          </span>
-          <span>
-            <b>✓</b> Installé en 2 minutes
-          </span>
-          <span>
-            <b>✓</b> 14 jours d'essai gratuit
-          </span>
         </motion.div>
       </motion.div>
     </section>

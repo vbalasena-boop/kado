@@ -7489,12 +7489,14 @@ summary:focus-visible,
   opacity: 0.9;
   margin-bottom: 12px;
 }
-/* Accent serif italique dans les titres (mot mis en avant). */
+/* Accent serif italique dans les titres (mot mis en avant).
+   Playfair Display : réserve de descente (p, y, g) pour l'italique. */
 .v-serif {
   font-family: var(--serif);
   font-style: italic;
-  font-weight: 400;
-  letter-spacing: -0.01em;
+  font-weight: 500;
+  letter-spacing: 0;
+  padding-bottom: 0.04em;
 }
 /* Titre hero : échelle « display » plus ample façon Hyliox. */
 .v-hero h1 {

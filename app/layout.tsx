@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import {
   Bricolage_Grotesque,
   Plus_Jakarta_Sans,
-  Instrument_Serif,
+  Playfair_Display,
   JetBrains_Mono,
 } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
@@ -23,11 +23,13 @@ const sans = Plus_Jakarta_Sans({
   display: "swap",
 });
 
-// Serif éditoriale en ACCENT (mots mis en avant dans les titres) — signature
-// « premium » façon Hyliox, transposée à la marque Kado.
-const serif = Instrument_Serif({
+// Serif éditoriale en ACCENT (mots mis en avant dans les titres) : signature
+// « premium » transposée à la marque Kado. Playfair Display (display serif à
+// fort contraste), retenue à la place d'Instrument Serif pour éviter le
+// « tell » IA le plus courant tout en gardant l'italique éditoriale.
+const serif = Playfair_Display({
   subsets: ["latin"],
-  weight: "400",
+  weight: ["500", "600"],
   style: ["normal", "italic"],
   variable: "--font-serif",
   display: "swap",
@@ -44,8 +46,8 @@ const mono = JetBrains_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://kado-app.fr"),
   title: {
-    default: "Kado — Plus d'avis Google & d'abonnés Instagram pour votre commerce",
-    template: "%s — Kado",
+    default: "Kado | Plus d'avis Google & d'abonnés Instagram pour votre commerce",
+    template: "%s | Kado",
   },
   description:
     "Kado est le jeu de roue de la fortune qui transforme vos clients en avis Google 5★ et en abonnés Instagram. Sans application, installé en 2 minutes. Essai gratuit 14 jours.",
@@ -74,9 +76,9 @@ export const metadata: Metadata = {
   authors: [{ name: "Kado" }],
   alternates: { canonical: "/" },
   openGraph: {
-    title: "Kado — Plus d'avis Google & d'abonnés Instagram",
+    title: "Kado | Plus d'avis Google & d'abonnés Instagram",
     description:
-      "Le jeu de roue qui transforme vos clients en avis 5★ et en abonnés — sans application, à chaque visite. Essai gratuit 14 jours.",
+      "Le jeu de roue qui transforme vos clients en avis 5★ et en abonnés, sans application, à chaque visite. Essai gratuit 14 jours.",
     url: "https://kado-app.fr",
     siteName: "Kado",
     locale: "fr_FR",
@@ -84,9 +86,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Kado — Plus d'avis Google & d'abonnés Instagram",
+    title: "Kado | Plus d'avis Google & d'abonnés Instagram",
     description:
-      "Le jeu de roue qui transforme vos clients en avis 5★ et en abonnés — sans application. Essai gratuit 14 jours.",
+      "Le jeu de roue qui transforme vos clients en avis 5★ et en abonnés, sans application. Essai gratuit 14 jours.",
   },
   robots: {
     index: true,
