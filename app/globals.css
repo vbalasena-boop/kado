@@ -498,9 +498,126 @@ h1 .accent {
   width: 100%;
   max-width: 340px;
   aspect-ratio: 1;
-  margin: 0 auto 22px;
+  /* Marge basse élargie : la jante (épaisseur) et l'ombre au sol débordent
+     sous le disque incliné, il faut de l'air avant le bouton. */
+  margin: 0 auto 34px;
   display: grid;
   place-items: center;
+  /* Scène 3D : la roue est vue en perspective, légèrement de dessus. */
+  perspective: 900px;
+  perspective-origin: 50% 30%;
+}
+/* ===== Roue 3D : scène en perspective autour du canvas 2D (dessin intact) =====
+   Le groupe est incliné (rotateX). La jante poussée en arrière (Z) donne
+   l'épaisseur, une ombre au sol ancre la roue, et un reflet conique suit la
+   rotation via --wheel-rot (posée chaque frame par le canvas). */
+.wheel-3d {
+  --tilt: 26deg;
+  --wheel-rot: 0rad;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--tilt));
+  will-change: transform;
+}
+/* Épaisseur : jante sombre en retrait (Z) + tranches empilées en ombre. */
+.wheel-rim {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 40%, #3a2a5c, #150c29 70%);
+  transform: translateZ(-26px);
+  box-shadow: 0 0 0 6px #1d1238, 0 10px 0 0 #0e0820, 0 22px 0 0 #0a0616,
+    0 40px 60px -14px rgba(0, 0, 0, 0.85);
+}
+/* Ombre au sol : ancre la roue sur un plan. */
+.wheel-3d::after {
+  content: "";
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: -14%;
+  height: 22%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.6), transparent 70%);
+  transform: translateZ(-60px);
+  filter: blur(10px);
+  pointer-events: none;
+}
+/* Reflet mobile : glint conique qui suit la rotation + lueur fixe en haut. */
+.wheel-sheen {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translateZ(1px);
+  background: conic-gradient(
+      from var(--wheel-rot),
+      transparent 0 28%,
+      rgba(255, 255, 255, 0.28) 34%,
+      rgba(255, 255, 255, 0.06) 40%,
+      transparent 46% 100%
+    ),
+    radial-gradient(circle at 50% 12%, rgba(255, 255, 255, 0.22), transparent 42%);
+  mix-blend-mode: screen;
+}
+/* ===== Roue WebGL (Three.js) : hôte carré, canvas plein cadre. Le repli 2D
+   (scène CSS ci-dessus) ne s'affiche que si WebGL est indisponible. ===== */
+.wheel-wrap.wheel-gl {
+  perspective: none;
+  /* Le conteneur parent est carré (roue 2D) : ici l'hôte est au format large,
+     on libère la hauteur pour ne pas réserver du vide au-dessus/en dessous. */
+  aspect-ratio: auto;
+  /* Le disque 3D déborde légèrement du carré (jante, ombre) : on lui laisse
+     respirer sans rogner. */
+  overflow: visible;
+}
+.wheel-gl-host {
+  width: 100%;
+  /* Format large : le disque incliné est une ellipse, un carré laisserait un
+     grand vide au-dessus et en dessous (et repousserait le bouton). */
+  aspect-ratio: 1 / 0.68;
+  position: relative;
+}
+.wheel-gl-host canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 0;
+  box-shadow: none;
+}
+/* Empilement en Z (fiable en preserve-3d) : jante < canvas < reflet < moyeu < pointeur. */
+.wheel-3d canvas#wheel { transform: translateZ(0); }
+.wheel-3d .hub-dot { transform: translateZ(8px); }
+.wheel-3d .pointer { transform: translateX(-50%) translateZ(10px); }
+/* Pendant le spin : légère oscillation (la roue « vit »). */
+.wheel-3d.is-spinning {
+  animation: wheel-wobble 1.15s ease-in-out infinite;
+}
+@keyframes wheel-wobble {
+  0%,
+  100% {
+    transform: rotateX(calc(var(--tilt) - 2deg)) rotateY(-2.5deg);
+  }
+  50% {
+    transform: rotateX(calc(var(--tilt) + 2deg)) rotateY(2.5deg);
+  }
+}
+/* À l'arrêt : rebond élastique qui revient à plat. */
+.wheel-3d.is-settling {
+  animation: wheel-settle 0.85s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+@keyframes wheel-settle {
+  0% {
+    transform: rotateX(calc(var(--tilt) + 7deg)) scale(1.03);
+  }
+  100% {
+    transform: rotateX(var(--tilt)) scale(1);
+  }
 }
 .pointer {
   position: absolute;
@@ -700,6 +817,14 @@ canvas#confetti {
 @media (prefers-reduced-motion: reduce) {
   .spin-cta:not(:disabled) {
     animation: none;
+  }
+  .wheel-3d,
+  .wheel-3d.is-spinning,
+  .wheel-3d.is-settling {
+    animation: none;
+  }
+  .wheel-sheen {
+    display: none;
   }
 }
 /* ---- Landing / vitrine ---- */
