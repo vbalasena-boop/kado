@@ -79,10 +79,28 @@ export default function Wheel3D({
       renderer.setClearColor(0x000000, 0);
       renderer.outputColorSpace = THREE.SRGBColorSpace;
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 1.05;
+      renderer.toneMappingExposure = 1.0;
+      // Vraies ombres portées (contact au sol, pointeur sur la face).
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       host.appendChild(renderer.domElement);
 
       const scene = new THREE.Scene();
+      // Environnement réfléchi (PMREM « pièce ») appliqué UNIQUEMENT aux
+      // matériaux métalliques (envMap par matériau), PAS à la scène entière :
+      // `scene.environment` éclairerait aussi la face (irradiance diffuse) et
+      // délaverait les couleurs des secteurs. L'or, lui, y gagne ses reflets.
+      let envTex: import("three").Texture | null = null;
+      try {
+        const { RoomEnvironment } = await import(
+          "three/examples/jsm/environments/RoomEnvironment.js"
+        );
+        const pmrem = new THREE.PMREMGenerator(renderer);
+        envTex = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+        pmrem.dispose();
+      } catch {
+        /* sans environnement : on garde l'éclairage direct */
+      }
       // Caméra devant et au-dessus : on voit la face ET la tranche proche
       // (bas de l'écran). Le pointeur est au bord opposé (haut de l'écran).
       // Hôte au format large (le disque incliné est une ellipse) : la caméra
@@ -93,8 +111,18 @@ export default function Wheel3D({
 
       // ---- Lumières ------------------------------------------------------
       scene.add(new THREE.AmbientLight(0xffffff, 0.75));
-      const key = new THREE.DirectionalLight(0xffffff, 1.9);
-      key.position.set(2.2, 4.5, 3.2);
+      const key = new THREE.DirectionalLight(0xfff4e0, 1.9);
+      key.position.set(2.4, 5, 3);
+      key.castShadow = true;
+      key.shadow.mapSize.set(1024, 1024);
+      key.shadow.camera.left = -2.2;
+      key.shadow.camera.right = 2.2;
+      key.shadow.camera.top = 2.2;
+      key.shadow.camera.bottom = -2.2;
+      key.shadow.camera.near = 0.5;
+      key.shadow.camera.far = 14;
+      key.shadow.bias = -0.0006;
+      key.shadow.radius = 4;
       scene.add(key);
       const fill = new THREE.DirectionalLight(0xbfa9ff, 0.55);
       fill.position.set(-3, 1.5, -2);
@@ -119,46 +147,82 @@ export default function Wheel3D({
 
       // ---- Disque : cylindre (côté sombre, face texturée, dessous sombre) --
       const H = 0.16;
-      const dark = new THREE.MeshStandardMaterial({
-        color: 0x1d1238,
-        metalness: 0.55,
-        roughness: 0.38,
+      const dark = new THREE.MeshPhysicalMaterial({
+        color: 0x1a1030,
+        metalness: 0.35,
+        roughness: 0.5,
+        envMap: envTex,
+        envMapIntensity: 0.8,
       });
+      // Face : PAS de vernis (clearcoat) — il reflète l'environnement lumineux
+      // sur toute la face comme un film laiteux et délave les couleurs des
+      // secteurs. Le brillant est déjà peint dans la texture 2D ; l'or, lui,
+      // garde ses reflets d'environnement (c'est là que le réalisme se joue).
       const faceMat = new THREE.MeshPhysicalMaterial({
         map: face,
-        roughness: 0.42,
-        metalness: 0.04,
-        clearcoat: 0.65,
-        clearcoatRoughness: 0.22,
+        roughness: 0.6,
+        metalness: 0.0,
+        clearcoat: 0,
       });
       const disc = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, H, 128, 1), [
         dark,
         faceMat,
         dark,
       ]);
+      disc.castShadow = true;
+      disc.receiveShadow = true;
       const wheel = new THREE.Group();
       wheel.add(disc);
 
       // ---- Habillage fixe : jante or, moyeu, pointeur, ombre au sol -------
-      const gold = new THREE.MeshStandardMaterial({
-        color: 0xffc24d,
-        metalness: 0.92,
+      const gold = new THREE.MeshPhysicalMaterial({
+        color: 0xf0b83f,
+        metalness: 1,
         roughness: 0.24,
+        envMap: envTex,
+        envMapIntensity: 1.0,
       });
+      // Picots dorés sur le pourtour, aux frontières des secteurs : ils
+      // tournent AVEC la roue (comme sur une vraie roue de fête foraine).
+      // Repère : angle canvas θ (horaire depuis la droite) → monde (cos θ, sin θ).
+      const pegs = new THREE.InstancedMesh(
+        new THREE.SphereGeometry(0.034, 16, 12),
+        gold,
+        prizes.length
+      );
+      {
+        const m = new THREE.Matrix4();
+        const seg = (Math.PI * 2) / prizes.length;
+        for (let i = 0; i < prizes.length; i++) {
+          m.makeTranslation(Math.cos(i * seg) * 0.955, H / 2 + 0.028, Math.sin(i * seg) * 0.955);
+          pegs.setMatrixAt(i, m);
+        }
+        pegs.instanceMatrix.needsUpdate = true;
+      }
+      pegs.castShadow = true;
+      wheel.add(pegs);
       const rim = new THREE.Mesh(new THREE.TorusGeometry(1.025, 0.05, 24, 160), gold);
       rim.rotation.x = Math.PI / 2;
       rim.position.y = H / 2 - 0.01;
+      rim.castShadow = true;
+      rim.receiveShadow = true;
       const rimInner = new THREE.Mesh(new THREE.TorusGeometry(0.985, 0.022, 16, 160), dark);
       rimInner.rotation.x = Math.PI / 2;
       rimInner.position.y = H / 2 + 0.005;
       const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.19, 0.07, 48), gold);
       hub.position.y = H / 2 + 0.035;
+      hub.castShadow = true;
       const hubRing = new THREE.Mesh(new THREE.TorusGeometry(0.19, 0.018, 12, 64), dark);
       hubRing.rotation.x = Math.PI / 2;
       hubRing.position.y = H / 2 + 0.02;
-      const pointer = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.26, 28), gold);
+      const pointer = new THREE.Mesh(new THREE.ConeGeometry(0.085, 0.3, 32), gold);
       pointer.rotation.x = Math.PI / 2; // pointe vers +Z (vers le centre)
-      pointer.position.set(0, H / 2 + 0.07, -1.06);
+      pointer.scale.set(1, 1, 0.42); // lame aplatie
+      pointer.position.set(0, H / 2 + 0.06, -1.07);
+      pointer.castShadow = true;
+      const pivot = new THREE.Mesh(new THREE.SphereGeometry(0.05, 20, 14), dark);
+      pivot.position.set(0, H / 2 + 0.06, -1.2);
+      pivot.castShadow = true;
       // Ombre douce au sol (texture radiale) : ancre la roue sur un plan.
       const shCv = document.createElement("canvas");
       shCv.width = shCv.height = 256;
@@ -180,10 +244,19 @@ export default function Wheel3D({
       );
       shadow.rotation.x = -Math.PI / 2;
       shadow.position.y = -H / 2 - 0.02;
+      (shadow.material as import("three").MeshBasicMaterial).opacity = 0.55;
+      // Sol invisible qui REÇOIT les ombres portées (ombre de contact réelle).
+      const ground = new THREE.Mesh(
+        new THREE.PlaneGeometry(10, 10),
+        new THREE.ShadowMaterial({ opacity: 0.42 })
+      );
+      ground.rotation.x = -Math.PI / 2;
+      ground.position.y = -H / 2 - 0.015;
+      ground.receiveShadow = true;
 
       const rig = new THREE.Group(); // groupe basculé par l'oscillation
-      rig.add(wheel, rim, rimInner, hub, hubRing, pointer);
-      scene.add(rig, shadow);
+      rig.add(wheel, rim, rimInner, hub, hubRing, pointer, pivot);
+      scene.add(rig, shadow, ground);
 
       // Déclaré AVANT `resize()` (appelé tout de suite) — une `let` plus bas
       // serait en zone morte temporelle → ReferenceError → repli 2D silencieux.
@@ -253,6 +326,7 @@ export default function Wheel3D({
             mat.dispose();
           }
         });
+        envTex?.dispose();
         renderer?.dispose();
         renderer?.domElement.remove();
       };
