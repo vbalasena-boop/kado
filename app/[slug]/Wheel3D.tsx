@@ -106,8 +106,10 @@ export default function Wheel3D({
       // Hôte au format large (le disque incliné est une ellipse) : la caméra
       // cadre serré pour ne pas laisser de vide au-dessus/en dessous.
       // Caméra plus haute et plus proche : vue davantage « de face » (plongée
-      // moins rasante) pour que les lots restent lisibles.
-      const camera = new THREE.PerspectiveCamera(24, 1.5, 0.1, 50);
+      // moins rasante) pour que les lots restent lisibles. La roue étant plus
+      // circulaire, le champ vertical est élargi (30°) pour l'englober en
+      // entier (jante + pointeur) sans la rogner en haut/bas.
+      const camera = new THREE.PerspectiveCamera(30, 1.05, 0.1, 50);
       camera.position.set(0, 3.35, 2.15);
       camera.lookAt(0, -0.04, 0);
 
@@ -272,7 +274,7 @@ export default function Wheel3D({
       // ---- Taille ----------------------------------------------------------
       const resize = () => {
         const w = Math.max(1, host.clientWidth);
-        const h = Math.max(1, host.clientHeight || Math.round(w * 0.68));
+        const h = Math.max(1, host.clientHeight || Math.round(w * 0.95));
         renderer!.setSize(w, h, false);
         camera.aspect = w / h;
         camera.updateProjectionMatrix();
