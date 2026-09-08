@@ -120,7 +120,7 @@ export default function RootLayout({
             Framer Motion ne serait sinon jamais annulée). N'affecte rien
             quand le JS est actif. */}
         <noscript>
-          <style>{`[data-reveal]{opacity:1!important;transform:none!important}`}</style>
+          <style>{`[data-reveal],.v-hero-inner,.v-hero-inner>*{opacity:1!important;transform:none!important;filter:none!important}`}</style>
         </noscript>
         <RefCapture />
         {children}

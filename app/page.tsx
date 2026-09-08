@@ -1,29 +1,11 @@
 import { Logo } from "@/components/Logo";
 import Reveal from "@/components/Reveal";
+import HeroCinematic from "@/components/HeroCinematic";
+import Marquee from "@/components/Marquee";
+import ScrollProgress from "@/components/ScrollProgress";
 import HomeGames from "@/components/HomeGames";
 import HomeLoyalty from "@/components/HomeLoyalty";
 import SupportButton from "@/components/SupportButton";
-
-/* --- Logos de marque (SVG, rendu côté serveur) --- */
-function InstagramGlyph({ size = 20 }: { size?: number }) {
-  return (
-    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true">
-      <rect x="3" y="3" width="18" height="18" rx="5.4" fill="none" stroke="#fff" strokeWidth="2" />
-      <circle cx="12" cy="12" r="4.2" fill="none" stroke="#fff" strokeWidth="2" />
-      <circle cx="17.3" cy="6.7" r="1.3" fill="#fff" />
-    </svg>
-  );
-}
-function GoogleGlyph({ size = 18 }: { size?: number }) {
-  return (
-    <svg viewBox="0 0 48 48" width={size} height={size} aria-hidden="true">
-      <path fill="#4285F4" d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z" />
-      <path fill="#34A853" d="M24 46c5.94 0 10.92-1.97 14.56-5.33l-7.11-5.52c-1.97 1.32-4.49 2.1-7.45 2.1-5.73 0-10.58-3.87-12.31-9.07H4.34v5.7C7.96 41.07 15.4 46 24 46z" />
-      <path fill="#FBBC05" d="M11.69 28.18C11.25 26.86 11 25.45 11 24s.25-2.86.69-4.18v-5.7H4.34C2.85 17.09 2 20.45 2 24s.85 6.91 2.34 9.88l7.35-5.7z" />
-      <path fill="#EA4335" d="M24 10.75c3.23 0 6.13 1.11 8.41 3.29l6.31-6.31C34.91 4.18 29.93 2 24 2 15.4 2 7.96 6.93 4.34 14.12l7.35 5.7c1.73-5.2 6.58-9.07 12.31-9.07z" />
-    </svg>
-  );
-}
 
 /* --- Icônes atouts (stroke, couleur héritée) --- */
 function Ico({ name }: { name: string }) {
@@ -250,6 +232,7 @@ export default function Home({
 }) {
   return (
     <main className="vitrine">
+      <ScrollProgress />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}
@@ -269,38 +252,7 @@ export default function Home({
         </nav>
       </header>
 
-      <section className="v-hero">
-        <div className="v-badge">🎁 Avis · Abonnés · Fidélité</div>
-        <Reveal className="v-wheel" y={16}>
-          <span className="v-wheel-disc" />
-          <span className="v-wheel-pin" />
-        </Reveal>
-        <h1>
-          Transformez vos clients en{" "}
-          <span className="v-serif">avis &amp; abonnés</span>
-        </h1>
-        <p className="v-lede">
-          Le jeu de roue de la fortune qui booste votre réputation Google et
-          votre Instagram — sans effort, à chaque visite.
-        </p>
-        <p className="v-hero-sectors">
-          Restaurant · Coiffeur · Boutique · Boulangerie · Salle de sport…{" "}
-          <b>Kado s'adapte à votre métier.</b>
-        </p>
-        <div className="v-brands">
-          <span className="v-brand"><GoogleGlyph /> Plus d'avis 5★</span>
-          <span className="v-brand insta"><InstagramGlyph /> Plus d'abonnés</span>
-        </div>
-        <div className="v-cta">
-          <a className="v-btn primary" href="/login?signup=1">Créer mon compte gratuit →</a>
-          <a className="v-btn ghost" href="/cafe-lumiere">🎡 Essayer la démo</a>
-        </div>
-        <div className="v-trust">
-          <span><b>✓</b> Sans application</span>
-          <span><b>✓</b> Installé en 2 minutes</span>
-          <span><b>✓</b> 14 jours d'essai gratuit</span>
-        </div>
-      </section>
+      <HeroCinematic />
 
       <section className="v-section">
         <span className="v-eyebrow">EN 3 ÉTAPES</span>
@@ -512,6 +464,16 @@ export default function Home({
           ))}
         </div>
       </section>
+
+      <Marquee
+        items={[
+          "Plus d'avis Google",
+          "Plus d'abonnés Instagram",
+          "Sans application",
+          "Installé en 2 minutes",
+          "Vos avis en sécurité",
+        ]}
+      />
 
       <section className="v-final">
         <span className="v-eyebrow">ON Y VA</span>

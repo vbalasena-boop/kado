@@ -7535,3 +7535,95 @@ summary:focus-visible,
     transform: scale(1.05);
   }
 }
+
+/* =====================================================================
+   Vitrine — couche « cinématographique » (Framer Motion + CSS)
+   Aurora animée, barre de progression, marquee. Palette Kado.
+   ===================================================================== */
+
+/* Aurora : les halos ambiants dérivent lentement (ambiance cinéma). */
+@media (prefers-reduced-motion: no-preference) {
+  .vitrine::before {
+    animation: aurora-drift 26s ease-in-out infinite alternate;
+  }
+}
+@keyframes aurora-drift {
+  0% {
+    transform: translate3d(-2%, -1%, 0) scale(1.05);
+    filter: hue-rotate(0deg);
+  }
+  50% {
+    transform: translate3d(2%, 1.5%, 0) scale(1.12);
+  }
+  100% {
+    transform: translate3d(-1%, 2%, 0) scale(1.06);
+    filter: hue-rotate(-8deg);
+  }
+}
+
+/* Barre de progression de scroll (dorée, en haut). */
+.v-scrollbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 60;
+  transform-origin: 0 50%;
+  background: linear-gradient(90deg, var(--gold), var(--coral));
+  box-shadow: 0 0 14px -2px var(--gold);
+}
+
+/* Hero : le conteneur animé garde la mise en page centrée d'origine. */
+.v-hero-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  will-change: transform, opacity;
+}
+
+/* Marquee : bandeau défilant infini. */
+.v-marquee {
+  overflow: hidden;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 18px 0;
+  margin: 8px 0 4px;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.v-marquee-track {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  white-space: nowrap;
+  will-change: transform;
+  animation: marquee-scroll 26s linear infinite;
+}
+.v-marquee:hover .v-marquee-track {
+  animation-play-state: paused;
+}
+.v-marquee-item {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: clamp(20px, 3.4vw, 34px);
+  letter-spacing: -0.01em;
+  color: var(--cream);
+  display: inline-flex;
+  align-items: center;
+}
+.v-marquee-dot {
+  color: var(--gold);
+  font-style: normal;
+  margin: 0 26px;
+  font-size: 0.6em;
+  opacity: 0.85;
+}
+@keyframes marquee-scroll {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .v-marquee-track { animation: none; }
+}
