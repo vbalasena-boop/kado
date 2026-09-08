@@ -580,9 +580,10 @@ h1 .accent {
 }
 .wheel-gl-host {
   width: 100%;
-  /* Format large : le disque incliné est une ellipse, un carré laisserait un
-     grand vide au-dessus et en dessous (et repousserait le bouton). */
-  aspect-ratio: 1 / 0.68;
+  /* La roue est désormais vue davantage « de face » (plus circulaire) : le
+     cadre est presque carré pour l'englober en entier, jante et pointeur
+     compris, sans la rogner en haut ni en bas. */
+  aspect-ratio: 1 / 0.95;
   position: relative;
 }
 .wheel-gl-host canvas {
