@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Gift, Play } from "@phosphor-icons/react/dist/ssr";
 import { createClient } from "@/lib/supabase/client";
 
 function LoginInner() {
@@ -79,7 +80,13 @@ function LoginInner() {
   return (
     <main className="auth-page">
       <div className="auth-card">
-        <div className="auth-logo">{isSignup ? "🎁" : "🎡"}</div>
+        <div className="auth-logo">
+          {isSignup ? (
+            <Gift size={44} weight="fill" color="var(--gold)" />
+          ) : (
+            <Play size={44} weight="fill" color="var(--gold)" />
+          )}
+        </div>
         <h1 style={{ textAlign: "center" }}>
           {isSignup ? "Créer mon compte" : "Espace commerçant"}
         </h1>

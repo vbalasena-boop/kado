@@ -7767,3 +7767,35 @@ summary:focus-visible,
 @media (prefers-reduced-motion: reduce) {
   .prize .emoji { animation: none; }
 }
+
+/* Parcours promoteur : liste numérotée avec pastilles dorées (remplace les
+   emojis clavier 1️⃣2️⃣3️⃣). */
+.vendeur-steps {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  counter-reset: vstep;
+  display: grid;
+  gap: 12px;
+}
+.vendeur-steps li {
+  counter-increment: vstep;
+  position: relative;
+  padding-left: 42px;
+  line-height: 1.5;
+}
+.vendeur-steps li::before {
+  content: counter(vstep);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 14px;
+  color: var(--night-2, #150c29);
+  background: var(--gold);
+}

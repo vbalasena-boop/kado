@@ -1,4 +1,16 @@
 import type { Metadata } from "next";
+import {
+  Gift,
+  LockOpen,
+  ShieldCheck,
+  Lightning,
+  Wrench,
+  PaintBrushBroad,
+  Storefront,
+  Folders,
+  CurrencyEur,
+  Handshake,
+} from "@phosphor-icons/react/dist/ssr";
 import { Logo } from "@/components/Logo";
 import SupportButton from "@/components/SupportButton";
 
@@ -59,24 +71,24 @@ const PLANS = [
     id: "comptoir",
     name: "Comptoir",
     price: "19",
-    desc: "Le bipeur digital — vos clients prévenus sur leur téléphone",
+    desc: "Le bipeur digital, vos clients prévenus sur leur téléphone",
     features: [
       "Le client prend un numéro en scannant un QR",
       "Suivi de commande en direct",
       "Alerte quand c'est prêt (notification + e-mail)",
       "Commande en ligne (click & collect) incluse",
       "Compatible avec votre caisse actuelle",
-      "Illimité — plus de bipeurs à acheter",
+      "Illimité, plus de bipeurs à acheter",
       "Aussi disponible en option (+12 €/mois) sur les autres formules",
     ],
   },
 ];
 
 const REASSURE = [
-  { i: "🎁", t: "14 jours offerts", d: "Sans carte bancaire" },
-  { i: "🔓", t: "Sans engagement", d: "Résiliable en 1 clic" },
-  { i: "🇫🇷", t: "Données protégées", d: "Conforme RGPD" },
-  { i: "⚡", t: "Prêt en 2 min", d: "Aucune installation" },
+  { I: Gift, t: "14 jours offerts", d: "Sans carte bancaire" },
+  { I: LockOpen, t: "Sans engagement", d: "Résiliable en 1 clic" },
+  { I: ShieldCheck, t: "Données protégées", d: "Conforme RGPD" },
+  { I: Lightning, t: "Prêt en 2 min", d: "Aucune installation" },
 ];
 
 const VALUE = [
@@ -90,7 +102,7 @@ const VALUE = [
   },
   {
     t: "La fidélité qui rapporte",
-    d: "Un programme de fidélité digital encourage vos clients à revenir plus souvent — et à dépenser davantage à chaque visite.",
+    d: "Un programme de fidélité digital encourage vos clients à revenir plus souvent, et à dépenser davantage à chaque visite.",
   },
 ];
 
@@ -146,7 +158,7 @@ export default function Tarifs() {
         <div className="tarif-reassure">
           {REASSURE.map((r) => (
             <div className="tarif-re" key={r.t}>
-              <span className="tarif-re-i">{r.i}</span>
+              <span className="tarif-re-i"><r.I size={26} weight="duotone" color="var(--gold)" /></span>
               <b>{r.t}</b>
               <small>{r.d}</small>
             </div>
@@ -179,13 +191,13 @@ export default function Tarifs() {
           ))}
         </div>
         <p className="v-plan-note" style={{ textAlign: "center", marginTop: 16 }}>
-          14 jours d'essai gratuit · sans carte bancaire · toutes fonctionnalités incluses
+          14 jours d'essai gratuit, sans carte bancaire, toutes fonctionnalités incluses
         </p>
       </section>
 
       <section className="v-section">
         <div className="v-setup">
-          <h3>🛠️ Pas le temps de configurer ? On s'occupe de tout.</h3>
+          <h3><Wrench className="ico" size={22} weight="bold" /> Pas le temps de configurer ? On s'occupe de tout.</h3>
           <p>
             Avec l'option <b>Installation clé en main</b>, on paramètre votre
             espace de A à Z : roue à vos couleurs, cadeaux adaptés à votre
@@ -194,7 +206,7 @@ export default function Tarifs() {
             abonnement.
           </p>
           <div className="v-setup-hl">
-            <span className="v-setup-hl-badge">🎨 Exclusif Installation</span>
+            <span className="v-setup-hl-badge"><PaintBrushBroad className="ico" size={15} weight="bold" /> Exclusif Installation</span>
             <div>
               <b>Page de jeu sur-mesure incluse</b>
               <small>
@@ -202,21 +214,21 @@ export default function Tarifs() {
                 fond, teintes, ambiance et même un décor animé à votre image
                 (par ex. tomates, basilic &amp; pâtes qui flottent pour un
                 restaurant italien). Sans l'option, vous choisissez parmi
-                3 thèmes prêts à l'emploi — avec elle, c'est une page unique,
+                3 thèmes prêts à l'emploi. Avec elle, c'est une page unique,
                 impossible à confondre avec une autre.
               </small>
             </div>
           </div>
           <div className="v-setup-opts">
             <div className="v-setup-opt">
-              <b>À distance — 79 €</b>
+              <b>À distance : 79 €</b>
               <small>
                 Configuration complète de votre espace + affiche PDF à imprimer.
                 Prêt sous 24 h ouvrées.
               </small>
             </div>
             <div className="v-setup-opt">
-              <b>Sur place — 129 €</b>
+              <b>Sur place : 129 €</b>
               <small>
                 Tout ça + on vient poser l'affiche et former votre équipe
                 (15 min). Vous n'avez rien à faire.
@@ -231,7 +243,7 @@ export default function Tarifs() {
 
       <section className="v-section">
         <div className="v-multi">
-          <span className="v-multi-badge">🏪 Chaînes &amp; franchises</span>
+          <span className="v-multi-badge"><Storefront className="ico" size={15} weight="bold" /> Chaînes &amp; franchises</span>
           <h3>Plusieurs boutiques ? Un seul compte, un tarif dégressif.</h3>
           <p className="v-multi-lede">
             Gérez tous vos établissements depuis le même espace : basculez de
@@ -240,16 +252,16 @@ export default function Tarifs() {
           </p>
           <div className="v-multi-grid">
             <div className="v-multi-opt">
-              <b>🗂️ Un seul espace</b>
+              <b><Folders className="ico" size={17} weight="bold" /> Un seul espace</b>
               <small>Toutes vos boutiques, une seule connexion, une seule facture.</small>
             </div>
             <div className="v-multi-opt is-hl">
               <span className="v-multi-tag">Sur devis</span>
-              <b>💶 Tarif dégressif</b>
+              <b><CurrencyEur className="ico" size={17} weight="bold" /> Tarif dégressif</b>
               <small>Plus vous ajoutez de boutiques, meilleur est le tarif. Nous consulter.</small>
             </div>
             <div className="v-multi-opt">
-              <b>🤝 Accompagnement</b>
+              <b><Handshake className="ico" size={17} weight="bold" /> Accompagnement</b>
               <small>On paramètre chaque établissement avec vous, clé en main.</small>
             </div>
           </div>
@@ -266,7 +278,7 @@ export default function Tarifs() {
             Nous consulter →
           </a>
           <p className="v-setup-note">
-            Réponse sous 24 h — <b>bonjour@kado-app.fr</b>.
+            Réponse sous 24 h : <b>bonjour@kado-app.fr</b>.
           </p>
         </div>
       </section>

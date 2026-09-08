@@ -132,7 +132,7 @@ export default function ArticlePage({
             <b>Envie de passer à l'action ?</b>
             <p>
               Kado transforme vos clients en avis Google, en abonnés et en
-              habitués — avec un simple jeu à scanner en caisse. Essai gratuit
+              habitués, avec un simple jeu à scanner en caisse. Essai gratuit
               14 jours, sans carte bancaire.
             </p>
             <a className="v-btn primary" href="/login?signup=1">Créer mon compte gratuit →</a>

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PencilSimple, Play } from "@phosphor-icons/react/dist/ssr";
 import { Logo } from "@/components/Logo";
 
 // ⚠️ Page en `noindex` tant qu'elle contient des exemples. Une fois remplie
@@ -79,8 +80,9 @@ export default function Temoignages() {
       {/* ⚠️ Bandeau à retirer une fois les vrais témoignages ajoutés. */}
       <section className="v-section" style={{ paddingTop: 0 }}>
         <div className="temoins-notice">
-          🖊️ Page à personnaliser : remplacez les exemples ci-dessous par les
-          vrais avis de vos clients, puis retirez ce bandeau.
+          <PencilSimple className="ico" size={16} weight="bold" /> Page à
+          personnaliser : remplacez les exemples ci-dessous par les vrais avis
+          de vos clients, puis retirez ce bandeau.
         </div>
       </section>
 
@@ -117,7 +119,7 @@ export default function Temoignages() {
             Créer mon compte gratuit →
           </a>
           <a className="v-btn ghost" href="/cafe-lumiere">
-            🎡 Essayer la démo
+            <Play className="ico" size={18} weight="fill" /> Essayer la démo
           </a>
         </div>
       </section>
