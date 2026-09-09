@@ -8223,3 +8223,238 @@ summary:focus-visible,
   flex-wrap: wrap;
   gap: 10px 22px;
 }
+
+/* Sobriété du mouvement de fond : une seule roue en filigrane, plus discrète ;
+   film plus court sur mobile (moins d'écrans à défiler avant les bénéfices). */
+.v-sw { opacity: 0.08; }
+.v-sw-b { display: none; }
+@media (max-width: 640px) {
+  .v-film { height: 240vh; }
+}
+
+/* ============================================================
+   ESPACE COMMERÇANT & CONNEXION — continuité « moderne » avec la vitrine.
+   Thème CLAIR conservé (lisibilité d'un outil du quotidien), mais : encre
+   prune, accent or (fini le bleu Google et le violet), boutons en pilules,
+   cartes à liseré fin, titres Bricolage. Scopé `.dash` / `.auth-page` :
+   le jeu joueur (`.card .btn`) n'est pas concerné.
+   ============================================================ */
+.dash,
+.auth-page {
+  /* Re-mappage des jetons « Google » vers la marque : recolore d'un coup
+     boutons, liens, icônes et bordures actives. */
+  --g-blue: #1a0d2e;
+  --g-blue-dark: #2d1b4e;
+  --g-bg: #f6f4fb;
+  --g-surface: #ffffff;
+  --g-ink: #1d1533;
+  --g-ink2: #6b6089;
+  --g-line: rgba(29, 21, 51, 0.1);
+  --g-shadow: 0 1px 2px rgba(29, 21, 51, 0.06);
+  --g-font: var(--font);
+  --d-line-strong: rgba(29, 21, 51, 0.18);
+  --d-gold-tint: rgba(245, 184, 65, 0.18);
+}
+.dash { background: var(--g-bg); color: var(--g-ink); }
+
+/* --- En-tête sombre : sticky, flouté, liseré fin --- */
+.dash .dash-top {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: rgba(23, 9, 46, 0.86);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(14px) saturate(140%);
+  border-bottom: 1px solid rgba(237, 231, 251, 0.1);
+}
+.dash .dash-brand { font-family: var(--font-head); font-size: 15px; letter-spacing: -0.01em; }
+.dash .dash-signout {
+  background: rgba(237, 231, 251, 0.08);
+  border: 1px solid rgba(237, 231, 251, 0.16);
+  border-radius: 999px;
+  padding: 7px 13px;
+}
+.dash .dash-signout:hover { background: rgba(237, 231, 251, 0.16); }
+
+/* --- Navigation : liens en pilules --- */
+.dash .dash-nav { background: var(--g-surface); border-bottom: 1px solid var(--g-line); }
+.dash .dash-nav a { border-radius: 999px; padding: 8px 14px; color: var(--g-ink2); }
+.dash .dash-nav a:hover { background: var(--d-gold-tint); color: var(--g-ink); }
+
+/* --- Titres : Bricolage, plus serrés --- */
+.dash .dash-h1 {
+  font-family: var(--font-head);
+  font-size: clamp(26px, 3vw, 34px);
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: var(--g-ink);
+}
+.dash .dash-sub { font-size: 15px; color: var(--g-ink2); }
+.dash .dash-section-title {
+  font-family: var(--font-head);
+  font-size: 18px;
+  letter-spacing: -0.01em;
+  color: var(--g-ink);
+  border-bottom: 1px solid var(--g-line);
+}
+.dash .dash-card h2, .dash .dash-card h3 { font-family: var(--font-head); letter-spacing: -0.02em; }
+
+/* --- Cartes & tuiles : plates, liseré fin, rayons cohérents --- */
+.dash .dash-card,
+.dash .card,
+.dash .stat {
+  background: var(--g-surface);
+  border: 1px solid var(--g-line);
+  border-radius: 20px;
+  box-shadow: 0 1px 2px rgba(29, 21, 51, 0.04);
+}
+.dash .stat { border-radius: 18px; }
+.dash .stat-n {
+  font-family: var(--font-head);
+  font-size: 32px;
+  letter-spacing: -0.03em;
+  color: var(--g-ink);
+  font-variant-numeric: tabular-nums;
+}
+.dash .stat-icon { background: var(--d-gold-tint); color: #7a4d00; border-radius: 12px; }
+
+/* --- Boutons : pilules à fort contraste (prune, survol or) --- */
+.dash .btn,
+.auth-page .btn {
+  border-radius: 999px;
+  background: var(--g-blue);
+  color: #fdf7e8;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  padding: 12px 20px;
+  box-shadow: none;
+}
+.dash .btn:hover,
+.auth-page .btn:hover { background: var(--gold); color: #1a0d2e; }
+.dash .btn.ghost,
+.auth-page .btn.ghost,
+.dash .btn-secondary {
+  background: var(--g-surface);
+  color: var(--g-ink);
+  border: 1px solid var(--d-line-strong);
+  border-radius: 999px;
+}
+.dash .btn.ghost:hover,
+.auth-page .btn.ghost:hover,
+.dash .btn-secondary:hover { background: var(--d-gold-tint); border-color: var(--gold); color: var(--g-ink); }
+.dash .btn-mini {
+  border-radius: 999px;
+  background: var(--g-surface);
+  color: var(--g-ink);
+  border: 1px solid var(--d-line-strong);
+  font-weight: 700;
+}
+.dash .btn-mini:hover { background: var(--d-gold-tint); border-color: var(--gold); }
+.dash .btn-danger { border-radius: 999px; }
+
+/* --- Champs : liseré fin, focus or --- */
+.dash .field input,
+.dash .field select,
+.dash .field textarea,
+.dash .input,
+.auth-page .auth-input {
+  border: 1px solid var(--d-line-strong);
+  border-radius: 12px;
+  background: var(--g-surface);
+  color: var(--g-ink);
+}
+.dash .field span { color: var(--g-ink2); font-weight: 600; }
+.dash .field input:focus,
+.dash .field select:focus,
+.dash .field textarea:focus,
+.auth-page .auth-input:focus { outline: 2px solid var(--gold); outline-offset: 1px; border-color: var(--gold); }
+
+/* --- Étiquettes, onglets, tableaux --- */
+.dash .badge, .dash .pill { border-radius: 999px; }
+.dash .tabs a, .dash .tabs button {
+  border-radius: 999px;
+  font-weight: 600;
+}
+.dash .tabs .on, .dash .tabs .active, .dash .tabs [aria-selected="true"] {
+  background: var(--g-blue);
+  color: #fdf7e8;
+}
+.dash .table th {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--g-ink2);
+  border-bottom: 1px solid var(--g-line);
+}
+.dash .table td { border-bottom: 1px solid var(--g-line); }
+.dash .dash-notice { border-radius: 16px; }
+
+/* --- Page de connexion : même langage --- */
+.auth-page { background: var(--g-bg); }
+.auth-page .auth-card {
+  border: 1px solid var(--g-line);
+  border-radius: 20px;
+  box-shadow: 0 1px 2px rgba(29, 21, 51, 0.05), 0 24px 60px -40px rgba(29, 21, 51, 0.35);
+  color: var(--g-ink);
+}
+.auth-page .auth-card h1 { font-family: var(--font-head); letter-spacing: -0.03em; }
+.auth-page .auth-card a { color: #7a4d00; font-weight: 700; }
+
+/* Correctifs issus de la page-témoin (espace commerçant) : onglets, zone
+   de texte, largeur des boutons en desktop, tableau qui défile dans sa carte. */
+.dash .tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 16px;
+  padding: 4px;
+  border: 1px solid var(--g-line);
+  border-radius: 999px;
+  width: -moz-fit-content;
+  width: fit-content;
+  max-width: 100%;
+  background: var(--g-surface);
+}
+.dash .tabs > * {
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--g-ink2);
+  text-decoration: none;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+}
+.dash .tabs > *:hover { background: var(--d-gold-tint); color: var(--g-ink); }
+.dash .tabs > .on,
+.dash .tabs > .active,
+.dash .tabs > [aria-selected="true"],
+.dash .tabs > [aria-current="page"] { background: var(--g-blue); color: #fdf7e8; }
+
+.dash .field textarea {
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1.5;
+  padding: 13px 14px;
+  width: 100%;
+  resize: vertical;
+}
+
+/* Boutons : largeur naturelle en desktop, pleine largeur (cible tactile)
+   sur mobile. La page de connexion garde son bouton pleine largeur. */
+.dash .btn { width: auto; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+@media (max-width: 640px) { .dash .btn { width: 100%; } }
+
+/* Tableau : défile horizontalement DANS sa carte, jamais la page. */
+.dash .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -4px; }
+.dash .table { width: 100%; min-width: 560px; border-collapse: collapse; }
+.dash .table th, .dash .table td { padding: 10px 12px; text-align: left; vertical-align: middle; white-space: nowrap; }
+.dash .badge { display: inline-flex; align-items: center; margin: 0; padding: 4px 10px; font-size: 12px; }
+.dash .dash-brand { color: var(--cream); }
+@media (max-width: 640px) {
+  .dash .tabs { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; }
+  .dash .tabs > * { white-space: nowrap; }
+}
