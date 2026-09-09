@@ -1,0 +1,84 @@
+<!doctype html><html><head><meta charset="utf-8">
+<style>html,body{margin:0;padding:0;overflow:hidden;background:#17091f}canvas{display:block}</style>
+<script src="./three.min.js"></script></head>
+<body>
+<script>
+const W=1080,H=1920;
+const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});
+renderer.setSize(W,H); renderer.setPixelRatio(1);
+renderer.physicallyCorrectLights=true;
+renderer.outputEncoding=THREE.sRGBEncoding;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=0.92;
+renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+
+const scene=new THREE.Scene();
+(function(){const c=document.createElement('canvas');c.width=8;c.height=H;const g=c.getContext('2d');
+ const gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#3a1c52');gr.addColorStop(1,'#120619');
+ g.fillStyle=gr;g.fillRect(0,0,8,H);scene.background=new THREE.CanvasTexture(c);})();
+(function(){const c=document.createElement('canvas');c.width=1024;c.height=512;const g=c.getContext('2d');
+ const gr=g.createLinearGradient(0,0,0,512);gr.addColorStop(0,'#fff6e8');gr.addColorStop(0.35,'#c9b7d6');gr.addColorStop(0.6,'#4b3960');gr.addColorStop(1,'#140a1e');
+ g.fillStyle=gr;g.fillRect(0,0,1024,512);
+ g.fillStyle='rgba(255,255,255,0.95)';g.beginPath();g.ellipse(320,150,260,110,0,0,7);g.fill();
+ g.fillStyle='rgba(255,210,150,0.6)';g.beginPath();g.ellipse(760,180,180,90,0,0,7);g.fill();
+ const t=new THREE.CanvasTexture(c);t.mapping=THREE.EquirectangularReflectionMapping;
+ const p=new THREE.PMREMGenerator(renderer);p.compileEquirectangularShader();scene.environment=p.fromEquirectangular(t).texture;})();
+
+const cam=new THREE.PerspectiveCamera(30,W/H,0.1,100);
+scene.add(new THREE.AmbientLight(0xffffff,0.16));
+const key=new THREE.DirectionalLight(0xffffff,1.7); key.position.set(-5,9,7);
+key.castShadow=true; key.shadow.mapSize.set(2048,2048);
+key.shadow.camera.left=-12;key.shadow.camera.right=12;key.shadow.camera.top=12;key.shadow.camera.bottom=-12;
+key.shadow.camera.near=1;key.shadow.camera.far=50;key.shadow.bias=-0.0004; scene.add(key);
+const fill=new THREE.DirectionalLight(0xffd9b0,0.4); fill.position.set(6,2,6); scene.add(fill);
+const spot=new THREE.SpotLight(0xffffff,1.2,60,0.6,0.6); spot.position.set(3,10,10); scene.add(spot);
+
+function C(hex){return new THREE.Color(hex).convertSRGBToLinear();}
+const COLORS=[0xff2f8e,0xffb400,0x8a3ffe,0xff5330,0xe22e9a,0xffc21f].map(C);
+const R=2.6,TH=0.6,N=6,step=Math.PI*2/N;
+const wheel=new THREE.Group();
+for(let i=0;i<N;i++){
+  const a0=i*step,a1=a0+step;const sh=new THREE.Shape();sh.moveTo(0,0);sh.absarc(0,0,R,a0,a1,false);sh.lineTo(0,0);
+  const geo=new THREE.ExtrudeGeometry(sh,{depth:TH,bevelEnabled:true,bevelThickness:0.08,bevelSize:0.07,bevelSegments:3,curveSegments:64});
+  const m=new THREE.Mesh(geo,new THREE.MeshPhysicalMaterial({color:COLORS[i],roughness:0.42,clearcoat:0.6,clearcoatRoughness:0.25,envMapIntensity:0.32}));
+  m.position.z=-TH/2;m.castShadow=true;m.receiveShadow=true;wheel.add(m);
+}
+const rimM=new THREE.Mesh(new THREE.TorusGeometry(R+0.02,0.16,32,160),new THREE.MeshStandardMaterial({color:C(0xf7c94a),metalness:1,roughness:0.16,envMapIntensity:1.5}));rimM.position.z=TH/2;rimM.castShadow=true;wheel.add(rimM);
+const hub=new THREE.Mesh(new THREE.CylinderGeometry(0.58,0.58,TH+0.5,64),new THREE.MeshPhysicalMaterial({color:C(0x1e1b3a),metalness:0.2,roughness:0.25,clearcoat:0.8}));hub.rotation.x=Math.PI/2;hub.castShadow=true;wheel.add(hub);
+const rmat=new THREE.MeshStandardMaterial({color:C(0xf7c94a),metalness:0.9,roughness:0.25,envMapIntensity:1.4});
+const gbox=new THREE.Mesh(new THREE.BoxGeometry(0.52,0.52,0.52),new THREE.MeshPhysicalMaterial({color:C(0xfff2d6),roughness:0.35,clearcoat:0.6}));gbox.position.z=TH/2+0.32;gbox.castShadow=true;wheel.add(gbox);
+const gv=new THREE.Mesh(new THREE.BoxGeometry(0.12,0.56,0.56),rmat);gv.position.z=TH/2+0.32;wheel.add(gv);
+const gh=new THREE.Mesh(new THREE.BoxGeometry(0.56,0.12,0.56),rmat);gh.position.z=TH/2+0.32;wheel.add(gh);
+wheel.rotation.x=-0.28; wheel.position.set(-2.4,0.2,0); scene.add(wheel);
+
+// carte de fidélité flottante (texture)
+const cardTex=new THREE.TextureLoader().load('./card.png'); cardTex.encoding=THREE.sRGBEncoding;
+const cardW=3.4, cardH=cardW*582/900;
+const card=new THREE.Mesh(new THREE.PlaneGeometry(cardW,cardH),
+  new THREE.MeshBasicMaterial({map:cardTex,transparent:true}));
+card.position.set(2.7,0.1,0.5); card.rotation.set(-0.15,-0.5,0.06); scene.add(card);
+
+// sol ombre
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(80,80),new THREE.ShadowMaterial({opacity:0.4}));
+floor.rotation.x=-Math.PI/2; floor.position.y=-R-0.7; floor.receiveShadow=true; scene.add(floor);
+
+function easeInOut(t){t=Math.max(0,Math.min(1,t));return t<0.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;}
+function easeOut(t){t=Math.max(0,Math.min(1,t));return 1-Math.pow(1-t,3);}
+window.renderAt=function(t){
+  // travelling ciné : dolly-in + arc + descente douce (0..7s)
+  const p=easeInOut(Math.min(1,t/7));
+  const ang=(-0.55+p*0.5);            // orbite
+  const rad=27-p*7;                   // dolly-in
+  cam.position.set(Math.sin(ang)*rad, 3.2-p*2.1, Math.cos(ang)*rad);
+  cam.lookAt(0,0.1,0);
+  wheel.rotation.z=-(Math.PI*2*2.2)*easeOut(Math.min(1,t/5))-0.3;
+  wheel.position.y=0.2+Math.sin(t*1.0)*0.05;
+  card.position.y=0.1+Math.sin(t*0.9+1)*0.12;
+  card.rotation.z=0.06+Math.sin(t*0.7)*0.03;
+  renderer.render(scene,cam);
+};
+window.renderAt(0);
+window.__ready=true;
+</script>
+</body></html>

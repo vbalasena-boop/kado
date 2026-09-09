@@ -1,0 +1,97 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Kado//Planning Reels//FR
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Kado — Publication Réels
+BEGIN:VEVENT
+UID:kado-reel9-20260903@kado-app.fr
+DTSTAMP:20260901T224300Z
+DTSTART:20260903T170000Z
+DURATION:PT15M
+SUMMARY:📲 Poster Réel 9 (Vous perdez vos clients) — Kado
+DESCRIPTION:Angle PORTÉE. Upload reel9-perte-clients.mp4 → SON TENDANCE → couverture cover-reel9 → légende (question en 1re ligne) + 1er commentaire → CTA Commentez DEMO.
+BEGIN:VALARM
+TRIGGER:PT0M
+ACTION:DISPLAY
+DESCRIPTION:Poster le Réel 9 maintenant
+END:VALARM
+BEGIN:VALARM
+TRIGGER:-PT10M
+ACTION:DISPLAY
+DESCRIPTION:Dans 10 min : poster le Réel 9
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:kado-reel10-20260905@kado-app.fr
+DTSTAMP:20260901T224300Z
+DTSTART:20260905T093000Z
+DURATION:PT15M
+SUMMARY:📲 Poster Réel 10 (x2 d'avis sans pub) — Kado
+DESCRIPTION:Angle PORTÉE. Upload reel10-x2-avis.mp4 → SON TENDANCE → couverture cover-reel10 → légende + 1er commentaire → CTA Commentez DEMO.
+BEGIN:VALARM
+TRIGGER:PT0M
+ACTION:DISPLAY
+DESCRIPTION:Poster le Réel 10 maintenant
+END:VALARM
+BEGIN:VALARM
+TRIGGER:-PT10M
+ACTION:DISPLAY
+DESCRIPTION:Dans 10 min : poster le Réel 10
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:kado-reel4-20260908@kado-app.fr
+DTSTAMP:20260901T224300Z
+DTSTART:20260908T170000Z
+DURATION:PT15M
+SUMMARY:📲 Poster Réel 4 (Conformité) — Kado
+DESCRIPTION:Angle CONVERSION. Upload reel4-conformite.mp4 → SON TENDANCE → couverture cover-reel4 → légende + 1er commentaire → CTA Commentez DEMO.
+BEGIN:VALARM
+TRIGGER:PT0M
+ACTION:DISPLAY
+DESCRIPTION:Poster le Réel 4 maintenant
+END:VALARM
+BEGIN:VALARM
+TRIGGER:-PT10M
+ACTION:DISPLAY
+DESCRIPTION:Dans 10 min : poster le Réel 4
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:kado-reel7-20260910@kado-app.fr
+DTSTAMP:20260901T224300Z
+DTSTART:20260910T170000Z
+DURATION:PT15M
+SUMMARY:📲 Poster Réel 7 (Rentrée) — Kado
+DESCRIPTION:Angle SAISONNIER. Upload reel7-rentree.mp4 → SON TENDANCE → couverture cover-reel7 → légende + 1er commentaire → CTA Commentez DEMO.
+BEGIN:VALARM
+TRIGGER:PT0M
+ACTION:DISPLAY
+DESCRIPTION:Poster le Réel 7 maintenant
+END:VALARM
+BEGIN:VALARM
+TRIGGER:-PT10M
+ACTION:DISPLAY
+DESCRIPTION:Dans 10 min : poster le Réel 7
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:kado-reel8-20260912@kado-app.fr
+DTSTAMP:20260901T224300Z
+DTSTART:20260912T170000Z
+DURATION:PT15M
+SUMMARY:📲 Poster Réel 8 (Offre de lancement) — Kado
+DESCRIPTION:Angle CONVERSION/OFFRE. Upload reel8-offre-lancement.mp4 → SON TENDANCE → couverture cover-reel8 → légende + 1er commentaire → CTA Commentez OFFRE. Épingler en story À la une « Offre ».
+BEGIN:VALARM
+TRIGGER:PT0M
+ACTION:DISPLAY
+DESCRIPTION:Poster le Réel 8 maintenant
+END:VALARM
+BEGIN:VALARM
+TRIGGER:-PT10M
+ACTION:DISPLAY
+DESCRIPTION:Dans 10 min : poster le Réel 8
+END:VALARM
+END:VEVENT
+END:VCALENDAR
