@@ -8400,3 +8400,61 @@ summary:focus-visible,
 }
 .auth-page .auth-card h1 { font-family: var(--font-head); letter-spacing: -0.03em; }
 .auth-page .auth-card a { color: #7a4d00; font-weight: 700; }
+
+/* Correctifs issus de la page-témoin (espace commerçant) : onglets, zone
+   de texte, largeur des boutons en desktop, tableau qui défile dans sa carte. */
+.dash .tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 16px;
+  padding: 4px;
+  border: 1px solid var(--g-line);
+  border-radius: 999px;
+  width: -moz-fit-content;
+  width: fit-content;
+  max-width: 100%;
+  background: var(--g-surface);
+}
+.dash .tabs > * {
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--g-ink2);
+  text-decoration: none;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+}
+.dash .tabs > *:hover { background: var(--d-gold-tint); color: var(--g-ink); }
+.dash .tabs > .on,
+.dash .tabs > .active,
+.dash .tabs > [aria-selected="true"],
+.dash .tabs > [aria-current="page"] { background: var(--g-blue); color: #fdf7e8; }
+
+.dash .field textarea {
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1.5;
+  padding: 13px 14px;
+  width: 100%;
+  resize: vertical;
+}
+
+/* Boutons : largeur naturelle en desktop, pleine largeur (cible tactile)
+   sur mobile. La page de connexion garde son bouton pleine largeur. */
+.dash .btn { width: auto; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+@media (max-width: 640px) { .dash .btn { width: 100%; } }
+
+/* Tableau : défile horizontalement DANS sa carte, jamais la page. */
+.dash .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -4px; }
+.dash .table { width: 100%; min-width: 560px; border-collapse: collapse; }
+.dash .table th, .dash .table td { padding: 10px 12px; text-align: left; vertical-align: middle; white-space: nowrap; }
+.dash .badge { display: inline-flex; align-items: center; margin: 0; padding: 4px 10px; font-size: 12px; }
+.dash .dash-brand { color: var(--cream); }
+@media (max-width: 640px) {
+  .dash .tabs { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; }
+  .dash .tabs > * { white-space: nowrap; }
+}
