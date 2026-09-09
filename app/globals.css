@@ -8223,3 +8223,180 @@ summary:focus-visible,
   flex-wrap: wrap;
   gap: 10px 22px;
 }
+
+/* Sobriété du mouvement de fond : une seule roue en filigrane, plus discrète ;
+   film plus court sur mobile (moins d'écrans à défiler avant les bénéfices). */
+.v-sw { opacity: 0.08; }
+.v-sw-b { display: none; }
+@media (max-width: 640px) {
+  .v-film { height: 240vh; }
+}
+
+/* ============================================================
+   ESPACE COMMERÇANT & CONNEXION — continuité « moderne » avec la vitrine.
+   Thème CLAIR conservé (lisibilité d'un outil du quotidien), mais : encre
+   prune, accent or (fini le bleu Google et le violet), boutons en pilules,
+   cartes à liseré fin, titres Bricolage. Scopé `.dash` / `.auth-page` :
+   le jeu joueur (`.card .btn`) n'est pas concerné.
+   ============================================================ */
+.dash,
+.auth-page {
+  /* Re-mappage des jetons « Google » vers la marque : recolore d'un coup
+     boutons, liens, icônes et bordures actives. */
+  --g-blue: #1a0d2e;
+  --g-blue-dark: #2d1b4e;
+  --g-bg: #f6f4fb;
+  --g-surface: #ffffff;
+  --g-ink: #1d1533;
+  --g-ink2: #6b6089;
+  --g-line: rgba(29, 21, 51, 0.1);
+  --g-shadow: 0 1px 2px rgba(29, 21, 51, 0.06);
+  --g-font: var(--font);
+  --d-line-strong: rgba(29, 21, 51, 0.18);
+  --d-gold-tint: rgba(245, 184, 65, 0.18);
+}
+.dash { background: var(--g-bg); color: var(--g-ink); }
+
+/* --- En-tête sombre : sticky, flouté, liseré fin --- */
+.dash .dash-top {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: rgba(23, 9, 46, 0.86);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(14px) saturate(140%);
+  border-bottom: 1px solid rgba(237, 231, 251, 0.1);
+}
+.dash .dash-brand { font-family: var(--font-head); font-size: 15px; letter-spacing: -0.01em; }
+.dash .dash-signout {
+  background: rgba(237, 231, 251, 0.08);
+  border: 1px solid rgba(237, 231, 251, 0.16);
+  border-radius: 999px;
+  padding: 7px 13px;
+}
+.dash .dash-signout:hover { background: rgba(237, 231, 251, 0.16); }
+
+/* --- Navigation : liens en pilules --- */
+.dash .dash-nav { background: var(--g-surface); border-bottom: 1px solid var(--g-line); }
+.dash .dash-nav a { border-radius: 999px; padding: 8px 14px; color: var(--g-ink2); }
+.dash .dash-nav a:hover { background: var(--d-gold-tint); color: var(--g-ink); }
+
+/* --- Titres : Bricolage, plus serrés --- */
+.dash .dash-h1 {
+  font-family: var(--font-head);
+  font-size: clamp(26px, 3vw, 34px);
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: var(--g-ink);
+}
+.dash .dash-sub { font-size: 15px; color: var(--g-ink2); }
+.dash .dash-section-title {
+  font-family: var(--font-head);
+  font-size: 18px;
+  letter-spacing: -0.01em;
+  color: var(--g-ink);
+  border-bottom: 1px solid var(--g-line);
+}
+.dash .dash-card h2, .dash .dash-card h3 { font-family: var(--font-head); letter-spacing: -0.02em; }
+
+/* --- Cartes & tuiles : plates, liseré fin, rayons cohérents --- */
+.dash .dash-card,
+.dash .card,
+.dash .stat {
+  background: var(--g-surface);
+  border: 1px solid var(--g-line);
+  border-radius: 20px;
+  box-shadow: 0 1px 2px rgba(29, 21, 51, 0.04);
+}
+.dash .stat { border-radius: 18px; }
+.dash .stat-n {
+  font-family: var(--font-head);
+  font-size: 32px;
+  letter-spacing: -0.03em;
+  color: var(--g-ink);
+  font-variant-numeric: tabular-nums;
+}
+.dash .stat-icon { background: var(--d-gold-tint); color: #7a4d00; border-radius: 12px; }
+
+/* --- Boutons : pilules à fort contraste (prune, survol or) --- */
+.dash .btn,
+.auth-page .btn {
+  border-radius: 999px;
+  background: var(--g-blue);
+  color: #fdf7e8;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  padding: 12px 20px;
+  box-shadow: none;
+}
+.dash .btn:hover,
+.auth-page .btn:hover { background: var(--gold); color: #1a0d2e; }
+.dash .btn.ghost,
+.auth-page .btn.ghost,
+.dash .btn-secondary {
+  background: var(--g-surface);
+  color: var(--g-ink);
+  border: 1px solid var(--d-line-strong);
+  border-radius: 999px;
+}
+.dash .btn.ghost:hover,
+.auth-page .btn.ghost:hover,
+.dash .btn-secondary:hover { background: var(--d-gold-tint); border-color: var(--gold); color: var(--g-ink); }
+.dash .btn-mini {
+  border-radius: 999px;
+  background: var(--g-surface);
+  color: var(--g-ink);
+  border: 1px solid var(--d-line-strong);
+  font-weight: 700;
+}
+.dash .btn-mini:hover { background: var(--d-gold-tint); border-color: var(--gold); }
+.dash .btn-danger { border-radius: 999px; }
+
+/* --- Champs : liseré fin, focus or --- */
+.dash .field input,
+.dash .field select,
+.dash .field textarea,
+.dash .input,
+.auth-page .auth-input {
+  border: 1px solid var(--d-line-strong);
+  border-radius: 12px;
+  background: var(--g-surface);
+  color: var(--g-ink);
+}
+.dash .field span { color: var(--g-ink2); font-weight: 600; }
+.dash .field input:focus,
+.dash .field select:focus,
+.dash .field textarea:focus,
+.auth-page .auth-input:focus { outline: 2px solid var(--gold); outline-offset: 1px; border-color: var(--gold); }
+
+/* --- Étiquettes, onglets, tableaux --- */
+.dash .badge, .dash .pill { border-radius: 999px; }
+.dash .tabs a, .dash .tabs button {
+  border-radius: 999px;
+  font-weight: 600;
+}
+.dash .tabs .on, .dash .tabs .active, .dash .tabs [aria-selected="true"] {
+  background: var(--g-blue);
+  color: #fdf7e8;
+}
+.dash .table th {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--g-ink2);
+  border-bottom: 1px solid var(--g-line);
+}
+.dash .table td { border-bottom: 1px solid var(--g-line); }
+.dash .dash-notice { border-radius: 16px; }
+
+/* --- Page de connexion : même langage --- */
+.auth-page { background: var(--g-bg); }
+.auth-page .auth-card {
+  border: 1px solid var(--g-line);
+  border-radius: 20px;
+  box-shadow: 0 1px 2px rgba(29, 21, 51, 0.05), 0 24px 60px -40px rgba(29, 21, 51, 0.35);
+  color: var(--g-ink);
+}
+.auth-page .auth-card h1 { font-family: var(--font-head); letter-spacing: -0.03em; }
+.auth-page .auth-card a { color: #7a4d00; font-weight: 700; }
