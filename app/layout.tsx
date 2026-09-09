@@ -122,7 +122,7 @@ export default function RootLayout({
             Framer Motion ne serait sinon jamais annulée). N'affecte rien
             quand le JS est actif. */}
         <noscript>
-          <style>{`[data-reveal],.v-hero-inner,.v-hero-inner>*{opacity:1!important;transform:none!important;filter:none!important}`}</style>
+          <style>{`[data-reveal],.v-hero-inner,.v-hero-inner>*{opacity:1!important;transform:none!important;filter:none!important}.v-film{height:auto!important}.v-film-stage{position:static!important;height:auto!important;overflow:visible!important}.v-film-scene{position:static!important;opacity:1!important;transform:none!important;pointer-events:auto!important;padding:24px 16px!important}.v-film-bar,.v-film-bg{display:none!important}`}</style>
         </noscript>
         <RefCapture />
         {children}

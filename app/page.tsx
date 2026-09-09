@@ -15,6 +15,8 @@ import Reveal from "@/components/Reveal";
 import HeroCinematic from "@/components/HeroCinematic";
 import Marquee from "@/components/Marquee";
 import ScrollProgress from "@/components/ScrollProgress";
+import ScrollWheel from "@/components/ScrollWheel";
+import ScrollFilm from "@/components/ScrollFilm";
 import HomeGames from "@/components/HomeGames";
 import HomeLoyalty from "@/components/HomeLoyalty";
 import SupportButton from "@/components/SupportButton";
@@ -245,6 +247,7 @@ export default function Home({
   return (
     <main className="vitrine">
       <ScrollProgress />
+      <ScrollWheel />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}
@@ -266,18 +269,7 @@ export default function Home({
 
       <HeroCinematic />
 
-      <section className="v-section">
-        <h2>Comment ça marche</h2>
-        <Reveal className="v-steps">
-          {STEPS.map((s) => (
-            <div className="v-step" key={s.n}>
-              <div className="v-step-n">{s.n}</div>
-              <h3>{s.t}</h3>
-              <p>{s.d}</p>
-            </div>
-          ))}
-        </Reveal>
-      </section>
+      <ScrollFilm steps={STEPS} />
 
       <section className="v-section v-preview">
         <div className="pv-copy">

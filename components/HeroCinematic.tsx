@@ -54,6 +54,10 @@ export default function HeroCinematic() {
   // Parallaxe au scroll : le contenu monte et s'estompe quand on descend.
   const y = useTransform(scrollYProgress, [0, 1], [0, reduce ? 0 : -90]);
   const opacity = useTransform(scrollYProgress, [0, 0.78], [1, reduce ? 1 : 0]);
+  // La roue TOURNE au rythme du scroll : plus on descend, plus le disque
+  // pivote (≈ 1,3 tour le temps que le hero sorte de l'écran). Le pointeur et
+  // le moyeu restent fixes, seul le disque tourne.
+  const spin = useTransform(scrollYProgress, [0, 1], [0, reduce ? 0 : 480]);
 
   // --- Parallaxe curseur (profondeur) ---
   const px = useMotionValue(0);
@@ -190,7 +194,12 @@ export default function HeroCinematic() {
                   : { duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1.6 }
               }
             >
-              <span className="v-wheel-disc" />
+              <motion.span
+                className="v-wheel-scroll"
+                style={reduce ? undefined : { rotate: spin }}
+              >
+                <span className="v-wheel-disc" />
+              </motion.span>
               <span className="v-wheel-pin" />
             </motion.span>
           </motion.div>

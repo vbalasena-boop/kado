@@ -7800,3 +7800,426 @@ summary:focus-visible,
   color: var(--night-2, #150c29);
   background: var(--gold);
 }
+
+/* Couche de rotation liée au scroll : ne fait tourner QUE le disque de la roue
+   (le pointeur et le moyeu restent fixes). */
+.v-wheel-scroll {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  will-change: transform;
+}
+
+/* ============================================================
+   ROUES EN FILIGRANE — tournent au rythme du scroll de toute la page.
+   Couche de fond (z 0) : au-dessus de l'aurora, sous le grain, sous le
+   contenu. Cadre fixe plein écran avec overflow hidden → jamais de
+   débordement horizontal, même avec les roues partiellement hors champ.
+   ============================================================ */
+.v-scrollwheel {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.v-sw {
+  position: absolute;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  will-change: transform;
+  opacity: 0.14;
+}
+.v-sw-disc {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    repeating-conic-gradient(rgba(10, 4, 24, 0.55) 0 1.2deg, transparent 1.2deg 60deg),
+    conic-gradient(
+      #ff5d73 0 60deg,
+      #ffc24d 60deg 120deg,
+      #39d98a 120deg 180deg,
+      #4fc3f7 180deg 240deg,
+      #8b6cff 240deg 300deg,
+      #ff8a5c 300deg 360deg
+    );
+  box-shadow:
+    0 0 0 10px rgba(245, 184, 65, 0.55),
+    0 0 0 15px rgba(17, 9, 46, 0.6);
+}
+.v-sw-hub {
+  position: absolute;
+  inset: 38%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #fff6df, var(--gold) 72%);
+}
+/* Grande roue : bas-droite, partiellement hors champ (arc majestueux). */
+.v-sw-a {
+  width: min(88vw, 720px);
+  right: -22vw;
+  bottom: -22vw;
+}
+/* Petite roue : haut-gauche, plus discrète, en contre-rotation. */
+.v-sw-b {
+  width: min(46vw, 340px);
+  left: -12vw;
+  top: 14vh;
+  opacity: 0.09;
+}
+@media (max-width: 640px) {
+  .v-sw-a { width: 118vw; right: -50vw; bottom: -34vw; }
+  .v-sw-b { display: none; }
+}
+
+/* ============================================================
+   FILM AU SCROLL — section épinglée plein écran dont le scroll est la
+   timeline (3 scènes). Bandes noires cinéma, scène centrée, légende en bas.
+   ============================================================ */
+.v-film {
+  position: relative;
+  height: 340vh;
+}
+.v-film-stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background: #0d0620;
+}
+.v-film-bg {
+  position: absolute;
+  inset: -6%;
+  background:
+    radial-gradient(60% 50% at 50% 45%, rgba(139, 108, 255, 0.3), transparent 70%),
+    radial-gradient(50% 40% at 28% 72%, rgba(255, 93, 115, 0.2), transparent 70%),
+    radial-gradient(45% 40% at 72% 28%, rgba(245, 184, 65, 0.18), transparent 70%);
+  will-change: transform;
+}
+.v-film-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 7vh;
+  min-height: 44px;
+  background: #000;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 clamp(16px, 4vw, 40px);
+}
+.v-film-bar.top { top: 0; }
+.v-film-bar.bottom { bottom: 0; }
+.v-film-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--gold);
+  opacity: 0.9;
+}
+.v-film-dots { display: flex; gap: 8px; }
+.v-film-dots i {
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--gold);
+}
+.v-film-scene {
+  position: absolute;
+  inset: 7vh 0;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  place-items: center;
+  padding: 4vh clamp(16px, 5vw, 48px) 6vh;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+.v-film-visual {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+/* Scène 1 : téléphone en filigrane + QR code doré lumineux. */
+.v-film-scan {
+  width: clamp(180px, 40vw, 260px);
+  aspect-ratio: 1;
+}
+.v-film-scan .ph {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 100%;
+  height: 100%;
+  color: rgba(237, 231, 251, 0.22);
+}
+.v-film-scan .qr {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 46%;
+  height: 46%;
+  color: var(--gold);
+  filter: drop-shadow(0 0 22px rgba(245, 184, 65, 0.55));
+}
+/* Scène 2 : la roue du hero, en grand. */
+.v-film-wheel {
+  width: clamp(200px, 56vw, 320px);
+  height: auto;
+  aspect-ratio: 1;
+  margin: 0;
+}
+/* Scène 3 : cadeau + halo + pastilles de gain. */
+.v-film-win {
+  width: clamp(220px, 60vw, 360px);
+  aspect-ratio: 1;
+}
+.v-film-glow {
+  position: absolute;
+  inset: 10%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(245, 184, 65, 0.55), rgba(255, 93, 115, 0.25) 45%, transparent 70%);
+  filter: blur(18px);
+}
+.v-film-gift {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 120px;
+  height: 120px;
+  display: grid;
+  place-items: center;
+  filter: drop-shadow(0 12px 30px rgba(0, 0, 0, 0.5));
+}
+.v-film-pill {
+  position: absolute;
+  bottom: 14%;
+  left: 2%;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border-radius: 999px;
+  background: var(--night-2);
+  border: 1px solid var(--stroke);
+  color: var(--cream);
+  font-weight: 700;
+  font-size: 14px;
+  white-space: nowrap;
+}
+.v-film-pill svg { color: var(--gold); }
+.v-film-pill.insta {
+  left: auto;
+  right: 2%;
+  border-color: rgba(225, 48, 108, 0.5);
+  background: linear-gradient(100deg, rgba(131, 58, 180, 0.35), rgba(225, 48, 108, 0.3));
+}
+.v-film-pill.insta svg { color: #fff; }
+/* Légende : titre en serif italique (signature vitrine) + une ligne. */
+.v-film-cap {
+  text-align: center;
+  max-width: 36ch;
+  margin: 0;
+  color: var(--cream-dim);
+  font-size: clamp(14px, 2.6vw, 16px);
+  line-height: 1.5;
+}
+.v-film-cap-t {
+  display: block;
+  font-size: clamp(28px, 6vw, 46px);
+  color: var(--cream);
+  line-height: 1.1;
+  margin-bottom: 10px;
+  text-wrap: balance;
+}
+@media (max-width: 640px) {
+  .v-film { height: 300vh; }
+  .v-film-pill { font-size: 12.5px; padding: 8px 12px; }
+}
+
+/* Film : pleine largeur de la fenêtre (sort de la colonne de contenu), pour
+   un vrai plein écran cinéma sur desktop. Le débordement éventuel de la
+   barre de défilement est absorbé par `body { overflow-x: hidden }`. */
+.v-film {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+}
+@media (min-width: 900px) {
+  .v-film-scan { width: clamp(220px, 24vw, 320px); }
+  .v-film-wheel { width: clamp(240px, 28vw, 380px); }
+  .v-film-win { width: clamp(260px, 32vw, 420px); }
+  .v-film-gift { width: 140px; height: 140px; }
+  .v-film-gift svg { width: 140px; height: 140px; }
+}
+
+/* ============================================================
+   DIRECTION « MODERNE » (vitrine) — SaaS premium 2026, marque Kado.
+   Nav flottante en pilule floutée · boutons pleins à fort contraste ·
+   cartes plates à liseré fin, rayons cohérents (pilules / 20 px) ·
+   typographie plus grande et plus serrée · respiration verticale ·
+   séparateurs filaires. Contenu et palette inchangés.
+   ============================================================ */
+.vitrine {
+  --r-card: 20px;
+  --stroke-soft: rgba(237, 231, 251, 0.09);
+  --stroke-strong: rgba(237, 231, 251, 0.2);
+}
+
+/* --- Navigation flottante (pilule floutée, collante) --- */
+.vitrine .v-topbar {
+  position: sticky;
+  top: 12px;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: min(100% - 24px, 1040px);
+  margin: 12px auto 0;
+  padding: 8px 8px 8px 14px;
+  border-radius: 999px;
+  background: rgba(17, 7, 32, 0.6);
+  border: 1px solid var(--stroke-soft);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  backdrop-filter: blur(16px) saturate(140%);
+  box-shadow: 0 10px 40px -22px rgba(0, 0, 0, 0.7);
+}
+.vitrine .v-topnav { display: flex; align-items: center; gap: 2px; }
+.vitrine .v-topnav a {
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-weight: 600;
+  color: var(--cream-dim);
+}
+.vitrine .v-topnav a:hover { color: var(--cream); background: rgba(255, 255, 255, 0.06); }
+.vitrine .v-topnav-cta {
+  background: var(--gold) !important;
+  color: #1a0d2e !important;
+  box-shadow: none;
+  padding: 9px 16px;
+  margin-left: 6px;
+}
+.vitrine .v-topnav-cta:hover { background: var(--cream) !important; }
+@media (max-width: 640px) {
+  /* Mobile : logo + action principale ; Blog / Tarifs / Connexion restent
+     dans le pied de page. */
+  .vitrine .v-topnav a:not(.v-topnav-cta) { display: none; }
+  .vitrine .v-topbar { top: 8px; padding: 6px 6px 6px 12px; }
+}
+
+/* --- Boutons : pilules pleines à fort contraste --- */
+.vitrine .v-btn {
+  border-radius: 999px;
+  padding: 15px 26px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.vitrine .v-btn.primary {
+  background: var(--gold);
+  color: #1a0d2e;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 14px 32px -18px rgba(245, 184, 65, 0.5);
+}
+.vitrine .v-btn.primary:hover {
+  background: var(--cream);
+  color: var(--night);
+  box-shadow: 0 18px 40px -20px rgba(237, 231, 251, 0.45);
+  filter: none;
+}
+.vitrine .v-btn.ghost {
+  border: 1px solid var(--stroke-strong);
+  background: rgba(255, 255, 255, 0.03);
+}
+.vitrine .v-btn.ghost:hover { border-color: var(--cream); background: rgba(255, 255, 255, 0.06); }
+
+/* --- Surfaces : plates, liseré fin, rayons cohérents --- */
+.vitrine .v-step,
+.vitrine .v-benefit,
+.vitrine .v-plan,
+.vitrine .v-final,
+.vitrine .v-concours,
+.vitrine .v-compare-col,
+.vitrine .v-faq-item {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--stroke-soft);
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.vitrine .v-step,
+.vitrine .v-benefit,
+.vitrine .v-plan,
+.vitrine .v-final,
+.vitrine .v-concours,
+.vitrine .v-compare-col { border-radius: var(--r-card); }
+.vitrine .v-faq-item { border-radius: 14px; }
+.vitrine .v-step:hover,
+.vitrine .v-benefit:hover,
+.vitrine .v-plan:hover,
+.vitrine .v-concours-item:hover {
+  border-color: var(--stroke-strong);
+  background: rgba(255, 255, 255, 0.055);
+  box-shadow: none;
+}
+.vitrine .v-plan.popular {
+  border: 1px solid var(--gold);
+  background: rgba(245, 184, 65, 0.06);
+  box-shadow: 0 0 0 1px rgba(245, 184, 65, 0.22), 0 30px 60px -32px rgba(245, 184, 65, 0.4);
+}
+.vitrine .v-compare-col.ok { border-color: rgba(245, 184, 65, 0.6); background: rgba(245, 184, 65, 0.05); }
+.vitrine .v-badge,
+.vitrine .v-chip,
+.vitrine .v-brand,
+.vitrine .v-concours-badge {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--stroke-soft);
+  border-radius: 999px;
+  box-shadow: none;
+}
+.vitrine .v-badge {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cream);
+  padding: 8px 14px;
+}
+.vitrine .v-badge .ico { color: var(--gold); }
+.vitrine .v-chip:hover { border-color: var(--gold); }
+.vitrine .v-brand.insta {
+  background: linear-gradient(100deg, rgba(131, 58, 180, 0.28), rgba(225, 48, 108, 0.24), rgba(253, 176, 61, 0.22));
+  border-color: rgba(225, 48, 108, 0.45);
+}
+.vitrine .v-concours-badge { background: var(--gold); border-color: var(--gold); color: #1a0d2e; }
+.vitrine .v-plan-pop { background: var(--gold); color: #1a0d2e; }
+
+/* --- Typographie : plus grande, plus serrée --- */
+.vitrine .v-hero h1 {
+  font-size: clamp(42px, 7vw, 88px);
+  letter-spacing: -0.04em;
+  line-height: 0.98;
+}
+.vitrine h2 {
+  font-size: clamp(30px, 4.4vw, 52px);
+  letter-spacing: -0.035em;
+  line-height: 1.02;
+}
+.vitrine .v-lede { font-size: clamp(16px, 1.6vw, 19px); line-height: 1.55; }
+.vitrine .v-plan-price {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
+}
+
+/* --- Rythme : respiration verticale + séparateurs filaires --- */
+.vitrine .v-section { padding: clamp(56px, 8vw, 104px) 0; }
+.vitrine .v-section + .v-section { border-top: 1px solid var(--stroke-soft); }
+.vitrine .v-footer {
+  border-top: 1px solid var(--stroke-soft);
+  padding: 40px 0 28px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+}
