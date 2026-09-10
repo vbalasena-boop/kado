@@ -248,6 +248,22 @@ export default async function OrdersPage() {
     modes,
   };
 
+  // Site + domaine de commande (migration 0083, lecture tolérante).
+  let siteUrl: string | null = null;
+  let orderDomain: string | null = null;
+  try {
+    const { data } = await db
+      .from("businesses")
+      .select("website_url, order_domain")
+      .eq("id", business.id)
+      .maybeSingle();
+    siteUrl = ((data as any)?.website_url as string | null) || null;
+    orderDomain = ((data as any)?.order_domain as string | null) || null;
+  } catch {
+    siteUrl = null;
+    orderDomain = null;
+  }
+
   return (
     <OrdersClient
       slug={business.slug}
@@ -261,6 +277,8 @@ export default async function OrdersPage() {
       payReady={payReady}
       onlinePayment={onlinePayment}
       smsOnReady={smsOnReady}
+      siteUrl={siteUrl}
+      orderDomain={orderDomain}
     />
   );
 }
