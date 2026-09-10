@@ -95,6 +95,7 @@ export default function OrderClient({
   slug,
   name,
   logoUrl,
+  siteUrl = null,
   products,
   open = true,
   nextOpen = null,
@@ -103,6 +104,8 @@ export default function OrderClient({
   slug: string;
   name: string;
   logoUrl: string | null;
+  /** Site vitrine du commerçant : affiche « Retour au site ». */
+  siteUrl?: string | null;
   products: Product[];
   open?: boolean;
   nextOpen?: string | null;
@@ -402,6 +405,13 @@ export default function OrderClient({
 
   return (
     <main className="uber">
+      {/* ---- Retour vers le site du commerçant (Wix, Shopify…) ---- */}
+      {siteUrl && (
+        <a className="uber-back" href={siteUrl}>
+          ← Retour au site
+        </a>
+      )}
+
       {/* ---- En-tête commerce ---- */}
       <header className="uber-head">
         {logoUrl ? (

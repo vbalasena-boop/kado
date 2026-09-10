@@ -119,6 +119,20 @@ export default async function CommanderPage({
     open = true;
   }
 
+  // Site du commerçant → lien « Retour au site » (lecture tolérante : la
+  // colonne arrive avec la migration 0083).
+  let siteUrl: string | null = null;
+  try {
+    const { data: w } = await db
+      .from("businesses")
+      .select("website_url")
+      .eq("id", biz.id)
+      .maybeSingle();
+    siteUrl = ((w as any)?.website_url as string | null) || null;
+  } catch {
+    siteUrl = null;
+  }
+
   // Thème du commerce → cohérence avec la page de jeu (lecture tolérante).
   let themeCss = "";
   try {
@@ -148,6 +162,7 @@ export default async function CommanderPage({
         open={open}
         nextOpen={nextOpen}
         payOnline={payOnline}
+        siteUrl={siteUrl}
       />
     </>
   );

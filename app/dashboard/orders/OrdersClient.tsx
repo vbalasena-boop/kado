@@ -213,6 +213,8 @@ export default function OrdersClient({
   payReady = false,
   onlinePayment = false,
   smsOnReady = false,
+  siteUrl = null,
+  orderDomain = null,
 }: {
   slug: string;
   shopName?: string;
@@ -225,6 +227,10 @@ export default function OrdersClient({
   payReady?: boolean;
   onlinePayment?: boolean;
   smsOnReady?: boolean;
+  /** Site vitrine du commerçant (lien « Retour au site » sur la commande). */
+  siteUrl?: string | null;
+  /** Sous-domaine de commande (commander.mon-commerce.fr). */
+  orderDomain?: string | null;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -313,10 +319,43 @@ export default function OrdersClient({
       setNumberBusy(false);
     }
   }
-  const orderLink =
+  const kadoLink =
     typeof window !== "undefined"
       ? `${window.location.origin}/${slug}/commander`
       : `https://kado-app.fr/${slug}/commander`;
+  // Domaine personnalisé enregistré → c'est LUI le lien à partager.
+  const [domainSaved, setDomainSaved] = useState<string | null>(orderDomain);
+  const orderLink = domainSaved ? `https://${domainSaved}` : kadoLink;
+  const [siteDraft, setSiteDraft] = useState(siteUrl ?? "");
+  const [domainDraft, setDomainDraft] = useState(orderDomain ?? "");
+  const [siteMsg, setSiteMsg] = useState<string | null>(null);
+  const [siteBusy, setSiteBusy] = useState(false);
+  /** Enregistre le site du commerçant et son sous-domaine de commande. */
+  async function saveSite() {
+    setSiteBusy(true);
+    setSiteMsg(null);
+    try {
+      const res = await fetch("/api/dashboard/order-site", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ websiteUrl: siteDraft, orderDomain: domainDraft }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setDomainSaved(d.orderDomain ?? null);
+        setDomainDraft(d.orderDomain ?? "");
+        setSiteDraft(d.websiteUrl ?? "");
+        setSiteMsg("✅ Enregistré.");
+        router.refresh();
+      } else {
+        setSiteMsg("❌ " + (d.detail || "Enregistrement impossible."));
+      }
+    } catch {
+      setSiteMsg("❌ Connexion impossible.");
+    } finally {
+      setSiteBusy(false);
+    }
+  }
   async function copyLink() {
     try {
       await navigator.clipboard.writeText(orderLink);
@@ -1517,6 +1556,68 @@ export default function OrdersClient({
           <b>📸 Bio Instagram</b>
           <b>💬 WhatsApp / SMS</b>
           <b>🌐 Votre site</b>
+        </div>
+
+        {/* ---- Votre site + adresse de commande personnalisée ---- */}
+        <div className="site-fields">
+          <h3>Votre site et votre propre adresse de commande</h3>
+          <p className="muted" style={{ margin: "2px 0 10px" }}>
+            Vos clients commandent sur <b>commander.votre-domaine.fr</b>, sans
+            jamais voir Kado, et reviennent sur votre site en un clic.
+          </p>
+          <label className="field">
+            <span>Adresse de votre site (bouton « Retour au site »)</span>
+            <input
+              type="url"
+              inputMode="url"
+              placeholder="https://www.mon-commerce.fr"
+              value={siteDraft}
+              onChange={(e) => setSiteDraft(e.target.value)}
+            />
+          </label>
+          <label className="field">
+            <span>Sous-domaine de commande (facultatif)</span>
+            <input
+              type="text"
+              inputMode="url"
+              autoCapitalize="none"
+              placeholder="commander.mon-commerce.fr"
+              value={domainDraft}
+              onChange={(e) => setDomainDraft(e.target.value)}
+            />
+          </label>
+          <div className="site-actions">
+            <button className="btn" disabled={siteBusy} onClick={saveSite}>
+              {siteBusy ? "…" : "Enregistrer"}
+            </button>
+            {siteMsg && <span className="muted">{siteMsg}</span>}
+          </div>
+          <details className="site-dns">
+            <summary>Comment relier mon sous-domaine ? (2 étapes)</summary>
+            <ol>
+              <li>
+                Chez votre registrar (Wix, OVH, Gandi, IONOS…), ajoutez un
+                enregistrement <b>CNAME</b> : nom <code>commander</code>, cible{" "}
+                <code>cname.vercel-dns.com</code>. Sur Wix : Domaines, Gérer
+                les enregistrements DNS, Ajouter un enregistrement CNAME.
+              </li>
+              <li>
+                Enregistrez le sous-domaine ci-dessus, puis écrivez-nous à{" "}
+                <a href="mailto:bonjour@kado-app.fr?subject=Sous-domaine%20de%20commande">
+                  bonjour@kado-app.fr
+                </a>
+                . Nous activons le certificat HTTPS sous 24 h ouvrées.
+              </li>
+            </ol>
+            <p className="muted" style={{ margin: "6px 0 0", fontSize: 13 }}>
+              Sur votre site Wix, un bouton « Commander » pointant vers cette
+              adresse suffit. Le lien Kado{" "}
+              <a href={kadoLink} target="_blank" rel="noreferrer">
+                {kadoLink.replace(/^https?:\/\//, "")}
+              </a>{" "}
+              continue de fonctionner.
+            </p>
+          </details>
         </div>
       </div>
 
