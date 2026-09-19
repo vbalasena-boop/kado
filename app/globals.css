@@ -1,21 +1,31 @@
 :root {
-  /* Direction « Festif raffiné » — prune profond + or, contrastes premium */
-  --night: #17092e;
-  --night-2: #110720;
-  --surface: #241641;
-  --surface-2: #2e1b52;
-  --gold: #f5b841;
-  --gold-deep: #e0a020;
-  --coral: #ff5d73;
-  --mint: #3dd9a0;
-  --violet: #8b6cff;
-  --cream: #ede7fb;
-  --cream-dim: #b3a6d2;
-  --stroke: rgba(237, 231, 251, 0.14);
-  --glow: #3a2568;
-  /* Dégradé signature « coucher de soleil » (roue + gros boutons) */
-  --sunset: linear-gradient(135deg, #ff6b4a, #f5b841 55%, #ff4e87);
-  --shadow: 0 24px 60px -20px rgba(10, 3, 26, 0.72);
+  /* Direction « Sombre premium raffiné » — plum-ink profond + or champagne.
+     Base désaturée vers l'encre pour un rendu haut de gamme : l'or reste
+     l'unique accent héros, corail et menthe deviennent des touches rares. */
+  --night: #130a20;
+  --night-2: #0c0616;
+  --surface: #1c1333;
+  --surface-2: #241947;
+  --gold: #ecc474;
+  --gold-deep: #c99a41;
+  --coral: #f2657f;
+  --mint: #46caa0;
+  --violet: #8f74ff;
+  --cream: #f2edfb;
+  --cream-dim: #a99cc6;
+  --stroke: rgba(242, 237, 251, 0.1);
+  --glow: #2c1c52;
+  /* Filet lumineux (bord supérieur des cartes) + surface vitrée réutilisable */
+  --hairline: rgba(242, 237, 251, 0.06);
+  --surface-glass: rgba(28, 19, 51, 0.6);
+  /* Dégradé signature « coucher de soleil » — calmé, aligné or champagne */
+  --sunset: linear-gradient(135deg, #ef6f52, #ecc474 55%, #f2657f);
+  /* Or métallique en dégradé (boutons héros) */
+  --gold-grad: linear-gradient(135deg, #f3d089 0%, #ecc474 45%, #cf9f44 100%);
+  /* Élévations en couches — ombre premium douce et profonde */
+  --shadow: 0 24px 60px -20px rgba(6, 2, 16, 0.78);
+  --shadow-sm: 0 2px 10px -3px rgba(6, 2, 16, 0.55);
+  --shadow-lg: 0 44px 100px -32px rgba(6, 2, 16, 0.85);
   --font: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI",
     Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-head: var(--font-display), var(--font);
@@ -840,7 +850,7 @@ canvas#confetti {
   background: linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
   border: 1px solid var(--stroke);
   border-radius: 28px;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow), inset 0 1px 0 var(--hairline);
   padding: 40px 28px;
   max-width: 460px;
   text-align: center;
@@ -871,8 +881,8 @@ canvas#confetti {
   padding: 15px 26px;
   border-radius: 16px;
   color: var(--night);
-  background: linear-gradient(135deg, var(--gold), var(--gold-deep));
-  box-shadow: 0 12px 26px -10px var(--gold-deep);
+  background: var(--gold-grad);
+  box-shadow: 0 14px 30px -12px rgba(201, 154, 65, 0.55);
 }
 .landing-fine {
   font-size: 12px;
@@ -2079,7 +2089,7 @@ canvas#confetti {
 .v-btn.primary {
   color: #2a0e10;
   background: var(--sunset);
-  box-shadow: 0 14px 30px -10px rgba(255, 78, 135, 0.5);
+  box-shadow: 0 16px 34px -12px rgba(201, 154, 65, 0.5);
 }
 .v-btn.ghost {
   color: var(--cream);
@@ -2106,6 +2116,7 @@ canvas#confetti {
   border-radius: 20px;
   padding: 24px;
   text-align: center;
+  box-shadow: inset 0 1px 0 var(--hairline);
 }
 .v-step-n {
   width: 42px;
@@ -4651,7 +4662,7 @@ a.btn {
 
 /* Défilement doux + sélection de texte à la marque */
 html { scroll-behavior: smooth; }
-::selection { background: rgba(255, 194, 77, 0.3); color: #fff; }
+::selection { background: rgba(236, 196, 116, 0.28); color: #fff; }
 
 /* Accessibilité clavier : anneaux de focus visibles */
 .vitrine a:focus-visible,
@@ -4660,7 +4671,7 @@ html { scroll-behavior: smooth; }
 .auth-page button:focus-visible,
 .auth-input:focus-visible,
 .v-faq-item summary:focus-visible {
-  outline: 3px solid rgba(255, 194, 77, 0.6);
+  outline: 3px solid rgba(236, 196, 116, 0.6);
   outline-offset: 3px;
   border-radius: 12px;
 }
@@ -4672,11 +4683,11 @@ html { scroll-behavior: smooth; }
 }
 .v-btn.primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 22px 42px -12px rgba(255, 78, 135, 0.6);
+  box-shadow: 0 20px 42px -14px rgba(201, 154, 65, 0.55);
 }
 .v-btn.primary:active { transform: translateY(0); }
 .v-btn.ghost:hover {
-  border-color: rgba(255, 194, 77, 0.5);
+  border-color: rgba(236, 196, 116, 0.45);
   color: #fff;
   background: rgba(255, 255, 255, 0.04);
 }
@@ -4698,15 +4709,15 @@ html { scroll-behavior: smooth; }
 .v-step:hover,
 .v-benefit:hover {
   transform: translateY(-4px);
-  border-color: rgba(255, 194, 77, 0.35);
-  box-shadow: 0 22px 44px -22px rgba(0, 0, 0, 0.85);
+  border-color: rgba(236, 196, 116, 0.3);
+  box-shadow: 0 26px 50px -26px rgba(6, 2, 16, 0.9);
 }
 .v-chip:hover {
-  border-color: rgba(255, 194, 77, 0.5);
+  border-color: rgba(236, 196, 116, 0.45);
   color: var(--cream);
   transform: translateY(-1px);
 }
-.v-faq-item:hover { border-color: rgba(255, 194, 77, 0.3); }
+.v-faq-item:hover { border-color: rgba(236, 196, 116, 0.26); }
 
 /* Zone héros : halo doux derrière la roue */
 .v-hero { position: relative; }
@@ -4721,8 +4732,8 @@ html { scroll-behavior: smooth; }
   transform: translateX(-50%);
   background: radial-gradient(
     circle,
-    rgba(255, 107, 74, 0.14),
-    rgba(255, 78, 135, 0.06) 45%,
+    rgba(236, 196, 116, 0.12),
+    rgba(143, 116, 255, 0.05) 45%,
     transparent 66%
   );
   pointer-events: none;
@@ -4738,7 +4749,7 @@ html { scroll-behavior: smooth; }
   .v-plan.popular {
     transform: scale(1.05);
     z-index: 2;
-    box-shadow: 0 30px 70px -24px rgba(240, 165, 46, 0.45);
+    box-shadow: 0 30px 70px -24px rgba(201, 154, 65, 0.4);
   }
   .v-plan.popular:hover { transform: scale(1.05) translateY(-4px); }
   .v-plan:not(.popular):hover { transform: translateY(-4px); }
