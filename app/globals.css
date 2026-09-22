@@ -1839,7 +1839,7 @@ canvas#confetti {
 .admin-table td {
   text-align: left;
   padding: 14px 16px;
-  border-bottom: 1px solid #eee7f7;
+  border-bottom: 1px solid var(--g-line);
   white-space: nowrap;
 }
 .admin-table th {
@@ -1877,7 +1877,7 @@ canvas#confetti {
   margin-right: 8px;
   padding: 1px 7px;
   border-radius: 6px;
-  background: #fff0d6;
+  background: var(--d-gold-tint);
   color: #a05a00;
   font-size: 12px;
   font-weight: 700;
@@ -1961,7 +1961,7 @@ canvas#confetti {
 }
 .redeem-result.ok {
   background: var(--d-green-tint);
-  color: #188038;
+  color: var(--g-green);
 }
 .redeem-result.warn {
   background: var(--d-gold-tint);
@@ -1969,13 +1969,13 @@ canvas#confetti {
 }
 .redeem-result.bad {
   background: var(--d-red-tint);
-  color: #d93025;
+  color: var(--g-red);
 }
 .redeem-prize {
   font-size: 18px;
   font-weight: 700;
   margin-top: 6px;
-  color: #202124;
+  color: var(--g-ink);
 }
 .prize-qr {
   display: block;
@@ -2019,7 +2019,7 @@ canvas#confetti {
   flex: 0 0 auto;
 }
 .toggle-field b {
-  color: #202124;
+  color: var(--g-ink);
 }
 .leads-head {
   display: flex;
@@ -5312,7 +5312,7 @@ html { scroll-behavior: smooth; }
   cursor: pointer;
   font-size: 13.5px;
   font-weight: 600;
-  color: #188038;
+  color: var(--g-green);
   padding: 8px 0;
   user-select: none;
 }
@@ -5403,11 +5403,11 @@ html { scroll-behavior: smooth; }
 }
 .setup-chip.done {
   background: rgba(24, 128, 56, 0.1);
-  color: #188038;
+  color: var(--g-green);
 }
 .setup-chip.todo {
   background: rgba(217, 48, 37, 0.1);
-  color: #d93025;
+  color: var(--g-red);
 }
 .admin-table td .sub-actions {
   max-width: 320px;
@@ -5430,7 +5430,7 @@ html { scroll-behavior: smooth; }
 .act-more .sub-actions { margin-top: 8px; }
 
 /* ───── Admin : état du système (auto-surveillance) ───── */
-.health-card.is-ok { border-left: 4px solid #188038; }
+.health-card.is-ok { border-left: 4px solid var(--g-green); }
 .health-card.is-bad { border-left: 4px solid var(--g-red, #d93025); }
 .health-grid {
   display: grid;
@@ -5499,7 +5499,7 @@ html { scroll-behavior: smooth; }
 /* Ancienneté des commandes à préparer : escalade additive (le rouge « new »
    existant reste, on ajoute un liseré et un badge selon l'urgence). */
 .order-card.age-aging { border-left: 4px solid #e0a020; }
-.order-card.age-late { border-left: 4px solid #d93025; }
+.order-card.age-late { border-left: 4px solid var(--g-red); }
 .order-age {
   font-size: 12px;
   font-weight: 800;
