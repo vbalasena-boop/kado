@@ -1065,7 +1065,7 @@ canvas#confetti {
   padding: 12px 18px;
   font-weight: 700;
   cursor: pointer;
-  background: linear-gradient(135deg, #ff6b4a, #ff4e87);
+  background: var(--sunset);
   color: #fff;
 }
 .feedback-send:disabled { opacity: 0.6; }
@@ -2279,7 +2279,7 @@ canvas#confetti {
 .v-topnav-cta {
   color: #2a0e10 !important;
   background: var(--sunset);
-  box-shadow: 0 8px 20px -10px rgba(255, 78, 135, 0.5);
+  box-shadow: 0 8px 20px -10px rgba(201, 154, 65, 0.5);
 }
 
 /* ---- Vitrine v2 : héros enrichi ---- */
@@ -3468,7 +3468,7 @@ canvas#confetti {
   font-size: 0.95rem;
   border: none;
   cursor: pointer;
-  box-shadow: 0 8px 20px rgba(255, 78, 135, 0.4);
+  box-shadow: 0 8px 20px rgba(201, 154, 65, 0.4);
   transition: transform 0.12s, box-shadow 0.12s;
 }
 .hw-btn:hover:not(:disabled) { transform: translateY(-1px); }
@@ -5766,7 +5766,7 @@ html { scroll-behavior: smooth; }
   border: 2px solid transparent;
   transition: border-color 0.15s;
 }
-.uber-item.in-cart { border-color: #f5b841; }
+.uber-item.in-cart { border-color: var(--gold); }
 .uber-item-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .uber-item-info h3 { margin: 0 0 3px; font-size: 16px; font-weight: 700; }
 .uber-item-info p {
@@ -5871,7 +5871,7 @@ html { scroll-behavior: smooth; }
   font-size: 16px;
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 8px 24px rgba(255, 78, 135, 0.4);
+  box-shadow: 0 8px 24px rgba(201, 154, 65, 0.4);
   z-index: 40;
 }
 .uber-cartbar-count {
@@ -5940,7 +5940,7 @@ html { scroll-behavior: smooth; }
 .uber-form select:focus,
 .uber-form textarea:focus {
   outline: none;
-  border-color: #f5b841;
+  border-color: var(--gold);
   background: #fff;
 }
 .uber-err {
@@ -5966,7 +5966,7 @@ html { scroll-behavior: smooth; }
   height: 20px;
   flex: 0 0 auto;
   margin-top: 1px;
-  accent-color: #f5b841;
+  accent-color: var(--gold);
 }
 .uber-notify span { font-size: 14.5px; color: #17092e; line-height: 1.35; }
 .uber-notify small { display: block; color: #7a6f88; font-size: 12.5px; margin-top: 2px; }
@@ -6002,9 +6002,9 @@ html { scroll-behavior: smooth; }
 .track li.done .track-dot { background: var(--gold); color: #fff; border-color: var(--gold); }
 .track li.active .track-dot {
   background: #fff; color: #c2306a; border-color: var(--gold);
-  box-shadow: 0 0 0 4px #f5b84133; animation: trackpulse 1.4s ease-in-out infinite;
+  box-shadow: 0 0 0 4px #ecc47433; animation: trackpulse 1.4s ease-in-out infinite;
 }
-@keyframes trackpulse { 50% { box-shadow: 0 0 0 8px #f5b84122; } }
+@keyframes trackpulse { 50% { box-shadow: 0 0 0 8px #ecc47422; } }
 .track-label { color: #5e556e; line-height: 1.2; }
 .track li.active .track-label { color: #17092e; font-weight: 700; }
 .track-table {
@@ -6020,7 +6020,7 @@ html { scroll-behavior: smooth; }
 }
 .uber-mode button.on {
   border-color: var(--gold); background: #fff8ec; color: #17092e;
-  box-shadow: 0 0 0 3px #f5b84122;
+  box-shadow: 0 0 0 3px #ecc47422;
 }
 .order-mode.onsite {
   display: inline-block; background: #eef7ee; color: #1a7a4a; font-weight: 800;
@@ -6141,7 +6141,7 @@ html { scroll-behavior: smooth; }
   background: #17092e; color: #fff; font-weight: 800; font-size: 15px;
   border-radius: 8px; padding: 3px 12px;
 }
-.order-card.is-buzzer { border-left: 4px solid #f5b841; }
+.order-card.is-buzzer { border-left: 4px solid var(--gold); }
 /* Carte option « Suivi au comptoir » */
 .opt-card.on { border-left: 4px solid #1a7a4a; }
 .opt-head { display: flex; align-items: center; gap: 18px; justify-content: space-between; }
@@ -6245,7 +6245,7 @@ html { scroll-behavior: smooth; }
   /* Accent de marque (thème commerçant), comme le gros bouton du jeu. */
   background: linear-gradient(135deg, var(--gold), var(--coral));
   cursor: pointer;
-  box-shadow: 0 6px 18px rgba(255, 78, 135, 0.35);
+  box-shadow: 0 6px 18px rgba(201, 154, 65, 0.35);
 }
 .uber-submit:disabled { opacity: 0.55; cursor: default; }
 .uber-done {
@@ -6694,8 +6694,8 @@ html { scroll-behavior: smooth; }
 }
 .support-fab:hover { filter: brightness(1.06); }
 .support-fab.sunset {
-  background: linear-gradient(135deg, #ff6b4a, #f5b841 55%, #ff4e87);
-  color: #17092e; box-shadow: 0 10px 30px rgba(255, 78, 135, 0.45);
+  background: var(--sunset);
+  color: var(--night); box-shadow: 0 10px 30px rgba(201, 154, 65, 0.45);
 }
 
 /* ───── FAQ / Aide (accordéons natifs, sans JS) ───── */
@@ -7448,7 +7448,7 @@ summary:focus-visible,
 }
 .v-btn:hover { transform: translateY(-2px); }
 .v-btn.primary:hover {
-  box-shadow: 0 20px 42px -12px rgba(255, 78, 135, 0.6);
+  box-shadow: 0 20px 42px -12px rgba(201, 154, 65, 0.6);
   filter: brightness(1.03);
 }
 .v-btn:active { transform: translateY(0) scale(0.985); }
