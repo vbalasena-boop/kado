@@ -158,6 +158,9 @@ export default async function DashboardLayout({
             <Link href="/dashboard/billing">
               <Icon name="card" /> Abonnement
             </Link>
+            <Link href="/dashboard/demarrage">
+              <Icon name="download" /> Guide de démarrage
+            </Link>
             <Link href="/dashboard/aide">
               <Icon name="help" /> Aide
             </Link>

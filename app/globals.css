@@ -2687,11 +2687,26 @@ canvas#confetti {
   font-weight: 800;
   letter-spacing: -0.01em;
 }
+.pp-eyebrow {
+  font-family: var(--mono, ui-monospace, monospace);
+  text-transform: uppercase;
+  letter-spacing: 0.26em;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #9a6b12;
+  opacity: 0.85;
+  margin-bottom: 7px;
+}
 .pp-title {
   font-size: 27px;
   font-weight: 800;
   letter-spacing: -0.02em;
   margin-bottom: 6px;
+}
+.pp-title .pp-serif {
+  font-family: var(--serif, Georgia, serif);
+  font-style: italic;
+  font-weight: 600;
 }
 .pp-sub {
   color: #5b5470;
@@ -8614,4 +8629,185 @@ summary:focus-visible,
   .dash .opt-head .btn,
   .dash .site-actions .btn,
   .dash .product-actions .btn { width: auto; }
+}
+
+/* ===== Guide de démarrage commerçant (document imprimable A4) =====
+   Clair, format « magazine » : bandeau courant, titre serif, étapes
+   numérotées, cartes « bons réflexes », QR. Rendu volontairement clair
+   (impression), posé sur le dashboard sombre comme l'affiche. */
+.sg {
+  --sg-ink: #1b1330;
+  --sg-dim: #5f5873;
+  --sg-line: #e7e2d6;
+  --sg-accent: #c2541f;
+  --sg-paper: #fbfaf6;
+  background: var(--sg-paper);
+  color: var(--sg-ink);
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 40px 44px 30px;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  box-shadow: 0 18px 50px -24px rgba(0, 0, 0, 0.3);
+  font-family: var(--font);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.sg h1, .sg h2, .sg h3 { color: var(--sg-ink); }
+.sg-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 10.5px;
+  color: var(--sg-dim);
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--sg-line);
+}
+.sg-top-r {
+  color: var(--sg-ink);
+  font-weight: 600;
+  max-width: 55%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sg-eyebrow {
+  display: block;
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.26em;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--sg-accent);
+  margin-bottom: 8px;
+}
+.sg-intro { margin: 26px 0 8px; }
+.sg-title {
+  font-family: var(--serif);
+  font-size: 40px;
+  line-height: 1.08;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+.sg-title .sg-serif { font-style: italic; color: var(--sg-accent); }
+.sg-lede {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 16px;
+  color: var(--sg-dim);
+  margin: 14px 0 0;
+  max-width: 60ch;
+}
+.sg-steps {
+  list-style: none;
+  margin: 28px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.sg-steps li { display: flex; gap: 18px; align-items: flex-start; }
+.sg-step-n {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--sg-ink);
+  color: #fff;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sg-step-body h2 { font-size: 17px; font-weight: 700; margin: 7px 0 4px; letter-spacing: -0.01em; }
+.sg-step-body p { font-size: 14px; line-height: 1.55; color: var(--sg-dim); margin: 0; }
+.sg-link {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  margin: 30px 0 0;
+  padding: 22px;
+  border: 1px solid var(--sg-line);
+  border-radius: 16px;
+  background: #fff;
+}
+.sg-link-copy { flex: 1 1 auto; min-width: 0; }
+.sg-link-copy h2 { font-size: 18px; margin: 2px 0 6px; }
+.sg-link-copy p { font-size: 13.5px; color: var(--sg-dim); line-height: 1.5; margin: 0 0 10px; }
+.sg-url {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  background: #f3f1ea;
+  border: 1px solid var(--sg-line);
+  border-radius: 8px;
+  padding: 6px 10px;
+  word-break: break-all;
+  color: var(--sg-ink);
+}
+.sg-qr {
+  width: 132px;
+  height: 132px;
+  flex: 0 0 auto;
+  border-radius: 10px;
+  border: 1px solid var(--sg-line);
+  background: #fff;
+}
+.sg-tips { margin: 30px 0 0; }
+.sg-tips-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 12px; }
+.sg-tip { border: 1px solid var(--sg-line); border-radius: 14px; padding: 16px 18px; background: #fff; }
+.sg-tip-n { font-family: var(--mono); font-weight: 700; font-size: 12px; color: var(--sg-accent); letter-spacing: 0.06em; }
+.sg-tip h3 { font-size: 15px; margin: 6px 0 4px; }
+.sg-tip p { font-size: 13px; color: var(--sg-dim); line-height: 1.5; margin: 0; }
+.sg-quote {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 19px;
+  line-height: 1.4;
+  color: var(--sg-ink);
+  border: 0;
+  border-top: 1px solid var(--sg-line);
+  margin: 28px 0 0;
+  padding: 18px 0 0;
+  text-align: center;
+}
+.sg-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 24px;
+  padding-top: 12px;
+  border-top: 1px solid var(--sg-line);
+  font-size: 12px;
+  color: var(--sg-dim);
+  font-family: var(--mono);
+  letter-spacing: 0.04em;
+}
+.sg-foot-l { display: inline-flex; align-items: center; gap: 7px; }
+.sg-foot-logo { width: 18px; height: 18px; border-radius: 50%; object-fit: cover; }
+@media (max-width: 560px) {
+  .sg { padding: 26px 20px; }
+  .sg-title { font-size: 30px; }
+  .sg-link { flex-direction: column; align-items: flex-start; }
+  .sg-tips-grid { grid-template-columns: 1fr; }
+}
+@media print {
+  body * { visibility: hidden; }
+  .sg, .sg * { visibility: visible; }
+  .sg {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    max-width: none;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 14mm 16mm;
+  }
 }
