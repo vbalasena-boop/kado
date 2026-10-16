@@ -2223,6 +2223,89 @@ canvas#confetti {
   color: var(--cream-dim);
   margin: 8px 0 20px;
 }
+/* « Par où commencer » — encart d'action numéroté (inspiré du gabarit guide :
+   eyebrow mono, titre serif accentué, étapes 01/02/03 en liste). */
+.v-start { text-align: center; }
+.v-start h2 { font-size: 26px; letter-spacing: -0.01em; }
+.v-start-lede { color: var(--cream-dim); margin: 8px 0 22px; font-size: 14.5px; }
+.v-start-steps {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+  max-width: 520px;
+  margin: 0 auto 24px;
+}
+.v-start-steps li {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: var(--night-2);
+  border: 1px solid var(--stroke);
+  box-shadow: inset 0 1px 0 var(--hairline);
+}
+.v-start-n {
+  flex: 0 0 auto;
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.04em;
+  min-width: 26px;
+  padding-top: 1px;
+}
+.v-start-steps b {
+  display: block;
+  font-size: 15px;
+  color: var(--cream);
+  letter-spacing: -0.01em;
+  margin-bottom: 3px;
+}
+.v-start-steps small {
+  display: block;
+  font-size: 13.5px;
+  color: var(--cream-dim);
+  line-height: 1.5;
+}
+/* Citation éditoriale (inspirée du gabarit guide : grande serif + attribution
+   mono). Guillemet or en filigrane. */
+.v-quote {
+  max-width: 720px;
+  margin: 0 auto;
+  text-align: center;
+  position: relative;
+  padding: 10px 16px;
+}
+.v-quote::before {
+  content: "\201C";
+  display: block;
+  font-family: var(--serif);
+  font-size: 72px;
+  line-height: 0.6;
+  color: var(--gold);
+  opacity: 0.35;
+  margin-bottom: 6px;
+}
+.v-quote blockquote {
+  font-family: var(--serif);
+  font-size: clamp(22px, 4.2vw, 30px);
+  line-height: 1.32;
+  letter-spacing: -0.01em;
+  color: var(--cream);
+  margin: 0;
+}
+.v-quote figcaption {
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.28em;
+  font-size: 11.5px;
+  color: var(--gold);
+  opacity: 0.9;
+  margin-top: 18px;
+}
 .v-footer {
   display: flex;
   gap: 16px;

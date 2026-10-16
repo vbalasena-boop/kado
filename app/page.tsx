@@ -416,6 +416,15 @@ export default function Home({
       </section>
 
       <section className="v-section">
+        <figure className="v-quote">
+          <blockquote>
+            Vos clients repartent avec un cadeau. Vous, avec un <span className="v-serif">avis Google</span>, un abonné et une visite de plus.
+          </blockquote>
+          <figcaption>L'idée derrière Kado</figcaption>
+        </figure>
+      </section>
+
+      <section className="v-section">
         <h2>Des tarifs <span className="v-serif">simples</span></h2>
         <p className="v-audience-note" style={{ marginTop: -6, marginBottom: 22 }}>
           Choisissez votre formule, sans engagement, résiliable à tout moment.
@@ -471,12 +480,38 @@ export default function Home({
         ]}
       />
 
-      <section className="v-final">
-        <h2>Prêt à faire tourner la roue ?</h2>
-        <p>Créez votre compte gratuit et lancez votre première roue en quelques minutes.</p>
-        <div className="v-cta">
-          <a className="v-btn primary" href="/login?signup=1">Créer mon compte gratuit →</a>
-          <a className="v-btn ghost" href="/cafe-lumiere"><Play className="ico" size={18} weight="fill" /> Essayer la démo</a>
+      <section className="v-section v-final">
+        <div className="v-start">
+          <span className="v-eyebrow">Par où commencer</span>
+          <h2>Lancez Kado en <span className="v-serif">3 étapes</span></h2>
+          <p className="v-start-lede">Pas de technique, pas d'installation. Vous êtes prêt en quelques minutes.</p>
+          <ol className="v-start-steps">
+            <li>
+              <span className="v-start-n">01</span>
+              <div>
+                <b>Créez votre compte gratuit</b>
+                <small>14 jours d'essai, sans carte bancaire, toutes les fonctionnalités.</small>
+              </div>
+            </li>
+            <li>
+              <span className="v-start-n">02</span>
+              <div>
+                <b>Personnalisez vos cadeaux &amp; imprimez votre QR</b>
+                <small>Lots pré-remplis selon votre métier, affiche prête à poser en 2 minutes.</small>
+              </div>
+            </li>
+            <li>
+              <span className="v-start-n">03</span>
+              <div>
+                <b>Vos clients scannent, jouent et reviennent</b>
+                <small>Plus d'avis Google 5★, plus d'abonnés Instagram, plus de visites.</small>
+              </div>
+            </li>
+          </ol>
+          <div className="v-cta">
+            <a className="v-btn primary" href="/login?signup=1">Créer mon compte gratuit →</a>
+            <a className="v-btn ghost" href="/cafe-lumiere"><Play className="ico" size={18} weight="fill" /> Essayer la démo</a>
+          </div>
         </div>
       </section>
 
