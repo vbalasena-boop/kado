@@ -27,6 +27,8 @@ const PRIZES = [
   },
 ];
 
+const mocks = vi.hoisted(() => ({ rateLimit: vi.fn(async () => true) }));
+
 // Client Supabase minimal : route les lectures selon la table + les colonnes.
 function makeClient() {
   return {
@@ -77,8 +79,9 @@ function makeClient() {
 }
 
 vi.mock("@/lib/rate-limit", () => ({
-  rateLimit: async () => true,
+  rateLimit: mocks.rateLimit,
   clientIp: () => "test-ip",
+  hashRateLimitKey: (value: string) => `hashed:${value}`,
 }));
 vi.mock("@/lib/supabase/admin", () => ({ getAdminClient: () => makeClient() }));
 vi.mock("@/lib/player", () => ({ getOrCreatePlayerId: () => "player1" }));
@@ -100,6 +103,23 @@ describe("POST /api/play — garde des actions déclenchantes", () => {
     TRIGGER = ["instagram"];
     LOYALTY_ENABLED = true;
     INSTAGRAM_URL = "https://instagram.com/cafe";
+    mocks.rateLimit.mockReset();
+    mocks.rateLimit.mockResolvedValue(true);
+  });
+
+  it("refuse les tours quand le plafond réseau du commerce est atteint", async () => {
+    mocks.rateLimit.mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+
+    const res = await POST(post("instagram"));
+
+    expect(res.status).toBe(429);
+    expect((await res.json()).error).toBe("rate_limited");
+    expect(mocks.rateLimit).toHaveBeenNthCalledWith(
+      2,
+      "play-business:biz1:hashed:test-ip",
+      80,
+      3600
+    );
   });
 
   it("instagram sans lien MAIS autre action offerte → 403 (bouton mort évité)", async () => {

@@ -21,9 +21,10 @@ export default function Confidentialite() {
       <ul>
         <li>
           L'adresse IP de la requête est utilisée pour limiter les abus et les
-          tentatives automatisées. Les compteurs contenant cette adresse sont
-          purgés chaque jour après expiration de leur fenêtre de limitation
-          (48 heures d'inactivité).
+          tentatives automatisées. Pour les tours de jeu, Kado stocke une clé
+          HMAC (une empreinte cryptographique secrète), limitée au commerce,
+          plutôt que l'adresse IP brute. Les compteurs anti-abus expirent après
+          leur fenêtre et sont purgés après 48 heures d'inactivité.
         </li>
         <li>
           Un identifiant <b>pseudonyme</b> stocké dans un cookie technique

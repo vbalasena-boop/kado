@@ -7,6 +7,7 @@ import { sendPushToBusiness } from "@/lib/push";
 import { isTriggerActionAllowed, instagramHref } from "@/lib/wheel";
 import { isValidDeviceHash } from "@/lib/device-hash";
 import { FINGERPRINT_CONSENT_VERSION } from "@/lib/fingerprint-consent";
+import { clientIp, hashRateLimitKey, rateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -31,8 +32,12 @@ const Body = z.object({
 export const POST = publicRoute({
   schema: Body,
   // Anti-abus : 30 tours/min max par IP
-  rateLimit: { key: ({ ip }) => `play:${ip}`, limit: 30, windowSeconds: 60 },
-  handler: async ({ body }) => {
+  rateLimit: {
+    key: ({ ip }) => `play:${hashRateLimitKey(ip)}`,
+    limit: 30,
+    windowSeconds: 60,
+  },
+  handler: async ({ body, req }) => {
     const { slug, playType } = body;
     if (!slug || !playType || !VALID_TYPES.includes(playType as any)) {
       return Response.json({ error: "invalid_params" }, { status: 400 });
@@ -76,6 +81,20 @@ export const POST = publicRoute({
     // il repasse en mode normal, même si le drapeau démo n'a pas été retiré.
     // Passer en essai retire déjà le drapeau (→ mode normal aussi).
     const isDemo = !!biz.demo && biz.subscription_status !== "active";
+
+    // Cookie rotation creates new player IDs. Add a second server-side ceiling
+    // per business and network, without requiring fingerprint, login, phone, or
+    // other customer data. HMAC keeps raw IP out of this persisted rate key.
+    if (
+      !isDemo &&
+      !(await rateLimit(
+        `play-business:${biz.id}:${hashRateLimitKey(clientIp(req))}`,
+        80,
+        60 * 60
+      ))
+    ) {
+      return Response.json({ error: "rate_limited" }, { status: 429 });
+    }
 
     const playerId = isDemo
       ? globalThis.crypto.randomUUID()
