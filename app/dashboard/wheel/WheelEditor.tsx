@@ -146,11 +146,11 @@ export default function WheelEditor({
   type EditorTab = "look" | "game" | "links" | "fid" | "draw";
   const [tab, setTab] = useState<EditorTab>("look");
   const ALL_TABS: { id: EditorTab; label: string; show: boolean }[] = [
-    { id: "look", label: "🎨 Apparence", show: showRoue },
-    { id: "game", label: "🎮 Le jeu", show: showRoue },
-    { id: "links", label: "🔗 Liens", show: showRoue },
-    { id: "fid", label: "🎟️ Fidélité", show: showFidelite || showRoue },
-    { id: "draw", label: "🎲 Tirage", show: showRoue },
+    { id: "look", label: "Apparence", show: showRoue },
+    { id: "game", label: "Jeu et cadeaux", show: showRoue },
+    { id: "links", label: "Actions", show: showRoue },
+    { id: "fid", label: "Fidélité", show: showFidelite || showRoue },
+    { id: "draw", label: "Concours", show: showRoue },
   ];
   const TABS = ALL_TABS.filter((t) => t.show);
   // Page personnalisée par l'admin (formule Installation) : le commerçant
