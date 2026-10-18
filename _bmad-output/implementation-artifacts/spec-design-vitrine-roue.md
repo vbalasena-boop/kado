@@ -1,6 +1,6 @@
 ---
 title: "Refonte visuelle de la vitrine et de la roue Kado"
-status: in-progress
+status: review
 ---
 
 # Refonte visuelle de la vitrine et de la roue Kado
@@ -28,6 +28,6 @@ Rendre la page d'accueil Kado et l'expérience de la roue plus distinctives, coh
 
 ## Reprise
 
-- Fait : nouvelle direction « ticket de comptoir », roue de démo recolorée avec retour accessible, habillage de la roue 3D et adaptations mobile ; build de production réussi.
-- Reste : publier, vérifier l'état Vercel et inspecter la vitrine en ligne.
-- Prochaine commande : confirmer le déploiement de production après publication.
+- Fait : nouvelle direction « ticket de comptoir », roue de démo recolorée avec retour accessible, habillage de la roue 3D et adaptations mobile ; build de production réussi et commit local créé.
+- Reste : publier et vérifier le déploiement Vercel. Le contrôle automatique a refusé la publication parce que le transfert de `app/globals.css` était tronqué ; le site en ligne n'a pas été modifié.
+- Prochaine commande : obtenir l'accord de l'utilisateur avant une autre méthode de publication.
