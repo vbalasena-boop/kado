@@ -4,6 +4,8 @@ import {
   formatEuros,
   recalcCart,
   buildCustomerOrderEmail,
+  buildOrderReadyEmail,
+  buildOrderCancelledEmail,
   orderApplicationFee,
   orderMatchesQuery,
   type OrderItemInput,
@@ -113,6 +115,41 @@ describe("buildCustomerOrderEmail — mention de paiement", () => {
     expect(buildCustomerOrderEmail({ ...base, paid: true }).html).toContain(
       "AB12C"
     );
+  });
+});
+
+describe("e-mails de statut d'une commande", () => {
+  it("construit un e-mail prêt en échappant le nom et le code", () => {
+    const mail = buildOrderReadyEmail({
+      to: "alice@example.com",
+      code: "<AB12>",
+      bizName: "Chez Alice",
+      customerName: "<Alice>",
+      paidFootnote: "Déjà réglée en ligne.",
+    });
+
+    expect(mail.subject).toContain("<AB12>");
+    expect(mail.html).toContain("&lt;Alice&gt;");
+    expect(mail.html).toContain("&lt;AB12&gt;");
+    expect(mail.html).toContain("Déjà réglée en ligne.");
+  });
+
+  it("ne promet un remboursement que si celui-ci a été déclenché", () => {
+    const refunded = buildOrderCancelledEmail({
+      to: "alice@example.com",
+      code: "AB12",
+      bizName: "Chez Alice",
+      refunded: true,
+    });
+    const notRefunded = buildOrderCancelledEmail({
+      to: "alice@example.com",
+      code: "AB12",
+      bizName: "Chez Alice",
+      refunded: false,
+    });
+
+    expect(refunded.html).toContain("a été remboursé");
+    expect(notRefunded.html).toContain("éventuel remboursement");
   });
 });
 

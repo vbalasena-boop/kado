@@ -1,14 +1,17 @@
 import { z } from "zod";
 import { merchantRoute } from "@/lib/api";
 import { getAdminClient } from "@/lib/supabase/admin";
-import { sendEmail, emailLayout } from "@/lib/email";
-import { escapeHtml } from "@/lib/campaigns";
+import { sendEmail } from "@/lib/email";
 import { pushToSubscriptionDetailed } from "@/lib/push";
 import { sendSms } from "@/lib/sms";
 import { getStripe } from "@/lib/stripe";
 import { reportError } from "@/lib/report";
 import { isMissingColumnError } from "@/lib/db-errors";
-import { refundEligibility } from "@/lib/orders";
+import {
+  buildOrderCancelledEmail,
+  buildOrderReadyEmail,
+  refundEligibility,
+} from "@/lib/orders";
 import { performOrderRefund, type RefundOutcome } from "@/lib/order-refund";
 
 export const dynamic = "force-dynamic";
@@ -260,58 +263,22 @@ export const POST = merchantRoute({
       // E-mail au client (s'il a laissé son adresse)
       try {
         if (order.customer_email) {
-          await sendEmail(
-            isCancel
-              ? {
-                  to: order.customer_email,
-                  subject: `Votre commande ${order.code} chez ${business.name} a été annulée`,
-                  fromName: `${business.name} via Kado`,
-                  html: emailLayout({
-                    preview: `Votre commande a été annulée.`,
-                    emoji: "❌",
-                    heading: `Commande annulée${
-                      order.customer_name
-                        ? `, ${escapeHtml(order.customer_name)}`
-                        : ""
-                    }`,
-                    bodyHtml: `
-                <p style="margin:0 0 14px;">Votre commande <b>${escapeHtml(
-                  order.code
-                )}</b> chez <b>${escapeHtml(
-                        business.name
-                      )}</b> a été <b>annulée</b>.</p>
-                <p style="margin:0 0 8px;">Pour toute question, rapprochez-vous directement du commerce.</p>`,
-                    footnote:
-                      refund?.status === "refunded"
-                        ? "Votre paiement en ligne a été remboursé."
-                        : "Pour toute question sur un éventuel remboursement, rapprochez-vous du commerce.",
-                  }),
-                  text: `Votre commande ${order.code} chez ${business.name} a été annulée.`,
-                }
-              : {
-                  to: order.customer_email,
-                  subject: `Votre commande ${order.code} est prête chez ${business.name}`,
-                  fromName: `${business.name} via Kado`,
-                  html: emailLayout({
-                    preview: `Votre commande est prête, venez la récupérer !`,
-                    emoji: "✅",
-                    heading: `C'est prêt${
-                      order.customer_name
-                        ? `, ${escapeHtml(order.customer_name)}`
-                        : ""
-                    } !`,
-                    bodyHtml: `
-                <p style="margin:0 0 14px;">Votre commande chez <b>${escapeHtml(
-                  business.name
-                )}</b> est <b>prête</b>. Présentez ce code au retrait :</p>
-                <p style="margin:0 0 8px;text-align:center;"><span style="display:inline-block;font-family:monospace;font-size:30px;font-weight:800;letter-spacing:0.15em;background:#f7f5fb;border:2px dashed #cfc5e5;border-radius:14px;padding:12px 22px;">${escapeHtml(
-                  order.code
-                )}</span></p>`,
-                    footnote: readyFootnote,
-                  }),
-                  text: `Votre commande ${order.code} chez ${business.name} est prête. Venez la récupérer !`,
-                }
-          );
+          const message = isCancel
+            ? buildOrderCancelledEmail({
+                to: order.customer_email,
+                code: order.code,
+                bizName: business.name,
+                customerName: order.customer_name,
+                refunded: refund?.status === "refunded",
+              })
+            : buildOrderReadyEmail({
+                to: order.customer_email,
+                code: order.code,
+                bizName: business.name,
+                customerName: order.customer_name,
+                paidFootnote: readyFootnote,
+              });
+          await sendEmail(message);
           emailResult = "sent"; // marqué seulement après un envoi réussi
         }
       } catch {

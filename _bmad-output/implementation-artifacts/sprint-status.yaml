@@ -104,11 +104,11 @@ action_items:
     action: "F3 — Extraire buildOrderReadyEmail/buildOrderCancelledEmail hors du POST
       orders"
     owner: "Root"
-    status: open
+    status: done
     ref: "_bmad-output/implementation-artifacts/epic-11-retro-08-25-2026.md"
   - id: "epic-11-retro-item-4-f4-garantir-l-exhaustivité-de-refundoutc"
     epic: 11
     action: "F4 — Garantir l exhaustivité de RefundOutcome côté frontend"
     owner: "Root"
-    status: open
+    status: done
     ref: "_bmad-output/implementation-artifacts/epic-11-retro-08-25-2026.md"
