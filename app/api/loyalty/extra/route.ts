@@ -43,7 +43,7 @@ export const POST = publicRoute({
     // bon code, un tiers ne peut pas modifier la carte d'autrui.
     const { data: card } = await db
       .from("loyalty_cards")
-      .select("id")
+      .select("id, unsubscribed_at")
       .eq("business_id", biz.id)
       .eq("email", body.email)
       .eq("code", body.code.toUpperCase())
@@ -58,6 +58,11 @@ export const POST = publicRoute({
       patch.birthday_month = body.birthday_month;
     }
     if (typeof body.marketing_ok === "boolean") {
+      // Une désinscription active prime sur la préférence envoyée par le
+      // navigateur. Seul le parcours de réabonnement confirmé peut la lever.
+      if (body.marketing_ok && card.unsubscribed_at) {
+        return Response.json({ error: "resubscribe_confirmation_required" }, { status: 409 });
+      }
       patch.marketing_ok = body.marketing_ok;
       // RGPD : on NE ré-efface PLUS `unsubscribed_at` ici. Un client qui s'était
       // désinscrit ne peut pas être ré-abonné de force via cet endpoint public ;

@@ -299,6 +299,19 @@ export const POST = merchantRoute({
         } catch (e) {
           reportError(e, { where: "dashboard/orders.notified_ready" });
         }
+      } else if (emailResult === "sent" || pushResult === "sent") {
+        try {
+          const { error } = await db
+            .from("orders")
+            .update({ notified_cancelled_at: new Date().toISOString() })
+            .eq("id", order.id)
+            .eq("business_id", business.id);
+          if (error && !isMissingColumnError(error)) {
+            reportError(error, { where: "dashboard/orders.notified_cancelled" });
+          }
+        } catch (e) {
+          reportError(e, { where: "dashboard/orders.notified_cancelled" });
+        }
       }
     }
 

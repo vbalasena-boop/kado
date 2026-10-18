@@ -31,6 +31,7 @@ function fakeDb(rows: any[] = [], opts: { error?: any } = {}) {
         return b;
       },
       select: () => {
+        if (payload === null) return b;
         if (opts.error) return Promise.resolve({ data: null, error: opts.error });
         // lignes correspondant à TOUS les filtres (état AVANT update)
         const matched = rows.filter((r) =>
@@ -39,6 +40,17 @@ function fakeDb(rows: any[] = [], opts: { error?: any } = {}) {
         matched.forEach((r) => Object.assign(r, payload));
         return Promise.resolve({
           data: matched.map((r) => ({ id: r.id })),
+          error: null,
+        });
+      },
+      maybeSingle: () => {
+        if (opts.error) return Promise.resolve({ data: null, error: opts.error });
+        const matched = rows.filter((r) =>
+          Object.entries(filters).every(([c, v]) => r[c] === v)
+        );
+        const { total_cents, id } = matched[0] ?? {};
+        return Promise.resolve({
+          data: matched[0] ? { id, total_cents } : null,
           error: null,
         });
       },
@@ -56,12 +68,12 @@ function fakeDb(rows: any[] = [], opts: { error?: any } = {}) {
 }
 
 function refund(overrides: any = {}): any {
-  return { id: "re_1", status: "succeeded", metadata: {}, created: 1_700_000_000, ...overrides };
+  return { id: "re_1", status: "succeeded", amount: 1000, metadata: {}, created: 1_700_000_000, ...overrides };
 }
 
 describe("reconcileRefundEvent — succeeded (confirme + ferme record_failed)", () => {
   it("metadata.order_id, ligne refunded=false → confirmed, écrit refunded=true + stripe_refund_id + refunded_at(refund.created)", async () => {
-    const row = { id: "ord-9", refunded: false, stripe_refund_id: null, refunded_at: null };
+    const row = { id: "ord-9", total_cents: 1000, refunded: false, stripe_refund_id: null, refunded_at: null };
     const db = fakeDb([row]);
     const out = await reconcileRefundEvent(
       db,
@@ -78,7 +90,7 @@ describe("reconcileRefundEvent — succeeded (confirme + ferme record_failed)", 
   });
 
   it("déjà enregistré (ligne refunded=true) → 0 ligne, noop idempotent, ligne inchangée", async () => {
-    const row = { id: "ord-9", refunded: true, stripe_refund_id: "re_9" };
+    const row = { id: "ord-9", total_cents: 1000, refunded: true, stripe_refund_id: "re_9" };
     const db = fakeDb([row]);
     const out = await reconcileRefundEvent(
       db,
@@ -89,7 +101,7 @@ describe("reconcileRefundEvent — succeeded (confirme + ferme record_failed)", 
   });
 
   it("commande introuvable (order_id inconnu) → 0 ligne → noop (ne prétend pas avoir réparé)", async () => {
-    const db = fakeDb([{ id: "autre", refunded: false }]);
+    const db = fakeDb([{ id: "autre", total_cents: 1000, refunded: false }]);
     const out = await reconcileRefundEvent(
       db,
       refund({ id: "re_9", status: "succeeded", metadata: { order_id: "inconnu" } })
@@ -98,7 +110,7 @@ describe("reconcileRefundEvent — succeeded (confirme + ferme record_failed)", 
   });
 
   it("repli sur stripe_refund_id quand pas de metadata", async () => {
-    const row = { id: "ord-x", refunded: false, stripe_refund_id: "re_old" };
+    const row = { id: "ord-x", total_cents: 1000, refunded: false, stripe_refund_id: "re_old" };
     const db = fakeDb([row]);
     const out = await reconcileRefundEvent(
       db,
@@ -163,6 +175,20 @@ describe("reconcileRefundEvent — failed/canceled (révocation gardée, anti-cl
   });
 });
 
+describe("reconcileRefundEvent — protection contre les remboursements partiels", () => {
+  it("un refund inférieur au total ne marque pas la commande entièrement remboursée", async () => {
+    const row = { id: "ord-9", total_cents: 1000, refunded: false, stripe_refund_id: null };
+    const db = fakeDb([row]);
+    const out = await reconcileRefundEvent(
+      db,
+      refund({ amount: 500, metadata: { order_id: "ord-9" } })
+    );
+    expect(out).toEqual({ action: "noop", orderId: "ord-9" });
+    expect(row.refunded).toBe(false);
+    expect(row.stripe_refund_id).toBeNull();
+  });
+});
+
 describe("reconcileRefundEvent — no-op & robustesse", () => {
   it("pending → noop, aucune écriture (from() jamais appelé)", async () => {
     const db = fakeDb();
@@ -183,7 +209,7 @@ describe("reconcileRefundEvent — no-op & robustesse", () => {
   });
 
   it("colonnes 0047 absentes (update renvoie {error}) → noop tolérant", async () => {
-    const db = fakeDb([{ id: "ord-9", refunded: false }], {
+    const db = fakeDb([{ id: "ord-9", total_cents: 1000, refunded: false }], {
       error: { message: 'column "stripe_refund_id" does not exist' },
     });
     const out = await reconcileRefundEvent(
@@ -207,7 +233,7 @@ describe("reconcileRefundEvent — no-op & robustesse", () => {
   });
 
   it("ne jette jamais, même avec un refund minimal", async () => {
-    const db = fakeDb([{ id: "x", refunded: false, stripe_refund_id: "re_x" }]);
+    const db = fakeDb([{ id: "x", total_cents: 1000, refunded: false, stripe_refund_id: "re_x" }]);
     await expect(
       reconcileRefundEvent(db, { id: "re_x", status: "succeeded" } as any)
     ).resolves.toBeTruthy();
