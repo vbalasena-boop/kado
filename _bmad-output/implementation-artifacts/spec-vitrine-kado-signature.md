@@ -2,7 +2,7 @@
 title: 'Donner une identité visuelle singulière à la vitrine Kado'
 type: 'feature'
 created: '2026-10-18'
-status: 'review'
+status: 'done'
 review_loop_iteration: 0
 baseline_commit: '023cd287abe2b3657a7ea71978de54d5da075df4'
 context: []
@@ -31,7 +31,7 @@ Remplacer l’esthétique SaaS sombre, brillante et très animée de la page d�
 
 ## Reprise
 
-- Fait : accueil restructuré en affiche éditoriale « papier de comptoir », sections harmonisées et contrastes vérifiés dans le navigateur.
-- Reste : publication en production, sur demande.
-- Vérification : `npm run lint`, `npm run build` et `git diff --check` réussis ; pas de suite de tests lancée.
-- Prochaine commande : revue de la proposition puis publication si demandée.
+- Fait : accueil restructuré en affiche éditoriale « papier de comptoir », sections harmonisées et contrastes vérifiés dans le navigateur ; changement poussé et publié sur kado-app.fr.
+- Reste : aucun point bloquant pour cette story.
+- Vérification : `scripts/relais/verifier.sh` réussi (tests, lint, TypeScript) ; compilation et vérification du diff déjà réussies.
+- Prochaine commande : aucune.
