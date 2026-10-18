@@ -9218,6 +9218,97 @@ body:has(.vitrine) {
   .vitrine .pv-phone:hover { transform: none; }
 }
 
+/* Espace commerçant : les gestes quotidiens restent visibles, les outils
+   secondaires se rangent dans un menu court et réouvrable. */
+.dash-nav {
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.dash-nav-primary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.dash-nav a[aria-current="page"] {
+  color: #174ea6;
+  background: #e8f0fe;
+}
+.dash-nav-more { position: relative; }
+.dash-nav-more-dots { font-size: 18px; letter-spacing: 1px; line-height: 1; }
+.dash-nav-more > summary {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  color: #4a3d6b;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  list-style: none;
+  user-select: none;
+}
+.dash-nav-more > summary::-webkit-details-marker { display: none; }
+.dash-nav-more > summary:hover,
+.dash-nav-more[open] > summary { background: #f0ecfa; }
+.dash-nav-chevron { margin-left: 2px; transition: transform 160ms ease; }
+.dash-nav-more[open] .dash-nav-chevron { transform: rotate(180deg); }
+.dash-nav-secondary {
+  position: absolute;
+  z-index: 12;
+  top: calc(100% + 6px);
+  right: 0;
+  display: grid;
+  min-width: 220px;
+  gap: 2px;
+  padding: 7px;
+  border: 1px solid #e1dce9;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(36, 27, 61, 0.16);
+}
+.dash-nav-secondary a { width: 100%; }
+.dash-nav-secondary a[aria-current="page"] { color: #174ea6; background: #e8f0fe; }
+.dash-nav-more summary:focus-visible,
+.dash-nav a:focus-visible {
+  outline: 3px solid #1a73e8;
+  outline-offset: 2px;
+}
+.tuto-home { display: block; }
+.tuto-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #3c4043;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  list-style: none;
+}
+.tuto-summary::-webkit-details-marker { display: none; }
+.tuto-summary-action { display: inline-flex; align-items: center; gap: 10px; color: #5f6368; font-weight: 500; }
+.tuto-summary-action b { color: #1a73e8; font-size: 20px; font-weight: 400; line-height: 1; }
+.tuto-summary:focus-visible { outline: 3px solid #1a73e8; outline-offset: 4px; border-radius: 4px; }
+.tuto-home[open] .tuto-summary-action b { transform: rotate(45deg); }
+.tuto-home-content { display: flex; align-items: center; gap: 26px; padding-top: 18px; }
+.tuto-home-content .tuto-home-txt { flex: 1 1 240px; }
+.tuto-home-content .tuto-home-txt p { margin-bottom: 10px; }
+@media (max-width: 640px) {
+  .dash-nav { display: flex; align-items: stretch; }
+  .dash-nav-primary { flex-direction: column; }
+  .dash-nav-more > summary { width: 100%; justify-content: space-between; padding: 12px 14px; }
+  .dash-nav-secondary { position: static; min-width: 0; margin: 3px 5px 7px; box-shadow: none; background: #faf9fc; }
+  .tuto-summary { align-items: flex-start; flex-direction: column; }
+  .tuto-home-content { flex-direction: column; align-items: stretch; }
+  .tuto-home-content .tuto-video { flex-basis: auto; max-width: 320px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dash-nav-chevron { transition: none; }
+}
+
 /* ============================================================
    ESPACE COMMERÇANT & CONNEXION — continuité « moderne » avec la vitrine.
    Thème CLAIR conservé (lisibilité d'un outil du quotidien), mais : encre

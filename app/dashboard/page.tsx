@@ -450,28 +450,32 @@ export default async function DashboardHome({
       )}
 
       {showChecklist && showRoue && (
-        <div className="dash-card tuto-home">
-          <div className="tuto-home-txt">
-            <h2>▶️ Démarrer en 3 minutes</h2>
-            <p>
-              Regardez cette courte vidéo : elle vous montre, étape par étape,
-              comment mettre Kado en place dans votre commerce.
-            </p>
-            <Link href="/dashboard/aide" className="setup-cta">
-              Voir toute l'aide →
-            </Link>
+        <details className="dash-card tuto-home">
+          <summary className="tuto-summary">
+            <span>Besoin d’un coup de main ?</span>
+            <span className="tuto-summary-action">Vidéo de démarrage · 3 min <b aria-hidden="true">＋</b></span>
+          </summary>
+          <div className="tuto-home-content">
+            <div className="tuto-home-txt">
+              <p>
+                Suivez les étapes pour installer Kado dans votre commerce.
+              </p>
+              <Link href="/dashboard/aide" className="setup-cta">
+                Ouvrir le guide d’aide →
+              </Link>
+            </div>
+            <video
+              className="tuto-video"
+              controls
+              preload="metadata"
+              playsInline
+              poster="/tutoriel-kado-poster.jpg"
+            >
+              <source src="/tutoriel-kado.mp4" type="video/mp4" />
+              Votre navigateur ne peut pas lire cette vidéo.
+            </video>
           </div>
-          <video
-            className="tuto-video"
-            controls
-            preload="metadata"
-            playsInline
-            poster="/tutoriel-kado-poster.jpg"
-          >
-            <source src="/tutoriel-kado.mp4" type="video/mp4" />
-            Votre navigateur ne peut pas lire cette vidéo.
-          </video>
-        </div>
+        </details>
       )}
 
       {showChecklist && showRoue && (

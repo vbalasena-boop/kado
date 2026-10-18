@@ -13,6 +13,7 @@ import { KadoMark } from "@/components/Logo";
 import { BusinessSwitcher } from "@/components/BusinessSwitcher";
 import SupportButton from "@/components/SupportButton";
 import { Onboarding } from "./Onboarding";
+import DashboardNav from "./DashboardNav";
 
 export const dynamic = "force-dynamic";
 
@@ -102,81 +103,12 @@ export default async function DashboardLayout({
         </main>
       ) : (
         <>
-          {/* Menu mobile : sous 640px, la nav (jusqu'à 11 liens) s'empilait sur
-              5-6 rangées. Hamburger pur CSS (case à cocher) — pas de JS ; comme
-              chaque lien recharge la page (Server Component), le menu se referme
-              tout seul à la navigation. */}
-          <input
-            type="checkbox"
-            id="dash-nav-toggle"
-            className="dash-nav-toggle"
+          <DashboardNav
+            showRoue={hasModule(business, "roue")}
+            showFidelite={hasModule(business, "fidelite")}
+            clickCollect={clickCollect}
+            slug={business.slug}
           />
-          <label htmlFor="dash-nav-toggle" className="dash-nav-burger">
-            ☰ Menu
-          </label>
-          <nav className="dash-nav">
-            <Link href="/dashboard">
-              <Icon name="dashboard" /> Vue d'ensemble
-            </Link>
-            {hasModule(business, "roue") && (
-              <Link href="/dashboard/wheel">
-                <Icon name="wheel" /> Mon jeu
-              </Link>
-            )}
-            {hasModule(business, "fidelite") && !hasModule(business, "roue") && (
-              <Link href="/dashboard/wheel">
-                <Icon name="wheel" /> Fidélité
-              </Link>
-            )}
-            {hasModule(business, "roue") && (
-              <Link href="/dashboard/qr">
-                <Icon name="qr" /> QR code
-              </Link>
-            )}
-            <Link href="/dashboard/validate">
-              <Icon name="redeem" /> Valider en caisse
-            </Link>
-            {hasModule(business, "roue") && (
-              <Link href="/dashboard/leads">
-                <Icon name="mail" /> Clients
-              </Link>
-            )}
-            <Link href="/dashboard/campaigns">
-              <Icon name="share" /> Campagnes
-            </Link>
-            <Link href="/dashboard/avis">
-              <Icon name="star" /> Avis
-            </Link>
-            <Link href="/dashboard/feedback">
-              <Icon name="mail" /> Retours
-            </Link>
-            {clickCollect && (
-              <Link href="/dashboard/orders">
-                <Icon name="cart" /> Commandes
-              </Link>
-            )}
-            <Link href="/dashboard/billing">
-              <Icon name="card" /> Abonnement
-            </Link>
-            <Link href="/dashboard/aide">
-              <Icon name="help" /> Aide
-            </Link>
-            {hasModule(business, "roue") && (
-              <>
-                <Link href={`/${business.slug}?preview=1`} target="_blank">
-                  <Icon name="test" /> Tester mon jeu
-                </Link>
-                <Link href={`/${business.slug}`} target="_blank">
-                  <Icon name="external" /> Voir ma page
-                </Link>
-              </>
-            )}
-            {hasModule(business, "fidelite") && (
-              <Link href={`/${business.slug}/fidelite`} target="_blank">
-                <Icon name="loyalty" /> Carte fidélité
-              </Link>
-            )}
-          </nav>
           <main className="dash-main">{children}</main>
           <SupportButton business={business?.name} />
         </>
