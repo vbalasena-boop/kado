@@ -56,7 +56,7 @@ export default function HeroEditorial() {
         <article className="hero-game-card">
           <header className="hero-game-head">
             <Logo size={32} />
-            <span className="hero-edition">Le jeu du café<br />Nº 01</span>
+            <span className="hero-edition">ÉDITION COMPTOIR<br />PARIS · Nº 001</span>
           </header>
           <div className="hero-wheel" role="img" aria-label="Roue de jeu colorée">
             <span className="hero-wheel-pointer" aria-hidden="true" />
@@ -67,9 +67,9 @@ export default function HeroEditorial() {
             <span className="hero-wheel-center" aria-hidden="true">K</span>
           </div>
           <div className="hero-game-caption">
-            <span className="hero-caption-overline">UNE PETITE PAUSE ?</span>
-            <strong>À vous de jouer.</strong>
-            <span>Un cadeau vous attend peut-être.</span>
+            <span className="hero-caption-overline">LE TICKET DU JOUR</span>
+            <strong>À vous la chance.</strong>
+            <span>Un petit cadeau, juste là.</span>
           </div>
           <div className="hero-game-action" aria-hidden="true">
             <span>Tourner la roue</span><span>↗</span>
@@ -78,7 +78,7 @@ export default function HeroEditorial() {
 
         <div className="hero-ticket">
           <span className="hero-ticket-icon" aria-hidden="true">✳</span>
-          <span>La prochaine tournée<br /><b>est pour vous.</b></span>
+          <span>À garder près de soi<br /><b>et à faire tourner.</b></span>
         </div>
       </div>
     </section>

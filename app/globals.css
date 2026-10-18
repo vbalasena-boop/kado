@@ -9046,6 +9046,179 @@ body:has(.vitrine) {
 }
 
 /* ============================================================
+   Kado — édition « ticket de comptoir »
+   Une affiche découpée dans le papier, avec aplats d'encre et détails
+   d'imprimerie. La même grammaire habille l'accueil et la roue jouée.
+   ============================================================ */
+.vitrine {
+  --paper: #f6f0e4;
+  --paper-light: #fffaf0;
+  --paper-deep: #e9ddc9;
+  --ink: #2e2833;
+  --ink-soft: #6c6265;
+  --plum: #352744;
+  --pepper: #d94f35;
+  --sun: #f0c24d;
+  --leaf: #5c8063;
+  --rule: #d9cdbb;
+  background:
+    radial-gradient(ellipse at 74% 4%, rgba(240, 194, 77, 0.12), transparent 30rem),
+    radial-gradient(circle at 1px 1px, rgba(53, 39, 68, 0.035) 1px, transparent 1.35px) 0 0 / 17px 17px,
+    var(--paper);
+}
+.vitrine .v-topbar { border-bottom: 1px dashed #cfc1ac; }
+.vitrine .v-topnav-cta { box-shadow: 3px 3px 0 var(--pepper); }
+.vitrine .hero-editorial { min-height: 630px; }
+.vitrine .hero-editorial h1 { font-size: clamp(58px, 7.4vw, 92px); }
+.vitrine .hero-art { min-height: 510px; }
+.vitrine .hero-art::before {
+  inset: 4% 0 4% 2%;
+  border: 1px solid #493952;
+  border-radius: 48% 52% 44% 56% / 53% 45% 55% 47%;
+  background:
+    radial-gradient(circle at 50% 48%, rgba(240, 194, 77, 0.18), transparent 52%),
+    radial-gradient(circle at 1px 1px, rgba(255, 250, 240, 0.1) 1px, transparent 1.4px) 0 0 / 11px 11px,
+    var(--plum);
+  box-shadow: inset 0 0 0 9px rgba(255, 250, 240, 0.035), 0 22px 60px rgba(53, 39, 68, 0.14);
+}
+.vitrine .hero-art-sun { width: 84px; height: 84px; border: 5px solid var(--plum); }
+.vitrine .hero-art-spark-one { color: var(--sun); }
+.vitrine .hero-art-spark-two { color: #f4d88e; }
+.vitrine .hero-game-card {
+  width: min(100%, 350px);
+  border: 1px solid #d2c1a7;
+  border-radius: 5px;
+  background:
+    linear-gradient(90deg, transparent 0 9px, rgba(217, 79, 53, 0.08) 9px 10px, transparent 10px),
+    radial-gradient(circle at 1px 1px, rgba(53, 39, 68, 0.055) 1px, transparent 1.3px) 0 0 / 10px 10px,
+    var(--paper-light);
+  box-shadow: 9px 10px 0 rgba(240, 194, 77, 0.92), 0 24px 55px rgba(13, 8, 20, 0.28);
+  transform: rotate(1.5deg);
+  transition: transform 240ms ease, box-shadow 240ms ease;
+}
+.vitrine .hero-art:hover .hero-game-card { transform: rotate(0deg) translateY(-4px); box-shadow: 11px 14px 0 var(--sun), 0 30px 65px rgba(13, 8, 20, 0.32); }
+.vitrine .hero-game-card::before,
+.vitrine .hero-game-card::after { background: var(--plum); border-color: var(--plum); }
+.vitrine .hero-game-head { border-color: #cdbda6; }
+.vitrine .hero-edition { color: var(--pepper); font-size: 8px; letter-spacing: 0.13em; }
+.vitrine .hero-wheel {
+  border: 7px solid var(--paper-light);
+  background: conic-gradient(from -30deg, #dc563d 0 60deg, #5d795f 60deg 120deg, #e9b849 120deg 180deg, #82709a 180deg 240deg, #d98768 240deg 300deg, #3b3543 300deg 360deg);
+  box-shadow: 0 0 0 1px #cbb99f, 0 8px 0 #e6d6bd, 0 14px 25px rgba(41, 35, 49, 0.2);
+}
+.vitrine .hero-wheel:hover { animation: ticket-wheel-turn 8s linear infinite; }
+.vitrine .hero-wheel::before { background: repeating-conic-gradient(from -30deg, transparent 0 58.8deg, var(--paper-light) 58.8deg 60deg); }
+.vitrine .hero-wheel-center { border-color: var(--paper-light); box-shadow: 0 2px 5px rgba(0,0,0,.22); }
+.vitrine .hero-game-caption strong { font-size: 27px; }
+.vitrine .hero-game-action { border-radius: 3px; box-shadow: 3px 3px 0 var(--sun); }
+.vitrine .hero-ticket { border-radius: 3px; box-shadow: 4px 5px 0 #1f1728; }
+.vitrine .v-section { border-top-style: dashed; }
+.vitrine .section-index { letter-spacing: 0.14em; }
+.vitrine .story-ribbon {
+  width: fit-content;
+  padding: 9px 15px;
+  border: 1px dashed #cbbb9f;
+  border-radius: 3px;
+  background: rgba(255, 250, 240, 0.55);
+}
+.vitrine .v-step-n { display: inline-block; padding-bottom: 5px; border-bottom: 2px solid var(--sun); }
+.vitrine .pv-phone { transform: rotate(1.3deg); transition: transform 220ms ease, box-shadow 220ms ease; }
+.vitrine .pv-phone:hover { transform: rotate(0) translateY(-4px); box-shadow: 12px 16px 0 rgba(53, 39, 68, 0.1); }
+.vitrine .v-chip { border-style: dashed; border-radius: 999px; }
+.vitrine .v-concours { border-radius: 4px; background: linear-gradient(120deg, #eee2cf, #f0e4d1 72%, #ead9bf); }
+.vitrine .v-plan { border-radius: 5px; box-shadow: 3px 4px 0 #e9ddc9; }
+.vitrine .v-plan.popular { box-shadow: 5px 5px 0 var(--pepper); }
+.vitrine .v-plan .v-btn { box-shadow: 3px 3px 0 var(--plum); }
+.vitrine .v-faq-item { border-bottom-style: dashed; }
+.vitrine .v-final { border-radius: 5px; box-shadow: 7px 8px 0 var(--sun); background: radial-gradient(circle at 1px 1px, rgba(255,255,255,.08) 1px, transparent 1.3px) 0 0 / 12px 12px, var(--plum); }
+.vitrine .v-footer { border-top-style: dashed; }
+
+/* La démo partage les couleurs imprimées de la roue d'accueil. */
+.vitrine .hw { gap: 14px; }
+.vitrine .hw-wheel-wrap {
+  width: 192px;
+  height: 192px;
+  padding: 5px;
+  border: 1px solid #e8d8b9;
+  border-radius: 50%;
+  background: #fffaf0;
+  box-shadow: 0 0 0 5px #d94f35, 0 0 0 8px #f0c24d, 0 14px 0 #d9c7a9, 0 20px 28px rgba(53, 39, 68, 0.2);
+}
+.vitrine .hw-wheel { filter: drop-shadow(0 2px 2px rgba(53, 39, 68, 0.2)); }
+.vitrine .hw-pointer {
+  top: -10px;
+  border-left-width: 11px;
+  border-right-width: 11px;
+  border-top-width: 19px;
+  border-top-color: var(--plum);
+  filter: drop-shadow(0 2px 0 var(--sun));
+}
+.vitrine .hw-btn {
+  min-height: 42px;
+  border: 1px solid var(--plum);
+  border-radius: 3px;
+  color: var(--paper-light);
+  background: var(--pepper);
+  box-shadow: 3px 4px 0 var(--plum);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.vitrine .hw-btn:hover:not(:disabled) { transform: translate(-1px, -2px); box-shadow: 5px 6px 0 var(--plum); }
+.vitrine .hw-result > b { color: var(--plum); }
+.vitrine .hw-again { border-radius: 3px; color: var(--paper-light); background: var(--plum); }
+.vitrine .hw-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
+.vitrine .pv-screen .hw-wheel-wrap { width: 164px; height: 164px; }
+.vitrine .pv-screen .hw-btn { color: var(--paper-light); background: var(--pepper); }
+.vitrine .pv-screen .hg-tabs { border: 1px solid #d8c9b3; border-radius: 4px; background: #f2eadc; }
+.vitrine .pv-screen .hg-tab { border-radius: 2px; }
+
+/* Plateau de jeu : la roue semble posée sur un comptoir, quelle que soit la marque. */
+.wheel-wrap {
+  isolation: isolate;
+  max-width: 360px;
+  margin-bottom: 40px;
+}
+.wheel-wrap:not(.wheel-gl)::before,
+.wheel-wrap.wheel-gl::before {
+  content: "";
+  position: absolute;
+  z-index: -2;
+  inset: 2%;
+  border: 1px solid color-mix(in srgb, var(--gold) 55%, transparent);
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--gold) 14%, transparent), transparent 61%);
+  box-shadow: 0 0 0 9px color-mix(in srgb, var(--gold) 7%, transparent), 0 22px 38px rgba(0,0,0,.24);
+}
+.wheel-wrap.wheel-gl::before { inset: 7% 11%; }
+.wheel-wrap .pointer { filter: drop-shadow(0 3px 0 color-mix(in srgb, var(--night) 55%, transparent)) drop-shadow(0 0 9px color-mix(in srgb, var(--gold) 45%, transparent)); }
+.wheel-wrap canvas#wheel { box-shadow: 0 0 0 8px color-mix(in srgb, var(--surface-2) 92%, transparent), 0 0 0 11px var(--gold), 0 0 0 15px color-mix(in srgb, var(--gold) 22%, transparent), 0 32px 54px -18px rgba(0,0,0,.75); }
+.wheel-gl-host canvas { filter: drop-shadow(0 0 14px color-mix(in srgb, var(--gold) 22%, transparent)); }
+.wheel-head { position: relative; margin-bottom: 21px; }
+.wheel-head h2 { font-size: 24px; letter-spacing: -0.035em; }
+.wheel-head p { max-width: 310px; margin-inline: auto; line-height: 1.55; }
+.card { border-radius: 24px; background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,.045) 1px, transparent 1.3px), linear-gradient(180deg, var(--surface-glass, var(--surface)), var(--surface-glass-2, var(--surface-2))); background-size: 15px 15px, auto; }
+
+@keyframes ticket-wheel-turn { to { transform: rotate(360deg); } }
+@media (max-width: 800px) {
+  .vitrine .hero-editorial { min-height: unset; }
+  .vitrine .hero-art { min-height: 490px; }
+}
+@media (max-width: 640px) {
+  .vitrine .hero-art { min-height: 450px; }
+  .vitrine .hero-art::before { inset: 4% 0; }
+  .vitrine .hero-game-card { width: min(78vw, 320px); }
+  .vitrine .story-ribbon { margin-inline: auto; }
+  .vitrine .hw-wheel-wrap { width: 184px; height: 184px; }
+  .wheel-wrap { max-width: min(100%, 330px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vitrine .hero-wheel:hover { animation: none; }
+  .vitrine .hero-art:hover .hero-game-card,
+  .vitrine .pv-phone:hover { transform: none; }
+}
+
+/* ============================================================
    ESPACE COMMERÇANT & CONNEXION — continuité « moderne » avec la vitrine.
    Thème CLAIR conservé (lisibilité d'un outil du quotidien), mais : encre
    prune, accent or (fini le bleu Google et le violet), boutons en pilules,
