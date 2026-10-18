@@ -1,7 +1,7 @@
 # Base de données Kado — migrations & CLI Supabase
 
 Le schéma vit dans `supabase/migrations/`. Les migrations numérotées vont de
-`0001` à `0084`, mais certains préfixes historiques sont dupliqués (`0041`,
+`0001` à `0087`, mais certains préfixes historiques sont dupliqués (`0041`,
 `0042`, `0043`). Les
 fichiers sont donc ordonnés par préfixe puis par nom; un préfixe seul ne
 constitue pas un identifiant unique de migration. Deux façons de les appliquer.
@@ -57,6 +57,11 @@ explicitement toute migration manuelle et son état distant.
 # (le nom peut aussi être généré par : supabase migration new nom — mais il
 #  utilise un préfixe horodaté ; préfère la numérotation séquentielle ici.)
 ```
+
+Les migrations `0085`–`0087` ont été appliquées au projet de production `kado`
+le 18 octobre 2026 et enregistrées dans `supabase_migrations.schema_migrations`.
+Elles réconcilient les anciennes actions Instagram, ajoutent l'horodatage de
+notification d'annulation et les champs d'audit des remboursements.
 
 La migration `0084_one_time_game_passes.sql` avait ajouté un système de codes
 de jeu à usage unique, appliqué au projet de production `kado` le 18 octobre

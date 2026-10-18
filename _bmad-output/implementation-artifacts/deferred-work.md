@@ -1,6 +1,6 @@
 # Revue du 18 octobre 2026
 
-Ce fichier est un instantané historique de constats de revue. Plusieurs éléments ci-dessous ont depuis été corrigés par leurs stories dédiées. La passe de clôture actuelle est documentée dans [`spec-deferred-backlog-remediation.md`](spec-deferred-backlog-remediation.md) : garde de réabonnement, migration des anciennes actions Instagram, horodatage d'annulation et protection contre les refunds partiels. La FAQ Google, le gating fidélité, la réconciliation webhook des refunds et la purge de rétention étaient déjà livrés.
+Ce fichier est un instantané historique de constats de revue. Plusieurs éléments ci-dessous ont depuis été corrigés par leurs stories dédiées. La passe de clôture actuelle est documentée dans [`spec-deferred-backlog-remediation.md`](spec-deferred-backlog-remediation.md) : garde de réabonnement, migrations des actions et commandes, horodatage d'annulation, audit du remboursement, e-mail au client, protection contre les refunds partiels, GET sans écriture pour la désinscription et plafond excluant les anciens avis. La FAQ Google, le gating fidélité, la réconciliation webhook des refunds et la purge de rétention étaient déjà livrés.
 
 Les éléments marqués « Ask-First » ou comme décision produit/RGPD restent des choix à valider séparément ; ils ne sont pas des défauts de code à corriger sans décision, notamment la collecte de métadonnées de consentement et la déduplication générique de tous les événements Stripe.
 

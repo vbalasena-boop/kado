@@ -70,7 +70,7 @@ const PostBody = z.object({
  */
 export const POST = merchantRoute({
   schema: PostBody,
-  handler: async ({ body: rawBody, business }) => {
+  handler: async ({ body: rawBody, business, user }) => {
     const body = rawBody as { id?: string; code?: string; status?: string };
     const next = String(body.status ?? "");
     const code = String(body.code ?? "").trim().toUpperCase().slice(0, 12);
@@ -175,6 +175,8 @@ export const POST = merchantRoute({
           refund = await performOrderRefund(db, getStripe(), {
             ...order,
             business_id: business.id,
+            refunded_by: typeof user?.id === "string" ? user.id : null,
+            refund_reason: "merchant_cancellation",
           });
         } catch (e) {
           // performOrderRefund ne jette pas, mais getStripe() (config absente)

@@ -212,6 +212,18 @@ describe("POST /api/loyalty/resubscribe/confirm (confirmation délibérée)", ()
     expect(insertCalls.filter((c) => c.table === "consent_events")).toHaveLength(0);
   });
 
+  it("commerce suspendu depuis l'envoi du lien → aucun réabonnement", async () => {
+    cardData = { id: "c1", unsubscribed_at: UNSUB };
+    updateRows = [{ id: "c1" }];
+    bizStatus = "suspended";
+    const exp = Date.now() + 100000;
+    const res = await confirmPost(
+      confirmReq({ b: "biz1", e: encodeEmail(email), exp: String(exp), t: goodToken(exp) })
+    );
+    expect(res.status).toBe(400);
+    expect(updateCalls).toHaveLength(0);
+  });
+
   it("token expiré → AUCUNE écriture, 400", async () => {
     cardData = { id: "c1", unsubscribed_at: UNSUB };
     const exp = Date.now() - 1000;

@@ -436,6 +436,28 @@ export function buildOrderCancelledEmail(o: {
   };
 }
 
+/** E-mail transactionnel après demande de remboursement depuis l'espace commerce. */
+export function buildOrderRefundedEmail(o: {
+  to: string;
+  code: string;
+  bizName: string;
+  customerName?: string | null;
+}) {
+  return {
+    to: o.to,
+    subject: `Remboursement demandé pour votre commande ${o.code} chez ${o.bizName}`,
+    fromName: `${o.bizName} via Kado`,
+    html: emailLayout({
+      preview: "Le commerce a demandé le remboursement de votre commande.",
+      emoji: "↩️",
+      heading: `Remboursement demandé${o.customerName ? `, ${escapeHtml(o.customerName)}` : ""}`,
+      bodyHtml: `<p style="margin:0 0 14px;">Le commerce <b>${escapeHtml(o.bizName)}</b> a demandé le remboursement de votre commande <b>${escapeHtml(o.code)}</b>.</p><p style="margin:0;">Le délai d'apparition dépend de votre banque. Pour toute question, contactez directement le commerce.</p>`,
+      footnote: "Cet e-mail confirme la demande, pas le délai de traitement bancaire.",
+    }),
+    text: `Le commerce ${o.bizName} a demandé le remboursement de votre commande ${o.code}. Le délai d'apparition dépend de votre banque.`,
+  };
+}
+
 /** Alerte e-mail au commerçant pour une nouvelle commande. */
 export function buildMerchantOrderEmail(o: {
   to: string;

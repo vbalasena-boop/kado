@@ -10,7 +10,9 @@ const PURPOSE = "resub-v1";
 
 function secret() {
   const s =
-    process.env.PLAYER_COOKIE_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY;
+    process.env.RESUB_SECRET ||
+    process.env.PLAYER_COOKIE_SECRET ||
+    process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (s) return s;
   // Pas de repli codé en dur en production : un secret connu rendrait les
   // jetons de ré-abonnement forgeables. On ne tolère un repli qu'en dev/local.
