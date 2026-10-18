@@ -30,14 +30,13 @@ Réviser les constats reportés par rapport au code actuel, corriger les risques
 - `bash scripts/relais/verifier.sh` : réussi (tests, lint et TypeScript).
 - `npm run build` : réussi.
 
-## À faire lors du déploiement
+## Déploiement et décisions conservées
 
-Les migrations `0085`–`0087` ont été appliquées et vérifiées sur Supabase. Le déploiement applicatif doit être relancé avec le commit final.
+Les migrations `0085`–`0087` ont été appliquées et vérifiées sur Supabase. Le commit applicatif final est publié sur la branche de travail et Vercel confirme le déploiement Production prêt sur `kado-app.fr`.
 
 Les choix de collecte d'IP/User-Agent restent refusés par minimisation des données. L'accusé de réception du bandeau reste local au navigateur pour ne pas créer de suivi centralisé. La déduplication générique de chaque événement Stripe et le secret `RESUB_SECRET` configuré en production restent des optimisations facultatives.
 
 ## Reprise
 
-- Fait : correctifs du backlog et migrations 0085–0087 appliquées/enregistrées sur Supabase.
-- Reste : publier le commit final et confirmer Vercel.
-- Prochaine commande : vérifier le statut de déploiement après publication.
+- Fait : correctifs du backlog, migrations `0085`–`0087`, tests, lint, TypeScript, build, publication GitHub et déploiement Vercel Production.
+- Reste : aucun correctif bloquant de ce backlog. `RESUB_SECRET` dédié demeure une option de durcissement; son activation ultérieure invaliderait les liens de réabonnement encore en circulation.
