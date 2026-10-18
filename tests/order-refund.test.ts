@@ -198,6 +198,11 @@ const h = vi.hoisted(() => ({
   },
 }));
 
+vi.mock("@/lib/email", () => ({
+  sendEmail: vi.fn(async () => ({ ok: true })),
+  emailLayout: ({ heading, bodyHtml }: any) => `${heading}${bodyHtml}`,
+}));
+
 vi.mock("@/lib/stripe", () => ({
   getStripe: () => ({
     checkout: { sessions: { retrieve: h.retrieve } },
@@ -215,7 +220,7 @@ vi.mock("@/lib/api", () => ({
         params: {},
         body,
         business: { id: "biz-1", slug: "cafe" },
-        user: {},
+        user: { id: "user-1" },
       });
     },
 }));
@@ -248,6 +253,7 @@ vi.mock("@/lib/supabase/admin", () => {
 });
 
 import { POST } from "@/app/api/dashboard/orders/refund/route";
+import { sendEmail } from "@/lib/email";
 
 function req(body: unknown) {
   return new Request("http://localhost/api/dashboard/orders/refund", {
@@ -265,6 +271,7 @@ beforeEach(() => {
   h.db.updateError = null;
   h.db.updatePayload = null;
   h.db.updateFilters = null;
+  (sendEmail as any).mockClear();
 });
 
 describe("POST /api/dashboard/orders/refund", () => {
@@ -277,6 +284,8 @@ describe("POST /api/dashboard/orders/refund", () => {
       refunded: false,
       code: "ABCDE",
       total_cents: 1500,
+      customer_email: "client@example.fr",
+      customer_name: "Camille",
     };
     h.retrieve.mockResolvedValue({ payment_intent: "pi_123" });
     h.create.mockResolvedValue({ id: "re_123" });
@@ -286,6 +295,9 @@ describe("POST /api/dashboard/orders/refund", () => {
     const json = await res.json();
     expect(json.ok).toBe(true);
     expect(json.stripe_refund_id).toBe("re_123");
+    expect(sendEmail).toHaveBeenCalledTimes(1);
+    expect((sendEmail as any).mock.calls[0][0].subject).toContain("Remboursement demandé");
+    expect((sendEmail as any).mock.calls[0][0].to).toBe("client@example.fr");
 
     // refund plateforme : jamais { stripeAccount }, avec reverse_transfer +
     // refund_application_fee, clé d'idempotence dérivée de order.id.
@@ -304,6 +316,8 @@ describe("POST /api/dashboard/orders/refund", () => {
     expect(h.db.updatePayload).toMatchObject({
       refunded: true,
       stripe_refund_id: "re_123",
+      refunded_by: "user-1",
+      refund_reason: "merchant_request",
     });
     expect(h.db.updatePayload.status).toBeUndefined();
     expect(h.db.updatePayload.refunded_at).toBeTruthy();

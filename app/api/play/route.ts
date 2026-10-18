@@ -210,6 +210,10 @@ export const POST = publicRoute({
           .select("*", { count: "exact", head: true })
           .eq("business_id", biz.id)
           .gte("created_at", start.toISOString())
+          // Exclut les anciens tours `review` : ils n'accordent plus de tour
+          // et ne doivent pas réduire le plafond du jour dans les anciennes
+          // bases qui utilisent encore ce comptage de secours.
+          .in("play_type", ["instagram", "loyalty", "optin"])
           .not("prize_label", "ilike", "%rien%");
         allowed = (count ?? 0) < limit;
       } else {

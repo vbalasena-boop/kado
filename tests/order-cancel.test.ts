@@ -56,7 +56,7 @@ vi.mock("@/lib/api", () => ({
         params: {},
         body,
         business: { id: "biz-1", slug: "cafe", name: "Café Test" },
-        user: {},
+        user: { id: "user-1" },
       });
     },
 }));
@@ -157,6 +157,10 @@ describe("POST /api/dashboard/orders — annulation", () => {
     // drapeau remboursé écrit (garde d'idempotence à l'écriture)
     const refundUpd = h.db.updates.find((u) => u.payload && "refunded" in u.payload);
     expect(refundUpd?.payload.refunded).toBe(true);
+    expect(refundUpd?.payload).toMatchObject({
+      refunded_by: "user-1",
+      refund_reason: "merchant_cancellation",
+    });
     expect(refundUpd?.filters).toMatchObject({ business_id: "biz-1", refunded: false });
 
     // client prévenu — ET avec le contenu D'ANNULATION (pas « prête »)

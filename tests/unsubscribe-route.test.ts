@@ -50,7 +50,7 @@ vi.mock("@/lib/supabase/admin", () => ({ getAdminClient: () => makeClient() }));
 vi.mock("@/lib/report", () => ({ reportError: vi.fn() }));
 
 import { reportError } from "@/lib/report";
-import { GET as unsubGet } from "@/app/api/unsubscribe/route";
+import { GET as unsubGet, POST as unsubPost } from "@/app/api/unsubscribe/route";
 
 const B = "biz1";
 const EMAIL = "a@b.fr";
@@ -63,6 +63,13 @@ function unsubReq(params: Record<string, string>) {
     method: "GET",
   });
 }
+function unsubPostReq(params: Record<string, string>) {
+  return new NextRequest("http://localhost/api/unsubscribe", {
+    method: "POST",
+    body: new URLSearchParams(params),
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+  });
+}
 
 beforeEach(() => {
   loyaltyUpdateRows = [];
@@ -72,11 +79,28 @@ beforeEach(() => {
   (reportError as any).mockClear();
 });
 
-describe("GET /api/unsubscribe (désinscription fidélité)", () => {
+describe("GET /api/unsubscribe (page de confirmation sans écriture)", () => {
+  it("token valide → affiche la confirmation sans modifier les consentements", async () => {
+    const res = await unsubGet(unsubReq({ b: B, e: enc(EMAIL), t: validToken }));
+    expect(res.status).toBe(200);
+    expect(await res.text()).toContain("Confirmer ma désinscription");
+    expect(updateCalls).toHaveLength(0);
+    expect(insertCalls).toHaveLength(0);
+  });
+
+  it("token invalide → aucune écriture, 400", async () => {
+    const res = await unsubGet(unsubReq({ b: B, e: enc(EMAIL), t: "forge" }));
+    expect(res.status).toBe(400);
+    expect(updateCalls).toHaveLength(0);
+    expect(insertCalls).toHaveLength(0);
+  });
+});
+
+describe("POST /api/unsubscribe (désinscription délibérée)", () => {
   it("token valide + carte inscrite → update filtré + 1 consent_events 'unsubscribed'", async () => {
     loyaltyUpdateRows = [{ id: "c1" }];
-    const res = await unsubGet(
-      unsubReq({ b: B, e: enc(EMAIL), t: validToken })
+    const res = await unsubPost(
+      unsubPostReq({ b: B, e: enc(EMAIL), t: validToken })
     );
     expect(res.status).toBe(200);
 
@@ -98,8 +122,8 @@ describe("GET /api/unsubscribe (désinscription fidélité)", () => {
 
   it("re-hit (carte déjà désinscrite → 0 ligne) → AUCUN nouvel consent_events (idempotent)", async () => {
     loyaltyUpdateRows = []; // le filtre .is(unsubscribed_at,null) n'affecte rien
-    const res = await unsubGet(
-      unsubReq({ b: B, e: enc(EMAIL), t: validToken })
+    const res = await unsubPost(
+      unsubPostReq({ b: B, e: enc(EMAIL), t: validToken })
     );
     expect(res.status).toBe(200);
     // L'update est bien tenté (filtré), mais aucun event puisque 0 ligne.
@@ -109,8 +133,8 @@ describe("GET /api/unsubscribe (désinscription fidélité)", () => {
 
   it("token invalide → aucune écriture, 400", async () => {
     loyaltyUpdateRows = [{ id: "c1" }];
-    const res = await unsubGet(
-      unsubReq({ b: B, e: enc(EMAIL), t: "forge" })
+    const res = await unsubPost(
+      unsubPostReq({ b: B, e: enc(EMAIL), t: "forge" })
     );
     expect(res.status).toBe(400);
     expect(updateCalls).toHaveLength(0);
@@ -120,8 +144,8 @@ describe("GET /api/unsubscribe (désinscription fidélité)", () => {
   it("audit KO (insert lève) → désinscription réussit quand même + reportError", async () => {
     loyaltyUpdateRows = [{ id: "c1" }];
     insertThrows = true;
-    const res = await unsubGet(
-      unsubReq({ b: B, e: enc(EMAIL), t: validToken })
+    const res = await unsubPost(
+      unsubPostReq({ b: B, e: enc(EMAIL), t: validToken })
     );
     // La désinscription reste actée (best-effort).
     expect(res.status).toBe(200);

@@ -51,6 +51,8 @@ export async function performOrderRefund(
     stripe_session_id?: string | null;
     stripe_account_id?: string | null;
     refunded?: boolean | null;
+    refunded_by?: string | null;
+    refund_reason?: string | null;
   }
 ): Promise<RefundOutcome> {
   // 1. Éligibilité (garde d'idempotence AVANT tout appel Stripe : un rejeu d'une
@@ -151,6 +153,8 @@ export async function performOrderRefund(
       refunded: true,
       refunded_at: new Date().toISOString(),
       stripe_refund_id: refund.id,
+      ...(order.refunded_by ? { refunded_by: order.refunded_by } : {}),
+      ...(order.refund_reason ? { refund_reason: order.refund_reason } : {}),
     })
     .eq("id", order.id)
     .eq("business_id", order.business_id)

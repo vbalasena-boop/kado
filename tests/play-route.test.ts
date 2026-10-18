@@ -14,6 +14,8 @@ let TRIGGER: unknown = ["instagram"];
 let LOYALTY_ENABLED = true;
 // Lien Instagram renseigné ? (gate de l'action « instagram », mutable par test).
 let INSTAGRAM_URL: string | null = "https://instagram.com/cafe";
+let DAILY_LIMIT: number | null = null;
+let FALLBACK_PLAY_TYPES: string[] | null = null;
 
 const PRIZES = [
   {
@@ -42,6 +44,12 @@ function makeClient() {
           return b;
         },
         eq: () => b,
+        in: (column: string, values: string[]) => {
+          if (table === "plays" && column === "play_type") {
+            FALLBACK_PLAY_TYPES = values;
+          }
+          return b;
+        },
         gte: () => b,
         gt: () => b,
         is: () => b,
@@ -70,7 +78,7 @@ function makeClient() {
                 error: null,
               });
             return Promise.resolve({
-              data: { daily_prize_limit: null },
+              data: { daily_prize_limit: DAILY_LIMIT },
               error: null,
             });
           }
@@ -79,6 +87,7 @@ function makeClient() {
       };
       return b;
     },
+    rpc: async () => ({ data: null, error: { message: "function missing" } }),
   };
 }
 
@@ -107,6 +116,8 @@ describe("POST /api/play — garde des actions déclenchantes", () => {
     TRIGGER = ["instagram"];
     LOYALTY_ENABLED = true;
     INSTAGRAM_URL = "https://instagram.com/cafe";
+    DAILY_LIMIT = null;
+    FALLBACK_PLAY_TYPES = null;
     mocks.rateLimit.mockReset();
     mocks.rateLimit.mockResolvedValue(true);
   });
@@ -124,6 +135,13 @@ describe("POST /api/play — garde des actions déclenchantes", () => {
       80,
       3600
     );
+  });
+
+  it("le comptage de secours du plafond ignore les anciens tours avis", async () => {
+    DAILY_LIMIT = 1;
+    const res = await POST(post("instagram"));
+    expect(res.status).toBe(200);
+    expect(FALLBACK_PLAY_TYPES).toEqual(["instagram", "loyalty", "optin"]);
   });
 
   it("instagram sans lien MAIS autre action offerte → 403 (bouton mort évité)", async () => {

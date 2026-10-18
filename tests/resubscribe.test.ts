@@ -111,6 +111,27 @@ describe("verifyResubToken — matrice", () => {
       true
     );
   });
+
+  it("utilise RESUB_SECRET lorsqu'il est configuré, avec repli compatible sinon", () => {
+    const oldResubSecret = process.env.RESUB_SECRET;
+    const oldPlayerSecret = process.env.PLAYER_COOKIE_SECRET;
+    const exp = NOW + 1000;
+    try {
+      process.env.PLAYER_COOKIE_SECRET = "cookie-key";
+      delete process.env.RESUB_SECRET;
+      const legacyToken = signResubToken(BID, EMAIL, exp, UNSUB);
+      process.env.RESUB_SECRET = "dedicated-resub-key";
+      const dedicatedToken = signResubToken(BID, EMAIL, exp, UNSUB);
+      expect(dedicatedToken).not.toBe(legacyToken);
+      expect(verifyResubToken(BID, EMAIL, exp, UNSUB, dedicatedToken, NOW)).toBe(true);
+      expect(verifyResubToken(BID, EMAIL, exp, UNSUB, legacyToken, NOW)).toBe(false);
+    } finally {
+      if (oldResubSecret === undefined) delete process.env.RESUB_SECRET;
+      else process.env.RESUB_SECRET = oldResubSecret;
+      if (oldPlayerSecret === undefined) delete process.env.PLAYER_COOKIE_SECRET;
+      else process.env.PLAYER_COOKIE_SECRET = oldPlayerSecret;
+    }
+  });
 });
 
 describe("encodeEmail / decodeEmail — round-trip base64url", () => {
