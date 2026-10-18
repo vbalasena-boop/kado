@@ -60,7 +60,7 @@ development_status:
   epic-6-retrospective: optional
 
   epic-7: done
-  7-1-ratification-abonnement-stripe-self-service: done
+  7-1-abonnement-stripe-self-service: done
   epic-7-retrospective: optional
 
   epic-8: done
@@ -83,7 +83,7 @@ development_status:
   11-1-rembourser-une-commande-payée-en-ligne: done
   11-2-annuler-une-commande: done
   epic-11-retrospective: done
-  vitrine-kado-signature: review
+  vitrine-kado-signature: done
 action_items:
   - id: "epic-11-retro-item-1-f1-résumé-ui-d-annulation-signaler-rembo"
     epic: 11
