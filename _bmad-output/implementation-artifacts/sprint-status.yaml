@@ -83,6 +83,7 @@ development_status:
   11-1-rembourser-une-commande-payée-en-ligne: done
   11-2-annuler-une-commande: done
   epic-11-retrospective: done
+  vitrine-kado-signature: review
 action_items:
   - id: "epic-11-retro-item-1-f1-résumé-ui-d-annulation-signaler-rembo"
     epic: 11
