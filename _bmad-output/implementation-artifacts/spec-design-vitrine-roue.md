@@ -1,6 +1,6 @@
 ---
 title: "Refonte visuelle de la vitrine et de la roue Kado"
-status: in-progress
+status: done
 ---
 
 # Refonte visuelle de la vitrine et de la roue Kado
@@ -28,6 +28,6 @@ Rendre la page d'accueil Kado et l'expérience de la roue plus distinctives, coh
 
 ## Reprise
 
-- Fait : nouvelle direction « ticket de comptoir », roue de démo recolorée avec retour accessible, habillage de la roue 3D et adaptations mobile ; build de production réussi.
-- Reste : publier, vérifier l'état Vercel et inspecter la vitrine en ligne.
-- Prochaine commande : confirmer le déploiement de production après publication.
+- Fait : nouvelle direction « ticket de comptoir », roue de démo recolorée avec retour accessible, habillage de la roue 3D et adaptations mobile ; build réussi, déploiement Vercel prêt et nouvelle vitrine vérifiée sur `kado-app.fr`.
+- Reste : aucun.
+- Prochaine commande : aucune.
