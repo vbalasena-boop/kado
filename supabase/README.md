@@ -58,11 +58,11 @@ explicitement toute migration manuelle et son état distant.
 #  utilise un préfixe horodaté ; préfère la numérotation séquentielle ici.)
 ```
 
-La migration `0084_one_time_game_passes.sql` ajoute les codes de jeu à usage
-unique remis en caisse. Elle doit être appliquée avant d'activer cette option
-dans le tableau de bord. Elle a été appliquée manuellement au projet de
-production `kado` le 18 octobre 2026 et vérifiée : table `play_passes`, colonne
-`wheel_configs.play_pass_required` et fonction atomique `play_with_pass`.
+La migration `0084_one_time_game_passes.sql` avait ajouté un système de codes
+de jeu à usage unique, appliqué au projet de production `kado` le 18 octobre
+2026. Le parcours a depuis été retiré car trop complexe pour les commerces. La
+table, la colonne et la fonction restent inactives dans le schéma : elles sont
+conservées pour éviter une suppression de données ou un changement destructif.
 
 ## Option B — SQL Editor (manuel, historique)
 

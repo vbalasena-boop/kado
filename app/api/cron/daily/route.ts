@@ -92,8 +92,8 @@ export async function GET(req: NextRequest) {
     out.errors.push("rate_limit_cleanup");
   }
 
-  // Les passes expirent après 90 jours; leur empreinte et leur lien vers le
-  // cookie joueur sont supprimés au plus tard au passage quotidien suivant.
+  // Nettoyage de fin de vie des éventuels anciens codes déjà émis avant le
+  // retrait de cette fonctionnalité. Aucun nouveau code n'est créé.
   try {
     const { count, error } = await db
       .from("play_passes")
@@ -102,8 +102,8 @@ export async function GET(req: NextRequest) {
     if (error && !isMissingColumnError(error)) throw error;
     out.playPassesDeleted = count ?? 0;
   } catch (e) {
-    reportError(e, { where: "cron/daily", phase: "play_pass_cleanup" });
-    out.errors.push("play_pass_cleanup");
+    reportError(e, { where: "cron/daily", phase: "legacy_play_pass_cleanup" });
+    out.errors.push("legacy_play_pass_cleanup");
   }
 
   // Envoi de masse : on ENFILE (file 0069) puis un drain envoie au rythme

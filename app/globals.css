@@ -8352,36 +8352,6 @@ summary:focus-visible,
 .dash .btn-mini:hover { background: var(--d-gold-tint); border-color: var(--gold); }
 .dash .btn-danger { border-radius: 999px; }
 
-.play-pass-controls,
-.play-pass-generate {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 16px;
-}
-.play-pass-toggle { display: inline-flex; align-items: center; gap: 9px; }
-.play-pass-toggle input { width: 18px; height: 18px; accent-color: var(--g-blue); }
-.play-pass-count { color: var(--g-ink2); font-size: 14px; }
-.play-pass-generate label { font-weight: 600; }
-.play-pass-generate .input { width: 86px; }
-.play-pass-message { margin: 12px 0; color: var(--g-ink2); }
-.play-pass-output { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--g-line); }
-.play-pass-output p { font-size: 14px; }
-.play-pass-code-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin: 14px 0; }
-.play-pass-code-grid code { display: block; padding: 9px 10px; border: 1px solid var(--g-line); border-radius: 9px; background: var(--g-surface); font-size: 15px; font-weight: 700; text-align: center; letter-spacing: .06em; }
-.play-pass-output .btn-secondary + .btn-secondary { margin-left: 8px; }
-.play-pass-entry { display: grid; gap: 7px; margin: 14px 0; font-weight: 700; text-align: left; }
-.play-pass-entry input { width: 100%; box-sizing: border-box; padding: 13px 15px; border: 1px solid var(--d-line-strong); border-radius: 12px; background: var(--g-surface); color: var(--g-ink); font: inherit; font-size: 18px; letter-spacing: .08em; text-align: center; text-transform: uppercase; }
-.play-pass-entry input:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
-@media print {
-  body * { visibility: hidden !important; }
-  .play-pass-output, .play-pass-output * { visibility: visible !important; }
-  .play-pass-output { position: absolute; inset: 0; width: 100%; border: 0; }
-  .play-pass-output button { display: none !important; }
-  .play-pass-code-grid { grid-template-columns: repeat(3, 1fr); }
-}
-
 /* --- Champs : liseré fin, focus or --- */
 .dash .field input,
 .dash .field select,

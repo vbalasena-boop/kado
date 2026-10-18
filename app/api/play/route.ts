@@ -8,8 +8,6 @@ import { isTriggerActionAllowed, instagramHref } from "@/lib/wheel";
 import { isValidDeviceHash } from "@/lib/device-hash";
 import { FINGERPRINT_CONSENT_VERSION } from "@/lib/fingerprint-consent";
 import { clientIp, hashRateLimitKey, rateLimit } from "@/lib/rate-limit";
-import { hashPlayPassCode, normalizePlayPassCode } from "@/lib/play-pass";
-import { isMissingColumnError } from "@/lib/db-errors";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +20,6 @@ const Body = z.object({
   slug: z.string().optional(),
   playType: z.string().optional(),
   deviceHash: z.string().nullish(),
-  playPass: z.string().max(40).nullish(),
 });
 
 /**
@@ -130,7 +127,7 @@ export const POST = publicRoute({
       }
     }
 
-    const [{ data: prizes }, { data: cfg }, taRes, passConfigRes] = await Promise.all([
+    const [{ data: prizes }, { data: cfg }, taRes] = await Promise.all([
       supa
         .from("prizes")
         .select("id, label, emoji, weight, color, position, is_losing")
@@ -149,27 +146,12 @@ export const POST = publicRoute({
         .select("trigger_actions, loyalty_enabled, instagram_url")
         .eq("business_id", biz.id)
         .maybeSingle(),
-      // Optionnel pour rester compatible avant migration 0084.
-      supa
-        .from("wheel_configs")
-        .select("play_pass_required")
-        .eq("business_id", biz.id)
-        .maybeSingle(),
     ]);
 
-    if (passConfigRes.error && !isMissingColumnError(passConfigRes.error)) {
-      return Response.json({ error: "play_pass_unavailable" }, { status: 503 });
-    }
-    const playPassRequired = !isDemo &&
-      !passConfigRes.error &&
-      (passConfigRes.data as any)?.play_pass_required === true;
-
-    // Cookie rotation creates new player IDs when passes are disabled. Add a
-    // second ceiling only in that mode; unique passes already gate every turn
-    // when the merchant enables them, so shared Wi-Fi won't block valid codes.
+    // Limite automatique par commerce et réseau : aucune action n'est demandée
+    // au commerçant ou au joueur. Les démos restent illimitées.
     if (
       !isDemo &&
-      !playPassRequired &&
       !(await rateLimit(
         `play-business:${biz.id}:${hashRateLimitKey(clientIp(req))}`,
         80,
@@ -177,47 +159,6 @@ export const POST = publicRoute({
       ))
     ) {
       return Response.json({ error: "rate_limited" }, { status: 429 });
-    }
-
-    let playPassHash: string | null = null;
-    if (playPassRequired) {
-      const { data: priorPlay, error: priorPlayError } = await supa
-        .from("plays")
-        .select("prize_label, prize_code")
-        .eq("business_id", biz.id)
-        .eq("player_id", playerId)
-        .eq("play_type", playType)
-        .maybeSingle();
-      if (priorPlayError) {
-        return Response.json({ error: "play_unavailable" }, { status: 503 });
-      }
-      if (priorPlay) {
-        return Response.json({
-          alreadyPlayed: true,
-          label: priorPlay.prize_label ?? null,
-          code: priorPlay.prize_code ?? null,
-        }, { status: 409 });
-      }
-
-      const normalizedPass = normalizePlayPassCode(body.playPass);
-      if (!normalizedPass) {
-        return Response.json({ error: "play_pass_required" }, { status: 400 });
-      }
-      playPassHash = hashPlayPassCode(normalizedPass);
-      const { data: availablePass, error: passError } = await supa
-        .from("play_passes")
-        .select("id")
-        .eq("business_id", biz.id)
-        .eq("code_hash", playPassHash)
-        .is("redeemed_at", null)
-        .gt("expires_at", new Date().toISOString())
-        .maybeSingle();
-      if (passError) {
-        return Response.json({ error: "play_pass_unavailable" }, { status: 503 });
-      }
-      if (!availablePass) {
-        return Response.json({ error: "invalid_play_pass" }, { status: 403 });
-      }
     }
 
     if (!prizes || prizes.length === 0) {
@@ -293,31 +234,13 @@ export const POST = publicRoute({
     // Instantané du caractère perdant au moment du tour + empreinte d'appareil.
     // Repli si une colonne optionnelle (is_losing / device_hash) n'existe pas
     // encore (migration non appliquée).
-    let error: { code?: string } | null;
-    if (playPassHash) {
-      const { data: accepted, error: passPlayError } = await supa.rpc("play_with_pass", {
-        p_business_id: biz.id,
-        p_code_hash: playPassHash,
-        p_player_id: playerId,
-        p_play_type: playType,
-        p_prize_label: prize.label,
-        p_prize_code: code,
-        p_is_losing: prizeIsLosing(prize),
-        p_device_hash: deviceHash,
-      });
-      error = passPlayError;
-      if (!error && accepted !== true) {
-        return Response.json({ error: "invalid_play_pass" }, { status: 403 });
-      }
-    } else {
-      const result = await supa
-        .from("plays")
-        .insert({ ...baseRow, is_losing: prizeIsLosing(prize), device_hash: deviceHash });
-      error = result.error;
-      if (error && error.code === "42703") {
-        const fallback = await supa.from("plays").insert(baseRow);
-        error = fallback.error;
-      }
+    const result = await supa
+      .from("plays")
+      .insert({ ...baseRow, is_losing: prizeIsLosing(prize), device_hash: deviceHash });
+    let error = result.error;
+    if (error && error.code === "42703") {
+      const fallback = await supa.from("plays").insert(baseRow);
+      error = fallback.error;
     }
 
     if (error) {

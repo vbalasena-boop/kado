@@ -46,7 +46,6 @@ type Config = {
   loyalty_enabled?: boolean | null;
   game_type?: string | null;
   trigger_actions?: unknown;
-  play_pass_required?: boolean | null;
 };
 
 type GameType = "wheel" | "scratch" | "slot";
@@ -578,7 +577,6 @@ export default function Game({
     []
   );
   const [error, setError] = useState<string | null>(null);
-  const [playPass, setPlayPass] = useState("");
   const [leadEmail, setLeadEmail] = useState("");
   const [leadConsent, setLeadConsent] = useState(false);
   // E-mail capté à l'étape « collect » (Offres/Fidélité) : alimente l'auto-envoi
@@ -1004,10 +1002,6 @@ export default function Game({
 
   async function spin() {
     if (spinning || !current) return;
-    if (config.play_pass_required && !preview && !demo && !playPass.trim()) {
-      setError("Saisissez le code de jeu remis par le commerce.");
-      return;
-    }
     setSpinning(true);
     setError(null);
     haptic(20);
@@ -1027,12 +1021,7 @@ export default function Game({
       const res = await fetch("/api/play", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          slug,
-          playType: current,
-          deviceHash: fp,
-          playPass: config.play_pass_required && !preview && !demo ? playPass : undefined,
-        }),
+        body: JSON.stringify({ slug, playType: current, deviceHash: fp }),
       });
       const data = await res.json();
 
@@ -1049,16 +1038,10 @@ export default function Game({
         return;
       }
       if (!res.ok) {
-        setError(data.error === "invalid_play_pass"
-          ? "Ce code est invalide, déjà utilisé ou expiré. Demandez un nouveau code en caisse."
-          : data.error === "play_pass_required"
-            ? "Un code de jeu remis par le commerce est nécessaire."
-            : "Le jeu est indisponible pour le moment.");
+        setError("Le jeu est indisponible pour le moment.");
         setSpinning(false);
         return;
       }
-
-      if (config.play_pass_required && !preview && !demo) setPlayPass("");
 
       setPlayed((p) => ({
         ...p,
@@ -1630,21 +1613,6 @@ export default function Game({
                 ))}
 
               {error && <p className="err">{error}</p>}
-
-              {config.play_pass_required && !preview && !demo && !scratchPrize && (
-                <label className="play-pass-entry">
-                  Code de jeu remis en caisse
-                  <input
-                    value={playPass}
-                    onChange={(e) => setPlayPass(e.target.value.toUpperCase())}
-                    placeholder="KDO-XXXXX-XXXXX"
-                    autoComplete="off"
-                    autoCapitalize="characters"
-                    maxLength={15}
-                    disabled={spinning}
-                  />
-                </label>
-              )}
 
               {gameType === "scratch" && scratchPrize ? (
                 <p className="scratch-hint">

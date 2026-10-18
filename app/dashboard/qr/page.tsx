@@ -4,7 +4,6 @@ import { getMyBusiness } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { KadoMark } from "@/components/Logo";
 import { PosterTool } from "@/components/PosterTool";
-import PlayPassManager from "./PlayPassManager";
 
 export const dynamic = "force-dynamic";
 
@@ -132,7 +131,6 @@ export default async function QrPage() {
   let accent = "#ff5d73";
   let bgColor = "#150c29";
   let decor = "";
-  let playPassRequired = false;
   try {
     const admin = getAdminClient();
     const { data: cfg } = await admin
@@ -151,12 +149,6 @@ export default async function QrPage() {
       .eq("business_id", business.id)
       .maybeSingle();
     decor = (d as any)?.decor_emojis || "";
-    const { data: passCfg } = await admin
-      .from("wheel_configs")
-      .select("play_pass_required")
-      .eq("business_id", business.id)
-      .maybeSingle();
-    playPassRequired = !!(passCfg as any)?.play_pass_required;
   } catch {
     /* colonnes absentes : valeurs par défaut */
   }
@@ -221,8 +213,6 @@ export default async function QrPage() {
         </a>
       </div>
 
-      <PlayPassManager initialRequired={playPassRequired} />
-
       {/* Sélecteur de format + aperçu + version imprimable de l'affiche */}
       <PosterTool>
       <div className="print-poster" style={posterStyle}>
@@ -268,9 +258,7 @@ export default async function QrPage() {
 
         <div className="pp-title">Tentez votre chance&nbsp;! 🎁</div>
         <p className="pp-sub">
-          {playPassRequired
-            ? "Demandez votre code de jeu en caisse, scannez et tentez de gagner un cadeau."
-            : "Scannez, faites tourner la roue et repartez avec un cadeau."}
+          Scannez, faites tourner la roue et repartez avec un cadeau.
         </p>
 
         {/* eslint-disable-next-line @next/next/no-img-element */}

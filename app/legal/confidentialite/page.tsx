@@ -27,16 +27,16 @@ export default function Confidentialite() {
           leur fenêtre et sont purgés après 48 heures d'inactivité.
         </li>
         <li>
+          Les éventuels anciens codes de jeu émis avant le retrait de cette
+          option sont stockés sous forme d'empreinte cryptographique. En cas
+          d'utilisation, leur association au cookie joueur est conservée jusqu'à
+          leur expiration, au plus tard 90 jours après leur création.
+        </li>
+        <li>
           Un identifiant <b>pseudonyme</b> stocké dans un cookie technique
           (<code>sr_pid</code>), utilisé pour éviter les rejouements. Il ne
           contient pas directement votre nom ou vos coordonnées, mais les
           parties enregistrées en base peuvent être reliées à vos tours.
-        </li>
-        <li>
-          Si un commerce active les codes de jeu à usage unique : le code remis
-          en caisse est vérifié sous forme d'empreinte cryptographique, puis son
-          utilisation est liée au cookie joueur pour empêcher de le réutiliser.
-          Les codes expirent au bout de 90 jours et sont alors supprimés.
         </li>
         <li>
           Seulement après votre accord explicite dans le jeu, le navigateur
@@ -109,8 +109,9 @@ export default function Confidentialite() {
       <p>
         Cookie joueur : 12 mois. Données de jeu et commandes : 13 mois. E-mails
         collectés et cartes de fidélité : jusqu'au retrait du consentement ou 3
-        ans sans interaction. Empreintes des codes de jeu : 90 jours. Abonnements
-        aux notifications : jusqu'à désactivation. Comptes commerçants : durée
+        ans sans interaction. Anciens codes de jeu : 90 jours maximum.
+        Abonnements aux notifications : jusqu'à désactivation. Comptes
+        commerçants : durée
         de la relation contractuelle + obligations légales.
       </p>
 
