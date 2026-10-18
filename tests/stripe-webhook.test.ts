@@ -15,13 +15,18 @@ const cap = vi.hoisted(() => ({
   payload: null as any,
   filters: {} as any,
   error: null as any,
+  order: { id: "ord-9", total_cents: 1000 } as any,
 }));
 vi.mock("@/lib/supabase/admin", () => ({
   getAdminClient: () => ({
     from: (t: string) => {
       cap.table = t;
+      let selected = "";
       const builder: any = {
-        select: () => builder,
+        select: (columns: string) => {
+          selected = columns;
+          return builder;
+        },
         update: (p: any) => {
           cap.payload = p;
           return builder;
@@ -30,7 +35,10 @@ vi.mock("@/lib/supabase/admin", () => ({
           cap.filters[col] = val;
           return builder;
         },
-        maybeSingle: async () => ({ data: null, error: null }),
+        maybeSingle: async () => ({
+          data: selected === "id, total_cents" ? cap.order : null,
+          error: null,
+        }),
         then: (resolve: any) => resolve({ error: cap.error }),
       };
       return builder;
@@ -62,6 +70,7 @@ beforeEach(() => {
   cap.payload = null;
   cap.filters = {};
   cap.error = null;
+  cap.order = { id: "ord-9", total_cents: 1000 };
 });
 
 describe("POST /api/billing/webhook — garde de signature", () => {
@@ -108,6 +117,7 @@ describe("POST /api/billing/webhook — réconciliation refund (F2)", () => {
       refundEvent("refund.updated", {
         id: "re_9",
         status: "succeeded",
+        amount: 1000,
         metadata: { order_id: "ord-9" },
       })
     );
@@ -167,6 +177,7 @@ describe("POST /api/billing/webhook — réconciliation refund (F2)", () => {
       refundEvent("charge.refund.updated", {
         id: "re_old",
         status: "succeeded",
+        amount: 1000,
         metadata: {},
       })
     );
@@ -181,6 +192,7 @@ describe("POST /api/billing/webhook — réconciliation refund (F2)", () => {
       refundEvent("refund.updated", {
         id: "re_9",
         status: "succeeded",
+        amount: 1000,
         metadata: { order_id: "ord-9" },
       })
     );
