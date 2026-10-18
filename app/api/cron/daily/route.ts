@@ -65,6 +65,7 @@ export async function GET(req: NextRequest) {
     recaps: 0,
     draws: 0,
     consentPurged: 0,
+    rateLimitBucketsDeleted: 0,
     reengageAlmost: 0,
     reengageInactive: 0,
     reviewInvites: 0,
@@ -73,6 +74,22 @@ export async function GET(req: NextRequest) {
     emailsSent: 0,
     errors: [] as string[],
   };
+
+  // Les clés de limitation contiennent l'IP utilisée pour protéger les routes
+  // publiques. Les fenêtres durent 60 s; supprimer les compteurs inactifs de
+  // plus de 48 h limite la conservation de cette donnée technique.
+  try {
+    const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+    const { count, error } = await db
+      .from("rate_limits")
+      .delete({ count: "exact" })
+      .lt("window_start", cutoff);
+    if (error) throw error;
+    out.rateLimitBucketsDeleted = count ?? 0;
+  } catch (e) {
+    reportError(e, { where: "cron/daily", phase: "rate_limit_cleanup" });
+    out.errors.push("rate_limit_cleanup");
+  }
 
   // Envoi de masse : on ENFILE (file 0069) puis un drain envoie au rythme
   // Resend. Repli : si la file n'existe pas (migration non appliquée), envoi

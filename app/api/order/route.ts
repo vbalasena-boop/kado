@@ -159,10 +159,8 @@ export async function POST(req: NextRequest) {
 
   const { error } = await insertOrderTolerant(db, baseInsert, optional);
   if (error) {
-    return Response.json(
-      { error: "save_failed", detail: error.message },
-      { status: 500 }
-    );
+    reportError(error, { where: "api/order", phase: "save_order" });
+    return Response.json({ error: "save_failed" }, { status: 500 });
   }
 
   // ---- Paiement en ligne (Stripe Connect) : l'argent va au commerçant ----
@@ -217,7 +215,8 @@ export async function POST(req: NextRequest) {
         total_cents: total,
         checkoutUrl: session.url,
       });
-    } catch (e: any) {
+    } catch (e: unknown) {
+      reportError(e, { where: "api/order", phase: "create_checkout" });
       // Échec de création du paiement : on annule la commande en attente
       // (best effort — on renvoie 500 payment_failed quoi qu'il arrive, mais on
       // ne gobe plus une vraie panne de l'annulation en silence).
@@ -233,10 +232,7 @@ export async function POST(req: NextRequest) {
       } catch (err) {
         reportError(err, { where: "order.cancel", code });
       }
-      return Response.json(
-        { error: "payment_failed", detail: e?.message ?? "stripe" },
-        { status: 500 }
-      );
+      return Response.json({ error: "payment_failed" }, { status: 500 });
     }
   }
 

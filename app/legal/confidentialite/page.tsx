@@ -20,9 +20,27 @@ export default function Confidentialite() {
       <h3>Joueurs (clients des commerces)</h3>
       <ul>
         <li>
-          Un <b>identifiant anonyme</b> stocké dans un cookie technique
-          (<code>sr_pid</code>), pour empêcher de rejouer plus de 2 fois. Il ne
-          contient aucune donnée personnelle.
+          L'adresse IP de la requête est utilisée pour limiter les abus et les
+          tentatives automatisées. Les compteurs contenant cette adresse sont
+          purgés chaque jour après expiration de leur fenêtre de limitation
+          (48 heures d'inactivité).
+        </li>
+        <li>
+          Un identifiant <b>pseudonyme</b> stocké dans un cookie technique
+          (<code>sr_pid</code>), utilisé pour éviter les rejouements. Il ne
+          contient pas directement votre nom ou vos coordonnées, mais les
+          parties enregistrées en base peuvent être reliées à vos tours.
+        </li>
+        <li>
+          Seulement après votre accord explicite dans le jeu, le navigateur
+          peut calculer une empreinte technique dérivée de caractéristiques de
+          l'appareil et du navigateur (agent utilisateur, langue, plateforme,
+          écran, fuseau horaire et rendu graphique). Seule son empreinte SHA-256 est transmise et associée aux
+          tours pour limiter les rejouements, y compris après suppression du
+          cookie. Le jeu reste accessible en cas de refus. Vous pouvez retirer
+          votre accord depuis la page du jeu; l'empreinte des tours associés à
+          cet identifiant de jeu est alors effacée. Cette empreinte n'est pas utilisée
+          à des fins publicitaires.
         </li>
         <li>
           Le <b>lot gagné</b> et un <b>code cadeau</b>, associés à cet
@@ -112,7 +130,7 @@ export default function Confidentialite() {
         publicitaire ni de suivi tiers n'est déposé.
       </p>
 
-      <p className="legal-date">Dernière mise à jour : 17 août 2026.</p>
+      <p className="legal-date">Dernière mise à jour : 18 octobre 2026.</p>
     </article>
   );
 }

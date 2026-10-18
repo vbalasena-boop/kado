@@ -551,6 +551,9 @@ export default function Game({
   const allDone =
     !preview && !demo && enabledActions.every((k) => initialPlayed[k] != null);
   const [screen, setScreen] = useState<Screen>(allDone ? "done" : "rules");
+  const [fingerprintConsent, setFingerprintConsent] = useState<"loading" | "yes" | "no">("loading");
+  const [editingFingerprintConsent, setEditingFingerprintConsent] = useState(false);
+  const [fingerprintConsentBusy, setFingerprintConsentBusy] = useState(false);
   const [played, setPlayed] = useState<Played>(initialPlayed);
   const [current, setCurrent] = useState<PlayType | null>(null);
   const [prize, setPrize] = useState<{
@@ -776,9 +779,20 @@ export default function Game({
   // appareil a déjà joué, et on réaffiche cadeaux + codes.
   useEffect(() => {
     // En démo, on ne re-verrouille jamais : tours illimités.
-    if (preview || demo || allDone) return;
+    if (preview || demo) return;
     let alive = true;
     (async () => {
+      let consented = false;
+      try {
+        const choice = await fetch(`/api/fingerprint-consent?slug=${encodeURIComponent(slug)}`);
+        const status = choice.ok ? await choice.json() : null;
+        consented = status?.consented === true;
+      } catch {
+        consented = false;
+      }
+      if (!alive) return;
+      setFingerprintConsent(consented ? "yes" : "no");
+      if (!consented || allDone) return;
       const fp = await deviceHash();
       if (!fp || !alive) return;
       try {
@@ -809,6 +823,39 @@ export default function Game({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  async function saveFingerprintConsent(consented: boolean) {
+    setFingerprintConsentBusy(true);
+    try {
+      const res = await fetch("/api/fingerprint-consent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug, consented }),
+      });
+      if (!res.ok) throw new Error("consent_not_saved");
+      setFingerprintConsent(consented ? "yes" : "no");
+      setEditingFingerprintConsent(false);
+      if (consented && !preview && !demo) {
+        // Le calcul commence uniquement après la confirmation serveur du choix.
+        const fp = await deviceHash();
+        if (fp) {
+          const recovered = await fetch("/api/my-plays", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ slug, deviceHash: fp }),
+          });
+          if (recovered.ok) {
+            const data = (await recovered.json()) as { played?: Played };
+            if (data.played) setPlayed((prev) => ({ ...data.played, ...prev }));
+          }
+        }
+      }
+    } catch {
+      setError("Votre choix n'a pas pu être enregistré. Réessayez.");
+    } finally {
+      setFingerprintConsentBusy(false);
+    }
+  }
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const confettiRef = useRef<HTMLCanvasElement | null>(null);
@@ -970,7 +1017,7 @@ export default function Game({
     try {
       // Empreinte d'appareil : verrou secondaire qui survit à la navigation
       // privée / au vidage des cookies (voir lib/device-hash.ts).
-      const fp = await deviceHash();
+      const fp = fingerprintConsent === "yes" && !demo ? await deviceHash() : null;
       const res = await fetch("/api/play", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1206,6 +1253,40 @@ export default function Game({
               <div className="tag">Jeu · Récompense</div>
             </div>
           </div>
+
+          {(screen === "rules" || screen === "done") && !preview && !demo && (
+            <div className="rules" style={{ marginTop: 16, textAlign: "left" }}>
+              <b>Protection de votre choix</b>
+              {fingerprintConsent === "loading" ? (
+                <p className="sub">Vérification de votre préférence…</p>
+              ) : !editingFingerprintConsent ? (
+                <>
+                  <p className="sub">
+                    {fingerprintConsent === "yes"
+                      ? "Vous avez autorisé l'empreinte technique de ce navigateur pour limiter les tours répétés. Vous pouvez retirer votre accord à tout moment."
+                      : "Sans empreinte de navigateur, le jeu reste accessible et utilise uniquement son cookie technique pour mémoriser vos tours."}
+                  </p>
+                  <button type="button" className="btn" onClick={() => setEditingFingerprintConsent(true)}>
+                    {fingerprintConsent === "yes" ? "Modifier mon choix" : "Choisir"}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="sub">
+                    Autoriser calcule une empreinte à partir de caractéristiques techniques du navigateur (agent utilisateur, langue, plateforme, écran, fuseau horaire et rendu graphique). Elle sert à retrouver les tours et limiter les répétitions, même après suppression du cookie. Le jeu fonctionne aussi si vous refusez. Un retrait efface l'empreinte des tours associés à cet identifiant de jeu.
+                  </p>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <button type="button" className="btn" disabled={fingerprintConsentBusy} onClick={() => void saveFingerprintConsent(true)}>
+                      Autoriser
+                    </button>
+                    <button type="button" className="btn" disabled={fingerprintConsentBusy} onClick={() => void saveFingerprintConsent(false)}>
+                      Refuser
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
 
           {/* RULES */}
           {screen === "rules" && (

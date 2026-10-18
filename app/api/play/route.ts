@@ -6,6 +6,7 @@ import { weightedIndex, generateCode, prizeIsLosing } from "@/lib/draw";
 import { sendPushToBusiness } from "@/lib/push";
 import { isTriggerActionAllowed, instagramHref } from "@/lib/wheel";
 import { isValidDeviceHash } from "@/lib/device-hash";
+import { FINGERPRINT_CONSENT_VERSION } from "@/lib/fingerprint-consent";
 
 export const dynamic = "force-dynamic";
 
@@ -83,8 +84,19 @@ export const POST = publicRoute({
     // Empreinte d'appareil (verrou secondaire). On n'accepte qu'un hex SHA-256
     // bien formé ; toute autre valeur est ignorée (repli sur le cookie seul).
     // En démo, on la neutralise (aucun re-verrouillage).
-    const deviceHash =
+    let deviceHash =
       !isDemo && isValidDeviceHash(body.deviceHash) ? body.deviceHash : null;
+    if (deviceHash) {
+      const { data: consent, error: consentError } = await supa
+        .from("player_fingerprint_consents")
+        .select("consented, policy_version")
+        .eq("business_id", biz.id)
+        .eq("player_id", playerId)
+        .maybeSingle();
+      if (consentError || consent?.consented !== true || consent.policy_version !== FINGERPRINT_CONSENT_VERSION) {
+        deviceHash = null;
+      }
+    }
 
     // Cet APPAREIL a-t-il déjà joué ce type ? Attrape le rejeu en navigation
     // privée / cookies vidés, que le cookie laisse passer. Vérification SOUPLE

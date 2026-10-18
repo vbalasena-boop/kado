@@ -83,8 +83,14 @@ async function applySubscription(sub: Stripe.Subscription) {
   }
 
   const query = db.from("businesses").update(patch);
-  if (businessId) await query.eq("id", businessId);
-  else await query.eq("stripe_customer_id", customerId);
+  const { data: updatedBusiness, error: updateError } = businessId
+    ? await query.eq("id", businessId).select("id").maybeSingle()
+    : await query
+        .eq("stripe_customer_id", customerId)
+        .select("id")
+        .maybeSingle();
+  if (updateError) throw updateError;
+  if (!updatedBusiness) throw new Error("Stripe subscription business was not found");
 
   // Idem pour l'option « Suivi au comptoir » — écriture séparée et tolérante
   // (la colonne order_tracking peut ne pas exister si 0039 n'est pas passée).
@@ -94,13 +100,69 @@ async function applySubscription(sub: Stripe.Subscription) {
       const { error } = businessId
         ? await q2.eq("id", businessId)
         : await q2.eq("stripe_customer_id", customerId);
-      if (error && !isMissingColumnError(error)) {
-        reportError(error, { where: "webhook.order_tracking" });
-      }
+      if (error && !isMissingColumnError(error)) throw error;
     } catch (e) {
-      reportError(e, { where: "webhook.order_tracking" });
+      if (!isMissingColumnError(e)) throw e;
+      /* colonne absente sur une ancienne base : ignorée */
     }
   }
+}
+
+type PaidOrder = {
+  code: string;
+  customer_name: string | null;
+  customer_phone: string | null;
+  customer_email: string | null;
+  note: string | null;
+  pickup_at: string | null;
+  items: any;
+  total_cents: number;
+};
+
+/** Échoue le webhook quand une commande payée n'est pas enregistrée, pour que Stripe réessaie. */
+async function markOrderPaid(
+  db: ReturnType<typeof getAdminClient>,
+  session: Stripe.Checkout.Session
+): Promise<PaidOrder | null> {
+  const code = session.metadata?.order_code;
+  const businessId = session.metadata?.business_id;
+  if (!code || !businessId) throw new Error("Paid order session missing metadata");
+
+  const { data: updated, error } = await db
+    .from("orders")
+    .update({ status: "new", paid: true })
+    .eq("business_id", businessId)
+    .eq("code", code)
+    .eq("status", "awaiting_payment")
+    .select("code, customer_name, customer_phone, customer_email, note, pickup_at, items, total_cents")
+    .maybeSingle();
+  if (error) throw error;
+  if (updated) return updated as PaidOrder;
+
+  // Les événements Stripe sont livrés au moins une fois; un rejeu est normal.
+  const { data: current, error: lookupError } = await db
+    .from("orders")
+    .select("id, paid")
+    .eq("business_id", businessId)
+    .eq("code", code)
+    .maybeSingle();
+  if (lookupError) throw lookupError;
+  if (current?.paid) return null;
+  throw new Error(`Paid Stripe order ${code} was not recorded`);
+}
+
+/** Annule seulement une commande qui attend encore son règlement. */
+async function cancelPendingOrder(session: Stripe.Checkout.Session) {
+  const code = session.metadata?.order_code;
+  const businessId = session.metadata?.business_id;
+  if (!code || !businessId) throw new Error("Expired order session missing metadata");
+  const { error } = await getAdminClient()
+    .from("orders")
+    .update({ status: "cancelled" })
+    .eq("business_id", businessId)
+    .eq("code", code)
+    .eq("status", "awaiting_payment");
+  if (error) throw error;
 }
 
 export async function POST(req: NextRequest) {
@@ -145,27 +207,14 @@ export async function POST(req: NextRequest) {
           const code = session.metadata.order_code;
           const bizId = session.metadata.business_id;
           if (code && bizId && session.payment_status === "paid") {
-            // Complétion de paiement : le webhook reste 200 quoi qu'il arrive
-            // (Stripe rejouera sinon), mais on ne gobe plus en silence un échec
-            // d'écriture de `paid=true` (colonne absente → ignoré ; sinon Sentry).
+            // Une erreur d'écriture remonte au gestionnaire global (500) pour
+            // que Stripe réessaie; les notifications restent idempotentes.
             try {
               const db = getAdminClient();
-              const { data: updated, error } = await db
-                .from("orders")
-                .update({ status: "new", paid: true })
-                .eq("business_id", bizId)
-                .eq("code", code)
-                .eq("status", "awaiting_payment")
-                .select(
-                  "code, customer_name, customer_phone, customer_email, note, pickup_at, items, total_cents"
-                );
-              if (error && !isMissingColumnError(error)) {
-                reportError(error, { where: "webhook.order_paid", code });
-              }
+              const order = await markOrderPaid(db, session);
               // Alerte commerçant — UNIQUEMENT si la transition a bien eu lieu
               // (idempotent : un rejeu du webhook ne modifie plus de ligne, donc
               // n'envoie rien). Miroir du chemin « paiement sur place ».
-              const order: any = updated && updated[0];
               if (order) {
                 try {
                   await sendPushToBusiness(db, bizId, {
@@ -190,8 +239,8 @@ export async function POST(req: NextRequest) {
                     await sendEmail(
                       buildMerchantOrderEmail({
                         to: ownerEmail,
-                        name: order.customer_name,
-                        phone: order.customer_phone,
+                        name: order.customer_name || "",
+                        phone: order.customer_phone || "",
                         code: order.code,
                         pickup: order.pickup_at || "",
                         note: order.note || "",
@@ -247,7 +296,7 @@ export async function POST(req: NextRequest) {
                 }
               }
             } catch (e) {
-              reportError(e, { where: "webhook.order_paid", code });
+              throw e;
             }
           }
           break;
@@ -557,6 +606,64 @@ export async function POST(req: NextRequest) {
             });
           }
         }
+        break;
+      }
+      case "checkout.session.async_payment_succeeded": {
+        const session = event.data.object as Stripe.Checkout.Session;
+        if (session.metadata?.kind === "order") {
+          const order = await markOrderPaid(getAdminClient(), session);
+          const businessId = session.metadata?.business_id;
+          if (order && businessId) {
+            const db = getAdminClient();
+            try {
+              await sendPushToBusiness(db, businessId, {
+                title: `🛒 Nouvelle commande ${order.code} (payée en ligne)`,
+                body: `${order.customer_name} · ${formatEuros(order.total_cents)} € · retrait ${order.pickup_at || "dès que possible"}`,
+                url: "/dashboard/orders",
+              });
+            } catch {
+              /* le push ne doit pas faire échouer le webhook */
+            }
+            const contact = await getOwnerContact(db, businessId).catch(() => ({
+              email: null,
+              businessName: null,
+            }));
+            try {
+              if (contact.email) {
+                await sendEmail(buildMerchantOrderEmail({
+                  to: contact.email,
+                  name: order.customer_name || "",
+                  phone: order.customer_phone || "",
+                  code: order.code,
+                  pickup: order.pickup_at || "",
+                  note: order.note || "",
+                  lines: order.items,
+                  total: order.total_cents,
+                }));
+              }
+              if (order.customer_email) {
+                await sendEmail(buildCustomerOrderEmail({
+                  to: order.customer_email,
+                  name: order.customer_name || "",
+                  code: order.code,
+                  bizName: contact.businessName || "",
+                  pickup: order.pickup_at || "",
+                  lines: order.items,
+                  total: order.total_cents,
+                  paid: true,
+                }));
+              }
+            } catch {
+              /* les e-mails ne doivent pas faire échouer le webhook */
+            }
+          }
+        }
+        break;
+      }
+      case "checkout.session.async_payment_failed":
+      case "checkout.session.expired": {
+        const session = event.data.object as Stripe.Checkout.Session;
+        if (session.metadata?.kind === "order") await cancelPendingOrder(session);
         break;
       }
       case "charge.refunded": {

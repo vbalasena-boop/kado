@@ -1,7 +1,9 @@
 # Base de données Kado — migrations & CLI Supabase
 
-Le schéma vit dans `supabase/migrations/`, en fichiers SQL numérotés
-séquentiellement (`0001_init.sql` → `0044_…`). Deux façons de les appliquer.
+Le schéma vit dans `supabase/migrations/`. L'historique actuel va de `0001` à
+`0047`, mais certains préfixes sont dupliqués (`0041`, `0042`, `0043`). Les
+fichiers sont donc ordonnés par préfixe puis par nom; un préfixe seul ne
+constitue pas un identifiant unique de migration. Deux façons de les appliquer.
 
 ## Option A — CLI Supabase (recommandé)
 
@@ -25,26 +27,29 @@ supabase db push
 
 ### Première adoption sur une base DÉJÀ migrée à la main
 
-Si les migrations `0001`→`0044` ont été appliquées manuellement (SQL Editor),
-la table de suivi de la CLI est vide : `db push` croirait devoir tout rejouer.
-On marque donc l'historique comme **déjà appliqué**, une seule fois :
+Si des migrations ont été appliquées manuellement (SQL Editor), la table de suivi
+de la CLI peut être vide : `db push` pourrait tenter de les rejouer. **Ne lance
+pas le bloc `migration repair` ci-dessous à l'aveugle** : l'exemple historique
+ci-dessous ne couvre que `0001`→`0044` et l'historique comporte maintenant des
+préfixes dupliqués ainsi que `0045` et `0046`. Compare d'abord les fichiers,
+l'historique distant et l'état réel du schéma. En cas de doute, fais une
+sauvegarde et demande une revue avant de réparer l'historique.
 
-```bash
-supabase migration repair --status applied \
-  0001 0002 0003 0004 0005 0006 0007 0008 0009 0010 0011 \
-  0012 0013 0014 0015 0016 0017 0018 0019 0020 0021 0022 \
-  0023 0024 0025 0026 0027 0028 0029 0030 0031 0032 0033 \
-  0034 0035 0036 0037 0038 0039 0040 0041 0042 0043 0044
-supabase migration list   # tout doit être aligné (Local ✓ / Remote ✓)
-```
-
-Ensuite, `db push` n'appliquera plus que les migrations réellement nouvelles.
+Il n'y a volontairement pas de commande `migration repair` à copier ici : les
+préfixes dupliqués empêchent de décrire un historique distant fiable avec une
+simple liste de versions. Réconcilie chaque fichier avec le schéma réel, la table
+`supabase_migrations.schema_migrations` et la version de la CLI utilisée avant
+de réparer ou de lancer `db push`. Pour une base neuve, valide d'abord sur une
+base jetable que la CLI reconnaît toutes les migrations locales sans collision.
 
 ### Créer une nouvelle migration
 
-Conserver la **convention numérique séquentielle** (prochain numéro libre, ex.
-`0045_ma_feature.sql`) pour rester cohérent avec l'historique et garder un ordre
-d'application non ambigu.
+L'historique utilise des préfixes numériques courts, mais les collisions
+`0041`–`0043` rendent l'ordre par numéro insuffisant et compliquent le suivi de
+version Supabase. Avant d'ajouter une migration, vérifier la compatibilité avec
+la CLI et le déploiement du projet; utiliser un identifiant unique reconnu par
+Supabase, sans renommer les migrations déjà appliquées en production. Documenter
+explicitement toute migration manuelle et son état distant.
 
 ```bash
 # Édite directement un nouveau fichier supabase/migrations/00XX_nom.sql
@@ -67,7 +72,8 @@ correctif ponctuel.
 - **Ne pas réécrire** une migration déjà appliquée en production : ajouter une
   nouvelle migration plutôt que d'éditer une ancienne (sinon le suivi de version
   de la CLI se désynchronise).
-- **Un numéro = un fichier** : pas de collision de préfixe.
+- **Pas de nouvelle collision** : les doublons historiques `0041`–`0043` doivent
+  être traités comme une dette de migration, pas reproduits.
 
 ## Shims de compatibilité `42703`
 

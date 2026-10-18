@@ -7,8 +7,9 @@
  *
  * Ce n'est volontairement PAS un identifiant parfait : deux appareils
  * identiques peuvent produire la même empreinte. Elle n'est donc utilisée que
- * comme signal souple, jamais comme garantie dure. Aucune donnée personnelle
- * n'est stockée : seulement un hachage SHA-256.
+ * comme signal souple, jamais comme garantie dure. Le calcul et l'envoi ne
+ * doivent avoir lieu qu'après consentement explicite. Seul le hachage SHA-256
+ * est stocké avec les tours.
  */
 
 /**

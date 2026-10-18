@@ -191,9 +191,8 @@ describe("POST /api/billing/webhook — réconciliation refund (F2)", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Story 3 — observabilité : un échec d'écriture DB (paid=true) ne doit plus
-// être avalé en silence (→ reportError), mais le webhook reste 200 (Stripe
-// rejouerait sinon).
+// Le webhook doit renvoyer une erreur si l'écriture du paiement échoue, afin
+// que Stripe réessaie et que la commande ne reste pas bloquée en attente.
 // ---------------------------------------------------------------------------
 describe("POST /api/billing/webhook — écriture paid=true (observabilité Story 3)", () => {
   beforeEach(() => {
@@ -212,19 +211,19 @@ describe("POST /api/billing/webhook — écriture paid=true (observabilité Stor
     };
   }
 
-  it("vraie erreur DB sur paid=true → reportError appelé, webhook toujours 200", async () => {
+  it("erreur DB sur paid=true → reportError appelé et Stripe reçoit une erreur à réessayer", async () => {
     cap.error = { code: "42501", message: "permission denied" }; // RLS, pas colonne absente
     constructEvent.mockReturnValue(orderPaidEvent());
     const res = await POST(req("{}", { "stripe-signature": "good" }));
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(500);
     expect(reportSpy).toHaveBeenCalled();
   });
 
-  it("colonne absente (42703) → tolérée, aucun reportError, 200", async () => {
+  it("colonne paid absente → la commande reste non payée et Stripe reçoit une erreur", async () => {
     cap.error = { code: "42703", message: 'column "paid" does not exist' };
     constructEvent.mockReturnValue(orderPaidEvent());
     const res = await POST(req("{}", { "stripe-signature": "good" }));
-    expect(res.status).toBe(200);
-    expect(reportSpy).not.toHaveBeenCalled();
+    expect(res.status).toBe(500);
+    expect(reportSpy).toHaveBeenCalled();
   });
 });
