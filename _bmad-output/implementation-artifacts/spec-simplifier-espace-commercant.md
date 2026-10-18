@@ -1,6 +1,6 @@
 ---
 title: "Simplifier l'espace commerçant Kado"
-status: in-progress
+status: done
 ---
 
 # Simplifier l'espace commerçant Kado
@@ -30,5 +30,5 @@ Réduire la charge de choix dans l'espace commerçant : placer les actions fréq
 ## Reprise
 
 - Fait : actions courantes dans la navigation principale, outils secondaires dans « Autres outils », aide vidéo repliable et onglets de la roue renommés clairement.
-- Reste : passer les contrôles, puis publier les changements.
-- Prochaine commande : lancer `scripts/relais/verifier.sh`.
+- Reste : aucun.
+- Prochaine commande : aucune — vérifications, build et déploiement terminés.
