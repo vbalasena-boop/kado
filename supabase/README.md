@@ -1,7 +1,8 @@
 # Base de données Kado — migrations & CLI Supabase
 
-Le schéma vit dans `supabase/migrations/`. L'historique actuel va de `0001` à
-`0047`, mais certains préfixes sont dupliqués (`0041`, `0042`, `0043`). Les
+Le schéma vit dans `supabase/migrations/`. Les migrations numérotées vont de
+`0001` à `0084`, mais certains préfixes historiques sont dupliqués (`0041`,
+`0042`, `0043`). Les
 fichiers sont donc ordonnés par préfixe puis par nom; un préfixe seul ne
 constitue pas un identifiant unique de migration. Deux façons de les appliquer.
 
@@ -56,6 +57,12 @@ explicitement toute migration manuelle et son état distant.
 # (le nom peut aussi être généré par : supabase migration new nom — mais il
 #  utilise un préfixe horodaté ; préfère la numérotation séquentielle ici.)
 ```
+
+La migration `0084_one_time_game_passes.sql` ajoute les codes de jeu à usage
+unique remis en caisse. Elle doit être appliquée avant d'activer cette option
+dans le tableau de bord. Elle a été appliquée manuellement au projet de
+production `kado` le 18 octobre 2026 et vérifiée : table `play_passes`, colonne
+`wheel_configs.play_pass_required` et fonction atomique `play_with_pass`.
 
 ## Option B — SQL Editor (manuel, historique)
 

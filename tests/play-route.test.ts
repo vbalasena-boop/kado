@@ -14,6 +14,8 @@ let TRIGGER: unknown = ["instagram"];
 let LOYALTY_ENABLED = true;
 // Lien Instagram renseigné ? (gate de l'action « instagram », mutable par test).
 let INSTAGRAM_URL: string | null = "https://instagram.com/cafe";
+let PLAY_PASS_REQUIRED = false;
+let PLAY_PASS_VALID = true;
 
 const PRIZES = [
   {
@@ -27,7 +29,10 @@ const PRIZES = [
   },
 ];
 
-const mocks = vi.hoisted(() => ({ rateLimit: vi.fn(async () => true) }));
+const mocks = vi.hoisted(() => ({
+  rateLimit: vi.fn(async () => true),
+  playWithPass: vi.fn(async (..._args: any[]) => ({ data: true, error: null })),
+}));
 
 // Client Supabase minimal : route les lectures selon la table + les colonnes.
 function makeClient() {
@@ -41,16 +46,22 @@ function makeClient() {
         },
         eq: () => b,
         gte: () => b,
+        gt: () => b,
+        is: () => b,
         not: () => Promise.resolve({ count: 0 }),
         order: () => Promise.resolve({ data: PRIZES, error: null }),
         insert: () => Promise.resolve({ error: null }),
         maybeSingle: () => {
+          if (table === "play_passes")
+            return Promise.resolve({ data: PLAY_PASS_VALID ? { id: "pass1" } : null, error: null });
           if (table === "businesses")
             return Promise.resolve({
               data: { id: "biz1", status: "active" },
               error: null,
             });
           if (table === "wheel_configs") {
+            if (cols.includes("play_pass_required"))
+              return Promise.resolve({ data: { play_pass_required: PLAY_PASS_REQUIRED }, error: null });
             if (cols.includes("trigger_actions"))
               return Promise.resolve({
                 data: {
@@ -75,6 +86,7 @@ function makeClient() {
       };
       return b;
     },
+    rpc: mocks.playWithPass,
   };
 }
 
@@ -90,10 +102,10 @@ vi.mock("@/lib/report", () => ({ reportError: () => {} }));
 
 import { POST } from "@/app/api/play/route";
 
-function post(playType: string) {
+function post(playType: string, playPass?: string) {
   return new NextRequest("http://localhost/api/play", {
     method: "POST",
-    body: JSON.stringify({ slug: "demo", playType }),
+    body: JSON.stringify({ slug: "demo", playType, playPass }),
     headers: { "content-type": "application/json" },
   });
 }
@@ -103,8 +115,43 @@ describe("POST /api/play — garde des actions déclenchantes", () => {
     TRIGGER = ["instagram"];
     LOYALTY_ENABLED = true;
     INSTAGRAM_URL = "https://instagram.com/cafe";
+    PLAY_PASS_REQUIRED = false;
+    PLAY_PASS_VALID = true;
     mocks.rateLimit.mockReset();
     mocks.rateLimit.mockResolvedValue(true);
+    mocks.playWithPass.mockReset();
+    mocks.playWithPass.mockResolvedValue({ data: true, error: null });
+  });
+
+  it("exige un code si le commerce a activé les passes", async () => {
+    PLAY_PASS_REQUIRED = true;
+
+    const res = await POST(post("instagram"));
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe("play_pass_required");
+    expect(mocks.playWithPass).not.toHaveBeenCalled();
+  });
+
+  it("refuse un code inconnu ou déjà utilisé", async () => {
+    PLAY_PASS_REQUIRED = true;
+    PLAY_PASS_VALID = false;
+
+    const res = await POST(post("instagram", "KDO-ABCDE-FGHJK"));
+
+    expect(res.status).toBe(403);
+    expect((await res.json()).error).toBe("invalid_play_pass");
+    expect(mocks.playWithPass).not.toHaveBeenCalled();
+  });
+
+  it("consomme atomiquement un code valide avec le tour", async () => {
+    PLAY_PASS_REQUIRED = true;
+
+    const res = await POST(post("instagram", "kdo-abcde-fghjk"));
+
+    expect(res.status).toBe(200);
+    expect(mocks.playWithPass).toHaveBeenCalledOnce();
+    expect(mocks.playWithPass.mock.calls[0][0]).toBe("play_with_pass");
   });
 
   it("refuse les tours quand le plafond réseau du commerce est atteint", async () => {

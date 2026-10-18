@@ -33,6 +33,12 @@ export default function Confidentialite() {
           parties enregistrées en base peuvent être reliées à vos tours.
         </li>
         <li>
+          Si un commerce active les codes de jeu à usage unique : le code remis
+          en caisse est vérifié sous forme d'empreinte cryptographique, puis son
+          utilisation est liée au cookie joueur pour empêcher de le réutiliser.
+          Les codes expirent au bout de 90 jours et sont alors supprimés.
+        </li>
+        <li>
           Seulement après votre accord explicite dans le jeu, le navigateur
           peut calculer une empreinte technique dérivée de caractéristiques de
           l'appareil et du navigateur (agent utilisateur, langue, plateforme,
@@ -103,9 +109,9 @@ export default function Confidentialite() {
       <p>
         Cookie joueur : 12 mois. Données de jeu et commandes : 13 mois. E-mails
         collectés et cartes de fidélité : jusqu'au retrait du consentement ou 3
-        ans sans interaction. Abonnements aux notifications : jusqu'à
-        désactivation. Comptes commerçants : durée de la relation contractuelle
-        + obligations légales.
+        ans sans interaction. Empreintes des codes de jeu : 90 jours. Abonnements
+        aux notifications : jusqu'à désactivation. Comptes commerçants : durée
+        de la relation contractuelle + obligations légales.
       </p>
 
       <h2>Sous-traitants</h2>
