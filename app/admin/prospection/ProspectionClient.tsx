@@ -125,13 +125,13 @@ const PIPELINE_COLUMNS: {
   statuses: ProspectStatus[];
   accent: string;
 }[] = [
-  { key: "new", label: "Nouveaux", emoji: "🆕", statuses: ["new"], accent: "#8b6cff" },
-  { key: "queued", label: "En file", emoji: "⏳", statuses: ["queued"], accent: "#a86b00" },
-  { key: "contacted", label: "Contactés", emoji: "📤", statuses: ["emailed", "dm_pending", "dm_sent"], accent: "#0b7285" },
-  { key: "replied", label: "Ont répondu", emoji: "💬", statuses: ["replied"], accent: "#1e7d34" },
-  { key: "interested", label: "Intéressés", emoji: "⭐", statuses: ["interested"], accent: "#1e7d34" },
-  { key: "client", label: "Clients", emoji: "🏆", statuses: ["client"], accent: "#1e7d34" },
-  { key: "excluded", label: "Exclus", emoji: "🚫", statuses: ["excluded"], accent: "#999" },
+  { key: "new", label: "Nouveaux", emoji: "🆕", statuses: ["new"], accent: "var(--gold)" },
+  { key: "queued", label: "En file", emoji: "⏳", statuses: ["queued"], accent: "var(--g-warn)" },
+  { key: "contacted", label: "Contactés", emoji: "📤", statuses: ["emailed", "dm_pending", "dm_sent"], accent: "var(--mint)" },
+  { key: "replied", label: "Ont répondu", emoji: "💬", statuses: ["replied"], accent: "var(--g-good)" },
+  { key: "interested", label: "Intéressés", emoji: "⭐", statuses: ["interested"], accent: "var(--g-good)" },
+  { key: "client", label: "Clients", emoji: "🏆", statuses: ["client"], accent: "var(--g-good)" },
+  { key: "excluded", label: "Exclus", emoji: "🚫", statuses: ["excluded"], accent: "var(--g-ink2)" },
 ];
 
 type SortKey = "score" | "reviews" | "rating" | "name" | "recent";
@@ -840,7 +840,7 @@ export default function ProspectionClient({
   return (
     <div className="dash-card">
       <h2>🔎 Prospection</h2>
-      <p style={{ color: "#666", marginTop: -4 }}>
+      <p style={{ color: "var(--g-ink2)", marginTop: -4 }}>
         Trouve des commerces à démarcher, classés par potentiel (peu d'avis
         Google = fort potentiel Kado). <a href="/admin/prospection/instagram">📸 File Instagram →</a>
       </p>
@@ -853,8 +853,8 @@ export default function ProspectionClient({
       {migrationMissing && (
         <div
           style={{
-            background: "#fff4e5",
-            border: "1px solid #ffd8a8",
+            background: "var(--g-warn-bg)",
+            border: "1px solid rgba(236, 196, 116, 0.28)",
             borderRadius: 8,
             padding: "10px 12px",
             margin: "10px 0",
@@ -870,7 +870,7 @@ export default function ProspectionClient({
       {/* --- Sourcing --- */}
       <div
         style={{
-          border: "1px solid #eee",
+          border: "1px solid var(--g-line)",
           borderRadius: 10,
           padding: 14,
           margin: "14px 0",
@@ -883,7 +883,7 @@ export default function ProspectionClient({
             onChange={setCity}
             placeholder="Ville(s) — ex. Versailles, Le Chesnay"
             title="Commence à taper : les villes sont proposées automatiquement. Plusieurs villes séparées par des virgules (5 max)."
-            style={{ padding: "8px 10px", borderRadius: 8, border: "1px solid #ccc", minWidth: 240, width: "100%", boxSizing: "border-box" }}
+            style={{ padding: "8px 10px", borderRadius: 8, border: "1px solid var(--d-line-strong)", minWidth: 240, width: "100%", boxSizing: "border-box" }}
           />
           <label style={{ fontSize: 14 }}>
             Limite&nbsp;
@@ -893,7 +893,7 @@ export default function ProspectionClient({
               max={120}
               value={limit}
               onChange={(e) => setLimit(Number(e.target.value))}
-              style={{ width: 64, padding: "8px 10px", borderRadius: 8, border: "1px solid #ccc" }}
+              style={{ width: 64, padding: "8px 10px", borderRadius: 8, border: "1px solid var(--d-line-strong)" }}
             />
           </label>
           <button
@@ -927,7 +927,7 @@ export default function ProspectionClient({
             onChange={(e) => changeTone(e.target.value)}
             disabled={aiWriting || aiWritingAll}
             title="Tonalité des messages rédigés par l'IA"
-            style={{ ...selectStyle, color: "#8b6cff" }}
+            style={{ ...selectStyle, color: "var(--gold)" }}
           >
             <option value="equilibre">Ton : équilibré</option>
             <option value="direct">Ton : direct</option>
@@ -938,7 +938,7 @@ export default function ProspectionClient({
             onClick={runAiWrite}
             disabled={aiWriting || aiWritingAll}
             className="dash-signout"
-            style={{ opacity: aiWriting || aiWritingAll ? 0.6 : 1, color: "#8b6cff" }}
+            style={{ opacity: aiWriting || aiWritingAll ? 0.6 : 1, color: "var(--gold)" }}
             title="Rédige un lot (8) de messages email + DM personnalisés par IA (brouillons à valider). Nécessite ANTHROPIC_API_KEY."
           >
             {aiWriting ? "Rédaction IA…" : "✨ Rédiger avec l'IA (lot)"}
@@ -947,7 +947,7 @@ export default function ProspectionClient({
             onClick={runAiWriteAll}
             disabled={aiWriting || aiWritingAll}
             className="dash-signout"
-            style={{ opacity: aiWriting || aiWritingAll ? 0.6 : 1, color: "#8b6cff", fontWeight: 600 }}
+            style={{ opacity: aiWriting || aiWritingAll ? 0.6 : 1, color: "var(--gold)", fontWeight: 600 }}
             title="Rédige par IA TOUS les prospects restants, lot après lot, automatiquement."
           >
             {aiWritingAll ? "Rédaction en cours…" : "✨ Tout rédiger (IA)"}
@@ -962,7 +962,7 @@ export default function ProspectionClient({
           <button
             onClick={approveAll}
             className="dash-signout"
-            style={{ color: "#2e7d32" }}
+            style={{ color: "var(--g-good)" }}
             title="Génère + approuve l'email de tous les prospects avec un contact (remplit la file)"
           >
             ✅ Approuver tous les emails
@@ -1013,7 +1013,7 @@ export default function ProspectionClient({
           ))}
         </div>
         {message && (
-          <p style={{ marginTop: 10, fontSize: 14, color: "#333" }}>{message}</p>
+          <p style={{ marginTop: 10, fontSize: 14, color: "var(--g-ink)" }}>{message}</p>
         )}
       </div>
 
@@ -1057,7 +1057,7 @@ export default function ProspectionClient({
         {showInsta && (
           <div
             style={{
-              border: "1px solid #eee",
+              border: "1px solid var(--g-line)",
               borderRadius: 10,
               padding: 14,
               marginTop: 8,
@@ -1067,7 +1067,7 @@ export default function ProspectionClient({
               gap: 8,
             }}
           >
-            <div style={{ fontSize: 13, color: "#555" }}>
+            <div style={{ fontSize: 13, color: "var(--g-ink2)" }}>
               Colle les comptes trouvés sur Instagram — <strong>un par ligne</strong>{" "}
               (@nom, nom, ou lien instagram.com/nom). 100 max par import. Les doublons
               sont ignorés, rien n'est écrasé.
@@ -1077,7 +1077,7 @@ export default function ProspectionClient({
               onChange={(e) => setInstaText(e.target.value)}
               rows={6}
               placeholder={"@le.bouillon.versailles\n@cafe.des.amis\ninstagram.com/salon.marie"}
-              style={{ width: "100%", padding: 10, borderRadius: 8, border: "1px solid #ccc", fontFamily: "inherit", fontSize: 14, boxSizing: "border-box" }}
+              style={{ width: "100%", padding: 10, borderRadius: 8, border: "1px solid var(--d-line-strong)", fontFamily: "inherit", fontSize: 14, boxSizing: "border-box" }}
             />
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
               <input
@@ -1085,7 +1085,7 @@ export default function ProspectionClient({
                 value={instaCity}
                 onChange={(e) => setInstaCity(e.target.value)}
                 placeholder="Ville (facultatif)"
-                style={{ padding: "8px 10px", borderRadius: 8, border: "1px solid #ccc", minWidth: 180 }}
+                style={{ padding: "8px 10px", borderRadius: 8, border: "1px solid var(--d-line-strong)", minWidth: 180 }}
               />
               <button
                 onClick={runInstaImport}
@@ -1101,7 +1101,7 @@ export default function ProspectionClient({
         {showAdd && (
           <div
             style={{
-              border: "1px solid #eee",
+              border: "1px solid var(--g-line)",
               borderRadius: 10,
               padding: 14,
               marginTop: 8,
@@ -1170,7 +1170,7 @@ export default function ProspectionClient({
             placeholder="∞"
             value={maxReviews}
             onChange={(e) => setMaxReviews(e.target.value)}
-            style={{ width: 70, padding: "6px 8px", borderRadius: 8, border: "1px solid #ccc" }}
+            style={{ width: 70, padding: "6px 8px", borderRadius: 8, border: "1px solid var(--d-line-strong)" }}
           />
         </label>
         <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)} style={selectStyle} disabled={view === "pipeline"} title={view === "pipeline" ? "Tri par score dans la vue pipeline" : undefined}>
@@ -1181,11 +1181,11 @@ export default function ProspectionClient({
           <option value="recent">Tri : ajout récent</option>
         </select>
         {/* Bascule Liste / Pipeline */}
-        <div style={{ display: "inline-flex", borderRadius: 8, overflow: "hidden", border: "1px solid #ccc" }}>
+        <div style={{ display: "inline-flex", borderRadius: 8, overflow: "hidden", border: "1px solid var(--d-line-strong)" }}>
           <button
             onClick={() => setView("list")}
             className="dash-signout"
-            style={{ fontSize: 13, border: "none", borderRadius: 0, background: view === "list" ? "#8b6cff" : "#fff", color: view === "list" ? "#fff" : "#555" }}
+            style={{ fontSize: 13, border: "none", borderRadius: 0, background: view === "list" ? "var(--gold)" : "var(--g-surface)", color: view === "list" ? "var(--night)" : "var(--g-ink2)" }}
             title="Vue liste détaillée"
           >
             ☰ Liste
@@ -1193,13 +1193,13 @@ export default function ProspectionClient({
           <button
             onClick={() => setView("pipeline")}
             className="dash-signout"
-            style={{ fontSize: 13, border: "none", borderRadius: 0, background: view === "pipeline" ? "#8b6cff" : "#fff", color: view === "pipeline" ? "#fff" : "#555" }}
+            style={{ fontSize: 13, border: "none", borderRadius: 0, background: view === "pipeline" ? "var(--gold)" : "var(--g-surface)", color: view === "pipeline" ? "var(--night)" : "var(--g-ink2)" }}
             title="Vue pipeline (kanban par statut)"
           >
             ▦ Pipeline
           </button>
         </div>
-        <span style={{ marginLeft: "auto", color: "#666", fontSize: 14 }}>
+        <span style={{ marginLeft: "auto", color: "var(--g-ink2)", fontSize: 14 }}>
           {(view === "pipeline" ? boardRows.length : filtered.length)} prospect(s)
         </span>
         <button
@@ -1223,7 +1223,7 @@ export default function ProspectionClient({
         <button
           onClick={() => clearProspects("all")}
           className="dash-signout"
-          style={{ fontSize: 13, color: "#c0392b" }}
+          style={{ fontSize: 13, color: "var(--g-bad)" }}
           title="Supprime TOUS les prospects"
         >
           Tout vider
@@ -1241,19 +1241,19 @@ export default function ProspectionClient({
       {/* --- Liste / Pipeline --- */}
       {view === "pipeline" ? (
         boardRows.length === 0 ? (
-          <p style={{ color: "#666" }}>
+          <p style={{ color: "var(--g-ink2)" }}>
             Aucun prospect. Lance un sourcing ci-dessus pour commencer.
           </p>
         ) : (
           <PipelineBoard rows={boardRows} onStatus={changeStatus} />
         )
       ) : filtered.length === 0 ? (
-        <p style={{ color: "#666" }}>
+        <p style={{ color: "var(--g-ink2)" }}>
           Aucun prospect. Lance un sourcing ci-dessus pour commencer.
         </p>
       ) : (
         <div>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", margin: "2px 0 10px", fontSize: 12, color: "#666" }}>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", margin: "2px 0 10px", fontSize: 12, color: "var(--g-ink2)" }}>
             <span>États Email / DM :</span>
             <Pill {...PILL.sent} />
             <Pill {...PILL.approved} />
@@ -1273,7 +1273,7 @@ export default function ProspectionClient({
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
                 <thead>
-                  <tr style={{ textAlign: "left", borderBottom: "2px solid #eee" }}>
+                  <tr style={{ textAlign: "left", borderBottom: "2px solid var(--g-line)" }}>
                     <th style={th}>Score</th>
                     <th style={th}>Nom</th>
                     <th style={th}>Ville</th>
@@ -1288,7 +1288,7 @@ export default function ProspectionClient({
                 </thead>
                 <tbody>
                   {paged.map((p) => (
-                    <tr key={p.id} style={{ borderBottom: "1px solid #f0f0f0" }}>
+                    <tr key={p.id} style={{ borderBottom: "1px solid var(--g-line)" }}>
                       <td style={td}>
                         <b>{p.score ?? "—"}</b>
                       </td>
@@ -1355,7 +1355,7 @@ export default function ProspectionClient({
               >
                 ← Précédent
               </button>
-              <span style={{ fontSize: 13, color: "#666" }}>
+              <span style={{ fontSize: 13, color: "var(--g-ink2)" }}>
                 Page {clampedPage + 1} / {totalPages}
               </span>
               <button
@@ -1378,10 +1378,10 @@ export default function ProspectionClient({
 type PillProps = { text: string; bg: string; color: string; title?: string };
 
 const PILL: Record<"sent" | "approved" | "draft" | "none", PillProps> = {
-  sent: { text: "✅ Envoyé", bg: "#e6f4ea", color: "#1e7d34" },
-  approved: { text: "⏳ À envoyer", bg: "#fff4e0", color: "#a86b00" },
-  draft: { text: "✍️ Brouillon", bg: "#eef0f3", color: "#555" },
-  none: { text: "—", bg: "#f5f5f7", color: "#999" },
+  sent: { text: "✅ Envoyé", bg: "var(--g-good-bg)", color: "var(--g-good)" },
+  approved: { text: "⏳ À envoyer", bg: "var(--g-warn-bg)", color: "var(--g-warn)" },
+  draft: { text: "✍️ Brouillon", bg: "var(--g-neutral-bg)", color: "var(--g-ink2)" },
+  none: { text: "—", bg: "var(--g-neutral-bg)", color: "var(--g-ink2)" },
 };
 
 function Pill({ text, bg, color, title }: PillProps) {
@@ -1414,8 +1414,8 @@ function EmailBadge({ p }: { p: ProspectRow }) {
 /** État d'envoi du DM Instagram (suivi via le statut du prospect). */
 function DmBadge({ p }: { p: ProspectRow }) {
   if (p.status === "dm_sent") return <Pill {...PILL.sent} />;
-  if (p.status === "dm_pending") return <Pill text="⏳ En file" bg="#fff4e0" color="#a86b00" />;
-  if (p.instagram_handle) return <Pill text="À envoyer" bg="#eef0f3" color="#555" title="Dans la file Instagram" />;
+  if (p.status === "dm_pending") return <Pill text="⏳ En file" bg="var(--g-warn-bg)" color="var(--g-warn)" />;
+  if (p.instagram_handle) return <Pill text="À envoyer" bg="var(--g-neutral-bg)" color="var(--g-ink2)" title="Dans la file Instagram" />;
   return <Pill {...PILL.none} title="Pas de compte Instagram" />;
 }
 
@@ -1442,7 +1442,7 @@ function ConversionTables({
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
             <thead>
-              <tr style={{ textAlign: "left", borderBottom: "2px solid #eee" }}>
+              <tr style={{ textAlign: "left", borderBottom: "2px solid var(--g-line)" }}>
                 <th style={th}>{title.includes("ville") ? "Ville" : "Secteur"}</th>
                 <th style={th}>Contactés</th>
                 <th style={th}>Réponses</th>
@@ -1454,7 +1454,7 @@ function ConversionTables({
                 const rate = r.contacted > 0 ? Math.round((r.replied / r.contacted) * 100) : 0;
                 const isBest = Boolean(best && r.key === best.key && r.contacted >= 5);
                 return (
-                  <tr key={r.key} style={{ borderBottom: "1px solid #f0f0f0", background: isBest ? "#e6f4ea" : undefined }}>
+                  <tr key={r.key} style={{ borderBottom: "1px solid var(--g-line)", background: isBest ? "var(--g-good-bg)" : undefined }}>
                     <td style={td}>{labelFor(r.key)} {isBest && "🏆"}</td>
                     <td style={td}>{r.contacted}</td>
                     <td style={td}>{r.replied}{r.clients ? ` (${r.clients} client${r.clients > 1 ? "s" : ""})` : ""}</td>
@@ -1470,9 +1470,9 @@ function ConversionTables({
   };
 
   return (
-    <div style={{ border: "1px solid #eee", borderRadius: 10, padding: 14, margin: "0 0 16px" }}>
+    <div style={{ border: "1px solid var(--g-line)", borderRadius: 10, padding: 14, margin: "0 0 16px" }}>
       <h3 style={{ margin: "0 0 2px" }}>📈 Conversion par ville & secteur</h3>
-      <p style={{ color: "#666", marginTop: 0, fontSize: 13 }}>
+      <p style={{ color: "var(--g-ink2)", marginTop: 0, fontSize: 13 }}>
         Où tes efforts convertissent le mieux (réponses / contactés). Concentre-toi
         sur les 🏆.
       </p>
@@ -1484,7 +1484,7 @@ function ConversionTables({
           labelFor={(k) => SEGMENT_LABEL[k as ProspectSegment] ?? k}
         />
       </div>
-      <p style={{ color: "#999", fontSize: 12, marginBottom: 0 }}>
+      <p style={{ color: "var(--g-ink2)", fontSize: 12, marginBottom: 0 }}>
         Un taux n'est fiable qu'à partir de ~10 contactés. 🏆 = meilleur taux à ce stade.
       </p>
     </div>
@@ -1508,21 +1508,21 @@ function AnglePerf({ perf }: { perf: Stats["anglePerf"] }) {
       : null;
 
   return (
-    <div style={{ border: "1px solid #eee", borderRadius: 10, padding: 14, margin: "0 0 16px" }}>
+    <div style={{ border: "1px solid var(--g-line)", borderRadius: 10, padding: 14, margin: "0 0 16px" }}>
       <h3 style={{ margin: "0 0 2px" }}>🧪 Test A/B des emails (IA)</h3>
-      <p style={{ color: "#666", marginTop: 0, fontSize: 13 }}>
+      <p style={{ color: "var(--g-ink2)", marginTop: 0, fontSize: 13 }}>
         Deux façons d&apos;aborder le prospect sont testées automatiquement (une
         moitié chacune). On garde celle qui obtient le plus de réponses.
       </p>
       {totalSent === 0 && (
         <p
           style={{
-            background: "#eef2ff",
-            border: "1px solid #e0e7ff",
+            background: "var(--g-neutral-bg)",
+            border: "1px solid var(--g-line)",
             borderRadius: 8,
             padding: "8px 10px",
             fontSize: 13,
-            color: "#3730a3",
+            color: "var(--g-ink)",
             margin: "0 0 10px",
           }}
         >
@@ -1534,7 +1534,7 @@ function AnglePerf({ perf }: { perf: Stats["anglePerf"] }) {
       <div style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
           <thead>
-            <tr style={{ textAlign: "left", borderBottom: "2px solid #eee" }}>
+            <tr style={{ textAlign: "left", borderBottom: "2px solid var(--g-line)" }}>
               <th style={th}>Variante</th>
               <th style={th}>Envoyés</th>
               <th style={th}>Réponses</th>
@@ -1549,8 +1549,8 @@ function AnglePerf({ perf }: { perf: Stats["anglePerf"] }) {
                 <tr
                   key={p.label}
                   style={{
-                    borderBottom: "1px solid #f0f0f0",
-                    background: isBest ? "#e6f4ea" : undefined,
+                    borderBottom: "1px solid var(--g-line)",
+                    background: isBest ? "var(--g-good-bg)" : undefined,
                   }}
                 >
                   <td style={td}>
@@ -1565,7 +1565,7 @@ function AnglePerf({ perf }: { perf: Stats["anglePerf"] }) {
           </tbody>
         </table>
       </div>
-      <p style={{ color: "#999", fontSize: 12, marginBottom: 0 }}>
+      <p style={{ color: "var(--g-ink2)", fontSize: 12, marginBottom: 0 }}>
         <strong>Question curieuse</strong> = on pose une vraie question sans dire
         tout de suite qu&apos;on vend un outil. <strong>Approche directe</strong> =
         on annonce Kado dès la 1ʳᵉ phrase. Un taux devient fiable à partir de
@@ -1588,16 +1588,16 @@ function SubjectPerf({ perf }: { perf: Stats["subjectPerf"] }) {
       : null;
 
   return (
-    <div style={{ border: "1px solid #eee", borderRadius: 10, padding: 14, margin: "0 0 16px" }}>
+    <div style={{ border: "1px solid var(--g-line)", borderRadius: 10, padding: 14, margin: "0 0 16px" }}>
       <h3 style={{ margin: "0 0 2px" }}>📊 Performance par objet d'email</h3>
-      <p style={{ color: "#666", marginTop: 0, fontSize: 13 }}>
+      <p style={{ color: "var(--g-ink2)", marginTop: 0, fontSize: 13 }}>
         Taux de réponse selon l'objet utilisé — pour garder les formulations qui
         marchent le mieux.
       </p>
       <div style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
           <thead>
-            <tr style={{ textAlign: "left", borderBottom: "2px solid #eee" }}>
+            <tr style={{ textAlign: "left", borderBottom: "2px solid var(--g-line)" }}>
               <th style={th}>Objet</th>
               <th style={th}>Envoyés</th>
               <th style={th}>Réponses</th>
@@ -1612,8 +1612,8 @@ function SubjectPerf({ perf }: { perf: Stats["subjectPerf"] }) {
                 <tr
                   key={p.label}
                   style={{
-                    borderBottom: "1px solid #f0f0f0",
-                    background: isBest ? "#e6f4ea" : undefined,
+                    borderBottom: "1px solid var(--g-line)",
+                    background: isBest ? "var(--g-good-bg)" : undefined,
                   }}
                 >
                   <td style={td}>
@@ -1628,7 +1628,7 @@ function SubjectPerf({ perf }: { perf: Stats["subjectPerf"] }) {
           </tbody>
         </table>
       </div>
-      <p style={{ color: "#999", fontSize: 12, marginBottom: 0 }}>
+      <p style={{ color: "var(--g-ink2)", fontSize: 12, marginBottom: 0 }}>
         Un taux n'est fiable qu'à partir de ~15–20 envois par objet. 🏆 = meilleure
         variante à ce stade.
       </p>
@@ -1653,7 +1653,7 @@ function StatusSelect({
       style={{
         padding: "6px 8px",
         borderRadius: 6,
-        border: "1px solid #ccc",
+        border: "1px solid var(--d-line-strong)",
         fontSize: 13,
         width: full ? "100%" : undefined,
       }}
@@ -1682,16 +1682,16 @@ function ProspectCard({
     .filter(Boolean)
     .join(" · ");
   return (
-    <div style={{ border: "1px solid #eee", borderRadius: 10, padding: 12, background: "#fff" }}>
+    <div style={{ border: "1px solid var(--g-line)", borderRadius: 10, padding: 12, background: "var(--g-surface)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "baseline" }}>
         <a href={`/admin/prospection/${p.id}`} style={{ fontWeight: 600, fontSize: 15 }}>
           {p.name}
         </a>
-        <span style={{ fontSize: 12, color: "#888", whiteSpace: "nowrap" }}>
+        <span style={{ fontSize: 12, color: "var(--g-ink2)", whiteSpace: "nowrap" }}>
           Score {p.score ?? "—"}
         </span>
       </div>
-      <div style={{ fontSize: 13, color: "#666", margin: "3px 0 8px" }}>
+      <div style={{ fontSize: 13, color: "var(--g-ink2)", margin: "3px 0 8px" }}>
         {meta}
         {meta && " · "}⭐ {p.google_rating ?? "—"} · {p.google_reviews_count ?? "—"} avis
       </div>
@@ -1707,12 +1707,12 @@ function ProspectCard({
             site ↗
           </a>
         )}
-        {!p.email && !p.instagram_handle && <span style={{ color: "#999" }}>Pas de contact</span>}
+        {!p.email && !p.instagram_handle && <span style={{ color: "var(--g-ink2)" }}>Pas de contact</span>}
       </div>
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginBottom: 10 }}>
-        <span style={{ fontSize: 12, color: "#888" }}>Email</span>
+        <span style={{ fontSize: 12, color: "var(--g-ink2)" }}>Email</span>
         <EmailBadge p={p} />
-        <span style={{ fontSize: 12, color: "#888", marginLeft: 6 }}>DM</span>
+        <span style={{ fontSize: 12, color: "var(--g-ink2)", marginLeft: 6 }}>DM</span>
         <DmBadge p={p} />
       </div>
       <StatusSelect p={p} onStatus={onStatus} full />
@@ -1729,26 +1729,26 @@ function DeliverabilityPanel({
   onClose: () => void;
 }) {
   const scoreColor =
-    report.score >= 85 ? "#1e7d34" : report.score >= 60 ? "#a86b00" : "#c0392b";
+    report.score >= 85 ? "var(--g-good)" : report.score >= 60 ? "var(--g-warn)" : "var(--g-bad)";
   const badge: Record<DeliverabilityCheck["status"], { txt: string; bg: string; color: string }> = {
-    ok: { txt: "✓ OK", bg: "#e6f4ea", color: "#1e7d34" },
-    warn: { txt: "⚠ À surveiller", bg: "#fff4e0", color: "#a86b00" },
-    fail: { txt: "✗ Problème", bg: "#fdecea", color: "#c0392b" },
+    ok: { txt: "✓ OK", bg: "var(--g-good-bg)", color: "var(--g-good)" },
+    warn: { txt: "⚠ À surveiller", bg: "var(--g-warn-bg)", color: "var(--g-warn)" },
+    fail: { txt: "✗ Problème", bg: "var(--g-bad-bg)", color: "var(--g-bad)" },
   };
   return (
     <div
       style={{
-        border: "1px solid #eee",
+        border: "1px solid var(--g-line)",
         borderRadius: 12,
         padding: 14,
         marginTop: 12,
-        background: "#fff",
+        background: "var(--g-surface)",
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <h3 style={{ margin: 0 }}>🛡️ Délivrabilité</h3>
         {report.domain && (
-          <code style={{ fontSize: 13, color: "#555" }}>{report.domain}</code>
+          <code style={{ fontSize: 13, color: "var(--g-ink2)" }}>{report.domain}</code>
         )}
         <span
           style={{
@@ -1765,7 +1765,7 @@ function DeliverabilityPanel({
           Fermer
         </button>
       </div>
-      <p style={{ color: "#444", fontSize: 14, margin: "6px 0 10px" }}>{report.summary}</p>
+      <p style={{ color: "var(--g-ink)", fontSize: 14, margin: "6px 0 10px" }}>{report.summary}</p>
       {report.configured ? (
         <div style={{ display: "grid", gap: 8 }}>
           {report.checks.map((c) => (
@@ -1775,7 +1775,7 @@ function DeliverabilityPanel({
                 display: "flex",
                 gap: 10,
                 alignItems: "flex-start",
-                border: "1px solid #f0f0f0",
+                border: "1px solid var(--g-line)",
                 borderRadius: 8,
                 padding: "8px 10px",
               }}
@@ -1796,21 +1796,21 @@ function DeliverabilityPanel({
               </span>
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontWeight: 600, fontSize: 14 }}>{c.label}</div>
-                <div style={{ fontSize: 13, color: "#555", wordBreak: "break-word" }}>{c.detail}</div>
+                <div style={{ fontSize: 13, color: "var(--g-ink2)", wordBreak: "break-word" }}>{c.detail}</div>
                 {c.help && (
-                  <div style={{ fontSize: 12, color: "#a86b00", marginTop: 2 }}>💡 {c.help}</div>
+                  <div style={{ fontSize: 12, color: "var(--g-warn)", marginTop: 2 }}>💡 {c.help}</div>
                 )}
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <p style={{ fontSize: 13, color: "#c0392b" }}>
+        <p style={{ fontSize: 13, color: "var(--g-bad)" }}>
           Configure d&apos;abord l&apos;expéditeur de prospection (variable{" "}
           <code>PROSPECT_EMAIL_FROM</code>) puis relance le test.
         </p>
       )}
-      <p style={{ fontSize: 12, color: "#999", marginBottom: 0, marginTop: 10 }}>
+      <p style={{ fontSize: 12, color: "var(--g-ink2)", marginBottom: 0, marginTop: 10 }}>
         Contrôle DNS gratuit (aucun email envoyé). Pour un score anti-spam complet
         (contenu, blacklists), tu peux compléter avec un outil comme mail-tester.com.
       </p>
@@ -1845,8 +1845,8 @@ function PipelineBoard({
               style={{
                 flex: "0 0 260px",
                 width: 260,
-                background: "#faf9fc",
-                border: "1px solid #eee",
+                background: "var(--g-surface-2)",
+                border: "1px solid var(--g-line)",
                 borderRadius: 12,
                 padding: 10,
               }}
@@ -1862,14 +1862,14 @@ function PipelineBoard({
                 }}
               >
                 <span style={{ fontSize: 15 }}>{col.emoji}</span>
-                <span style={{ fontWeight: 700, fontSize: 14, color: "#222" }}>{col.label}</span>
+                <span style={{ fontWeight: 700, fontSize: 14, color: "var(--g-ink)" }}>{col.label}</span>
                 <span
                   style={{
                     marginLeft: "auto",
                     fontSize: 12,
                     fontWeight: 700,
                     color: col.accent,
-                    background: "#fff",
+                    background: "var(--g-surface)",
                     border: `1px solid ${col.accent}33`,
                     borderRadius: 999,
                     padding: "1px 8px",
@@ -1880,7 +1880,7 @@ function PipelineBoard({
               </div>
               <div style={{ display: "grid", gap: 8, maxHeight: 560, overflowY: "auto" }}>
                 {items.length === 0 ? (
-                  <p style={{ color: "#bbb", fontSize: 13, textAlign: "center", margin: "10px 0" }}>—</p>
+                  <p style={{ color: "var(--g-ink2)", fontSize: 13, textAlign: "center", margin: "10px 0" }}>—</p>
                 ) : (
                   items.map((p) => <PipelineCard key={p.id} p={p} onStatus={onStatus} />)
                 )}
@@ -1902,14 +1902,14 @@ function PipelineCard({
   onStatus: (id: string, s: ProspectStatus) => void;
 }) {
   return (
-    <div style={{ border: "1px solid #eee", borderRadius: 10, padding: 10, background: "#fff" }}>
+    <div style={{ border: "1px solid var(--g-line)", borderRadius: 10, padding: 10, background: "var(--g-surface)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 6, alignItems: "baseline" }}>
         <a href={`/admin/prospection/${p.id}`} style={{ fontWeight: 600, fontSize: 14 }}>
           {p.name}
         </a>
-        <span style={{ fontSize: 11, color: "#888", whiteSpace: "nowrap" }}>{p.score ?? "—"}</span>
+        <span style={{ fontSize: 11, color: "var(--g-ink2)", whiteSpace: "nowrap" }}>{p.score ?? "—"}</span>
       </div>
-      <div style={{ fontSize: 12, color: "#666", margin: "2px 0 6px" }}>
+      <div style={{ fontSize: 12, color: "var(--g-ink2)", margin: "2px 0 6px" }}>
         {[p.city, p.category ? SEGMENT_LABEL[p.category as ProspectSegment] ?? p.category : null]
           .filter(Boolean)
           .join(" · ") || "—"}
@@ -1921,7 +1921,7 @@ function PipelineCard({
             📸
           </a>
         )}
-        {!p.email && !p.instagram_handle && <span style={{ color: "#bbb" }}>Pas de contact</span>}
+        {!p.email && !p.instagram_handle && <span style={{ color: "var(--g-ink2)" }}>Pas de contact</span>}
       </div>
       <StatusSelect p={p} onStatus={onStatus} full />
     </div>
@@ -1939,7 +1939,7 @@ function StatsBand({ stats }: { stats: Stats }) {
   // Seuils usuels : < 2 % sain · 2–5 % à surveiller · > 5 % danger réputation.
   const bounceRate =
     stats.sentTotal > 0 ? Math.round((stats.bouncedTotal / stats.sentTotal) * 100) : 0;
-  const bounceColor = bounceRate > 5 ? "#c0392b" : bounceRate > 2 ? "#a86b00" : "#2e7d32";
+  const bounceColor = bounceRate > 5 ? "var(--g-bad)" : bounceRate > 2 ? "var(--g-warn)" : "var(--g-good)";
   // Alerte seulement avec assez de volume pour être significatif.
   const bounceWarn = stats.sentTotal >= 20 && bounceRate > 5;
 
@@ -1947,14 +1947,14 @@ function StatsBand({ stats }: { stats: Stats }) {
     { label: "Prospects", value: String(stats.total) },
     { label: "À contacter", value: String((s.new ?? 0) + (s.queued ?? 0)) },
     { label: "Contactés", value: String(contacted) },
-    { label: "Ont répondu", value: String(s.replied ?? 0), color: "#2e7d32" },
-    { label: "Intéressés", value: String(s.interested ?? 0), color: "#2e7d32" },
-    { label: "Clients", value: String(s.client ?? 0), color: "#2e7d32" },
+    { label: "Ont répondu", value: String(s.replied ?? 0), color: "var(--g-good)" },
+    { label: "Intéressés", value: String(s.interested ?? 0), color: "var(--g-good)" },
+    { label: "Clients", value: String(s.client ?? 0), color: "var(--g-good)" },
     { label: "Taux de réponse", value: `${rate}%` },
     { label: "Avec email", value: String(stats.withEmail) },
     { label: "Avec Insta", value: String(stats.withInstagram) },
     { label: "Emails aujourd'hui", value: `${stats.emailsToday}/${stats.emailCap}` },
-    { label: "À envoyer (approuvés)", value: String(stats.pendingEmails), color: "#8b6cff" },
+    { label: "À envoyer (approuvés)", value: String(stats.pendingEmails), color: "var(--gold)" },
     { label: "DM aujourd'hui", value: String(stats.dmToday) },
     { label: "Taux de bounce", value: `${bounceRate}%`, color: bounceColor },
   ];
@@ -1964,13 +1964,13 @@ function StatsBand({ stats }: { stats: Stats }) {
       {bounceWarn && (
         <div
           style={{
-            background: "#fdecea",
-            border: "1px solid #f5c6cb",
+            background: "var(--g-bad-bg)",
+            border: "1px solid rgba(242, 101, 127, 0.28)",
             borderRadius: 8,
             padding: "10px 12px",
             margin: "10px 0",
             fontSize: 14,
-            color: "#a12b21",
+            color: "var(--g-bad)",
           }}
         >
           ⚠️ <b>Taux de bounce élevé ({bounceRate}%)</b> — au-delà de 5 %, ta
@@ -1993,14 +1993,14 @@ function StatsBand({ stats }: { stats: Stats }) {
           style={{
             flex: "1 1 110px",
             minWidth: 100,
-            border: "1px solid #eee",
+            border: "1px solid var(--g-line)",
             borderRadius: 10,
             padding: "10px 12px",
-            background: "#faf9fc",
+            background: "var(--g-surface-2)",
           }}
         >
-          <div style={{ fontSize: 12, color: "#888" }}>{t.label}</div>
-          <div style={{ fontSize: 22, fontWeight: 700, color: t.color ?? "#222" }}>
+          <div style={{ fontSize: 12, color: "var(--g-ink2)" }}>{t.label}</div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: t.color ?? "var(--g-ink)" }}>
             {t.value}
           </div>
           </div>
@@ -2013,14 +2013,14 @@ function StatsBand({ stats }: { stats: Stats }) {
 const addInput: React.CSSProperties = {
   padding: 8,
   borderRadius: 8,
-  border: "1px solid #ccc",
+  border: "1px solid var(--d-line-strong)",
   minWidth: 180,
 };
 
 const selectStyle: React.CSSProperties = {
   padding: "6px 10px",
   borderRadius: 8,
-  border: "1px solid #ccc",
+  border: "1px solid var(--d-line-strong)",
   fontSize: 14,
 };
 const th: React.CSSProperties = { padding: "8px 10px", fontWeight: 600 };

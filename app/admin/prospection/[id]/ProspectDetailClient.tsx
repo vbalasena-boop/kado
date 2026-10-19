@@ -141,14 +141,14 @@ export default function ProspectDetailClient({
           onClick={deleteProspect}
           disabled={busy || aiBusy}
           className="dash-signout"
-          style={{ fontSize: 13, color: "#c0392b" }}
+          style={{ fontSize: 13, color: "var(--g-bad)" }}
           title="Supprimer définitivement ce prospect"
         >
           🗑️ Supprimer
         </button>
       </div>
       <h2 style={{ marginBottom: 4 }}>{prospect.name}</h2>
-      <p style={{ color: "#666", marginTop: 0 }}>
+      <p style={{ color: "var(--g-ink2)", marginTop: 0 }}>
         {prospect.city ?? "—"}
         {prospect.address ? ` · ${prospect.address}` : ""}
       </p>
@@ -173,10 +173,10 @@ export default function ProspectDetailClient({
 
       {factors.length > 0 && (
         <details style={{ marginBottom: 12 }}>
-          <summary style={{ cursor: "pointer", color: "#555" }}>
+          <summary style={{ cursor: "pointer", color: "var(--g-ink2)" }}>
             Détail du score
           </summary>
-          <ul style={{ fontSize: 14, color: "#555" }}>
+          <ul style={{ fontSize: 14, color: "var(--g-ink2)" }}>
             {factors.map((f) => (
               <li key={f.key}>
                 <b>+{f.points}</b> — {f.reason}
@@ -194,19 +194,19 @@ export default function ProspectDetailClient({
           onClick={aiGenerate}
           disabled={busy || aiBusy}
           className="dash-signout"
-          style={{ color: "#8b6cff" }}
+          style={{ color: "var(--gold)" }}
           title="Rédige ce prospect avec l'IA (brouillon). Nécessite ANTHROPIC_API_KEY."
         >
           {aiBusy ? "Rédaction IA…" : "✨ Rédiger avec l'IA"}
         </button>
-        {msg && <span style={{ fontSize: 14, color: "#333" }}>{msg}</span>}
+        {msg && <span style={{ fontSize: 14, color: "var(--g-ink)" }}>{msg}</span>}
       </div>
 
       {spamFlags.length > 0 && (
         <div
           style={{
-            background: "#fff4e5",
-            border: "1px solid #ffd8a8",
+            background: "var(--g-warn-bg)",
+            border: "1px solid rgba(236, 196, 116, 0.28)",
             borderRadius: 8,
             padding: "8px 12px",
             fontSize: 14,
@@ -222,7 +222,7 @@ export default function ProspectDetailClient({
 
       {/* Messages */}
       {!email && !dm ? (
-        <p style={{ color: "#666" }}>
+        <p style={{ color: "var(--g-ink2)" }}>
           Aucun message encore. Clique sur « Générer les messages ».
         </p>
       ) : (
@@ -264,7 +264,7 @@ function ContactEditor({
 
   return (
     <details style={{ margin: "8px 0 12px" }}>
-      <summary style={{ cursor: "pointer", color: "#555" }}>
+      <summary style={{ cursor: "pointer", color: "var(--g-ink2)" }}>
         ✏️ Compléter le contact à la main
       </summary>
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginTop: 8 }}>
@@ -272,18 +272,18 @@ function ContactEditor({
           value={em}
           onChange={(e) => setEm(e.target.value)}
           placeholder="email@commerce.fr"
-          style={{ padding: 8, borderRadius: 8, border: "1px solid #ccc", minWidth: 220 }}
+          style={{ padding: 8, borderRadius: 8, border: "1px solid var(--d-line-strong)", minWidth: 220 }}
         />
         <input
           value={ig}
           onChange={(e) => setIg(e.target.value)}
           placeholder="@instagram"
-          style={{ padding: 8, borderRadius: 8, border: "1px solid #ccc", minWidth: 160 }}
+          style={{ padding: 8, borderRadius: 8, border: "1px solid var(--d-line-strong)", minWidth: 160 }}
         />
         <button onClick={save} className="dash-signout" style={{ fontSize: 13 }}>
           Enregistrer le contact
         </button>
-        {saved && <span style={{ fontSize: 13, color: "#555" }}>{saved}</span>}
+        {saved && <span style={{ fontSize: 13, color: "var(--g-ink2)" }}>{saved}</span>}
       </div>
     </details>
   );
@@ -324,13 +324,13 @@ function Timeline({ events }: { events: EventRow[] }) {
   };
   return (
     <details style={{ margin: "8px 0 16px" }}>
-      <summary style={{ cursor: "pointer", color: "#555" }}>
+      <summary style={{ cursor: "pointer", color: "var(--g-ink2)" }}>
         🕒 Historique ({events.length})
       </summary>
-      <ul style={{ fontSize: 14, color: "#555", listStyle: "none", paddingLeft: 0 }}>
+      <ul style={{ fontSize: 14, color: "var(--g-ink2)", listStyle: "none", paddingLeft: 0 }}>
         {events.map((e) => (
-          <li key={e.id} style={{ padding: "4px 0", borderBottom: "1px solid #f2f2f2" }}>
-            <span style={{ color: "#999", marginRight: 8 }}>{fmt(e.created_at)}</span>
+          <li key={e.id} style={{ padding: "4px 0", borderBottom: "1px solid var(--g-line)" }}>
+            <span style={{ color: "var(--g-ink2)", marginRight: 8 }}>{fmt(e.created_at)}</span>
             {EVENT_LABEL[e.type] ?? e.type}
             {e.type === "status_changed" && e.meta?.status
               ? ` → ${String(e.meta.status)}`
@@ -345,7 +345,7 @@ function Timeline({ events }: { events: EventRow[] }) {
 function Signal({ label, value }: { label: string; value: string }) {
   return (
     <div style={{ minWidth: 90 }}>
-      <div style={{ fontSize: 12, color: "#888" }}>{label}</div>
+      <div style={{ fontSize: 12, color: "var(--g-ink2)" }}>{label}</div>
       <div style={{ fontWeight: 600, wordBreak: "break-all" }}>{value}</div>
     </div>
   );
@@ -366,10 +366,10 @@ function EmailEditor({ message }: { message: MessageRow }) {
   }
 
   return (
-    <div style={{ border: "1px solid #eee", borderRadius: 10, padding: 14 }}>
+    <div style={{ border: "1px solid var(--g-line)", borderRadius: 10, padding: 14 }}>
       <h3 style={{ marginTop: 0 }}>✉️ Email {statusBadge(message.status)}</h3>
       {message.status === "sent" && (
-        <p style={{ fontSize: 13, color: "#a86b00", background: "#fff4e0", borderRadius: 8, padding: "8px 10px", margin: "0 0 10px" }}>
+        <p style={{ fontSize: 13, color: "var(--g-warn)", background: "var(--g-warn-bg)", borderRadius: 8, padding: "8px 10px", margin: "0 0 10px" }}>
           ✅ Cet email a déjà été envoyé — « Régénérer » ne le modifie pas. Pour tester une nouvelle version, ajoute un autre prospect.
         </p>
       )}
@@ -377,15 +377,15 @@ function EmailEditor({ message }: { message: MessageRow }) {
         value={subject}
         onChange={(e) => setSubject(e.target.value)}
         placeholder="Objet"
-        style={{ width: "100%", padding: 8, borderRadius: 8, border: "1px solid #ccc", marginBottom: 8 }}
+        style={{ width: "100%", padding: 8, borderRadius: 8, border: "1px solid var(--d-line-strong)", marginBottom: 8 }}
       />
       <textarea
         value={body}
         onChange={(e) => setBody(e.target.value)}
         rows={12}
-        style={{ width: "100%", padding: 8, borderRadius: 8, border: "1px solid #ccc", fontFamily: "inherit" }}
+        style={{ width: "100%", padding: 8, borderRadius: 8, border: "1px solid var(--d-line-strong)", fontFamily: "inherit" }}
       />
-      <p style={{ fontSize: 12, color: "#888" }}>
+      <p style={{ fontSize: 12, color: "var(--g-ink2)" }}>
         Le marqueur <code>{"{{unsubscribe_url}}"}</code> deviendra le vrai lien de
         désinscription à l'envoi.
       </p>
@@ -429,13 +429,13 @@ function DmEditor({
   }
 
   return (
-    <div style={{ border: "1px solid #eee", borderRadius: 10, padding: 14 }}>
+    <div style={{ border: "1px solid var(--g-line)", borderRadius: 10, padding: 14 }}>
       <h3 style={{ marginTop: 0 }}>📸 DM Instagram {statusBadge(message.status)}</h3>
       <textarea
         value={body}
         onChange={(e) => setBody(e.target.value)}
         rows={8}
-        style={{ width: "100%", padding: 8, borderRadius: 8, border: "1px solid #ccc", fontFamily: "inherit" }}
+        style={{ width: "100%", padding: 8, borderRadius: 8, border: "1px solid var(--d-line-strong)", fontFamily: "inherit" }}
       />
       {/* Envoi manuel assisté : copier le texte, puis ouvrir le DM Instagram. */}
       <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", margin: "8px 0 0" }}>
@@ -453,12 +453,12 @@ function DmEditor({
             📸 Ouvrir le DM (@{handle})
           </a>
         ) : (
-          <span style={{ fontSize: 12, color: "#999" }}>
+          <span style={{ fontSize: 12, color: "var(--g-ink2)" }}>
             Pas de compte Instagram sur cette fiche.
           </span>
         )}
       </div>
-      <p style={{ fontSize: 12, color: "#888", margin: "6px 0 0" }}>
+      <p style={{ fontSize: 12, color: "var(--g-ink2)", margin: "6px 0 0" }}>
         Astuce : « Copier le DM » puis « Ouvrir le DM » → tu colles et tu envoies
         (Instagram ne permet pas de pré-remplir le message).
       </p>
@@ -481,10 +481,10 @@ function Actions({
       <button onClick={onSave} className="dash-signout" style={{ fontSize: 13 }}>
         Enregistrer
       </button>
-      <button onClick={onApprove} className="dash-signout" style={{ fontSize: 13, color: "#2e7d32" }}>
+      <button onClick={onApprove} className="dash-signout" style={{ fontSize: 13, color: "var(--g-good)" }}>
         Approuver
       </button>
-      {saved && <span style={{ fontSize: 13, color: "#555" }}>{saved}</span>}
+      {saved && <span style={{ fontSize: 13, color: "var(--g-ink2)" }}>{saved}</span>}
     </div>
   );
 }
@@ -497,7 +497,7 @@ function statusBadge(status: string) {
     skipped: "ignoré",
   };
   return (
-    <span style={{ fontSize: 12, color: "#888", fontWeight: 400 }}>
+    <span style={{ fontSize: 12, color: "var(--g-ink2)", fontWeight: 400 }}>
       ({map[status] ?? status})
     </span>
   );

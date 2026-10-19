@@ -60,14 +60,14 @@ export default function InstagramQueueClient({
         <Link href="/admin/prospection">← Retour à la prospection</Link>
       </p>
       <h2 style={{ marginBottom: 4 }}>📸 File Instagram (envoi assisté)</h2>
-      <p style={{ color: "#666", marginTop: 0 }}>
+      <p style={{ color: "var(--g-ink2)", marginTop: 0 }}>
         Copie le message, ouvre le profil, colle et envoie depuis <b>ton</b> compte,
         puis clique « Marqué envoyé ». Aucun envoi automatique (sécurité du compte).
       </p>
 
-      <p style={{ fontSize: 14, color: "#555" }}>
+      <p style={{ fontSize: 14, color: "var(--g-ink2)" }}>
         {pending.length} à envoyer · {sent.length} envoyé(s) ·{" "}
-        <b style={{ color: quotaReached ? "#c0392b" : "#2e7d32" }}>
+        <b style={{ color: quotaReached ? "var(--g-bad)" : "var(--g-good)" }}>
           {dmToday}/{dmCap} aujourd'hui
         </b>
       </p>
@@ -75,13 +75,13 @@ export default function InstagramQueueClient({
       {quotaReached && (
         <div
           style={{
-            background: "#fff4e5",
-            border: "1px solid #ffd8a8",
+            background: "var(--g-warn-bg)",
+            border: "1px solid rgba(236, 196, 116, 0.28)",
             borderRadius: 8,
             padding: "10px 12px",
             margin: "10px 0",
             fontSize: 14,
-            color: "#8a5a00",
+            color: "var(--g-warn)",
           }}
         >
           ✋ <b>Quota du jour atteint ({dmToday}/{dmCap}).</b> Mieux vaut s'arrêter
@@ -91,7 +91,7 @@ export default function InstagramQueueClient({
       )}
 
       {pending.length === 0 ? (
-        <p style={{ color: "#666" }}>
+        <p style={{ color: "var(--g-ink2)" }}>
           Aucun DM en attente. Enrichis des prospects (pour récupérer leur Instagram)
           depuis la page prospection.
         </p>
@@ -100,11 +100,11 @@ export default function InstagramQueueClient({
           {pending.map((item) => (
             <div
               key={item.id}
-              style={{ border: "1px solid #eee", borderRadius: 10, padding: 14 }}
+              style={{ border: "1px solid var(--g-line)", borderRadius: 10, padding: 14 }}
             >
               <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
                 <b>{item.name}</b>
-                <span style={{ color: "#888", fontSize: 13 }}>@{item.handle}</span>
+                <span style={{ color: "var(--g-ink2)", fontSize: 13 }}>@{item.handle}</span>
                 <a
                   href={`https://instagram.com/${item.handle}`}
                   target="_blank"
@@ -118,8 +118,8 @@ export default function InstagramQueueClient({
               <pre
                 style={{
                   whiteSpace: "pre-wrap",
-                  background: "#faf9fc",
-                  border: "1px solid #eee",
+                  background: "var(--g-surface-2)",
+                  border: "1px solid var(--g-line)",
                   borderRadius: 8,
                   padding: 10,
                   fontFamily: "inherit",
@@ -137,7 +137,7 @@ export default function InstagramQueueClient({
                   onClick={() => markSent(item.id)}
                   disabled={busy === item.id}
                   className="dash-signout"
-                  style={{ fontSize: 13, color: "#2e7d32" }}
+                  style={{ fontSize: 13, color: "var(--g-good)" }}
                 >
                   {busy === item.id ? "…" : "Marqué envoyé"}
                 </button>

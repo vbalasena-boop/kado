@@ -137,8 +137,8 @@ export default function CityInput({
             margin: 0,
             padding: 4,
             listStyle: "none",
-            background: "#fff",
-            border: "1px solid #ddd",
+            background: "var(--g-surface)",
+            border: "1px solid var(--d-line-strong)",
             borderRadius: 8,
             boxShadow: "0 6px 18px rgba(0,0,0,0.08)",
             maxHeight: 240,
@@ -160,13 +160,13 @@ export default function CityInput({
                 padding: "8px 10px",
                 borderRadius: 6,
                 cursor: "pointer",
-                background: i === active ? "#f1f5f9" : "transparent",
+                background: i === active ? "var(--d-gold-tint)" : "transparent",
                 fontSize: 14,
               }}
             >
               {c.nom}
               {c.departement?.code ? (
-                <span style={{ color: "#888", marginLeft: 6, fontSize: 12 }}>
+                <span style={{ color: "var(--g-ink2)", marginLeft: 6, fontSize: 12 }}>
                   ({c.departement.code}
                   {c.departement.nom ? ` — ${c.departement.nom}` : ""})
                 </span>
