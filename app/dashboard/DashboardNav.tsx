@@ -24,6 +24,7 @@ export default function DashboardNav({
     "/dashboard/avis",
     "/dashboard/feedback",
     "/dashboard/billing",
+    "/dashboard/demarrage",
     "/dashboard/aide",
   ];
   const moreIsCurrent =
@@ -85,6 +86,9 @@ export default function DashboardNav({
           </Link>
           <Link href="/dashboard/billing" aria-current={pathname?.startsWith("/dashboard/billing") ? "page" : undefined}>
             <Icon name="card" /> Abonnement
+          </Link>
+          <Link href="/dashboard/demarrage" aria-current={pathname?.startsWith("/dashboard/demarrage") ? "page" : undefined}>
+            <Icon name="download" /> Guide de démarrage
           </Link>
           <Link href="/dashboard/aide" aria-current={pathname?.startsWith("/dashboard/aide") ? "page" : undefined}>
             <Icon name="help" /> Aide

@@ -256,7 +256,8 @@ export default async function QrPage() {
           />
         </div>
 
-        <div className="pp-title">Tentez votre chance&nbsp;! 🎁</div>
+        <div className="pp-eyebrow">Votre cadeau vous attend</div>
+        <div className="pp-title">Tentez votre <span className="pp-serif">chance</span>&nbsp;! 🎁</div>
         <p className="pp-sub">
           Scannez, faites tourner la roue et repartez avec un cadeau.
         </p>
