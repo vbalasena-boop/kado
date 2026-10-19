@@ -9236,6 +9236,25 @@ body:has(.vitrine) {
 }
 .dash-nav-more { position: relative; }
 .dash-nav-more-dots { font-size: 18px; letter-spacing: 1px; line-height: 1; }
+.editor-advanced {
+  margin: 14px 0 18px;
+  border: 1px solid var(--g-line, #e4ded4);
+  border-radius: 14px;
+  background: var(--g-surface, #fff);
+}
+.editor-advanced > summary {
+  padding: 12px 15px;
+  color: var(--g-ink, #32251a);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 650;
+  list-style-position: inside;
+}
+.editor-advanced[open] > summary { border-bottom: 1px solid var(--g-line, #e4ded4); }
+.editor-advanced > :not(summary) { margin-right: 15px; margin-left: 15px; }
+.editor-advanced > .field:first-of-type { margin-top: 14px; }
+.editor-advanced > .toggle-field { padding-top: 8px; padding-bottom: 8px; }
+.editor-advanced > :last-child { margin-bottom: 15px; }
 .dash-nav-more > summary {
   display: inline-flex;
   min-height: 38px;

@@ -1182,6 +1182,8 @@ export default function WheelEditor({
                 Le « poids » définit la probabilité relative (total actuel :{" "}
                 {totalWeight}). Un lot « Rien… » gère les cas sans gain.
               </p>
+              <details className="editor-advanced">
+                <summary>Réglages avancés</summary>
               <label className="field">
                 <span>Nombre de cadeaux max par jour (vide = illimité)</span>
                 <input
@@ -1256,6 +1258,7 @@ export default function WheelEditor({
                 </span>
               </label>
               {config.play_alerts && <EnableNotifications />}
+              </details>
               <hr className="fid-sep" />
               <div className="prize-list">
                 {prizes.map((p, i) => (
