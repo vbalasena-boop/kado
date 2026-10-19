@@ -20,9 +20,34 @@ export default function Confidentialite() {
       <h3>Joueurs (clients des commerces)</h3>
       <ul>
         <li>
-          Un <b>identifiant anonyme</b> stocké dans un cookie technique
-          (<code>sr_pid</code>), pour empêcher de rejouer plus de 2 fois. Il ne
-          contient aucune donnée personnelle.
+          L'adresse IP de la requête est utilisée pour limiter les abus et les
+          tentatives automatisées. Pour les tours de jeu, Kado stocke une clé
+          HMAC (une empreinte cryptographique secrète), limitée au commerce,
+          plutôt que l'adresse IP brute. Les compteurs anti-abus expirent après
+          leur fenêtre et sont purgés après 48 heures d'inactivité.
+        </li>
+        <li>
+          Les éventuels anciens codes de jeu émis avant le retrait de cette
+          option sont stockés sous forme d'empreinte cryptographique. En cas
+          d'utilisation, leur association au cookie joueur est conservée jusqu'à
+          leur expiration, au plus tard 90 jours après leur création.
+        </li>
+        <li>
+          Un identifiant <b>pseudonyme</b> stocké dans un cookie technique
+          (<code>sr_pid</code>), utilisé pour éviter les rejouements. Il ne
+          contient pas directement votre nom ou vos coordonnées, mais les
+          parties enregistrées en base peuvent être reliées à vos tours.
+        </li>
+        <li>
+          Seulement après votre accord explicite dans le jeu, le navigateur
+          peut calculer une empreinte technique dérivée de caractéristiques de
+          l'appareil et du navigateur (agent utilisateur, langue, plateforme,
+          écran, fuseau horaire et rendu graphique). Seule son empreinte SHA-256 est transmise et associée aux
+          tours pour limiter les rejouements, y compris après suppression du
+          cookie. Le jeu reste accessible en cas de refus. Vous pouvez retirer
+          votre accord depuis la page du jeu; l'empreinte des tours associés à
+          cet identifiant de jeu est alors effacée. Cette empreinte n'est pas utilisée
+          à des fins publicitaires.
         </li>
         <li>
           Le <b>lot gagné</b> et un <b>code cadeau</b>, associés à cet
@@ -84,9 +109,10 @@ export default function Confidentialite() {
       <p>
         Cookie joueur : 12 mois. Données de jeu et commandes : 13 mois. E-mails
         collectés et cartes de fidélité : jusqu'au retrait du consentement ou 3
-        ans sans interaction. Abonnements aux notifications : jusqu'à
-        désactivation. Comptes commerçants : durée de la relation contractuelle
-        + obligations légales.
+        ans sans interaction. Anciens codes de jeu : 90 jours maximum.
+        Abonnements aux notifications : jusqu'à désactivation. Comptes
+        commerçants : durée
+        de la relation contractuelle + obligations légales.
       </p>
 
       <h2>Sous-traitants</h2>
@@ -112,7 +138,7 @@ export default function Confidentialite() {
         publicitaire ni de suivi tiers n'est déposé.
       </p>
 
-      <p className="legal-date">Dernière mise à jour : 17 août 2026.</p>
+      <p className="legal-date">Dernière mise à jour : 18 octobre 2026.</p>
     </article>
   );
 }

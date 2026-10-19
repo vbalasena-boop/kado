@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Icon } from "@/components/icons";
 import { subscribeWithCurrentKey } from "@/lib/push-client";
 import { orderMatchesQuery } from "@/lib/orders";
+import { cancellationRefundMessages } from "@/lib/order-refund-ui";
 import { orderAge, minutesSince, isReadyUncollectedLate, LATE_MIN } from "@/lib/order-age";
 
 /** Scanner de QR de retrait (caméra + jsQR), rendu dans un volet plein écran. */
@@ -839,25 +840,8 @@ export default function OrdersClient({
       // « Rembourser » resté disponible.
       if (status === "cancelled") {
         const bits: string[] = [];
-        const r = d?.refund;
-        if (r?.status === "refunded") bits.push("remboursement déclenché ↩️");
-        else if (r?.status === "failed")
-          bits.push(
-            "remboursement échoué — réessayez via « ↩️ Rembourser »"
-          );
-        else if (r?.status === "record_failed")
-          bits.push("remboursement Stripe effectué (état non enregistré)");
-        else if (r?.status === "no_payment_intent")
-          bits.push("remboursement impossible (paiement Stripe introuvable)");
-        else if (r?.status === "skipped" && r.code === "already_refunded")
-          bits.push("déjà remboursée");
-        // Payée en ligne mais AUCUN refund tenté (ex. colonnes 0047 illisibles) :
-        // ne pas laisser croire que le client a été remboursé — l'inviter à
-        // vérifier via le bouton « Rembourser ».
-        else if (!r && paid)
-          bits.push(
-            "⚠️ remboursement non tenté — vérifiez via « ↩️ Rembourser »"
-          );
+        const refundOutcome = d?.refund ?? null;
+        bits.push(...cancellationRefundMessages(refundOutcome, paid));
         if (d?.notified?.email === "sent") bits.push("e-mail envoyé");
         if (d?.notified?.push === "sent") bits.push("notification envoyée 📲");
         else if (d?.notified?.push === "failed")

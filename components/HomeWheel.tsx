@@ -3,12 +3,12 @@
 import { useState } from "react";
 
 const SEGMENTS = [
-  { emoji: "🎁", label: "Cadeau surprise", color: "#c0603f" },
-  { emoji: "☕", label: "Café offert", color: "#8a5a34" },
-  { emoji: "🍰", label: "Dessert offert", color: "#d98a5a" },
-  { emoji: "🏷️", label: "-10 % sur l'addition", color: "#9c6b3f" },
-  { emoji: "🍹", label: "Boisson offerte", color: "#e0a34a" },
-  { emoji: "⭐", label: "Une bonne surprise", color: "#b8875a" },
+  { emoji: "🎁", label: "Cadeau surprise", color: "#dc563d" },
+  { emoji: "☕", label: "Café offert", color: "#5d795f" },
+  { emoji: "🍰", label: "Dessert offert", color: "#e9b849" },
+  { emoji: "🏷️", label: "-10 % sur l'addition", color: "#82709a" },
+  { emoji: "🍹", label: "Boisson offerte", color: "#d98768" },
+  { emoji: "⭐", label: "Une bonne surprise", color: "#3b3543" },
 ];
 
 const SEG = 360 / SEGMENTS.length;
@@ -59,6 +59,7 @@ export default function HomeWheel() {
         <svg
           viewBox="0 0 100 100"
           className="hw-wheel"
+          aria-hidden="true"
           style={{
             transform: `rotate(${angle}deg)`,
             transition: spinning
@@ -66,12 +67,12 @@ export default function HomeWheel() {
               : "none",
           }}
         >
-          <g stroke="#fff" strokeWidth="1.1" strokeLinejoin="round">
+          <g stroke="#fff8e9" strokeWidth="1.25" strokeLinejoin="round">
             {SEGMENTS.map((s, i) => (
               <path key={i} d={arc(i)} fill={s.color} />
             ))}
           </g>
-          <g fontSize="9" textAnchor="middle">
+          <g fontSize="9" textAnchor="middle" aria-hidden="true">
             {SEGMENTS.map((s, i) => {
               const p = emojiPos(i);
               return (
@@ -81,8 +82,9 @@ export default function HomeWheel() {
               );
             })}
           </g>
-          <circle cx="50" cy="50" r="44" fill="none" stroke="#f0a52e" strokeWidth="3" />
-          <circle cx="50" cy="50" r="11" fill="#8a5a34" stroke="#1b1035" strokeWidth="3" />
+          <circle cx="50" cy="50" r="44" fill="none" stroke="#f3d88f" strokeWidth="2.5" />
+          <circle cx="50" cy="50" r="10.5" fill="#fff6df" stroke="#33204d" strokeWidth="2.5" />
+          <text x="50" y="53.5" textAnchor="middle" fontSize="8" fontWeight="800" fill="#33204d">K</text>
         </svg>
       </div>
 
@@ -98,6 +100,9 @@ export default function HomeWheel() {
           </button>
         </div>
       )}
+      <span className="hw-live" role="status" aria-live="polite" aria-atomic="true">
+        {won === null ? "" : `Résultat : ${SEGMENTS[won].label}`}
+      </span>
     </div>
   );
 }

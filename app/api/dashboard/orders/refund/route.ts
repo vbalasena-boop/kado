@@ -3,6 +3,8 @@ import { merchantRoute } from "@/lib/api";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { getStripe } from "@/lib/stripe";
 import { performOrderRefund } from "@/lib/order-refund";
+import { sendEmail } from "@/lib/email";
+import { buildOrderRefundedEmail } from "@/lib/orders";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -33,7 +35,7 @@ export const POST = merchantRoute({
     limit: 20,
     windowSeconds: 60,
   },
-  handler: async ({ body, business }) => {
+  handler: async ({ body, business, user }) => {
     const id = String((body as { id: string }).id);
     const db = getAdminClient();
 
@@ -42,7 +44,7 @@ export const POST = merchantRoute({
     // lire ni enregistrer l'état de remboursement.
     const { data: order, error: selErr } = (await db
       .from("orders")
-      .select("id, status, paid, stripe_session_id, refunded, code, total_cents")
+      .select("id, status, paid, stripe_session_id, refunded, code, total_cents, customer_email, customer_name")
       .eq("id", id)
       .eq("business_id", business.id)
       .maybeSingle()) as { data: any; error: any };
@@ -86,10 +88,24 @@ export const POST = merchantRoute({
     const outcome = await performOrderRefund(db, getStripe(), {
       ...order,
       business_id: business.id,
+      refunded_by: typeof user?.id === "string" ? user.id : null,
+      refund_reason: "merchant_request",
     });
 
     switch (outcome.status) {
       case "refunded":
+        if (order.customer_email) {
+          try {
+            await sendEmail(buildOrderRefundedEmail({
+              to: order.customer_email,
+              code: order.code,
+              bizName: business.name || "votre commerce",
+              customerName: order.customer_name,
+            }));
+          } catch {
+            // La demande de remboursement réussie ne dépend pas de l'e-mail.
+          }
+        }
         return Response.json({
           ok: true,
           refunded: true,

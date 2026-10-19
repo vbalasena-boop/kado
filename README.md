@@ -1,134 +1,70 @@
 # Kado 🎁
 
-SaaS « **scannez, jouez, gagnez** » : un jeu de roue de la fortune qui aide n'importe
-quel commerce à obtenir plus **d'avis Google** et **d'abonnés Instagram**.
-Chaque client scanne un QR code, débloque **2 tours** (un pour un suivi Instagram, un
-pour un avis Google) et gagne un cadeau.
+Kado est un SaaS pour commerces de proximité. Il regroupe des outils de jeu et de fidélité, la gestion des cadeaux, la collecte de contacts avec consentement, les commandes click & collect et au comptoir, ainsi que la gestion d'abonnements.
 
-> Projet cadré avec la **BMAD Method** — voir `docs/brief.md`, `docs/prd.md`,
-> `docs/architecture.md`. Pour installer BMAD dans Claude Code : `docs/bmad-install.md`.
+## Fonctionnalités présentes dans le dépôt
 
----
+- **Jeu public** sur `/{slug}` : roue et cadeaux tirés côté serveur, code de retrait, limites de jeu et de cadeaux.
+- **Avis Google** : lien facultatif et neutre, indépendant du jeu et de toute récompense. Un avis ne débloque jamais de tour. Ne conditionnez jamais un cadeau à la publication ou à la note d'un avis.
+- **Espace commerçant** : configuration de la roue, QR code, cadeaux, fidélité, commandes, produits, horaires, notifications et facturation.
+- **Commandes** : click & collect et suivi au comptoir; paiement en ligne via Stripe Connect lorsque configuré.
+- **Espace admin et vendeurs** : gestion des établissements, abonnements, vendeurs et outils internes de prospection.
+- **Site public** : tarifs, témoignages, blog et pages légales.
 
-## Ce qui est déjà construit (Epic 1)
+Le prototype statique de roue reste disponible dans `prototype/roue.html`. La documentation de cadrage se trouve dans `docs/`.
 
-- ✅ Page de jeu publique `/{slug}` (règles → 2 tours → cadeau + confettis)
-- ✅ **Verrou serveur des 2 tours** — double signal : cookie joueur signé **+**
-  empreinte d'appareil (bloque aussi le rejeu en navigation privée / cookies
-  vidés sur le même appareil). Garde-fou anti-fraude ultime : code cadeau à
-  usage unique + plafond quotidien, validés en boutique.
-- ✅ Tirage du cadeau **côté serveur** (anti-triche, stats fiables)
-- ✅ Base de données multi-établissements (Supabase + RLS)
-- ✅ Suspension d'un établissement = page publique bloquée
+## Stack et scripts
 
-Prototype 100 % statique (sans base) toujours dispo : `prototype/roue.html`.
-
-À venir : espace commerçant (config + QR + stats) et espace admin (gestion des accès).
-
----
-
-## Stack
-
-Next.js (App Router) · Supabase (Auth + Postgres) · déploiement Vercel — **offres gratuites**.
-
----
-
-## Installation pas à pas (≈ 15 min, 0 €)
-
-### 1. Créer la base de données (Supabase)
-
-1. Va sur [supabase.com](https://supabase.com) → **New project** (gratuit).
-2. Applique le schéma. Deux options (détaillées dans
-   [`supabase/README.md`](supabase/README.md)) :
-   - **CLI (recommandé)** : `supabase link --project-ref <ref>` puis
-     `supabase db push` — applique les migrations en attente avec suivi de version.
-   - **Manuel** : ouvre **SQL Editor** et exécute `supabase/migrations/0001_init.sql`
-     (puis les migrations suivantes dans l'ordre), puis `supabase/seed.sql`
-     (démo « Café Lumière »).
-3. Va dans **Settings → API** et note :
-   - **Project URL** → `SUPABASE_URL` **et** `NEXT_PUBLIC_SUPABASE_URL` (même valeur)
-   - clé **`service_role`** (secrète) → `SUPABASE_SERVICE_ROLE_KEY`
-   - clé **`anon`** (publique) → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-4. Pour la connexion des commerçants (**Auth**) : va dans **Authentication → URL
-   Configuration** et ajoute ton URL de site + `…/auth/callback` dans les
-   **Redirect URLs** (ex. `http://localhost:3000/auth/callback` et
-   `https://ton-site.vercel.app/auth/callback`).
-
-### 2. Lancer en local (optionnel, pour tester)
+- Next.js 14 (App Router), React 18 et TypeScript
+- Supabase Auth et Postgres, avec migrations dans `supabase/migrations/`
+- Stripe pour les abonnements et paiements, Vercel pour l'hébergement et les tâches planifiées
 
 ```bash
 npm install
-cp .env.example .env.local     # puis colle tes clés dedans
-npm run dev                     # ouvre http://localhost:3000/cafe-lumiere
+npm run dev       # serveur local
+npm run lint      # lint Next.js
+npm test          # suite Vitest
+npm run build     # build de production
 ```
 
-### 3. Mettre en ligne (Vercel)
+## Configuration locale
 
-1. Va sur [vercel.com](https://vercel.com) → **Add New → Project** → importe ce dépôt GitHub.
-2. Dans **Settings → Environment Variables**, ajoute :
-   - `SUPABASE_URL`
-   - `SUPABASE_SERVICE_ROLE_KEY`
-   - `PLAYER_COOKIE_SECRET` (une longue chaîne aléatoire de ton choix)
-   - `NEXT_PUBLIC_SITE_URL` (l'URL Vercel du site)
-3. **Deploy**. Ta page de démo : `https://ton-site.vercel.app/cafe-lumiere`
+1. Crée un projet Supabase et applique les migrations selon [`supabase/README.md`](supabase/README.md).
+2. Copie `.env.example` vers `.env.local` et configure au minimum `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `PLAYER_COOKIE_SECRET` et `NEXT_PUBLIC_SITE_URL`.
+3. Configure `ADMIN_EMAILS` pour autoriser l'accès administrateur et les URL de redirection Supabase Auth pour `/auth/callback`.
+4. Lance `npm run dev`. Le seed de démonstration est dans `supabase/seed.sql`.
 
----
+Les intégrations e-mail, Stripe, push, tâches planifiées et prospection ont leurs propres variables documentées dans `.env.example`. N'active en production que les intégrations pour lesquelles les secrets et les réglages fournisseur sont effectivement configurés. La clé Supabase `service_role` est strictement serveur : ne jamais la préfixer par `NEXT_PUBLIC_`.
 
-## Espace admin (toi)
+## Déploiement
 
-1. Ajoute ton e-mail dans la variable `ADMIN_EMAILS` (plusieurs possibles, séparés
-   par des virgules).
-2. Connecte-toi sur `/login` avec cet e-mail, puis va sur **`/admin`**.
-3. Depuis `/admin` tu peux :
-   - **Créer un compte** commerçant (nom + e-mail → génère slug, roue et cadeaux
-     par défaut, et envoie une invitation par mail) ;
-   - **Suspendre / Réactiver** un compte (= donner ou retirer l'accès : coupe la
-     page de jeu **et** l'espace commerçant) ;
-   - voir l'activité (tours joués) et le statut d'abonnement de chaque compte.
+Le projet est prévu pour Vercel et Supabase. Configure les variables d'environnement de production à partir de `.env.example`, applique les migrations avant le déploiement applicatif et ajoute les URL de production aux redirections Supabase Auth. `vercel.json` déclare les crons quotidiens; `CRON_SECRET` doit être défini pour que leurs routes restent protégées et puissent s'exécuter.
 
-> L'envoi des invitations utilise l'e-mail intégré de Supabase (limité). Pour un
-> usage réel, configure un SMTP dans Supabase (Authentication → Emails).
-
-## Tester l'espace commerçant
-
-1. Va sur `/login`, entre ton e-mail, clique le lien reçu par mail.
-2. À la première connexion, ton compte n'est lié à aucun établissement. Pour
-   tester avec la démo, récupère ton `user id` dans Supabase (**Authentication →
-   Users**) puis exécute dans le **SQL Editor** :
-
-   ```sql
-   update businesses set owner_user_id = 'TON_USER_ID'
-   where slug = 'cafe-lumiere';
-   ```
-
-3. Recharge `/dashboard` : tu accèdes à la vue d'ensemble, à l'éditeur de roue et
-   au QR. *(La création/liaison automatique des comptes arrivera avec l'Epic 3.)*
+Pour Stripe, configure les clés et l'URL du webhook `/api/billing/webhook` dans le tableau de bord Stripe, puis renseigne `STRIPE_WEBHOOK_SECRET`. Les parcours de paiement en ligne des commandes nécessitent également Stripe Connect correctement configuré pour l'établissement.
 
 ## Structure
 
-```
-app/
-  page.tsx              Accueil (vitrine)
-  [slug]/page.tsx       Page de jeu (serveur : charge la config)
-  [slug]/Game.tsx       Jeu (client : roue, écrans, appels API)
-  api/play/route.ts     Enregistre un tour + verrou + tirage serveur
-  api/health/route.ts   Health-check
-lib/
-  supabase/admin.ts     Client Supabase (serveur uniquement)
-  player.ts             Cookie joueur signé (verrou des 2 tours)
-  draw.ts               Tirage pondéré + génération de code
-supabase/
-  migrations/0001_init.sql   Schéma + RLS
-  seed.sql                   Données de démo
-docs/                    Documents BMAD (brief, PRD, architecture)
-prototype/roue.html      Prototype statique (sans base)
+```text
+app/                    Pages Next.js et routes API
+  [slug]/                Jeu public, commande et fidélité
+  dashboard/             Espace commerçant
+  admin/                 Espace administrateur
+  api/                   API publique, commerçant, admin, webhooks et crons
+components/              Composants partagés
+lib/                     Auth, Supabase, commandes, tirage, e-mail, Stripe…
+supabase/migrations/     Évolutions du schéma Postgres
+supabase/seed.sql        Données de démonstration
+docs/                    Brief, PRD, architecture et notes de projet
+tests/                   Tests Vitest
+prototype/roue.html      Ancien prototype statique
 ```
 
-## Variables d'environnement
+## Données et règles produit
 
-| Variable | Rôle |
-|---|---|
-| `SUPABASE_URL` | URL du projet Supabase |
-| `SUPABASE_SERVICE_ROLE_KEY` | Clé secrète serveur (jamais côté navigateur) |
-| `PLAYER_COOKIE_SECRET` | Signe le cookie anonyme du joueur |
-| `NEXT_PUBLIC_SITE_URL` | URL publique (QR codes) |
+Le service traite notamment des coordonnées de joueurs et de clients qui passent commande. Les collectes marketing doivent rester facultatives et explicites; le lien de désinscription est pris en charge pour les campagnes. Les détails des finalités, durées et droits sont dans [la politique de confidentialité](/legal/confidentialite).
+
+Le jeu et les cadeaux sont découplés des avis Google. Le lien d'avis est une invitation optionnelle, proposée sans filtrage par satisfaction. Voir `docs/prd.md` et `lib/wheel.ts` pour la règle produit et sa garde côté serveur.
+
+## État de la documentation
+
+Les documents `docs/brief.md`, `docs/prd.md` et `docs/architecture.md` décrivent le cadrage initial et peuvent conserver des décisions historiques. En cas d'écart avec le comportement actuel, vérifier le code et les migrations; mettre à jour ces documents lors de toute évolution produit importante.

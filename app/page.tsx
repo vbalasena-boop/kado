@@ -12,11 +12,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { Logo } from "@/components/Logo";
 import Reveal from "@/components/Reveal";
-import HeroCinematic from "@/components/HeroCinematic";
-import Marquee from "@/components/Marquee";
-import ScrollProgress from "@/components/ScrollProgress";
-import ScrollWheel from "@/components/ScrollWheel";
-import ScrollFilm from "@/components/ScrollFilm";
+import HeroEditorial from "@/components/HeroEditorial";
 import HomeGames from "@/components/HomeGames";
 import HomeLoyalty from "@/components/HomeLoyalty";
 import SupportButton from "@/components/SupportButton";
@@ -79,7 +75,7 @@ const BENEFITS = [
   { i: "gift", t: "Anniversaires & parrainage", d: "E-mail automatique le jour J, et +1 tampon quand un ami parrainé passe en caisse." },
   { i: "palette", t: "À vos couleurs", d: "Logo, photo de fond et lots entièrement personnalisables." },
   { i: "shield", t: "Anti-triche", d: "Tirage sécurisé côté serveur, 2 chances maximum par personne." },
-  { i: "coins", t: "Coûts maîtrisés", d: "Plafond de cadeaux par jour et validation du code en caisse." },
+  { i: "coins", t: "Coûts maîtrisés", d: "Vous choisissez les lots, leur probabilité et le plafond quotidien." },
 ];
 
 const PLANS = [
@@ -161,7 +157,7 @@ const FAQ = [
   },
   {
     q: "Est-ce que je maîtrise les cadeaux distribués ?",
-    a: "Oui. Vous fixez la probabilité de chaque lot, un plafond de cadeaux par jour, et chaque gain doit être validé par un code en caisse. Vous gardez le contrôle total sur vos coûts.",
+    a: "Oui. Vous choisissez les lots, leur probabilité et le plafond de cadeaux par jour. Pour lancer le jeu, aucun code n'est à préparer ni à remettre aux clients.",
   },
   {
     q: "Comment mes clients récupèrent-ils leur cadeau ?",
@@ -246,8 +242,6 @@ export default function Home({
 }) {
   return (
     <main className="vitrine">
-      <ScrollProgress />
-      <ScrollWheel />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}
@@ -259,6 +253,7 @@ export default function Home({
       )}
       <header className="v-topbar">
         <Logo size={42} />
+        <span className="nav-note">Le jeu qui fait parler de vous.</span>
         <nav className="v-topnav">
           <a href="/blog">Blog</a>
           <a href="/tarifs">Tarifs</a>
@@ -267,13 +262,32 @@ export default function Home({
         </nav>
       </header>
 
-      <HeroCinematic />
+      <HeroEditorial />
 
-      <ScrollFilm steps={STEPS} />
+      <section className="v-section story-section" aria-labelledby="story-title">
+        <div className="story-heading">
+          <span className="section-index">01 / Le principe</span>
+          <h2 id="story-title">Tout part d’un <em>petit moment.</em></h2>
+          <p>Pas d’application, pas de mode d’emploi. Vos clients connaissent déjà la suite.</p>
+        </div>
+        <div className="v-steps">
+          {STEPS.map((s) => (
+            <article className="v-step" key={s.n}>
+              <span className="v-step-n">0{s.n}</span>
+              <h3>{s.t}</h3>
+              <p>{s.d}</p>
+            </article>
+          ))}
+        </div>
+        <div className="story-ribbon" aria-label="Simple pour vos clients">
+          <span>Un scan</span><b>→</b><span>Un jeu</span><b>→</b><span>Un sourire</span>
+        </div>
+      </section>
 
       <section className="v-section v-preview">
         <div className="pv-copy">
-          <h2>3 jeux au choix, essayez-les <CursorClick className="ico" size={26} weight="bold" /></h2>
+          <span className="section-index">02 / À chacun son jeu</span>
+          <h2>Leur curiosité fait le reste <CursorClick className="ico" size={26} weight="bold" /></h2>
           <p className="pv-lede">
             Roue de la fortune, carte à gratter ou machine à sous : vous
             choisissez le jeu qui colle à votre commerce. Testez les trois
@@ -303,7 +317,8 @@ export default function Home({
         </div>
         <div className="pv-copy">
           <div className="v-badge" style={{ marginBottom: 14 }}><Ticket className="ico" size={16} weight="bold" /> Fidélité digitale</div>
-          <h2>Tamponnez la carte <CursorClick className="ico" size={26} weight="bold" /></h2>
+          <span className="section-index">03 / Les habitués</span>
+          <h2>Les bonnes adresses se gardent <CursorClick className="ico" size={26} weight="bold" /></h2>
           <p className="pv-lede">
             Cliquez pour ajouter un tampon et débloquer la récompense. Vos
             clients cumulent à chaque passage : une carte digitale retrouvée par
@@ -320,7 +335,8 @@ export default function Home({
       </section>
 
       <section className="v-section">
-        <h2>Pensé pour tous les commerces</h2>
+        <span className="section-index">04 / Le commerce de proximité</span>
+        <h2>Chaque adresse a son petit rituel.</h2>
         <p className="v-audience-lead">
           Roue de la fortune ou carte de fidélité : Kado s'adapte à votre
           activité, vos couleurs et vos récompenses. Peu importe votre métier,
@@ -340,6 +356,7 @@ export default function Home({
       <section className="v-section">
         <div className="v-concours">
           <span className="v-concours-badge"><Sparkle className="ico" size={15} weight="fill" /> Nouveau</span>
+          <span className="section-index">05 / De temps en temps</span>
           <h2 style={{ marginBottom: 10 }}>
             Lancez un <span className="v-hl">concours</span> qui fait revenir
             vos clients
@@ -371,7 +388,8 @@ export default function Home({
       </section>
 
       <section className="v-section">
-        <h2>Pourquoi Kado</h2>
+        <span className="section-index">06 / Ce qui compte</span>
+        <h2>Simple à lancer. Agréable à retrouver.</h2>
         <Reveal className="v-benefits">
           {BENEFITS.map((b) => (
             <div className="v-benefit" key={b.t}>
@@ -386,7 +404,8 @@ export default function Home({
       </section>
 
       <section className="v-section">
-        <h2>Vos avis Google, sans prendre de risque</h2>
+        <span className="section-index">07 / Un cadre clair</span>
+        <h2>Les avis restent libres.</h2>
         <Reveal className="v-compare">
           <div className="v-compare-col risk">
             <div className="v-compare-head">
@@ -416,16 +435,8 @@ export default function Home({
       </section>
 
       <section className="v-section">
-        <figure className="v-quote">
-          <blockquote>
-            Vos clients repartent avec un cadeau. Vous, avec un <span className="v-serif">avis Google</span>, un abonné et une visite de plus.
-          </blockquote>
-          <figcaption>L'idée derrière Kado</figcaption>
-        </figure>
-      </section>
-
-      <section className="v-section">
-        <h2>Des tarifs <span className="v-serif">simples</span></h2>
+        <span className="section-index">08 / Les formules</span>
+        <h2>Choisissez votre point de départ.</h2>
         <p className="v-audience-note" style={{ marginTop: -6, marginBottom: 22 }}>
           Choisissez votre formule, sans engagement, résiliable à tout moment.
         </p>
@@ -459,7 +470,8 @@ export default function Home({
       </section>
 
       <section className="v-section">
-        <h2>Questions fréquentes</h2>
+        <span className="section-index">09 / Les questions qu’on nous pose</span>
+        <h2>Avant de vous lancer.</h2>
         <div className="v-faq">
           {FAQ.map((f) => (
             <details className="v-faq-item" key={f.q}>
@@ -470,53 +482,18 @@ export default function Home({
         </div>
       </section>
 
-      <Marquee
-        items={[
-          "Plus d'avis Google",
-          "Plus d'abonnés Instagram",
-          "Sans application",
-          "Installé en 2 minutes",
-          "Vos avis en sécurité",
-        ]}
-      />
-
-      <section className="v-section v-final">
-        <div className="v-start">
-          <span className="v-eyebrow">Par où commencer</span>
-          <h2>Lancez Kado en <span className="v-serif">3 étapes</span></h2>
-          <p className="v-start-lede">Pas de technique, pas d'installation. Vous êtes prêt en quelques minutes.</p>
-          <ol className="v-start-steps">
-            <li>
-              <span className="v-start-n">01</span>
-              <div>
-                <b>Créez votre compte gratuit</b>
-                <small>14 jours d'essai, sans carte bancaire, toutes les fonctionnalités.</small>
-              </div>
-            </li>
-            <li>
-              <span className="v-start-n">02</span>
-              <div>
-                <b>Personnalisez vos cadeaux &amp; imprimez votre QR</b>
-                <small>Lots pré-remplis selon votre métier, affiche prête à poser en 2 minutes.</small>
-              </div>
-            </li>
-            <li>
-              <span className="v-start-n">03</span>
-              <div>
-                <b>Vos clients scannent, jouent et reviennent</b>
-                <small>Plus d'avis Google 5★, plus d'abonnés Instagram, plus de visites.</small>
-              </div>
-            </li>
-          </ol>
-          <div className="v-cta">
-            <a className="v-btn primary" href="/login?signup=1">Créer mon compte gratuit →</a>
-            <a className="v-btn ghost" href="/cafe-lumiere"><Play className="ico" size={18} weight="fill" /> Essayer la démo</a>
-          </div>
+      <section className="v-final">
+        <span className="section-index">On ouvre la boutique ?</span>
+        <h2>Le premier tour est pour vous.</h2>
+        <p>Essayez Kado dans votre commerce pendant 14 jours. Vous verrez vite si vos clients accrochent.</p>
+        <div className="v-cta">
+          <a className="v-btn primary" href="/login?signup=1">Créer mon compte gratuit →</a>
+          <a className="v-btn ghost" href="/cafe-lumiere"><Play className="ico" size={18} weight="fill" /> Essayer la démo</a>
         </div>
       </section>
 
       <footer className="v-footer">
-        <span>© Kado</span>
+        <span className="footer-brand"><Logo size={28} /> © Kado</span>
         <a href="/blog">Blog</a>
         <a href="/tarifs">Tarifs</a>
         <a href="/legal/mentions">Mentions légales</a>

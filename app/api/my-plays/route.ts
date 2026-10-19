@@ -2,6 +2,8 @@ import { NextRequest } from "next/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { isValidDeviceHash } from "@/lib/device-hash";
+import { readPlayerId } from "@/lib/player";
+import { FINGERPRINT_CONSENT_VERSION } from "@/lib/fingerprint-consent";
 
 export const dynamic = "force-dynamic";
 
@@ -26,8 +28,10 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "bad_request" }, { status: 400 });
   }
 
-  // Sans empreinte valide, rien à récupérer (repli silencieux).
-  if (!body.slug || !isValidDeviceHash(body.deviceHash)) {
+  // Sans cookie signé, empreinte valide ou consentement explicite, ne pas
+  // interroger la colonne d'empreinte.
+  const playerId = readPlayerId();
+  if (!body.slug || !playerId || !isValidDeviceHash(body.deviceHash)) {
     return Response.json({ played: {} });
   }
 
@@ -38,6 +42,16 @@ export async function POST(req: NextRequest) {
     .eq("slug", body.slug)
     .maybeSingle();
   if (!biz || biz.status !== "active") {
+    return Response.json({ played: {} });
+  }
+
+  const { data: consent, error: consentError } = await supa
+    .from("player_fingerprint_consents")
+    .select("consented, policy_version")
+    .eq("business_id", biz.id)
+    .eq("player_id", playerId)
+    .maybeSingle();
+  if (consentError || consent?.consented !== true || consent.policy_version !== FINGERPRINT_CONSENT_VERSION) {
     return Response.json({ played: {} });
   }
 

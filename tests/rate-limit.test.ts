@@ -9,7 +9,7 @@ vi.mock("@/lib/supabase/admin", () => ({
 }));
 vi.mock("@/lib/report", () => ({ reportError: () => {} }));
 
-import { rateLimit } from "@/lib/rate-limit";
+import { clientIp, hashRateLimitKey, rateLimit } from "@/lib/rate-limit";
 
 describe("rateLimit — repli mémoire (fail-closed)", () => {
   it("applique la limite en mémoire quand la RPC échoue", async () => {
@@ -25,5 +25,30 @@ describe("rateLimit — repli mémoire (fail-closed)", () => {
     expect(await rateLimit(a, 1, 60)).toBe(true);
     expect(await rateLimit(a, 1, 60)).toBe(false);
     expect(await rateLimit(b, 1, 60)).toBe(true); // clé b intacte
+  });
+});
+
+describe("clés anti-abus pseudonymisées", () => {
+  it("produit un HMAC stable et opaque pour une même adresse", () => {
+    expect(hashRateLimitKey("203.0.113.7")).toBe(hashRateLimitKey("203.0.113.7"));
+    expect(hashRateLimitKey("203.0.113.7")).not.toBe("203.0.113.7");
+    expect(hashRateLimitKey("203.0.113.7")).not.toBe(hashRateLimitKey("203.0.113.8"));
+  });
+
+  it("préfère l'IP fournie par le proxy et ignore le premier X-Forwarded-For", () => {
+    const req = new Request("https://kado-app.fr/api/play", {
+      headers: {
+        "x-real-ip": "203.0.113.9",
+        "x-forwarded-for": "198.51.100.1, 203.0.113.8",
+      },
+    });
+    expect(clientIp(req)).toBe("203.0.113.9");
+  });
+
+  it("utilise le dernier relais X-Forwarded-For en l'absence de x-real-ip", () => {
+    const req = new Request("https://kado-app.fr/api/play", {
+      headers: { "x-forwarded-for": "198.51.100.1, 203.0.113.8" },
+    });
+    expect(clientIp(req)).toBe("203.0.113.8");
   });
 });

@@ -6,6 +6,8 @@ import { weightedIndex, generateCode, prizeIsLosing } from "@/lib/draw";
 import { sendPushToBusiness } from "@/lib/push";
 import { isTriggerActionAllowed, instagramHref } from "@/lib/wheel";
 import { isValidDeviceHash } from "@/lib/device-hash";
+import { FINGERPRINT_CONSENT_VERSION } from "@/lib/fingerprint-consent";
+import { clientIp, hashRateLimitKey, rateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -30,8 +32,12 @@ const Body = z.object({
 export const POST = publicRoute({
   schema: Body,
   // Anti-abus : 30 tours/min max par IP
-  rateLimit: { key: ({ ip }) => `play:${ip}`, limit: 30, windowSeconds: 60 },
-  handler: async ({ body }) => {
+  rateLimit: {
+    key: ({ ip }) => `play:${hashRateLimitKey(ip)}`,
+    limit: 30,
+    windowSeconds: 60,
+  },
+  handler: async ({ body, req }) => {
     const { slug, playType } = body;
     if (!slug || !playType || !VALID_TYPES.includes(playType as any)) {
       return Response.json({ error: "invalid_params" }, { status: 400 });
@@ -83,8 +89,19 @@ export const POST = publicRoute({
     // Empreinte d'appareil (verrou secondaire). On n'accepte qu'un hex SHA-256
     // bien formé ; toute autre valeur est ignorée (repli sur le cookie seul).
     // En démo, on la neutralise (aucun re-verrouillage).
-    const deviceHash =
+    let deviceHash =
       !isDemo && isValidDeviceHash(body.deviceHash) ? body.deviceHash : null;
+    if (deviceHash) {
+      const { data: consent, error: consentError } = await supa
+        .from("player_fingerprint_consents")
+        .select("consented, policy_version")
+        .eq("business_id", biz.id)
+        .eq("player_id", playerId)
+        .maybeSingle();
+      if (consentError || consent?.consented !== true || consent.policy_version !== FINGERPRINT_CONSENT_VERSION) {
+        deviceHash = null;
+      }
+    }
 
     // Cet APPAREIL a-t-il déjà joué ce type ? Attrape le rejeu en navigation
     // privée / cookies vidés, que le cookie laisse passer. Vérification SOUPLE
@@ -130,6 +147,19 @@ export const POST = publicRoute({
         .eq("business_id", biz.id)
         .maybeSingle(),
     ]);
+
+    // Limite automatique par commerce et réseau : aucune action n'est demandée
+    // au commerçant ou au joueur. Les démos restent illimitées.
+    if (
+      !isDemo &&
+      !(await rateLimit(
+        `play-business:${biz.id}:${hashRateLimitKey(clientIp(req))}`,
+        80,
+        60 * 60
+      ))
+    ) {
+      return Response.json({ error: "rate_limited" }, { status: 429 });
+    }
 
     if (!prizes || prizes.length === 0) {
       return Response.json({ error: "no_prizes" }, { status: 409 });
@@ -180,6 +210,10 @@ export const POST = publicRoute({
           .select("*", { count: "exact", head: true })
           .eq("business_id", biz.id)
           .gte("created_at", start.toISOString())
+          // Exclut les anciens tours `review` : ils n'accordent plus de tour
+          // et ne doivent pas réduire le plafond du jour dans les anciennes
+          // bases qui utilisent encore ce comptage de secours.
+          .in("play_type", ["instagram", "loyalty", "optin"])
           .not("prize_label", "ilike", "%rien%");
         allowed = (count ?? 0) < limit;
       } else {
@@ -204,11 +238,13 @@ export const POST = publicRoute({
     // Instantané du caractère perdant au moment du tour + empreinte d'appareil.
     // Repli si une colonne optionnelle (is_losing / device_hash) n'existe pas
     // encore (migration non appliquée).
-    let { error } = await supa
+    const result = await supa
       .from("plays")
       .insert({ ...baseRow, is_losing: prizeIsLosing(prize), device_hash: deviceHash });
-    if (error && (error as { code?: string }).code === "42703") {
-      ({ error } = await supa.from("plays").insert(baseRow));
+    let error = result.error;
+    if (error && error.code === "42703") {
+      const fallback = await supa.from("plays").insert(baseRow);
+      error = fallback.error;
     }
 
     if (error) {

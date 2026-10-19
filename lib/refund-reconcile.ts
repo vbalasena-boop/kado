@@ -75,6 +75,31 @@ export async function reconcileRefundEvent(
       const filterVal = orderId ?? refundId;
       if (!filterCol || !filterVal) return { action: "noop" };
 
+      // Un remboursement partiel ne doit jamais faire apparaître la commande
+      // comme totalement remboursée. Le flux Kado émet des refunds complets ;
+      // si un remboursement est créé manuellement dans Stripe, on reste
+      // volontairement conservateur et on attendra un remboursement total.
+      const { data: order, error: orderError } = await db
+        .from("orders")
+        .select("id, total_cents")
+        .eq(filterCol, filterVal)
+        .maybeSingle();
+      if (orderError) {
+        reportError(orderError, { where: "reconcileRefundEvent.readOrder", status, refundId });
+        return { action: "noop" };
+      }
+      if (!order) return { action: "noop" };
+      const totalCents = Number((order as { total_cents?: number | string | null }).total_cents);
+      const refundAmount = Number((refund as { amount?: number }).amount);
+      if (
+        !Number.isFinite(totalCents) ||
+        totalCents <= 0 ||
+        !Number.isFinite(refundAmount) ||
+        refundAmount < totalCents
+      ) {
+        return { action: "noop", ...(orderId ? { orderId } : {}) };
+      }
+
       // Confirme le remboursement : écrit aussi `stripe_refund_id` → ferme
       // l'angle mort record_failed. Filtre `refunded=false` = garde
       // d'idempotence (un rejeu ne modifie 0 ligne, aucun effet).

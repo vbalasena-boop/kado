@@ -372,6 +372,92 @@ export function buildCustomerOrderEmail(o: {
   };
 }
 
+/** E-mail envoyé au client quand sa commande est prête au retrait. */
+export function buildOrderReadyEmail(o: {
+  to: string;
+  code: string;
+  bizName: string;
+  customerName?: string | null;
+  paidFootnote?: string;
+}) {
+  return {
+    to: o.to,
+    subject: `Votre commande ${o.code} est prête chez ${o.bizName}`,
+    fromName: `${o.bizName} via Kado`,
+    html: emailLayout({
+      preview: `Votre commande est prête, venez la récupérer !`,
+      emoji: "✅",
+      heading: `C'est prêt${
+        o.customerName ? `, ${escapeHtml(o.customerName)}` : ""
+      } !`,
+      bodyHtml: `
+        <p style="margin:0 0 14px;">Votre commande chez <b>${escapeHtml(
+          o.bizName
+        )}</b> est <b>prête</b>. Présentez ce code au retrait :</p>
+        <p style="margin:0 0 8px;text-align:center;"><span style="display:inline-block;font-family:monospace;font-size:30px;font-weight:800;letter-spacing:0.15em;background:#f7f5fb;border:2px dashed #cfc5e5;border-radius:14px;padding:12px 22px;">${escapeHtml(
+          o.code
+        )}</span></p>`,
+      footnote: o.paidFootnote,
+    }),
+    text: `Votre commande ${o.code} chez ${o.bizName} est prête. Venez la récupérer !`,
+  };
+}
+
+/** E-mail envoyé au client quand sa commande est annulée. */
+export function buildOrderCancelledEmail(o: {
+  to: string;
+  code: string;
+  bizName: string;
+  customerName?: string | null;
+  refunded: boolean;
+}) {
+  return {
+    to: o.to,
+    subject: `Votre commande ${o.code} chez ${o.bizName} a été annulée`,
+    fromName: `${o.bizName} via Kado`,
+    html: emailLayout({
+      preview: `Votre commande a été annulée.`,
+      emoji: "❌",
+      heading: `Commande annulée${
+        o.customerName ? `, ${escapeHtml(o.customerName)}` : ""
+      }`,
+      bodyHtml: `
+        <p style="margin:0 0 14px;">Votre commande <b>${escapeHtml(
+          o.code
+        )}</b> chez <b>${escapeHtml(
+          o.bizName
+        )}</b> a été <b>annulée</b>.</p>
+        <p style="margin:0 0 8px;">Pour toute question, rapprochez-vous directement du commerce.</p>`,
+      footnote: o.refunded
+        ? "Votre paiement en ligne a été remboursé."
+        : "Pour toute question sur un éventuel remboursement, rapprochez-vous du commerce.",
+    }),
+    text: `Votre commande ${o.code} chez ${o.bizName} a été annulée.`,
+  };
+}
+
+/** E-mail transactionnel après demande de remboursement depuis l'espace commerce. */
+export function buildOrderRefundedEmail(o: {
+  to: string;
+  code: string;
+  bizName: string;
+  customerName?: string | null;
+}) {
+  return {
+    to: o.to,
+    subject: `Remboursement demandé pour votre commande ${o.code} chez ${o.bizName}`,
+    fromName: `${o.bizName} via Kado`,
+    html: emailLayout({
+      preview: "Le commerce a demandé le remboursement de votre commande.",
+      emoji: "↩️",
+      heading: `Remboursement demandé${o.customerName ? `, ${escapeHtml(o.customerName)}` : ""}`,
+      bodyHtml: `<p style="margin:0 0 14px;">Le commerce <b>${escapeHtml(o.bizName)}</b> a demandé le remboursement de votre commande <b>${escapeHtml(o.code)}</b>.</p><p style="margin:0;">Le délai d'apparition dépend de votre banque. Pour toute question, contactez directement le commerce.</p>`,
+      footnote: "Cet e-mail confirme la demande, pas le délai de traitement bancaire.",
+    }),
+    text: `Le commerce ${o.bizName} a demandé le remboursement de votre commande ${o.code}. Le délai d'apparition dépend de votre banque.`,
+  };
+}
+
 /** Alerte e-mail au commerçant pour une nouvelle commande. */
 export function buildMerchantOrderEmail(o: {
   to: string;

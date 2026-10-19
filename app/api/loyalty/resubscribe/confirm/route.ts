@@ -212,6 +212,21 @@ export async function POST(req: NextRequest) {
     return verifyFailureResponse(result);
   }
 
+  // Un commerce peut avoir été suspendu depuis l'envoi du lien. Fermer le
+  // parcours dans ce cas et échouer en mode fermé si le statut est illisible.
+  try {
+    const db = getAdminClient();
+    const { data: business, error } = await db
+      .from("businesses")
+      .select("status")
+      .eq("id", b)
+      .maybeSingle();
+    if (error) return htmlResponse(RETRY, 503);
+    if (!business || business.status !== "active") return htmlResponse(INVALID, 400);
+  } catch {
+    return htmlResponse(RETRY, 503);
+  }
+
   let changed = 0;
   let updatedId: string | null = null;
   try {
