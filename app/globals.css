@@ -9755,6 +9755,75 @@ body:has(.vitrine) {
 }
 
 /* ==========================================================================
+   ADMIN & ESPACE COMMERÇANT — continuité avec la vitrine « ticket de comptoir »
+   ========================================================================== */
+.dash, .auth-page {
+  --paper: #f4efe5;
+  --paper-light: #fbf8f1;
+  --paper-deep: #e9dfd0;
+  --ink: #292331;
+  --ink-soft: #665c61;
+  --plum: #33204d;
+  --pepper: #e85b3d;
+  --sun: #efc64f;
+  --rule: #d9cebf;
+  --g-blue: var(--pepper);
+  --g-blue-dark: #b83e2b;
+  --g-bg: var(--paper);
+  --g-surface: var(--paper-light);
+  --g-surface-2: var(--paper-deep);
+  --g-ink: var(--ink);
+  --g-ink2: var(--ink-soft);
+  --g-line: var(--rule);
+  --g-green: #39704b;
+  --g-red: #b83e2b;
+  --g-good: #236341; --g-good-bg: #e3f0e4;
+  --g-warn: #805719; --g-warn-bg: #f7edcf;
+  --g-bad: #a33d32; --g-bad-bg: #f8e3dc;
+  --g-neutral-bg: rgba(53,39,68,.06);
+  --d-line-strong: #cdbfae;
+  --d-gold-tint: rgba(240,194,77,.22);
+  --d-green-tint: rgba(57,112,75,.1);
+  --d-red-tint: rgba(184,62,43,.1);
+  --d-ink-on-gold: var(--plum);
+}
+.dash {
+  color: var(--g-ink);
+  background: radial-gradient(ellipse at 84% 0%, rgba(240,194,77,.1), transparent 34rem),
+    radial-gradient(circle at 1px 1px, rgba(53,39,68,.035) 1px, transparent 1.35px) 0 0 / 17px 17px, var(--g-bg);
+}
+.dash .dash-top { background: color-mix(in srgb, var(--paper-light) 94%, transparent); border-bottom: 1px dashed var(--rule); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.dash .dash-brand { color: var(--plum); }
+.dash .dash-signout { color: var(--plum); background: var(--paper); border: 1px solid var(--rule); border-radius: 4px; }
+.dash .dash-signout:hover { background: var(--paper-deep); }
+.dash .dash-nav { background: var(--paper-light); border-bottom: 1px dashed var(--rule); }
+.dash .dash-nav a { color: var(--ink-soft); border-radius: 4px; }
+.dash .dash-nav a[aria-current="page"], .dash .dash-nav-secondary a[aria-current="page"] { color: var(--paper-light); background: var(--plum); }
+.dash .dash-nav a:hover, .dash .dash-nav-more > summary:hover, .dash .dash-nav-more[open] > summary { color: var(--plum); background: var(--d-gold-tint); }
+.dash .dash-nav-more > summary { color: var(--ink-soft); }
+.dash .dash-nav-secondary { background: var(--paper-light); border-color: var(--rule); }
+.dash .dash-card, .dash .card, .dash .stat { background: var(--paper-light); border-color: var(--rule); border-radius: 10px; box-shadow: 2px 2px 0 rgba(53,39,68,.06); }
+.dash .stat { border-radius: 8px; }
+.dash .stat-icon { color: var(--plum); background: rgba(240,194,77,.24); }
+.dash .btn, .auth-page .btn { color: var(--paper-light); background: var(--pepper); border-radius: 5px; box-shadow: 3px 3px 0 var(--plum); }
+.dash .btn:hover, .auth-page .btn:hover { color: var(--paper-light); background: var(--plum); }
+.dash .btn.ghost, .auth-page .btn.ghost, .dash .btn-secondary, .dash .btn-mini { color: var(--plum); background: var(--paper-light); border: 1px solid var(--rule); border-radius: 5px; }
+.dash .btn.ghost:hover, .auth-page .btn.ghost:hover, .dash .btn-secondary:hover, .dash .btn-mini:hover { background: var(--d-gold-tint); border-color: var(--sun); }
+.dash .field input, .dash .field select, .dash .field textarea, .dash .input, .auth-page .auth-input { color: var(--ink); background: var(--paper-light); border: 1px solid var(--d-line-strong); border-radius: 5px; }
+.dash input:not([type="checkbox"]):not([type="radio"]), .dash select, .dash textarea { color-scheme: light; }
+.dash .field input:focus, .dash .field select:focus, .dash .field textarea:focus, .auth-page .auth-input:focus { outline: 2px solid var(--pepper); border-color: var(--pepper); }
+.dash .field input::placeholder, .dash textarea::placeholder { color: var(--ink-soft); opacity: .8; }
+.dash .tabs { border-color: var(--rule); border-radius: 6px; background: var(--paper-light); }
+.dash .tabs > *, .dash .tabs a, .dash .tabs button { border-radius: 4px; }
+.dash .tabs > .on, .dash .tabs > .active, .dash .tabs > [aria-selected="true"], .dash .tabs > [aria-current="page"] { color: var(--paper-light); background: var(--plum); }
+.dash a:not([class]) { color: var(--plum); text-decoration-color: rgba(217,79,53,.55); }
+.dash a:not([class]):hover, .auth-page .auth-card a { color: var(--pepper); }
+.dash a:not([class]):focus-visible { outline: 2px solid var(--pepper); }
+.auth-page { color: var(--ink); background: var(--paper); }
+.auth-page .auth-card { color: var(--ink); background: var(--paper-light); border-color: var(--rule); border-radius: 10px; }
+@media (max-width: 640px) { .dash .dash-nav-secondary { background: var(--paper-light); } }
+
+/* ==========================================================================
    COMMANDE SUR LE DOMAINE DU COMMERÇANT
    Lien « Retour au site » (page de commande) + réglages site / sous-domaine
    dans l'espace commerçant (carte « Votre lien de commande »).
