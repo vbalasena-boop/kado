@@ -11,7 +11,7 @@ export const metadata = {
 
 function Unavailable() {
   return (
-    <main className="landing">
+    <main id="main-content" tabIndex={-1} className="landing">
       <div className="landing-card">
         <div className="landing-logo">🤝</div>
         <h1>Lien invalide</h1>
@@ -24,11 +24,12 @@ function Unavailable() {
   );
 }
 
-export default async function VendeurPage({
-  params,
-}: {
-  params: { key: string };
-}) {
+export default async function VendeurPage(
+  props: {
+    params: Promise<{ key: string }>;
+  }
+) {
+  const params = await props.params;
   const key = (params.key || "").trim();
   // Clé = UUID ; on rejette tout le reste sans toucher la base.
   if (!/^[0-9a-f-]{36}$/i.test(key)) return <Unavailable />;

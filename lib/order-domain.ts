@@ -1,7 +1,7 @@
 /**
  * Commande en ligne sur le domaine du commerçant (ex. commander.qustos.fr).
  *
- * Le commerçant pointe un sous-domaine (CNAME) vers Kado ; le middleware
+ * Le commerçant pointe un sous-domaine (CNAME) vers Kado ; le Proxy Next.js
  * reconnaît l'hôte, retrouve le commerce et RÉÉCRIT l'URL vers ses pages
  * publiques sans que le client ne voie jamais « kado-app.fr » :
  *
@@ -9,7 +9,7 @@
  *   commander.qustos.fr/suivi/ABCD  → /qustos/suivi/ABCD
  *
  * Ce module ne contient que de la logique pure (testable sans réseau) : la
- * résolution hôte → slug est injectée par le middleware.
+ * résolution hôte → slug est injectée par le Proxy Next.js.
  */
 
 /** Hôtes qui appartiennent à Kado (jamais réécrits). */

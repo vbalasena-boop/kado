@@ -8,7 +8,12 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 function secret(): string {
-  return process.env.PROSPECT_UNSUB_SECRET || process.env.CRON_SECRET || "kado-prospection-dev-secret";
+  const configured = process.env.PROSPECT_UNSUB_SECRET || process.env.CRON_SECRET;
+  if (configured) return configured;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("PROSPECT_UNSUB_SECRET or CRON_SECRET must be configured in production");
+  }
+  return "kado-prospection-dev-secret";
 }
 
 /** Jeton de désinscription pour une adresse (hex court). */

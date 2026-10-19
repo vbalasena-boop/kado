@@ -64,19 +64,26 @@ export async function POST(req: NextRequest) {
   const db = getAdminClient();
   const now = new Date().toISOString();
   try {
-    await db.from("leads").update({ unsubscribed_at: now }).eq("business_id", b).eq("email", email);
-  } catch {
-    /* best effort */
+    const { error } = await db
+      .from("leads")
+      .update({ unsubscribed_at: now, phone: null })
+      .eq("business_id", b)
+      .eq("email", email);
+    if (error) throw error;
+  } catch (err) {
+    reportError(err, { where: "unsubscribe.lead" });
+    return response("Désinscription non confirmée", "Un problème temporaire empêche la mise à jour. Réessayez dans quelques instants.", 503);
   }
   try {
     // Seule une transition réelle est auditée ; les rejeux restent idempotents.
-    const { data: cards } = await db
+    const { data: cards, error } = await db
       .from("loyalty_cards")
       .update({ unsubscribed_at: now, marketing_ok: false })
       .eq("business_id", b)
       .eq("email", email)
       .is("unsubscribed_at", null)
       .select("id");
+    if (error) throw error;
     const cardId = Array.isArray(cards) ? cards[0]?.id ?? null : null;
     if (Array.isArray(cards) && cards.length > 0) {
       try {
@@ -84,11 +91,12 @@ export async function POST(req: NextRequest) {
           type: "unsubscribed", source: "unsubscribe_route", business_id: b, email, card_id: cardId,
         });
       } catch (err) {
-        reportError(err, { where: "unsubscribe.audit" });
+          reportError(err, { where: "unsubscribe.audit" });
       }
     }
-  } catch {
-    /* best effort */
+  } catch (err) {
+    reportError(err, { where: "unsubscribe.card" });
+    return response("Désinscription non confirmée", "Un problème temporaire empêche la mise à jour. Réessayez dans quelques instants.", 503);
   }
   return response("Vous êtes désinscrit(e)", "Vous ne recevrez plus d'offres de ce commerce. Votre carte de fidélité reste utilisable normalement.", 200);
 }

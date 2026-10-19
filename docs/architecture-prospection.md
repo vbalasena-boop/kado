@@ -26,7 +26,7 @@ créer de nouvelles — c'est ce qui garantit **0 € de coût marginal** et la 
 | Accès base sécurisé | `lib/supabase/admin.ts` (clé service, côté serveur) |
 | Erreurs | `lib/report.ts` (Sentry, déjà branché) |
 | Validation entrées | `zod` (déjà utilisé) |
-| Zone admin / auth | Espace `/admin` + middleware existants |
+| Zone admin / auth | Espace `/admin` + Proxy Next.js existant |
 
 > ⚠️ **Décision critique — l'ENVOI des emails de prospection NE passe PAS par Resend.**
 > Le règlement de Resend **interdit le cold email** ; pire, mélanger prospection et

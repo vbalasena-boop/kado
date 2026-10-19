@@ -1875,7 +1875,7 @@ export default function OrdersClient({
 
           {stats.top.length > 0 && (
             <>
-              <h3 className="top-sales-h">🏆 Meilleures ventes</h3>
+              <h3 className="top-sales-h">🏆 Meilleures ventes · 13 derniers mois</h3>
               <ol className="top-sales">
                 {stats.top.map((t, i) => {
                   const max = stats.top[0]?.qty || 1;

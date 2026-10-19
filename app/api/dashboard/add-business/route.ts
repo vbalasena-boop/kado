@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
     );
 
     // 4) bascule tout de suite sur le nouvel établissement
-    cookies().set(ACTIVE_BIZ_COOKIE, biz.id, {
+    (await cookies()).set(ACTIVE_BIZ_COOKIE, biz.id, {
       httpOnly: true,
       sameSite: "lax",
       path: "/",

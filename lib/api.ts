@@ -44,10 +44,10 @@ type MerchantCtx<B> = PublicCtx<B> & { business: Business; user: User };
 type AdminCtx<B> = PublicCtx<B> & { user: User };
 
 type Handler<Ctx> = (ctx: Ctx) => Response | Promise<Response>;
-type NextHandler = (
-  req: NextRequest,
-  ctx?: { params?: Params }
-) => Promise<Response>;
+type NextHandler = {
+  (req: NextRequest): Promise<Response>;
+  (req: NextRequest, ctx: { params: Promise<Params> }): Promise<Response>;
+};
 
 const json = (data: unknown, status = 200) => Response.json(data, { status });
 
@@ -108,8 +108,8 @@ async function guard(
 export function publicRoute<B = undefined>(
   opts: BaseOpts<B> & { handler: Handler<PublicCtx<B>> }
 ): NextHandler {
-  return async (req, ctx) => {
-    const params = ctx?.params ?? {};
+  return (async (req: NextRequest, ctx?: { params: Promise<Params> }) => {
+    const params = ctx ? await ctx.params : {};
     const rl = await checkRateLimit(req, params, opts.rateLimit);
     if (rl) return rl;
     const parsed = await parseBody(req, opts.schema);
@@ -117,7 +117,7 @@ export function publicRoute<B = undefined>(
     return guard(req.nextUrl.pathname, () =>
       opts.handler({ req, params, body: parsed.body })
     );
-  };
+  }) as NextHandler;
 }
 
 /** Options de gating (droits) propres aux routes commerçant. */
@@ -148,8 +148,8 @@ type MerchantGate = {
 export function merchantRoute<B = undefined>(
   opts: BaseOpts<B> & MerchantGate & { handler: Handler<MerchantCtx<B>> }
 ): NextHandler {
-  return async (req, ctx) => {
-    const params = ctx?.params ?? {};
+  return (async (req: NextRequest, ctx?: { params: Promise<Params> }) => {
+    const params = ctx ? await ctx.params : {};
     const { user, business } = await getMyBusiness();
     if (!user || !business) {
       return json({ error: "not_authenticated" }, 401);
@@ -188,15 +188,15 @@ export function merchantRoute<B = undefined>(
     return guard(req.nextUrl.pathname, () =>
       opts.handler({ req, params, body: parsed.body, business, user })
     );
-  };
+  }) as NextHandler;
 }
 
 /** Route admin : exige un e-mail présent dans ADMIN_EMAILS. */
 export function adminRoute<B = undefined>(
   opts: BaseOpts<B> & { handler: Handler<AdminCtx<B>> }
 ): NextHandler {
-  return async (req, ctx) => {
-    const params = ctx?.params ?? {};
+  return (async (req: NextRequest, ctx?: { params: Promise<Params> }) => {
+    const params = ctx ? await ctx.params : {};
     const user = await getAdminUser();
     if (!user) return json({ error: "forbidden" }, 403);
     const rl = await checkRateLimit(req, params, opts.rateLimit);
@@ -206,5 +206,5 @@ export function adminRoute<B = undefined>(
     return guard(req.nextUrl.pathname, () =>
       opts.handler({ req, params, body: parsed.body, user })
     );
-  };
+  }) as NextHandler;
 }

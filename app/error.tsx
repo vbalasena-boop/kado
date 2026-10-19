@@ -15,7 +15,7 @@ export default function Error({
   }, [error]);
 
   return (
-    <main className="landing">
+    <main id="main-content" tabIndex={-1} className="landing">
       <div className="landing-card">
         <div className="landing-logo"><WarningCircle size={54} weight="duotone" color="var(--coral)" /></div>
         <h1>Une erreur est survenue</h1>

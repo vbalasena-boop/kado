@@ -9,6 +9,7 @@ const Body = z.object({
   slug: z.string().optional(),
   email: z.string().optional(),
   phone: z.string().optional(),
+  consent: z.literal(true).optional(),
 });
 
 /** Enregistre un e-mail (opt-in) laissé par un joueur pour un établissement. */
@@ -17,10 +18,13 @@ export const POST = publicRoute({
   // Anti-abus : 10 soumissions/min max par IP
   rateLimit: { key: ({ ip }) => `lead:${ip}`, limit: 10, windowSeconds: 60 },
   handler: async ({ body }) => {
-    const email = (body.email || "").trim();
+    const email = (body.email || "").trim().toLowerCase();
     const phone = (body.phone || "").trim();
     if (!body.slug || (!email && !phone)) {
       return Response.json({ error: "missing" }, { status: 400 });
+    }
+    if (email && body.consent !== true) {
+      return Response.json({ error: "consent_required" }, { status: 400 });
     }
     if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
       return Response.json({ error: "bad_email" }, { status: 400 });
@@ -36,7 +40,13 @@ export const POST = publicRoute({
 
     const { error } = await db
       .from("leads")
-      .insert({ business_id: biz.id, email: email || null, phone: phone || null });
+      .insert({
+        business_id: biz.id,
+        email: email || null,
+        phone: phone || null,
+        marketing_consented_at: email ? new Date().toISOString() : null,
+        consent_source: email ? "game_email_form" : null,
+      });
     if (error) return Response.json({ error: "save_failed" }, { status: 500 });
 
     return Response.json({ ok: true });

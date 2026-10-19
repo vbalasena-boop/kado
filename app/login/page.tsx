@@ -78,7 +78,7 @@ function LoginInner() {
   }
 
   return (
-    <main className="auth-page">
+    <main id="main-content" tabIndex={-1} className="auth-page">
       <div className="auth-card">
         <div className="auth-logo">
           {isSignup ? (
@@ -188,7 +188,7 @@ function LoginInner() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<main className="auth-page" />}>
+    <Suspense fallback={<main id="main-content" tabIndex={-1} className="auth-page" />}>
       <LoginInner />
     </Suspense>
   );

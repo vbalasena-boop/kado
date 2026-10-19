@@ -5,11 +5,12 @@ import AdminThemeEditor from "./AdminThemeEditor";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminPersonalisePage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default async function AdminPersonalisePage(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = await props.params;
   const user = await getAdminUser();
   if (!user) return null; // le layout gère l'accès refusé
 

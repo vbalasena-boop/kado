@@ -27,7 +27,7 @@ function Pitch({ loggedIn }: { loggedIn: boolean }) {
       <header className="dash-top">
         <div className="dash-brand"><Gift className="ico" size={18} weight="bold" /> Kado · Programme promoteur</div>
       </header>
-      <main className="dash-main">
+      <main id="main-content" tabIndex={-1} className="dash-main">
         <h1 className="dash-h1"><Handshake className="ico" size={26} weight="bold" /> Devenez promoteur Kado</h1>
         <p className="dash-sub">
           Vous connaissez des commerçants ? Recommandez-leur Kado avec votre
@@ -138,7 +138,7 @@ export default async function VendeurHome() {
   if (!aff) return <Pitch loggedIn />;
   if (!aff.active) {
     return (
-      <main className="landing">
+      <main id="main-content" tabIndex={-1} className="landing">
         <div className="landing-card">
           <div className="landing-logo"><Confetti size={54} weight="fill" color="var(--gold)" /></div>
           <h1>Candidature bien reçue !</h1>

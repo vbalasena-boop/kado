@@ -94,7 +94,7 @@ export function hasAccess(b: {
  * rendu. Le cache est vidé entre chaque requête (pas de fuite inter-requêtes).
  */
 export const getSessionUser = perRequest(async () => {
-  const supa = createSSRClient();
+  const supa = await createSSRClient();
   const {
     data: { user },
   } = await supa.auth.getUser();
@@ -140,7 +140,7 @@ export const getMyBusiness = perRequest(async (): Promise<{
   if (!user || businesses.length === 0) return { user, business: null };
   let active: Business | undefined;
   try {
-    const activeId = cookies().get(ACTIVE_BIZ_COOKIE)?.value;
+    const activeId = (await cookies()).get(ACTIVE_BIZ_COOKIE)?.value;
     if (activeId) active = businesses.find((b) => b.id === activeId);
   } catch {
     /* hors contexte requête : on prend le premier */

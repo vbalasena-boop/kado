@@ -59,13 +59,13 @@ export async function drainEmailQueue(
   db: SupabaseClient,
   opts: { max: number; deadlineMs?: number }
 ): Promise<{ sent: number; failed: number; remaining: boolean }> {
-  const { data: rows, error } = await db
-    .from("email_queue")
-    .select("id, to_addr, subject, html, from_name, marketing, attempts")
-    .eq("status", "pending")
-    .order("created_at", { ascending: true })
-    .limit(opts.max);
-  if (error) return { sent: 0, failed: 0, remaining: false };
+  if (!Number.isFinite(opts.max) || opts.max <= 0) {
+    return { sent: 0, failed: 0, remaining: false };
+  }
+  const { data: rows, error } = await db.rpc("claim_email_queue", {
+    batch_size: opts.max,
+  });
+  if (error) throw new Error(`email_queue_claim_failed: ${error.message}`);
 
   let sent = 0;
   let failed = 0;
@@ -76,23 +76,48 @@ export async function drainEmailQueue(
       stoppedEarly = true;
       break;
     }
-    const res = await sendEmail({
-      to: r.to_addr,
-      subject: r.subject,
-      html: r.html,
-      fromName: r.from_name ?? undefined,
-      marketing: r.marketing,
-    });
+    let res: { ok: boolean; skipped?: boolean; error?: string };
+    if (r.marketing) {
+      if (!r.business_id) throw new Error("marketing_email_missing_business_scope");
+      const { data: hasConsent, error: consentError } = await db.rpc(
+        "has_active_marketing_consent",
+        { p_business_id: r.business_id, p_email: r.to_addr },
+      );
+      if (consentError) throw new Error(`marketing_consent_check_failed: ${consentError.message}`);
+      res = hasConsent === true
+        ? await sendEmail({
+            to: r.to_addr,
+            subject: r.subject,
+            html: r.html,
+            fromName: r.from_name ?? undefined,
+            marketing: true,
+          })
+        : { ok: false, skipped: true, error: "marketing_consent_withdrawn" };
+    } else {
+      res = await sendEmail({
+        to: r.to_addr,
+        subject: r.subject,
+        html: r.html,
+        fromName: r.from_name ?? undefined,
+        marketing: false,
+      });
+    }
     const next = nextQueueState(r.attempts ?? 0, res.ok, res.skipped);
-    await db
+    const { data: updatedRows, error: updateError } = await db
       .from("email_queue")
       .update({
         status: next.status,
         attempts: next.attempts,
         last_error: res.ok ? null : res.error ?? "error",
+        locked_until: null,
+        lock_token: null,
         ...(next.status === "sent" ? { sent_at: new Date().toISOString() } : {}),
       })
-      .eq("id", r.id);
+      .eq("id", r.id)
+      .eq("lock_token", r.lock_token)
+      .select("id");
+    if (updateError) throw new Error(`email_queue_update_failed: ${updateError.message}`);
+    if (!updatedRows?.length) throw new Error("email_queue_lease_lost_after_send");
     if (res.ok) sent++;
     else failed++;
   }

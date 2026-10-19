@@ -4,7 +4,7 @@ import { createSSRClient } from "@/lib/supabase/ssr";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
-  const supabase = createSSRClient();
+  const supabase = await createSSRClient();
   // Déconnexion locale uniquement : ne ferme que l'appareil courant.
   // (Par défaut Supabase déconnecte TOUS les appareils — ce qui empêche le
   //  commerçant de rester connecté simultanément sur son téléphone, sa

@@ -84,7 +84,7 @@ export const POST = publicRoute({
 
     const playerId = isDemo
       ? globalThis.crypto.randomUUID()
-      : getOrCreatePlayerId();
+      : await getOrCreatePlayerId();
 
     // Empreinte d'appareil (verrou secondaire). On n'accepte qu'un hex SHA-256
     // bien formé ; toute autre valeur est ignorée (repli sur le cookie seul).
@@ -189,90 +189,59 @@ export const POST = publicRoute({
 
     let idx = weightedIndex(prizes);
 
-    // Plafond de cadeaux par jour : au-delà, on force un "Rien" (si disponible).
-    // Réservation ATOMIQUE (RPC 0054) pour éviter le dépassement sous forte
-    // affluence ; repli sur l'ancien comptage souple si la fonction n'est pas
-    // encore déployée.
+    // Enregistre le tour dans une transaction serveur qui réserve le plafond
+    // du cadeau et insère la partie ensemble.
     const limit = cfg?.daily_prize_limit;
-    if (!isDemo && limit && limit > 0 && isWin(prizes[idx])) {
-      let allowed: boolean;
-      const { data: claimed, error: claimErr } = await supa.rpc(
-        "claim_daily_prize",
-        { biz: biz.id, lim: limit }
+    const code = generateCode();
+    const record = async () => supa.rpc("record_play_with_daily_prize_limit", {
+      p_business_id: biz.id,
+      p_player_id: playerId,
+      p_play_type: playType,
+      p_prize_label: prizes[idx].label,
+      p_prize_code: code,
+      p_is_losing: prizeIsLosing(prizes[idx]),
+      p_device_hash: deviceHash,
+      p_daily_limit: isDemo ? null : limit,
+    });
+
+    let { data: recordStatus, error: recordError } = await record();
+    if (recordError) {
+      return Response.json({ error: "play_save_unavailable" }, { status: 503 });
+    }
+    if (recordStatus === "daily_prize_limit_reached") {
+      const noWin = prizes.findIndex((p) => !isWin(p));
+      if (noWin < 0) {
+        return Response.json({ error: "daily_prize_limit_reached" }, { status: 409 });
+      }
+      idx = noWin;
+      ({ data: recordStatus, error: recordError } = await record());
+      if (recordError) {
+        return Response.json({ error: "play_save_unavailable" }, { status: 503 });
+      }
+    }
+
+    if (recordStatus === "already_played") {
+      const { data: existing } = await supa
+        .from("plays")
+        .select("prize_label, prize_code")
+        .eq("business_id", biz.id)
+        .eq("player_id", playerId)
+        .eq("play_type", playType)
+        .maybeSingle();
+      return Response.json(
+        {
+          alreadyPlayed: true,
+          label: existing?.prize_label ?? null,
+          code: existing?.prize_code ?? null,
+        },
+        { status: 409 }
       );
-      if (claimErr) {
-        // Migration 0054 absente → comptage direct (plafond souple, best effort).
-        const start = new Date();
-        start.setHours(0, 0, 0, 0);
-        // Miroir SQL de labelIsLosing() (lib/draw.ts) : tours GAGNANTS du jour.
-        const { count } = await supa
-          .from("plays")
-          .select("*", { count: "exact", head: true })
-          .eq("business_id", biz.id)
-          .gte("created_at", start.toISOString())
-          // Exclut les anciens tours `review` : ils n'accordent plus de tour
-          // et ne doivent pas réduire le plafond du jour dans les anciennes
-          // bases qui utilisent encore ce comptage de secours.
-          .in("play_type", ["instagram", "loyalty", "optin"])
-          .not("prize_label", "ilike", "%rien%");
-        allowed = (count ?? 0) < limit;
-      } else {
-        allowed = claimed === true;
-      }
-      if (!allowed) {
-        const noWin = prizes.findIndex((p) => !isWin(p));
-        if (noWin >= 0) idx = noWin;
-      }
+    }
+    if (recordStatus !== "inserted") {
+      return Response.json({ error: "play_save_unavailable" }, { status: 503 });
     }
 
     const prize = prizes[idx];
-    const code = generateCode();
-
-    const baseRow = {
-      business_id: biz.id,
-      player_id: playerId,
-      play_type: playType,
-      prize_label: prize.label,
-      prize_code: code,
-    };
-    // Instantané du caractère perdant au moment du tour + empreinte d'appareil.
-    // Repli si une colonne optionnelle (is_losing / device_hash) n'existe pas
-    // encore (migration non appliquée).
-    const result = await supa
-      .from("plays")
-      .insert({ ...baseRow, is_losing: prizeIsLosing(prize), device_hash: deviceHash });
-    let error = result.error;
-    if (error && error.code === "42703") {
-      const fallback = await supa.from("plays").insert(baseRow);
-      error = fallback.error;
-    }
-
-    if (error) {
-      // 23505 = violation de contrainte unique => ce type de tour est déjà joué
-      if ((error as any).code === "23505") {
-        const { data: existing } = await supa
-          .from("plays")
-          .select("prize_label, prize_code")
-          .eq("business_id", biz.id)
-          .eq("player_id", playerId)
-          .eq("play_type", playType)
-          .maybeSingle();
-        return Response.json(
-          {
-            alreadyPlayed: true,
-            label: existing?.prize_label ?? null,
-            code: existing?.prize_code ?? null,
-          },
-          { status: 409 }
-        );
-      }
-      // 23514 = violation du CHECK play_type (migration 0046 pas encore
-      // appliquée) : ce type de tour n'est pas accepté → refus propre, pas un 500.
-      if ((error as any).code === "23514") {
-        return Response.json({ error: "action_not_allowed" }, { status: 403 });
-      }
-      return Response.json({ error: "db_error" }, { status: 500 });
-    }
 
     // Alerte temps réel au commerçant à chaque cadeau gagné (si activée).
     // Lecture tolérante : colonne 0029 peut manquer ; on n'échoue jamais le tour.

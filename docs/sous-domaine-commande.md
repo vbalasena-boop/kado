@@ -10,7 +10,7 @@ et un lien « Retour au site » le ramène sur la vitrine (Wix, Shopify…).
    de commande** :
    - l'adresse de son site (lien « Retour au site »),
    - son sous-domaine de commande (`commander.mon-commerce.fr`).
-2. `middleware.ts` reconnaît tout hôte qui n'est pas Kado, retrouve le
+2. `proxy.ts` reconnaît tout hôte qui n'est pas Kado, retrouve le
    commerce (`businesses.order_domain`) et réécrit l'URL :
 
    | URL demandée                        | Page servie              |
@@ -22,7 +22,7 @@ et un lien « Retour au site » le ramène sur la vitrine (Wix, Shopify…).
    L'API (`/api/*`), les assets et les fichiers statiques passent tels quels.
    Stripe Checkout renvoie vers `https://commander.qustos.fr/qustos/suivi/…`
    (chemin déjà préfixé, servi sans réécriture).
-3. La résolution hôte → slug est mise en cache 5 min par isolat Edge.
+3. La résolution hôte → slug est mise en cache 5 min par processus Proxy.
 
 ## Marche à suivre DNS (côté commerçant)
 

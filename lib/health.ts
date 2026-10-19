@@ -243,9 +243,9 @@ export async function runHealthChecks(): Promise<HealthCheck[]> {
     if (!data) {
       checks.push({
         name: "Cron quotidien (8 h)",
-        ok: true,
+        ok: false,
         detail:
-          "Pas encore de passage enregistré — normal si la mise à jour date d'aujourd'hui.",
+          "Aucun passage enregistré — vérifiez la configuration du cron et la migration 0018.",
       });
     } else {
       const age = Date.now() - new Date(data.updated_at).getTime();
@@ -263,7 +263,7 @@ export async function runHealthChecks(): Promise<HealthCheck[]> {
   } catch {
     checks.push({
       name: "Cron quotidien (8 h)",
-      ok: true,
+      ok: false,
       detail: "Table system_state absente — exécutez la migration 0018.",
     });
   }

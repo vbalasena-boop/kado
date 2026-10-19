@@ -107,7 +107,7 @@ export const POST = publicRoute({
     // Parrainage commerçant : on relie le filleul à son parrain (tolérant).
     // La source du parrain est le corps de la requête OU le cookie kado-parrain
     // posé par RefCapture (lien /tarifs?parrain=<slug> depuis la roue).
-    const parrainSlug = (body.parrain || cookies().get("kado-parrain")?.value || "")
+    const parrainSlug = (body.parrain || (await cookies()).get("kado-parrain")?.value || "")
       .trim()
       .toLowerCase()
       .replace(/[^a-z0-9_-]/g, "");
@@ -154,7 +154,7 @@ export const POST = publicRoute({
     // ?ref=code) attribue ce client au vendeur. Tolérant : la table peut ne
     // pas exister encore.
     try {
-      const affCode = (cookies().get("kado-aff")?.value || "")
+      const affCode = ((await cookies()).get("kado-aff")?.value || "")
         .trim()
         .toLowerCase()
         .replace(/[^a-z0-9_-]/g, "");

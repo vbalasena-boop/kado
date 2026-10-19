@@ -8,7 +8,7 @@ export const metadata = { robots: { index: false, follow: false } };
 
 function Unavailable({ message }: { message: string }) {
   return (
-    <main className="landing">
+    <main id="main-content" tabIndex={-1} className="landing">
       <div className="landing-card">
         <div className="landing-logo">🧾</div>
         <h1>Suivi indisponible</h1>
@@ -18,11 +18,12 @@ function Unavailable({ message }: { message: string }) {
   );
 }
 
-export default async function SuiviPage({
-  params,
-}: {
-  params: { slug: string; code: string };
-}) {
+export default async function SuiviPage(
+  props: {
+    params: Promise<{ slug: string; code: string }>;
+  }
+) {
+  const params = await props.params;
   let db;
   try {
     db = getAdminClient();

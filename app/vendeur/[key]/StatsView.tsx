@@ -28,7 +28,7 @@ export default function StatsView({ data }: { data: VendorStatsData }) {
       <header className="dash-top">
         <div className="dash-brand">🎡 Kado · Espace vendeur</div>
       </header>
-      <main className="dash-main">
+      <main id="main-content" tabIndex={-1} className="dash-main">
         <h1 className="dash-h1">🤝 Bonjour {data.name} !</h1>
         <p className="dash-sub">
           Voici vos résultats en temps réel. Gardez cette page dans vos

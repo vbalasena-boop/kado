@@ -120,7 +120,7 @@ export default async function QrPage() {
   const { business } = await getMyBusiness();
   if (!business) return null;
 
-  const h = headers();
+  const h = await headers();
   const base =
     process.env.NEXT_PUBLIC_SITE_URL ||
     `${h.get("x-forwarded-proto") ?? "https"}://${h.get("host") ?? "localhost:3000"}`;
@@ -256,7 +256,8 @@ export default async function QrPage() {
           />
         </div>
 
-        <div className="pp-title">Tentez votre chance&nbsp;! 🎁</div>
+        <div className="pp-eyebrow">Votre cadeau vous attend</div>
+        <div className="pp-title">Tentez votre <span className="pp-serif">chance</span>&nbsp;! 🎁</div>
         <p className="pp-sub">
           Scannez, faites tourner la roue et repartez avec un cadeau.
         </p>

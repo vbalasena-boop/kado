@@ -4,11 +4,12 @@ import BillingClient from "./BillingClient";
 
 export const dynamic = "force-dynamic";
 
-export default async function BillingPage({
-  searchParams,
-}: {
-  searchParams: { success?: string; setup_ok?: string };
-}) {
+export default async function BillingPage(
+  props: {
+    searchParams: Promise<{ success?: string; setup_ok?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const { user, business } = await getMyBusiness();
   if (!business) return null;
 

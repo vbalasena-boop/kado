@@ -20,10 +20,8 @@ function euros(cents: number, currency: string) {
  * body.amount (en euros, optionnel) = remboursement partiel.
  * Envoie un e-mail de confirmation au propriétaire.
  */
-export async function POST(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const admin = await getAdminUser();
   if (!admin) return Response.json({ error: "forbidden" }, { status: 403 });
 

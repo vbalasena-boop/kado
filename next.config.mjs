@@ -1,11 +1,9 @@
-import { withSentryConfig } from "@sentry/nextjs";
+import { withSentryConfig } from "@sentry/nextjs/config";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Nécessaire sous Next 14 pour charger instrumentation.ts (Sentry serveur).
-  experimental: {
-    instrumentationHook: true,
-  },
+  // Keep Turbopack scoped to this app in a parent directory with a lockfile.
+  turbopack: { root: process.cwd() },
   // Page de vente commerçants : /pro sert le fichier statique public/pro.html
   // (page autonome, isolée des styles globaux de l'app).
   async rewrites() {

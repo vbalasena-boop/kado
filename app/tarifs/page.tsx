@@ -135,7 +135,7 @@ const FAQ = [
 
 export default function Tarifs() {
   return (
-    <main className="vitrine">
+    <main id="main-content" tabIndex={-1} className="vitrine">
       <header className="v-topbar">
         <a href="/" aria-label="Accueil Kado">
           <Logo size={42} />

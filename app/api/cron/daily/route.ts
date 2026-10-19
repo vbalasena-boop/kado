@@ -67,6 +67,7 @@ export async function GET(req: NextRequest) {
     consentPurged: 0,
     rateLimitBucketsDeleted: 0,
     playPassesDeleted: 0,
+    customerDataPurged: null as Record<string, number> | null,
     reengageAlmost: 0,
     reengageInactive: 0,
     reviewInvites: 0,
@@ -106,9 +107,19 @@ export async function GET(req: NextRequest) {
     out.errors.push("legacy_play_pass_cleanup");
   }
 
-  // Envoi de masse : on ENFILE (file 0069) puis un drain envoie au rythme
-  // Resend. Repli : si la file n'existe pas (migration non appliquée), envoi
-  // direct — comportement inchangé. Renvoie true si pris en charge.
+  // Rétention bornée des données clients et nettoyage des données d'e-mails.
+  try {
+    const { data, error } = await db.rpc("purge_expired_customer_data");
+    if (error) throw error;
+    out.customerDataPurged = data;
+  } catch (e) {
+    reportError(e, { where: "cron/daily", phase: "customer_data_retention" });
+    out.errors.push("customer_data_retention");
+  }
+
+  // Les offres passent obligatoirement par la file : le drain vérifie le
+  // consentement juste avant l'envoi. Ne pas contourner ce contrôle si la file
+  // est indisponible ou si sa migration n'a pas été appliquée.
   const queueOrSend = async (e: {
     to: string;
     subject: string;
@@ -118,14 +129,7 @@ export async function GET(req: NextRequest) {
     businessId?: string | null;
   }): Promise<boolean> => {
     if (await enqueueEmail(db, e)) return true;
-    const res = await sendEmail({
-      to: e.to,
-      subject: e.subject,
-      html: e.html,
-      fromName: e.fromName,
-      marketing: e.marketing,
-    });
-    return res.ok;
+    throw new Error("email_queue_enqueue_failed");
   };
 
   // ── 1. Relance fin d'essai (J-3) ────────────────────────────────
@@ -1181,5 +1185,7 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  return Response.json({ ok: true, ...out });
+  return Response.json({ ok: out.errors.length === 0, ...out }, {
+    status: out.errors.length === 0 ? 200 : 500,
+  });
 }

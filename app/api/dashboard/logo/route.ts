@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { revalidateTag } from "next/cache";
 import { getMyBusiness } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
-import { imageExt } from "@/lib/upload";
+import { imageExt, normalizeUploadedImage } from "@/lib/upload";
 
 export const dynamic = "force-dynamic";
 
@@ -27,32 +27,33 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "no_file" }, { status: 400 });
   }
   // Type déterminé par une whitelist (SVG refusé) — pas `startsWith("image/")`.
-  const ext = imageExt(file.type);
-  if (!ext) {
+  if (!imageExt(file.type)) {
     return Response.json({ error: "not_an_image" }, { status: 400 });
   }
   if (file.size > MAX_BYTES) {
     return Response.json({ error: "too_large" }, { status: 400 });
   }
 
-  const db = getAdminClient();
-
-  // Crée le bucket public s'il n'existe pas (ignore l'erreur si déjà là)
+  let normalized: Awaited<ReturnType<typeof normalizeUploadedImage>>;
   try {
-    await db.storage.createBucket(BUCKET, {
-      public: true,
-      fileSizeLimit: MAX_BYTES,
-    });
-  } catch {
-    /* déjà existant */
+    normalized = await normalizeUploadedImage(file.type, Buffer.from(await file.arrayBuffer()), MAX_BYTES);
+  } catch (error) {
+    const code = error instanceof Error ? error.message : "invalid_image_content";
+    return Response.json({ error: code }, { status: 400 });
   }
 
-  const path = `${business.id}-${Date.now()}.${ext}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
+  const db = getAdminClient();
+  try {
+    await db.storage.createBucket(BUCKET, { public: true, fileSizeLimit: MAX_BYTES });
+  } catch {
+    /* bucket déjà créé */
+  }
+
+  const path = `${business.id}-${Date.now()}.${normalized.ext}`;
 
   const { error: upErr } = await db.storage
     .from(BUCKET)
-    .upload(path, buffer, { contentType: file.type, upsert: true });
+    .upload(path, normalized.buffer, { contentType: file.type, upsert: true });
   if (upErr) {
     return Response.json({ error: "upload_failed" }, { status: 500 });
   }
@@ -68,6 +69,6 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "save_failed" }, { status: 500 });
   }
 
-  revalidateTag(`biz-${business.slug}`);
+  revalidateTag(`biz-${business.slug}`, { expire: 0 });
   return Response.json({ ok: true, logo_url: logoUrl });
 }

@@ -6,8 +6,8 @@ import { cookies } from "next/headers";
  * Sert à identifier l'utilisateur connecté. Les opérations sur les données
  * passent, elles, par le client "admin" (service role) avec filtres explicites.
  */
-export function createSSRClient() {
-  const cookieStore = cookies();
+export async function createSSRClient() {
+  const cookieStore = await cookies();
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -22,7 +22,7 @@ export function createSSRClient() {
               cookieStore.set(name, value, options)
             );
           } catch {
-            // Appelé depuis un Server Component : ignoré (le middleware rafraîchit).
+            // Appelé depuis un Server Component : ignoré (le Proxy rafraîchit).
           }
         },
       },

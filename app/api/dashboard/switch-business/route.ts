@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     .maybeSingle();
   if (!data) return Response.json({ error: "not_found" }, { status: 404 });
 
-  cookies().set(ACTIVE_BIZ_COOKIE, businessId, {
+  (await cookies()).set(ACTIVE_BIZ_COOKIE, businessId, {
     httpOnly: true,
     sameSite: "lax",
     path: "/",

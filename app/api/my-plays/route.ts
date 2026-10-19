@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
 
   // Sans cookie signé, empreinte valide ou consentement explicite, ne pas
   // interroger la colonne d'empreinte.
-  const playerId = readPlayerId();
+  const playerId = await readPlayerId();
   if (!body.slug || !playerId || !isValidDeviceHash(body.deviceHash)) {
     return Response.json({ played: {} });
   }

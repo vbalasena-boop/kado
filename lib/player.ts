@@ -45,16 +45,16 @@ function unpack(raw: string | undefined): string | null {
 }
 
 /** Lecture seule (utilisable dans un Server Component). Renvoie null si absent. */
-export function readPlayerId(): string | null {
-  return unpack(cookies().get(COOKIE)?.value);
+export async function readPlayerId(): Promise<string | null> {
+  return unpack((await cookies()).get(COOKIE)?.value);
 }
 
 /**
  * Lit l'identifiant, ou en crée un et pose le cookie.
  * À utiliser uniquement dans un Route Handler / Server Action (cookie modifiable).
  */
-export function getOrCreatePlayerId(): string {
-  const jar = cookies();
+export async function getOrCreatePlayerId(): Promise<string> {
+  const jar = await cookies();
   const existing = unpack(jar.get(COOKIE)?.value);
   if (existing) return existing;
   const id = crypto.randomUUID();

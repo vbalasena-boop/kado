@@ -760,7 +760,7 @@ export default function Game({
         const res = await fetch("/api/lead", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ slug, email }),
+          body: JSON.stringify({ slug, email, consent: true }),
         });
         if (res.ok) setLeadSent(true);
       } catch {
@@ -978,7 +978,7 @@ export default function Game({
         fetch("/api/lead", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ slug, email }),
+          body: JSON.stringify({ slug, email, consent: true }),
         }).catch(() => {
           /* silencieux : la capture est facultative */
         });

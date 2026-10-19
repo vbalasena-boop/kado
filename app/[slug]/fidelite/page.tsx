@@ -11,7 +11,7 @@ export const fetchCache = "force-no-store";
 
 function Unavailable({ message }: { message: string }) {
   return (
-    <main className="landing">
+    <main id="main-content" tabIndex={-1} className="landing">
       <div className="landing-card">
         <div className="landing-logo">🎟️</div>
         <h1>Carte indisponible</h1>
@@ -21,13 +21,14 @@ function Unavailable({ message }: { message: string }) {
   );
 }
 
-export default async function FidelitePage({
-  params,
-  searchParams,
-}: {
-  params: { slug: string };
-  searchParams?: { parrain?: string };
-}) {
+export default async function FidelitePage(
+  props: {
+    params: Promise<{ slug: string }>;
+    searchParams?: Promise<{ parrain?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const db = getAdminClient();
   const { data: biz } = await db
     .from("businesses")

@@ -326,7 +326,7 @@ export default function OrderClient({
       ? "Commande retirée — merci !"
       : "En préparation…";
     return (
-      <main className="uber">
+      <main id="main-content" tabIndex={-1} className="uber">
         {buzzing && (
           <div className="buzz-flash" aria-hidden="true">
             <div className="buzz-flash-in">✅ C'est prêt !</div>
@@ -404,7 +404,7 @@ export default function OrderClient({
   }
 
   return (
-    <main className="uber">
+    <main id="main-content" tabIndex={-1} className="uber">
       {/* ---- Retour vers le site du commerçant (Wix, Shopify…) ---- */}
       {siteUrl && (
         <a className="uber-back" href={siteUrl}>

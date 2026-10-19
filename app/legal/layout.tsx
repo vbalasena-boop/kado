@@ -23,7 +23,7 @@ export default function LegalLayout({
           <Link href="/legal/reglement">Règlement du jeu</Link>
         </nav>
       </header>
-      <main className="legal-main">{children}</main>
+      <main id="main-content" tabIndex={-1} className="legal-main">{children}</main>
     </div>
   );
 }

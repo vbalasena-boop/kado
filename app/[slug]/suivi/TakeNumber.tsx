@@ -40,7 +40,7 @@ export default function TakeNumber({
   }
 
   return (
-    <main className="uber">
+    <main id="main-content" tabIndex={-1} className="uber">
       <div className="uber-done" style={{ paddingTop: 40 }}>
         <div className="uber-done-emoji">🎫</div>
         <h1>Suivez votre commande</h1>

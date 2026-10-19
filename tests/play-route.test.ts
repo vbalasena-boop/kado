@@ -15,18 +15,21 @@ let LOYALTY_ENABLED = true;
 // Lien Instagram renseigné ? (gate de l'action « instagram », mutable par test).
 let INSTAGRAM_URL: string | null = "https://instagram.com/cafe";
 let DAILY_LIMIT: number | null = null;
-let FALLBACK_PLAY_TYPES: string[] | null = null;
+let CLAIM_ERROR = false;
+let CLAIMED = true;
+let INSERT_STATUS = "inserted";
 
-const PRIZES = [
-  {
-    id: "p1",
-    label: "Café offert",
-    emoji: "☕",
-    weight: 1,
-    color: "#ffffff",
-    position: 0,
-    is_losing: false,
-  },
+const WINNING_PRIZE = {
+  id: "p1",
+  label: "Café offert",
+  emoji: "☕",
+  weight: 1,
+  color: "#ffffff",
+  position: 0,
+  is_losing: false,
+};
+let PRIZES = [
+  WINNING_PRIZE,
 ];
 
 const mocks = vi.hoisted(() => ({
@@ -44,12 +47,7 @@ function makeClient() {
           return b;
         },
         eq: () => b,
-        in: (column: string, values: string[]) => {
-          if (table === "plays" && column === "play_type") {
-            FALLBACK_PLAY_TYPES = values;
-          }
-          return b;
-        },
+        in: () => b,
         gte: () => b,
         gt: () => b,
         is: () => b,
@@ -87,7 +85,16 @@ function makeClient() {
       };
       return b;
     },
-    rpc: async () => ({ data: null, error: { message: "function missing" } }),
+    rpc: async (_name: string, args: any) => CLAIM_ERROR
+      ? ({ data: null, error: { message: "function unavailable" } })
+      : ({
+          data: INSERT_STATUS !== "inserted"
+            ? INSERT_STATUS
+            : args.p_is_losing || CLAIMED
+              ? "inserted"
+              : "daily_prize_limit_reached",
+          error: null,
+        }),
   };
 }
 
@@ -117,7 +124,10 @@ describe("POST /api/play — garde des actions déclenchantes", () => {
     LOYALTY_ENABLED = true;
     INSTAGRAM_URL = "https://instagram.com/cafe";
     DAILY_LIMIT = null;
-    FALLBACK_PLAY_TYPES = null;
+    PRIZES = [WINNING_PRIZE];
+    CLAIM_ERROR = false;
+    CLAIMED = true;
+    INSERT_STATUS = "inserted";
     mocks.rateLimit.mockReset();
     mocks.rateLimit.mockResolvedValue(true);
   });
@@ -137,11 +147,29 @@ describe("POST /api/play — garde des actions déclenchantes", () => {
     );
   });
 
-  it("le comptage de secours du plafond ignore les anciens tours avis", async () => {
+  it("échoue fermé si l'enregistrement transactionnel est indisponible", async () => {
     DAILY_LIMIT = 1;
+    CLAIM_ERROR = true;
+    const res = await POST(post("instagram"));
+    expect(res.status).toBe(503);
+    expect((await res.json()).error).toBe("play_save_unavailable");
+  });
+
+  it("ne dépasse pas le plafond si aucun lot perdant n'est configuré", async () => {
+    DAILY_LIMIT = 1;
+    CLAIMED = false;
+    const res = await POST(post("instagram"));
+    expect(res.status).toBe(409);
+    expect((await res.json()).error).toBe("daily_prize_limit_reached");
+  });
+
+  it("enregistre un lot perdant au plafond sans consommer une réservation gagnante", async () => {
+    DAILY_LIMIT = 1;
+    CLAIMED = false;
+    PRIZES.push({ ...WINNING_PRIZE, id: "p2", label: "Rien", is_losing: true, position: 1 });
     const res = await POST(post("instagram"));
     expect(res.status).toBe(200);
-    expect(FALLBACK_PLAY_TYPES).toEqual(["instagram", "loyalty", "optin"]);
+    expect((await res.json()).label).toBe("Rien");
   });
 
   it("instagram sans lien MAIS autre action offerte → 403 (bouton mort évité)", async () => {

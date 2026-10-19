@@ -14,6 +14,7 @@ process.env.PLAYER_COOKIE_SECRET = "test-secret-unsub";
 // État configurable du mock Supabase.
 let loyaltyUpdateRows: { id: string }[] = [];
 let insertThrows = false;
+let updateErrorTable: string | null = null;
 const updateCalls: { table: string; payload: Record<string, unknown> }[] = [];
 const insertCalls: { table: string; payload: Record<string, unknown> }[] = [];
 
@@ -28,8 +29,15 @@ function makeClient() {
       q.eq = () => q;
       q.is = () => q;
       // Terminal de l'update loyalty_cards : `.update()...is().select("id")`.
-      q.select = () =>
-        Promise.resolve({ data: loyaltyUpdateRows, error: null });
+      q.select = () => Promise.resolve({
+        data: loyaltyUpdateRows,
+        error: updateErrorTable === table ? { message: "update failed" } : null,
+      });
+      q.then = (resolve: (value: unknown) => unknown, reject?: (reason: unknown) => unknown) =>
+        Promise.resolve({
+          data: null,
+          error: updateErrorTable === table ? { message: "update failed" } : null,
+        }).then(resolve, reject);
       q.insert = (payload: Record<string, unknown>) => {
         insertCalls.push({ table, payload });
         if (insertThrows) return Promise.reject(new Error("audit KO"));
@@ -74,6 +82,7 @@ function unsubPostReq(params: Record<string, string>) {
 beforeEach(() => {
   loyaltyUpdateRows = [];
   insertThrows = false;
+  updateErrorTable = null;
   updateCalls.length = 0;
   insertCalls.length = 0;
   (reportError as any).mockClear();
@@ -151,5 +160,13 @@ describe("POST /api/unsubscribe (désinscription délibérée)", () => {
     expect(res.status).toBe(200);
     expect(updateCalls.some((c) => c.table === "loyalty_cards")).toBe(true);
     expect(reportError as any).toHaveBeenCalledTimes(1);
+  });
+
+  it("ne confirme pas le retrait si la mise à jour de la carte échoue", async () => {
+    loyaltyUpdateRows = [{ id: "c1" }];
+    updateErrorTable = "loyalty_cards";
+    const res = await unsubPost(unsubPostReq({ b: B, e: enc(EMAIL), t: validToken }));
+    expect(res.status).toBe(503);
+    expect(await res.text()).toContain("Désinscription non confirmée");
   });
 });

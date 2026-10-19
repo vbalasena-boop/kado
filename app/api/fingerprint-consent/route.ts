@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
   if (!slug) return Response.json({ consented: false });
   const [biz, playerId] = await Promise.all([
     activeBusiness(slug),
-    Promise.resolve(readPlayerId()),
+    readPlayerId(),
   ]);
   if (!biz || !playerId) return Response.json({ consented: false });
   const { data, error } = await getAdminClient()
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
   }
   const biz = await activeBusiness(body.slug);
   if (!biz) return Response.json({ error: "unavailable" }, { status: 404 });
-  const playerId = getOrCreatePlayerId();
+  const playerId = await getOrCreatePlayerId();
   const supa = getAdminClient();
   const { error } = await supa.from("player_fingerprint_consents").upsert({
     business_id: biz.id,

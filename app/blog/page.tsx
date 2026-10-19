@@ -21,7 +21,7 @@ function fmt(d: string) {
 
 export default function BlogIndex() {
   return (
-    <main className="vitrine">
+    <main id="main-content" tabIndex={-1} className="vitrine">
       <header className="v-topbar">
         <Link href="/"><Logo size={42} /></Link>
         <nav className="v-topnav">

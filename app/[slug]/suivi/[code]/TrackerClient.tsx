@@ -277,7 +277,7 @@ export default function TrackerClient({
     : "En préparation…";
 
   return (
-    <main className="uber">
+    <main id="main-content" tabIndex={-1} className="uber">
       {buzzing && (
         <div className="buzz-flash" aria-hidden="true">
           <div className="buzz-flash-in">✅ C'est prêt !</div>

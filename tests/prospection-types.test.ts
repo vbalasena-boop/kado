@@ -14,7 +14,10 @@ import {
  * CHECK de la migration. Si l'un des deux change sans l'autre, ce test casse.
  */
 const migration = readFileSync(
-  join(process.cwd(), "supabase/migrations/0043_prospection.sql"),
+  join(
+    process.cwd(),
+    "supabase/migrations/20261019135753_legacy_prospection.sql"
+  ),
   "utf8"
 );
 

@@ -89,7 +89,7 @@ function loadPublicData(slug: string): Promise<PublicData> {
 
 function Unavailable({ message }: { message: string }) {
   return (
-    <main className="landing">
+    <main id="main-content" tabIndex={-1} className="landing">
       <div className="landing-card">
         <div className="landing-logo">🚫</div>
         <h1>Page indisponible</h1>
@@ -99,13 +99,14 @@ function Unavailable({ message }: { message: string }) {
   );
 }
 
-export default async function Page({
-  params,
-  searchParams,
-}: {
-  params: { slug: string };
-  searchParams: { preview?: string };
-}) {
+export default async function Page(
+  props: {
+    params: Promise<{ slug: string }>;
+    searchParams: Promise<{ preview?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   // Service configuré ? (message amical plutôt qu'une erreur brute)
   try {
     getAdminClient();
@@ -179,7 +180,7 @@ export default async function Page({
 
   // Tours déjà joués par ce navigateur (verrou serveur) — personnalisé, hors cache.
   const played: Record<string, { label: string; code: string }> = {};
-  const playerId = readPlayerId();
+  const playerId = await readPlayerId();
   if (playerId && !preview && !demo) {
     const { data: rows } = await getAdminClient()
       .from("plays")

@@ -10,11 +10,12 @@ import ProspectDetailClient, {
 export const dynamic = "force-dynamic";
 
 /** Fiche prospect (admin) — story C2 : signaux + messages générés éditables. */
-export default async function ProspectPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default async function ProspectPage(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = await props.params;
   const user = await getAdminUser();
   if (!user) return null;
 

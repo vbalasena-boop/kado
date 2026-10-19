@@ -27,11 +27,12 @@ import TrendChart from "@/components/TrendChart";
 
 export const dynamic = "force-dynamic";
 
-export default async function DashboardHome({
-  searchParams,
-}: {
-  searchParams?: { parcours?: string };
-}) {
+export default async function DashboardHome(
+  props: {
+    searchParams?: Promise<{ parcours?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const { business } = await getMyBusiness();
   if (!business) return null;
 

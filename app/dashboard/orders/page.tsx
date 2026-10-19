@@ -103,6 +103,14 @@ export default async function OrdersPage() {
     );
   }
 
+  const startDay = new Date();
+  startDay.setHours(0, 0, 0, 0);
+  const startMonth = new Date();
+  startMonth.setDate(1);
+  startMonth.setHours(0, 0, 0, 0);
+  const retentionStart = new Date();
+  retentionStart.setMonth(retentionStart.getMonth() - 13);
+
   let products: Product[] = [];
   let orders: Order[] = [];
   let allForStats: {
@@ -141,6 +149,7 @@ export default async function OrdersPage() {
           .from("orders")
           .select(cols)
           .eq("business_id", business.id)
+          .gte("created_at", retentionStart.toISOString())
           .order("created_at", { ascending: false })
           .limit(150),
       [
@@ -160,6 +169,7 @@ export default async function OrdersPage() {
       .from("orders")
       .select("items, total_cents, status, created_at, service_mode, notified_ready_at")
       .eq("business_id", business.id)
+      .gte("created_at", retentionStart.toISOString())
       .neq("status", "cancelled")
       .neq("status", "awaiting_payment")
       .order("created_at", { ascending: false })
@@ -169,6 +179,7 @@ export default async function OrdersPage() {
         .from("orders")
         .select("items, total_cents, status, created_at")
         .eq("business_id", business.id)
+        .gte("created_at", retentionStart.toISOString())
         .neq("status", "cancelled")
         .neq("status", "awaiting_payment")
         .order("created_at", { ascending: false })
@@ -180,12 +191,6 @@ export default async function OrdersPage() {
   }
 
   // ---- Statistiques ----
-  const startDay = new Date();
-  startDay.setHours(0, 0, 0, 0);
-  const startMonth = new Date();
-  startMonth.setDate(1);
-  startMonth.setHours(0, 0, 0, 0);
-
   const dayOrders = allForStats.filter(
     (o) => new Date(o.created_at) >= startDay
   );
@@ -195,7 +200,37 @@ export default async function OrdersPage() {
   const sum = (list: typeof allForStats) =>
     list.reduce((a, o) => a + (o.total_cents ?? 0), 0);
 
-  // Meilleures ventes (toutes commandes non annulées)
+  let historicalTotals: {
+    totalOrders: number;
+    totalCents: number;
+    todayOrders: number;
+    todayCents: number;
+    monthOrders: number;
+    monthCents: number;
+  } | null = null;
+  try {
+    const { data, error } = await db.rpc("get_order_dashboard_totals", {
+      p_business_id: business.id,
+      p_today_start: startDay.toISOString(),
+      p_month_start: startMonth.toISOString(),
+    });
+    if (error) throw error;
+    const row = Array.isArray(data) ? data[0] : data;
+    if (row) {
+      historicalTotals = {
+        totalOrders: Number(row.total_orders) || 0,
+        totalCents: Number(row.total_cents) || 0,
+        todayOrders: Number(row.today_orders) || 0,
+        todayCents: Number(row.today_cents) || 0,
+        monthOrders: Number(row.month_orders) || 0,
+        monthCents: Number(row.month_cents) || 0,
+      };
+    }
+  } catch {
+    /* migration absente : replis sur les commandes chargées */
+  }
+
+  // Repli local tant que la migration d'agrégation n'est pas disponible.
   const byProduct = new Map<string, { qty: number; cents: number }>();
   for (const o of allForStats) {
     for (const it of o.items ?? []) {
@@ -205,10 +240,25 @@ export default async function OrdersPage() {
       byProduct.set(it.name, cur);
     }
   }
-  const top = [...byProduct.entries()]
+  let top = [...byProduct.entries()]
     .map(([name, v]) => ({ name, qty: v.qty, cents: v.cents }))
     .sort((a, b) => b.qty - a.qty)
     .slice(0, 5);
+  try {
+    const { data, error } = await db.rpc("get_order_top_products", {
+      p_business_id: business.id,
+      p_since: retentionStart.toISOString(),
+      p_limit: 5,
+    });
+    if (error) throw error;
+    top = (data ?? []).map((row: any) => ({
+      name: String(row.name),
+      qty: Number(row.qty) || 0,
+      cents: Number(row.cents) || 0,
+    }));
+  } catch {
+    /* migration absente : les 2 000 dernières commandes servent de repli */
+  }
 
   // Temps moyen de préparation (création → « prête »), sur les commandes servies.
   let prepSum = 0;
@@ -233,16 +283,18 @@ export default async function OrdersPage() {
   }
 
   const stats: OrderStats = {
-    today: dayOrders.length,
-    todayCents: sum(dayOrders),
-    month: monthOrders.length,
-    monthCents: sum(monthOrders),
-    total: allForStats.length,
-    totalCents: sum(allForStats),
-    avgCents:
-      allForStats.length > 0
-        ? Math.round(sum(allForStats) / allForStats.length)
-        : 0,
+    today: historicalTotals?.todayOrders ?? dayOrders.length,
+    todayCents: historicalTotals?.todayCents ?? sum(dayOrders),
+    month: historicalTotals?.monthOrders ?? monthOrders.length,
+    monthCents: historicalTotals?.monthCents ?? sum(monthOrders),
+    total: historicalTotals?.totalOrders ?? allForStats.length,
+    totalCents: historicalTotals?.totalCents ?? sum(allForStats),
+    avgCents: (historicalTotals?.totalOrders ?? allForStats.length) > 0
+      ? Math.round(
+          (historicalTotals?.totalCents ?? sum(allForStats)) /
+            (historicalTotals?.totalOrders ?? allForStats.length),
+        )
+      : 0,
     top,
     avgPrepMin,
     modes,

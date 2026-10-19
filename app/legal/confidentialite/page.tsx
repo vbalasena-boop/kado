@@ -15,6 +15,19 @@ export default function Confidentialite() {
         Vobinson BALASENA (entrepreneur individuel), éditeur du service Kado.
         Contact : vbalasena@instant-events.fr.
       </p>
+      <p>
+        Pour la gestion de son compte Kado, de la sécurité de la plateforme et
+        de la facturation, Kado détermine les finalités de ses traitements et
+        agit comme responsable du traitement. Pour les données que vous
+        transmettez à un commerce via le jeu, la fidélité ou une commande, le
+        commerce détermine les finalités (par exemple honorer une commande ou
+        envoyer ses propres offres) et agit comme responsable du traitement ;
+        Kado traite ces données pour fournir le service et selon les
+        instructions du commerce. Selon la fonctionnalité, la répartition peut
+        différer. Pour une demande concernant un achat ou une offre d'un
+        commerce, vous pouvez aussi contacter directement ce commerce ; Kado
+        peut transmettre votre demande au bon interlocuteur.
+      </p>
 
       <h2>Données collectées</h2>
       <h3>Joueurs (clients des commerces)</h3>
@@ -103,32 +116,54 @@ export default function Confidentialite() {
           navigateur pour les notifications).
         </li>
         <li>Statistiques agrégées : <b>intérêt légitime</b>.</li>
+        <li>
+          Archive financière restreinte : <b>obligation légale applicable</b>
+          et conservation nécessaire à la gestion financière du service.
+        </li>
       </ul>
 
       <h2>Durée de conservation</h2>
       <p>
-        Cookie joueur : 12 mois. Données de jeu et commandes : 13 mois. E-mails
-        collectés et cartes de fidélité : jusqu'au retrait du consentement ou 3
-        ans sans interaction. Anciens codes de jeu : 90 jours maximum.
-        Abonnements aux notifications : jusqu'à désactivation. Comptes
-        commerçants : durée
-        de la relation contractuelle + obligations légales.
+        Cookie joueur : 12 mois. Données de jeu et empreintes liées au jeu : 13
+        mois. Les coordonnées, notes, articles détaillés, codes de suivi et
+        références de paiement enregistrés avec une commande sont effacés ou
+        supprimés au plus tard 13 mois après la commande. Pour les besoins de
+        suivi financier, une
+        archive à accès restreint conserve pendant 10 ans la date, le statut et
+        le montant de chaque commande, sans nom, coordonnées, panier ni
+        référence de paiement ; un résumé mensuel des ventes est aussi conservé
+        pour les statistiques. Le commerçant demeure responsable de ses
+        justificatifs comptables légaux. Les e-mails laissés pour
+        recevoir les offres d'un commerce et les cartes de fidélité sont
+        conservés tant que le consentement reste actif, puis supprimés après 3
+        ans sans interaction. Après désinscription, l'adresse est gardée au
+        maximum 3 ans à compter de la demande, uniquement pour éviter un nouvel
+        envoi non souhaité ; le numéro de téléphone associé est effacé. Les
+        preuves du consentement encore actif sont conservées tant qu'il est
+        utilisé.
+        Anciens codes de jeu : 90 jours maximum. E-mails en file d'envoi : 90
+        jours maximum. Abonnements aux notifications : jusqu'à désactivation
+        ou expiration de la commande associée. Comptes commerçants : durée de la
+        relation contractuelle, puis archivage limité aux obligations légales.
       </p>
 
       <h2>Sous-traitants</h2>
       <p>
         Hébergement et base de données : Vercel, Supabase (Europe). Envoi
         d'e-mails : Resend. Paiement : Stripe. Remise des notifications :
-        services de notification des navigateurs (Apple, Google, Mozilla). Ces
-        prestataires agissent conformément au RGPD.
+        services de notification des navigateurs (Apple, Google, Mozilla). Les
+        prestataires ne reçoivent que les données nécessaires à leur fonction ;
+        les informations sur leur localisation et les garanties de transfert
+        applicables peuvent être obtenues à l'adresse de contact ci-dessus.
       </p>
 
       <h2>Vos droits</h2>
       <p>
         Vous disposez d'un droit d'accès, de rectification, d'effacement,
         d'opposition et de portabilité. Exercez-les à :
-        vbalasena@instant-events.fr. Vous pouvez saisir la CNIL (www.cnil.fr) en
-        cas de litige.
+        vbalasena@instant-events.fr pour les traitements de Kado, ou auprès du
+        commerce concerné pour les traitements qu'il détermine. Vous pouvez
+        saisir la CNIL (www.cnil.fr) en cas de litige.
       </p>
 
       <h2>Cookies</h2>
@@ -138,7 +173,7 @@ export default function Confidentialite() {
         publicitaire ni de suivi tiers n'est déposé.
       </p>
 
-      <p className="legal-date">Dernière mise à jour : 18 octobre 2026.</p>
+      <p className="legal-date">Dernière mise à jour : 19 octobre 2026.</p>
     </article>
   );
 }

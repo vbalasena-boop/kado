@@ -8,11 +8,12 @@ export function generateStaticParams() {
   return ARTICLES.map((a) => ({ slug: a.slug }));
 }
 
-export function generateMetadata({
-  params,
-}: {
-  params: { slug: string };
-}): Metadata {
+export async function generateMetadata(
+  props: {
+    params: Promise<{ slug: string }>;
+  }
+): Promise<Metadata> {
+  const params = await props.params;
   const a = getArticle(params.slug);
   if (!a) return { title: "Article introuvable" };
   return {
@@ -53,11 +54,12 @@ function renderBlock(b: Block, i: number) {
   return null;
 }
 
-export default function ArticlePage({
-  params,
-}: {
-  params: { slug: string };
-}) {
+export default async function ArticlePage(
+  props: {
+    params: Promise<{ slug: string }>;
+  }
+) {
+  const params = await props.params;
   const a = getArticle(params.slug);
   if (!a) notFound();
 
@@ -98,7 +100,7 @@ export default function ArticlePage({
   };
 
   return (
-    <main className="vitrine">
+    <main id="main-content" tabIndex={-1} className="vitrine">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

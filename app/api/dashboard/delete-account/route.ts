@@ -27,15 +27,21 @@ export async function POST(_req: NextRequest) {
 
   const db = getAdminClient();
 
-  // 1) Annuler l'abonnement Stripe de CHAQUE établissement (best effort).
+  // 1) Annuler les abonnements avant toute suppression. En cas d'échec, garder
+  // le compte et ses données permet au commerçant de réessayer sans continuer
+  // à facturer un compte inaccessible.
+  const failedCancellations: string[] = [];
   for (const b of businesses) {
     if (b.stripe_subscription_id) {
       try {
         await getStripe().subscriptions.cancel(b.stripe_subscription_id);
       } catch {
-        /* on continue quand même la suppression */
+        failedCancellations.push(b.id);
       }
     }
+  }
+  if (failedCancellations.length) {
+    return Response.json({ error: "subscription_cancel_failed" }, { status: 502 });
   }
 
   // 2) Supprimer TOUS les établissements du propriétaire (cascade :
@@ -50,7 +56,13 @@ export async function POST(_req: NextRequest) {
 
   const firstBusinessName = businesses[0]?.name ?? null;
 
-  // 3) E-mail d'adieu (best effort, avant de supprimer le compte)
+  // 3) Supprimer le compte utilisateur.
+  const { error: authDeleteError } = await db.auth.admin.deleteUser(user.id);
+  if (authDeleteError) {
+    return Response.json({ error: "account_delete_partial" }, { status: 500 });
+  }
+
+  // 4) E-mail de confirmation (best effort), seulement après suppression.
   if (user.email) {
     const html = emailLayout({
       preview: "Votre compte Kado a bien été supprimé",
@@ -72,13 +84,6 @@ export async function POST(_req: NextRequest) {
       html,
       text: "Votre espace Kado et vos données ont été supprimés, et votre abonnement résilié. À bientôt peut-être sur kado-app.fr.",
     });
-  }
-
-  // 4) Supprimer le compte utilisateur (best effort)
-  try {
-    await db.auth.admin.deleteUser(user.id);
-  } catch {
-    /* le compte restera sans établissement — sera reproposé l'onboarding */
   }
 
   return Response.json({ ok: true });

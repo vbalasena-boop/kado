@@ -235,13 +235,14 @@ const JSON_LD = {
   ],
 };
 
-export default function Home({
-  searchParams,
-}: {
-  searchParams?: { deleted?: string };
-}) {
+export default async function Home(
+  props: {
+    searchParams?: Promise<{ deleted?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   return (
-    <main className="vitrine">
+    <main id="main-content" tabIndex={-1} className="vitrine">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}

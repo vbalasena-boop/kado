@@ -19,7 +19,7 @@ export default async function AdminLayout({
         <header className="dash-top">
           <div className="dash-brand">🎡 Kado · Admin</div>
         </header>
-        <main className="dash-main">
+        <main id="main-content" tabIndex={-1} className="dash-main">
           <div className="dash-card">
             <h2>Accès refusé</h2>
             <p>
@@ -46,7 +46,7 @@ export default async function AdminLayout({
         </div>
       </header>
       <AdminNav />
-      <main className="dash-main">{children}</main>
+      <main id="main-content" tabIndex={-1} className="dash-main">{children}</main>
     </div>
   );
 }

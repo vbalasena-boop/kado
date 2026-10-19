@@ -477,7 +477,7 @@ export async function POST(req: NextRequest) {
 
   // La page de jeu publique met en cache config + lots : on l'invalide pour
   // que l'édition soit visible immédiatement (sans attendre la revalidation).
-  revalidateTag(`biz-${business.slug}`);
+  revalidateTag(`biz-${business.slug}`, { expire: 0 });
 
   return Response.json({ ok: true });
 }

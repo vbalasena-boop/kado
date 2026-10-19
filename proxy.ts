@@ -16,7 +16,7 @@ import {
  *     chaque requête. Sans cela, les cookies d'auth peuvent expirer côté
  *     serveur.
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const host = cleanHost(
     request.headers.get("x-forwarded-host") ?? request.headers.get("host")
   );
@@ -34,7 +34,7 @@ export async function middleware(request: NextRequest) {
 /* 1. Domaine commerçant                                                     */
 /* ------------------------------------------------------------------------ */
 
-/** Cache hôte → slug par isolat Edge (évite une lecture DB à chaque hit). */
+/** Cache hôte → slug par processus Proxy (évite une lecture DB à chaque hit). */
 const hostCache = new Map<string, { slug: string | null; until: number }>();
 const HOST_TTL_MS = 5 * 60 * 1000;
 
@@ -50,7 +50,7 @@ async function orderDomainRewrite(request: NextRequest, host: string) {
 
 /**
  * Retrouve le slug du commerce dont `order_domain` = hôte. Lecture PostgREST
- * directe (légère sur l'Edge), clé service (RLS ferme `businesses` au public),
+ * directe, clé service (RLS ferme `businesses` au public),
  * bornée à 2 s, résultat mis en cache 5 min (y compris l'absence).
  */
 async function slugForHost(host: string): Promise<string | null> {
@@ -118,7 +118,7 @@ async function refreshSession(request: NextRequest) {
 
   // Rafraîchissement de session « best-effort », borné dans le temps.
   //
-  // Sur l'Edge Vercel, le middleware a un budget d'exécution très court. Si
+  // Sur Vercel, le Proxy a un budget d'exécution limité. Si
   // Supabase Auth est lent ou injoignable (projet gratuit en pause, incident,
   // pic de latence), `getUser()` peut rester bloqué jusqu'au timeout de la
   // plateforme → toutes les pages `/dashboard` renvoient alors un 504

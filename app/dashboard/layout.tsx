@@ -80,7 +80,7 @@ export default async function DashboardLayout({
       )}
 
       {!business ? (
-        <main className="dash-main">
+        <main id="main-content" tabIndex={-1} className="dash-main">
           {admin ? (
             <div className="dash-card onboarding">
               <h2>Espace administrateur 🔑</h2>
@@ -109,7 +109,7 @@ export default async function DashboardLayout({
             clickCollect={clickCollect}
             slug={business.slug}
           />
-          <main className="dash-main">{children}</main>
+          <main id="main-content" tabIndex={-1} className="dash-main">{children}</main>
           <SupportButton business={business?.name} />
         </>
       )}
