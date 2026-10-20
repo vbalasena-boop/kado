@@ -165,7 +165,7 @@ export async function GET(req: NextRequest) {
           emoji: "⏳",
           bodyHtml: `Bonjour,<br><br>Votre essai gratuit de Kado${
             businessName ? ` pour <b>${businessName}</b>` : ""
-          } se termine bientôt. Après cette date, votre page de jeu et votre carte de fidélité seront désactivées.<br><br>Pour continuer sans interruption, choisissez votre formule&nbsp;: <b>Jeux 29&nbsp;€</b>, <b>Fidélité 19&nbsp;€</b> ou <b>Complet 44&nbsp;€</b> par mois, sans engagement.<br><br><a href="${SITE}/dashboard/billing" style="display:inline-block;background:linear-gradient(135deg,#ff6b4a,#ff4e87);color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:12px;">Choisir ma formule</a>`,
+          } se termine bientôt. Après cette date, votre page de jeu et votre carte de fidélité seront désactivées.<br><br>Pour continuer sans interruption, choisissez votre formule&nbsp;: <b>Jeux 19&nbsp;€</b>, <b>Fidélité 19&nbsp;€</b> ou <b>Complet 44&nbsp;€</b> par mois, sans engagement.<br><br><a href="${SITE}/dashboard/billing" style="display:inline-block;background:linear-gradient(135deg,#ff6b4a,#ff4e87);color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:12px;">Choisir ma formule</a>`,
           footnote:
             "Résiliable à tout moment en un clic. Une question ? Répondez à cet e-mail.",
         }),

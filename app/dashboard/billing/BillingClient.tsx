@@ -7,7 +7,7 @@ const PLANS = [
     id: "roue",
     emoji: "🎡",
     label: "Jeux",
-    price: "29",
+    price: "19",
     features: [
       "3 jeux : roue, grattage, machine à sous",
       "Avis Google + Instagram",
@@ -55,7 +55,7 @@ const PLANS = [
 ];
 
 const PLAN_LABEL: Record<string, string> = {
-  roue: "Jeux (29 €/mois)",
+  roue: "Jeux (19 €/mois)",
   fidelite: "Fidélité (19 €/mois)",
   complet: "Complet (44 €/mois)",
   comptoir: "Comptoir (19 €/mois)",

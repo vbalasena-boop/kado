@@ -76,7 +76,7 @@ export default function CGV() {
 
       <h2>3. Prix</h2>
       <p>
-        Les abonnements sont facturés mensuellement&nbsp;: <b>Jeux 29&nbsp;€/mois</b>,{" "}
+        Les abonnements sont facturés mensuellement&nbsp;: <b>Jeux 19&nbsp;€/mois</b>,{" "}
         <b>Fidélité 19&nbsp;€/mois</b>, <b>Complet 44&nbsp;€/mois</b>,{" "}
         <b>Comptoir 19&nbsp;€/mois</b>. Deux options mensuelles, sans engagement,
         peuvent être activées et désactivées à tout moment depuis l'espace

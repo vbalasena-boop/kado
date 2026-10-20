@@ -8,7 +8,7 @@ const PLANS = [
     id: "roue",
     emoji: "🎡",
     label: "Jeux",
-    price: "29",
+    price: "19",
     desc: "3 jeux au choix, avis Google & Instagram",
   },
   {

@@ -182,7 +182,7 @@ export default function VendeursClient({
         </form>
         {msg && <p className="save-msg">{msg}</p>}
         <p className="muted">
-          Commissions par défaut : Fidélité <b>20 €</b> · Jeux <b>30 €</b> ·
+          Commissions par défaut : Fidélité <b>20 €</b> · Jeux <b>20 €</b> ·
           Complet <b>45 €</b> par client signé — versées après le{" "}
           <b>2ᵉ prélèvement</b> du client (caduques s'il part avant).
         </p>

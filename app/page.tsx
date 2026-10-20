@@ -82,7 +82,7 @@ const PLANS = [
   {
     id: "roue",
     name: "Jeux",
-    price: "29",
+    price: "19",
     desc: "Boostez vos avis & abonnés",
     features: [
       "3 jeux : roue, grattage, machine à sous",
@@ -145,7 +145,7 @@ const FAQ = [
   },
   {
     q: "Combien ça coûte ?",
-    a: "Quatre formules sans engagement : Jeux à 29 €/mois, Fidélité à 19 €/mois, Complet (les deux) à 44 €/mois, et Comptoir (le bipeur digital) à 19 €/mois. Vous démarrez avec 14 jours d'essai gratuit, sans carte bancaire, avec toutes les fonctionnalités.",
+    a: "Quatre formules sans engagement : Jeux à 19 €/mois, Fidélité à 19 €/mois, Complet (les deux) à 44 €/mois, et Comptoir (le bipeur digital) à 19 €/mois. Vous démarrez avec 14 jours d'essai gratuit, sans carte bancaire, avec toutes les fonctionnalités.",
   },
   {
     q: "Pour quels commerces ?",

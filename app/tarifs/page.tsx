@@ -17,7 +17,7 @@ import SupportButton from "@/components/SupportButton";
 export const metadata: Metadata = {
   title: "Tarifs",
   description:
-    "Kado : 4 formules pour booster votre commerce : Jeux 29 €/mois, Fidélité 19 €/mois, Complet 44 €/mois, Comptoir (bipeur digital) 19 €/mois. Essai gratuit 14 jours, sans engagement.",
+    "Kado : 4 formules pour booster votre commerce : Jeux 19 €/mois, Fidélité 19 €/mois, Complet 44 €/mois, Comptoir (bipeur digital) 19 €/mois. Essai gratuit 14 jours, sans engagement.",
   alternates: { canonical: "/tarifs" },
 };
 
@@ -54,7 +54,7 @@ const PLANS = [
   {
     id: "roue",
     name: "Jeux",
-    price: "29",
+    price: "19",
     desc: "Boostez vos avis et vos abonnés",
     features: [
       "3 jeux : roue, grattage, machine à sous",

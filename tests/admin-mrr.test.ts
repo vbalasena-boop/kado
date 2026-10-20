@@ -15,7 +15,7 @@ describe("businessMrrEur", () => {
         campaigns_addon: true,
         order_tracking: true,
       })
-    ).toBe(29 + 15 + 12);
+    ).toBe(19 + 15 + 12);
   });
   it("essai = 0 (pas encore payant)", () => {
     expect(

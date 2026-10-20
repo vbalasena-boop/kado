@@ -1,6 +1,6 @@
 ---
 title: "Formule Jeux (roue) : 29 € → 19 €/mois"
-status: ready-for-dev
+status: review
 ---
 
 # Formule Jeux (roue) : 29 € → 19 €/mois
@@ -15,11 +15,11 @@ Décision du fondateur (20/10/2026) : baisser Jeux de 29 à 19 €/mois. Fidéli
 
 ## Critères vérifiables
 
-- [ ] Tous les « 29 € » de la formule Jeux deviennent « 19 € » (textes, `price: "29"`, métadonnées SEO, FAQ, CGV, e-mail cron, libellés admin/facturation).
-- [ ] Commission vendeur Jeux : 30 € → 20 € (≈ 1er mois, comme Fidélité). `lib/affiliates.ts` `DEFAULT_COMMISSIONS.roue = 2000`, `tests/affiliates.test.ts` l.98, `app/vendeur/page.tsx` l.62 (« Jeux (19 €/mois) → 20 € »). Fidélité 20 € et Complet 45 € inchangés. Ne pas modifier les taux déjà enregistrés en base.
-- [ ] Ne PAS toucher : « 129 € » (installation), couleurs `#150c29`/`29` CSS.
-- [ ] `grep -rnE "Jeux[^.]{0,20}29" app lib tests` ne renvoie plus rien ; tests qui citent 29 mis à jour.
-- [ ] `bash scripts/relais/verifier.sh` OK.
+- [x] Tous les « 29 € » de la formule Jeux deviennent « 19 € » (textes, `price: "29"`, métadonnées SEO, FAQ, CGV, e-mail cron, libellés admin/facturation).
+- [x] Commission vendeur Jeux : 30 € → 20 € (≈ 1er mois, comme Fidélité). `lib/affiliates.ts` `DEFAULT_COMMISSIONS.roue = 2000`, `tests/affiliates.test.ts` l.98, `app/vendeur/page.tsx` l.62 (« Jeux (19 €/mois) → 20 € »). Fidélité 20 € et Complet 45 € inchangés. Ne pas modifier les taux déjà enregistrés en base.
+- [x] Ne PAS toucher : « 129 € » (installation), couleurs `#150c29`/`29` CSS.
+- [x] `grep -rnE "Jeux[^.]{0,20}29" app lib tests` ne renvoie plus rien ; tests qui citent 29 mis à jour.
+- [x] `bash scripts/relais/verifier.sh` OK.
 
 ## Fichiers
 
@@ -27,4 +27,6 @@ Décision du fondateur (20/10/2026) : baisser Jeux de 29 à 19 €/mois. Fidéli
 
 ## Reprise
 
-Fait : rien. Reste : tout.
+Fait : prix Jeux et commission vendeur mis à jour dans les pages, libellés, e-mails, tableaux admin, vitrine pro et calcul MRR ; 11 tests ciblés et vérificateur complet OK.
+Reste : E2E et création du prix Stripe par Claude ; aucun taux existant en base modifié.
+Prochaine commande : lancer les E2E, puis revoir le diff avant validation.

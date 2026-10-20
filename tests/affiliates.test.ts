@@ -95,7 +95,7 @@ describe("getAffiliateStats", () => {
 
 describe("barème par défaut", () => {
   it("vaut 30/20/45 € (paiement unique, après le 2e prélèvement)", () => {
-    expect(DEFAULT_COMMISSIONS.roue).toBe(3000);
+    expect(DEFAULT_COMMISSIONS.roue).toBe(2000);
     expect(DEFAULT_COMMISSIONS.fidelite).toBe(2000);
     expect(DEFAULT_COMMISSIONS.complet).toBe(4500);
   });

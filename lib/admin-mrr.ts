@@ -6,7 +6,7 @@
  */
 
 export const PLAN_PRICE_EUR: Record<string, number> = {
-  roue: 29,
+  roue: 19,
   fidelite: 19,
   complet: 44,
   comptoir: 19,
