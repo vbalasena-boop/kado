@@ -23,7 +23,7 @@ const PLANS = [
     emoji: "⭐",
     label: "Complet",
     price: "44",
-    desc: "Jeux + fidélité — le meilleur tarif",
+    desc: "Tout Kado (jeux, fidélité, commande, bipeur) — le meilleur tarif",
     recommended: true,
   },
   {

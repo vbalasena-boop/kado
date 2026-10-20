@@ -95,13 +95,13 @@ const PLANS = [
     id: "complet",
     name: "Complet",
     price: "44",
-    desc: "Jeux + fidélité, le meilleur tarif",
+    desc: "Tout Kado, le meilleur tarif",
     popular: true,
     features: [
       "Tout ce qui est dans Jeux",
       "+ Carte de fidélité digitale",
-      "Toutes les fonctionnalités",
-      "4 € d'économie / mois",
+      "Commande en ligne + bipeur digital inclus",
+      "13 € d'économie / mois vs 3 formules",
     ],
   },
   {
