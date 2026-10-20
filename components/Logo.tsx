@@ -1,46 +1,28 @@
-import { useId } from "react";
-
 /**
- * Logo Kado — roue-cadeau stylisée + mot « Kado ».
+ * Logo Kado — cadeau minimal (trait fin) + mot « kado ».
+ * Le trait suit `currentColor` : lisible sur fond clair comme sur fond sombre.
  * `withText` : afficher le mot à côté du symbole.
  */
 export function KadoMark({ size = 34 }: { size?: number }) {
-  const gradientId = useId().replace(/:/g, "");
-  const goldId = `${gradientId}-kado-gold`;
-  const lightGoldId = `${gradientId}-kado-gold-light`;
   return (
     <svg
       width={size}
       height={size}
-      viewBox="0 0 48 48"
+      viewBox="0 0 64 64"
       fill="none"
       role="img"
       aria-label="Kado"
     >
-      <defs>
-        <linearGradient id={goldId} x1="8" y1="6" x2="40" y2="42" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#ffd36b" />
-          <stop offset="1" stopColor="#f0a52e" />
-        </linearGradient>
-        <linearGradient id={lightGoldId} x1="12" y1="12" x2="36" y2="36" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#fff0c4" />
-          <stop offset="1" stopColor="#ffce68" />
-        </linearGradient>
-      </defs>
-      {/* pastille sombre */}
-      <circle cx="24" cy="24" r="22" fill="#1b1035" />
-      {/* corps du cadeau */}
-      <rect x="14.5" y="23.5" width="19" height="12" rx="2.4" fill={`url(#${goldId})`} />
-      {/* couvercle */}
-      <rect x="12.5" y="19" width="23" height="5.6" rx="1.8" fill={`url(#${lightGoldId})`} />
-      {/* ruban vertical */}
-      <rect x="22.2" y="19" width="3.6" height="16.5" fill="#1b1035" opacity="0.85" />
-      {/* nœud */}
-      <path d="M24 19 L18 14.5 L19.6 19.4 Z" fill={`url(#${goldId})`} />
-      <path d="M24 19 L30 14.5 L28.4 19.4 Z" fill={`url(#${goldId})`} />
-      <circle cx="24" cy="18.6" r="2.3" fill={`url(#${lightGoldId})`} stroke="#1b1035" strokeWidth="1.1" />
-      {/* étincelle */}
-      <path d="M35.5 10.5l1.1 2.8 2.8 1.1-2.8 1.1-1.1 2.8-1.1-2.8-2.8-1.1 2.8-1.1z" fill="#ffe9a8" />
+      <rect x="10" y="28" width="44" height="28" rx="4" stroke="currentColor" strokeWidth="4" />
+      <rect x="6" y="20" width="52" height="11" rx="3" fill="currentColor" />
+      <rect x="29.5" y="20" width="5" height="36" fill="#e85b3d" />
+      <path
+        d="M32 20 C26 6 14 8 18 16 C20 20 28 20 32 20 Z M32 20 C38 6 50 8 46 16 C44 20 36 20 32 20 Z"
+        fill="#efc64f"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -60,7 +42,7 @@ export function Logo({
           className="kado-logo-text"
           style={{ fontSize: Math.round(size * 0.62) }}
         >
-          Kado
+          kado
         </span>
       )}
     </span>
