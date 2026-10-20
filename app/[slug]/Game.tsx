@@ -14,7 +14,10 @@ import {
   Gift,
   Star,
 } from "@phosphor-icons/react/dist/ssr";
-import Wheel3D from "./Wheel3D";
+import dynamic from "next/dynamic";
+import Image from "next/image";
+
+const Wheel3D = dynamic(() => import("./Wheel3D"));
 import { TextEffect } from "@/components/motion/text-effect";
 import type { Prize } from "@/lib/draw";
 import { paintWheelFace, WHEEL_FONT as FONT } from "@/lib/wheel-face";
@@ -890,7 +893,7 @@ export default function Game({
     cc.height = window.innerHeight;
     const cx = cc.getContext("2d");
     if (!cx) return;
-    const cols = ["#ffc24d", "#ff5d73", "#39d98a", "#8b6cff", "#4fc3f7", "#fdf4e3"];
+    const cols = ["#efc64f", "#e85b3d", "#6d9273", "#33204d", "#ddd2bf", "#f4efe5"];
     let parts = Array.from({ length: 160 }, (_, i) => ({
       x: window.innerWidth / 2,
       y: window.innerHeight * 0.35,
@@ -1202,12 +1205,13 @@ export default function Game({
     window.setTimeout(() => setLogoSpin(false), 750);
   }
   const logo = logoUrl ? (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
+    <Image
       src={logoUrl}
       alt={name}
       width={46}
       height={46}
+      unoptimized
+      priority
       decoding="async"
       className={`logo-img logo-anim${logoSpin ? " poke" : ""}`}
       onClick={pokeLogo}
@@ -1223,8 +1227,8 @@ export default function Game({
 
   const themeCss = buildTheme(
     config.primary_color || "#ffc24d",
-    config.accent_color || "#ff5d73",
-    config.bg_color || "#150c29",
+    config.accent_color || "#e85b3d",
+    config.bg_color || "#292331",
     config.bg_image_url
   );
 
@@ -1710,10 +1714,13 @@ export default function Game({
                       <span>{prize.code}</span>
                     </div>
                     {prizeQr && (
-                      // eslint-disable-next-line @next/next/no-img-element -- data URI (QR généré), pas d'optimisation next/image utile
-                      <img
+                      <Image
                         src={prizeQr}
                         alt="QR du code cadeau"
+                        width={150}
+                        height={150}
+                        unoptimized
+                        loading="lazy"
                         className="prize-qr"
                       />
                     )}

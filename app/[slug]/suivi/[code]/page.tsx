@@ -72,8 +72,8 @@ export default async function SuiviPage(
       .maybeSingle();
     themeCss = buildTheme(
       (c as any)?.primary_color || "#ffc24d",
-      (c as any)?.accent_color || "#ff5d73",
-      (c as any)?.bg_color || "#150c29",
+      (c as any)?.accent_color || "#e85b3d",
+      (c as any)?.bg_color || "#292331",
       (c as any)?.bg_image_url || null
     );
   } catch {

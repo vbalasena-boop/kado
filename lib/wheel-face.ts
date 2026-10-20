@@ -6,6 +6,17 @@ export const WHEEL_FONT =
 
 const TAU = Math.PI * 2;
 
+/** Couleur de texte lisible sur chaque quartier, y compris les couleurs personnalisées. */
+export function wheelTextColor(background: string): string {
+  const channels = /^#([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(background);
+  if (!channels) return "#ffffff";
+  const luminance = channels.slice(1).map((channel) => {
+    const value = parseInt(channel, 16) / 255;
+    return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+  }).reduce((sum, value, index) => sum + value * [0.2126, 0.7152, 0.0722][index], 0);
+  return luminance > 0.179 ? "#000000" : "#ffffff";
+}
+
 /**
  * Peint la FACE de la roue (secteurs, emojis, libellés, loupiotes, vernis) dans
  * un canvas 2D, tournée de `rot`. PARTAGÉ par le rendu 2D (repli) et la roue
@@ -37,7 +48,7 @@ export function paintWheelFace(
     ctx.moveTo(0, 0);
     ctx.arc(0, 0, R - 6 * k, a0, a0 + seg);
     ctx.closePath();
-    ctx.fillStyle = p.color || "#ff5d73";
+    ctx.fillStyle = p.color || "#e85b3d";
     ctx.fill();
     ctx.strokeStyle = "rgba(21,12,41,.55)";
     ctx.lineWidth = 3 * k;
@@ -45,7 +56,7 @@ export function paintWheelFace(
     ctx.save();
     ctx.rotate(a0 + seg / 2);
     ctx.textAlign = "right";
-    ctx.fillStyle = "#150c29";
+    ctx.fillStyle = wheelTextColor(p.color || "#e85b3d");
     ctx.font = `700 ${27 * k}px ${WHEEL_FONT}`;
     ctx.fillText(p.emoji || "🎁", R - 30 * k, -6 * k);
     ctx.font = `800 ${20 * k}px ${WHEEL_FONT}`;

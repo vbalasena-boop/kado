@@ -1,3 +1,4 @@
+import { publicMetadata } from "@/lib/public-metadata";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -17,15 +18,11 @@ export async function generateMetadata(
   const a = getArticle(params.slug);
   if (!a) return { title: "Article introuvable" };
   return {
-    title: a.metaTitle,
-    description: a.description,
+    ...publicMetadata(a.metaTitle, a.description, `/blog/${a.slug}`),
     keywords: a.keywords,
-    alternates: { canonical: `/blog/${a.slug}` },
     openGraph: {
-      title: a.metaTitle,
-      description: a.description,
+      ...publicMetadata(a.metaTitle, a.description, `/blog/${a.slug}`).openGraph,
       type: "article",
-      url: `https://kado-app.fr/blog/${a.slug}`,
       publishedTime: a.date,
     },
   };

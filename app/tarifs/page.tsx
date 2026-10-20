@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import { publicMetadata } from "@/lib/public-metadata";
 import {
   Gift,
   LockOpen,
@@ -14,12 +14,11 @@ import {
 import { Logo } from "@/components/Logo";
 import SupportButton from "@/components/SupportButton";
 
-export const metadata: Metadata = {
-  title: "Tarifs",
-  description:
-    "Kado : 4 formules pour booster votre commerce : Jeux 19 €/mois, Fidélité 19 €/mois, Complet 44 €/mois, Comptoir (bipeur digital) 19 €/mois. Essai gratuit 14 jours, sans engagement.",
-  alternates: { canonical: "/tarifs" },
-};
+export const metadata = publicMetadata(
+  "Tarifs Kado : jeux, fidélité et bipeur digital",
+  "Découvrez les tarifs Kado pour votre commerce : jeux, carte de fidélité et bipeur digital dès 19 €/mois. Essai gratuit 14 jours sans carte bancaire.",
+  "/tarifs",
+);
 
 const PLANS = [
   {
@@ -150,7 +149,14 @@ export default function Tarifs() {
         </nav>
       </header>
 
-      <section className="v-hero" style={{ paddingBottom: 10 }}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+        "@context": "https://schema.org",
+        "@graph": [
+          { "@type": "Organization", "@id": "https://kado-app.fr/#organization", name: "Kado", url: "https://kado-app.fr", logo: "https://kado-app.fr/icon-512.png" },
+          { "@type": "SoftwareApplication", name: "Kado", applicationCategory: "BusinessApplication", operatingSystem: "Web", url: "https://kado-app.fr/tarifs", publisher: { "@id": "https://kado-app.fr/#organization" }, offers: PLANS.map((p) => ({ "@type": "Offer", name: p.name, price: p.price, priceCurrency: "EUR", url: "https://kado-app.fr/tarifs", priceSpecification: { "@type": "UnitPriceSpecification", price: p.price, priceCurrency: "EUR", billingDuration: "P1M" } })) },
+        ],
+      }) }} />
+      <section className="v-hero tarif-hero" style={{ paddingBottom: 10 }}>
         <div className="v-badge">4 formules, sans engagement</div>
         <h1>
           Choisissez votre <span>formule</span>
@@ -159,6 +165,10 @@ export default function Tarifs() {
           Essai gratuit de 14 jours avec toutes les fonctionnalités, puis
           abonnement mensuel résiliable quand vous voulez.
         </p>
+        <div className="tarif-hero-cta">
+          <a className="v-btn primary" href="/login?signup=1">Commencer l'essai gratuit</a>
+          <small>14 jours, sans carte bancaire</small>
+        </div>
         <div className="tarif-reassure">
           {REASSURE.map((r) => (
             <div className="tarif-re" key={r.t}>
@@ -189,8 +199,9 @@ export default function Tarifs() {
                 ))}
               </ul>
               <a className="v-btn primary" href="/login" style={{ display: "block" }}>
-                Commencer l'essai gratuit →
+                Commencer l'essai gratuit
               </a>
+              <small className="tarif-cta-note">14 jours, sans carte bancaire</small>
             </div>
           ))}
         </div>
@@ -201,7 +212,7 @@ export default function Tarifs() {
 
       <section className="v-section">
         <div className="v-setup">
-          <h3><Wrench className="ico" size={22} weight="bold" /> Pas le temps de configurer ? On s'occupe de tout.</h3>
+          <h2><Wrench className="ico" size={22} weight="bold" /> Pas le temps de configurer ? On s'occupe de tout.</h2>
           <p>
             Avec l'option <b>Installation clé en main</b>, on paramètre votre
             espace de A à Z : roue à vos couleurs, cadeaux adaptés à votre
@@ -248,7 +259,7 @@ export default function Tarifs() {
       <section className="v-section">
         <div className="v-multi">
           <span className="v-multi-badge"><Storefront className="ico" size={15} weight="bold" /> Chaînes &amp; franchises</span>
-          <h3>Plusieurs boutiques ? Un seul compte, un tarif dégressif.</h3>
+          <h2>Plusieurs boutiques ? Un seul compte, un tarif dégressif.</h2>
           <p className="v-multi-lede">
             Gérez tous vos établissements depuis le même espace : basculez de
             l'un à l'autre en un clic, chacun avec son jeu, sa fidélité, ses
@@ -317,7 +328,7 @@ export default function Tarifs() {
         <h2>Prêt à essayer ?</h2>
         <p>14 jours gratuits, sans carte bancaire. Vous verrez la différence.</p>
         <div className="v-cta">
-          <a className="v-btn primary" href="/login">Commencer l'essai gratuit →</a>
+          <a className="v-btn primary" href="/login?signup=1">Commencer l'essai gratuit</a>
         </div>
       </section>
 

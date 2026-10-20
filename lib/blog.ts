@@ -219,7 +219,7 @@ export const ARTICLES: Article[] = [
   {
     slug: "attirer-nouveaux-clients-commerce-local",
     title: "Comment attirer de nouveaux clients dans son commerce local",
-    metaTitle: "Attirer de nouveaux clients : 8 leviers pour un commerce local",
+    metaTitle: "Attirer de nouveaux clients : 8 leviers locaux",
     description:
       "Comment attirer plus de clients dans votre restaurant, salon ou boutique ? 8 leviers concrets et peu coûteux pour faire venir du monde, en 2026.",
     keywords: [
@@ -329,7 +329,7 @@ export const ARTICLES: Article[] = [
   {
     slug: "marketing-local-idees-petit-commerce",
     title: "Marketing local : 10 idées pour un petit commerce en 2026",
-    metaTitle: "Marketing local : 10 idées concrètes pour petit commerce 2026",
+    metaTitle: "Marketing local : 10 idées pour petit commerce 2026",
     description:
       "10 idées de marketing local simples et peu coûteuses pour faire connaître votre petit commerce en 2026 : Google, réseaux, fidélité, événements.",
     keywords: [
@@ -720,7 +720,7 @@ ARTICLES.push(
     title: "Combien coûte un programme de fidélité pour un commerce ?",
     metaTitle: "Combien coûte un programme de fidélité ? (prix 2026)",
     description:
-      "Cartes papier, applications, solutions digitales : combien coûte vraiment un programme de fidélité pour un commerce en 2026 ? Comparatif des prix et du retour sur investissement.",
+      "Programme de fidélité pour commerce : comparez les coûts des cartes papier, applications et solutions digitales en 2026.",
     keywords: [
       "prix programme de fidélité",
       "combien coûte carte de fidélité",
@@ -842,7 +842,7 @@ ARTICLES.push(
     title: "Carte de fidélité digitale ou papier : que choisir ?",
     metaTitle: "Carte de fidélité digitale ou papier : le comparatif",
     description:
-      "Carte à tampons papier ou carte de fidélité digitale ? Comparatif honnête des avantages, inconvénients et coûts pour choisir la bonne solution pour votre commerce.",
+      "Carte papier ou fidélité digitale ? Comparez avantages, limites et coûts pour choisir la solution adaptée à votre commerce.",
     keywords: [
       "carte de fidélité digitale",
       "carte fidélité papier ou digitale",
@@ -970,7 +970,7 @@ ARTICLES.push(
     title: "Bipeur digital : gérer sa file d'attente sans boîtier",
     metaTitle: "Bipeur digital pour restaurant : le guide (2026)",
     description:
-      "Fini les bipeurs à boîtier coûteux et perdus : le bipeur digital prévient vos clients sur leur propre téléphone quand leur commande est prête. Comment ça marche, pour quels commerces.",
+      "Le bipeur digital prévient vos clients sur leur téléphone quand la commande est prête. Découvrez son fonctionnement et ses avantages pour votre commerce.",
     keywords: [
       "bipeur digital",
       "bipeur restaurant",

@@ -128,8 +128,8 @@ export default async function QrPage() {
 
   // ---- Couleurs & décor du commerçant (affiche sur-mesure) ----
   let primary = "#ffc24d";
-  let accent = "#ff5d73";
-  let bgColor = "#150c29";
+  let accent = "#e85b3d";
+  let bgColor = "#292331";
   let decor = "";
   try {
     const admin = getAdminClient();

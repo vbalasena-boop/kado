@@ -146,8 +146,8 @@ export async function POST(req: NextRequest) {
     ? {}
     : {
         primary_color: hex(cfg.primary_color, "#ffc24d"),
-        accent_color: hex(cfg.accent_color, "#ff5d73"),
-        bg_color: hex(cfg.bg_color, "#150c29"),
+        accent_color: hex(cfg.accent_color, "#e85b3d"),
+        bg_color: hex(cfg.bg_color, "#292331"),
         decor_emojis: (cfg.decor_emojis || "").trim().slice(0, 40) || null,
       };
   let { error: cfgErr } = await admin
@@ -469,7 +469,7 @@ export async function POST(req: NextRequest) {
       label: p.label.trim().slice(0, 40),
       emoji: (p.emoji || "🎁").slice(0, 8),
       weight: Math.max(0, Math.round(Number(p.weight) || 0)),
-      color: /^#[0-9a-fA-F]{6}$/.test(p.color) ? p.color : "#ff5d73",
+      color: /^#[0-9a-fA-F]{6}$/.test(p.color) ? p.color : "#e85b3d",
       position: i,
     }))
   );

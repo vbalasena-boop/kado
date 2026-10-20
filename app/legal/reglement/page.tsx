@@ -1,9 +1,5 @@
-export const metadata = {
-  title: "Règlement du jeu",
-  description:
-    "Règlement du jeu (roue de la fortune, grattage, machine à sous) proposé par les commerces via Kado.",
-  alternates: { canonical: "/legal/reglement" },
-};
+import { publicMetadata } from "@/lib/public-metadata";
+export const metadata = publicMetadata('Règlement du jeu | Kado', 'Consultez le règlement des jeux Kado : participation, tirage, dotations, remise des lots et protection des données.', "/legal/reglement");
 
 export default function Reglement() {
   return (

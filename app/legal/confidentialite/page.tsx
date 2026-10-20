@@ -1,9 +1,5 @@
-export const metadata = {
-  title: "Politique de confidentialité",
-  description:
-    "Politique de confidentialité de Kado : quelles données sont collectées, pourquoi, et vos droits (RGPD).",
-  alternates: { canonical: "/legal/confidentialite" },
-};
+import { publicMetadata } from "@/lib/public-metadata";
+export const metadata = publicMetadata('Politique de confidentialité et RGPD | Kado', 'Découvrez comment Kado collecte, utilise et protège les données des commerçants et de leurs clients, conformément au RGPD.', "/legal/confidentialite");
 
 export default function Confidentialite() {
   return (

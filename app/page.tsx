@@ -13,7 +13,7 @@ import {
 import { Logo } from "@/components/Logo";
 import Reveal from "@/components/Reveal";
 import HeroEditorial from "@/components/HeroEditorial";
-import HomeGames from "@/components/HomeGames";
+import HomeGames from "@/components/HomeGamesLoader";
 import HomeLoyalty from "@/components/HomeLoyalty";
 import SupportButton from "@/components/SupportButton";
 
@@ -67,9 +67,9 @@ const AUDIENCE = [
 ];
 
 const BENEFITS = [
-  { i: "star", t: "Plus d'avis Google", d: "Transformez chaque client satisfait en avis 5 étoiles." },
+  { i: "star", t: "Plus d'avis Google", d: "Invitez chaque client à laisser un avis Google libre et sincère." },
   { i: "insta", t: "Plus d'abonnés Insta", d: "Faites grandir votre communauté à chaque visite." },
-  { i: "repeat", t: "Plus de visites", d: "Le cadeau donne une bonne raison de revenir vous voir." },
+  { i: "repeat", t: "Plus de visites", d: "Un cadeau peut donner envie à vos clients de revenir." },
   { i: "lock", t: "Vos avis Google en sécurité", d: "Le cadeau n’est jamais lié à l’avis : pas de « review gating », donc aucun risque de voir vos avis supprimés par Google." },
   { i: "mail", t: "Campagnes e-mail & notifs (option)", d: "Envoyez vos offres par e-mail et notification sur le téléphone de vos clients (+15 €/mois)." },
   { i: "gift", t: "Anniversaires & parrainage", d: "E-mail automatique le jour J, et +1 tampon quand un ami parrainé passe en caisse." },
@@ -211,7 +211,7 @@ const JSON_LD = {
       operatingSystem: "Web",
       inLanguage: "fr-FR",
       description:
-        "Le jeu à scanner en caisse qui transforme vos clients en avis Google 5★ et en abonnés Instagram, avec carte de fidélité digitale, campagnes e-mail et commande en ligne. Sans application.",
+        "Jeux, carte de fidélité digitale, campagnes et commande en ligne pour commerces de proximité. L’avis Google reste facultatif et sans récompense.",
       url: "https://kado-app.fr",
       publisher: { "@id": "https://kado-app.fr/#organization" },
       offers: {

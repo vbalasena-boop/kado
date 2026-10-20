@@ -5,7 +5,7 @@ status: ready-for-dev
 
 # Roue : mêmes couleurs que le site
 
-**Agent :** codex  
+**Agent :** codex
 **Niveau :** moyen  
 **Priorité :** normale
 
@@ -15,12 +15,14 @@ La roue du jeu public (`/{slug}`) doit reprendre la palette du site vitrine (`.v
 
 ## Critères vérifiables
 
-- [ ] Couleurs par défaut des quartiers de la roue (liste ~l.105 de `app/dashboard/wheel/WheelEditor.tsx`, `DEFAULT_PRIZES` de `lib/defaults.ts`) = piment, soleil, feuille, prune, papier foncé (alternance lisible, contraste texte ≥ 4.5:1).
-- [ ] Accent et fond par défaut (`#ff5d73`, `#150c29`) remplacés par piment `#e85b3d` / encre `#292331` dans : `lib/wheel-face.ts`, `WheelEditor.tsx`, `app/[slug]/Game.tsx`, `app/[slug]/page.tsx`, `app/[slug]/commander|suivi|fidelite/page.tsx`, `app/dashboard/qr/page.tsx`, `app/admin/business/[id]/personnaliser/*`, `app/api/admin/business/[id]/theme/route.ts`, `app/api/dashboard/wheel/route.ts`.
-- [ ] Les thèmes déjà choisis par un commerçant (valeurs en base) ne changent PAS : seulement les valeurs par défaut. Aucune migration.
-- [ ] Mettre à jour les tests qui citent les anciens défauts.
-- [ ] `bash scripts/relais/verifier.sh` OK.
+- [x] Couleurs par défaut des quartiers de la roue (liste ~l.105 de `app/dashboard/wheel/WheelEditor.tsx`, `DEFAULT_PRIZES` de `lib/defaults.ts`) = piment, soleil, feuille, prune, papier foncé (alternance lisible, contraste texte ≥ 4.5:1).
+- [x] Accent et fond par défaut (`#ff5d73`, `#150c29`) remplacés par piment `#e85b3d` / encre `#292331` dans : `lib/wheel-face.ts`, `WheelEditor.tsx`, `app/[slug]/Game.tsx`, `app/[slug]/page.tsx`, `app/[slug]/commander|suivi|fidelite/page.tsx`, `app/dashboard/qr/page.tsx`, `app/admin/business/[id]/personnaliser/*`, `app/api/admin/business/[id]/theme/route.ts`, `app/api/dashboard/wheel/route.ts`.
+- [x] Les thèmes déjà choisis par un commerçant (valeurs en base) ne changent PAS : seulement les valeurs par défaut. Aucune migration.
+- [x] Mettre à jour les tests qui citent les anciens défauts.
+- [x] `bash scripts/relais/verifier.sh` OK.
 
 ## Reprise
 
-Fait : rien.
+Fait : palette par défaut alignée, contraste des textes vérifié, 16 tests ciblés et verifier.sh OK.
+Reste : E2E navigateur par Claude.
+Prochaine commande : lancer les E2E du jeu public sans base réelle ici.

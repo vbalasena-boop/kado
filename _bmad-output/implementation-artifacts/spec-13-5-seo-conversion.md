@@ -1,6 +1,6 @@
 ---
 title: "SEO et conversion de la page tarifs"
-status: ready-for-dev
+status: review
 ---
 
 # SEO et conversion de la page tarifs
@@ -15,15 +15,17 @@ Mieux se positionner sur Google (commerces de proximité : roue cadeaux, avis Go
 
 ## Critères vérifiables
 
-- [ ] Chaque page publique (`/`, `/tarifs`, `/vendeur`, `/temoignages`, `/blog`, articles) a un `<title>` unique (≤ 60 car.), une meta description (≤ 155 car.), une URL canonique et des balises Open Graph/Twitter.
-- [ ] Données structurées JSON-LD : `Organization` + `SoftwareApplication` avec `offers` (Jeux 19, Fidélité 19, Complet 44, Comptoir 19 €/mois) sur `/tarifs` ; `FAQPage` sur `/` à partir de la FAQ existante ; les prix du JSON-LD sont lus depuis le même tableau que la page (pas de valeur dupliquée à la main).
-- [ ] `app/sitemap.ts` liste toutes les pages publiques et articles ; `robots` autorise le public et bloque `/dashboard`, `/admin`, `/api`.
-- [ ] Un seul `<h1>` par page ; hiérarchie h2/h3 cohérente ; `alt` sur toutes les images.
-- [ ] Conversion `/tarifs` : bouton principal visible sans défiler sur mobile, même libellé que `/` (« Commencer l'essai gratuit »), mention « 14 jours, sans carte bancaire » près de chaque bouton, bloc de réassurance (RGPD, sans engagement) avant la grille.
-- [ ] Aucune promesse conditionnant un cadeau à un avis Google (règle du projet).
-- [ ] Ne pas modifier prix, Stripe, auth, migrations.
-- [ ] `bash scripts/relais/verifier.sh` OK.
+- [x] Chaque page publique (`/`, `/tarifs`, `/vendeur`, `/temoignages`, `/blog`, articles) a un `<title>` unique (≤ 60 car.), une meta description (≤ 155 car.), une URL canonique et des balises Open Graph/Twitter.
+- [x] Données structurées JSON-LD : `Organization` + `SoftwareApplication` avec `offers` (Jeux 19, Fidélité 19, Complet 44, Comptoir 19 €/mois) sur `/tarifs` ; `FAQPage` sur `/` à partir de la FAQ existante ; les prix du JSON-LD sont lus depuis le même tableau que la page (pas de valeur dupliquée à la main).
+- [x] `app/sitemap.ts` liste toutes les pages publiques et articles ; `robots` autorise le public et bloque `/dashboard`, `/admin`, `/api`.
+- [x] Un seul `<h1>` par page ; hiérarchie h2/h3 cohérente ; `alt` sur toutes les images.
+- [x] Conversion `/tarifs` : bouton principal visible sans défiler sur mobile, même libellé que `/` (« Commencer l'essai gratuit »), mention « 14 jours, sans carte bancaire » près de chaque bouton, bloc de réassurance (RGPD, sans engagement) avant la grille.
+- [x] Aucune promesse conditionnant un cadeau à un avis Google (règle du projet).
+- [x] Ne pas modifier prix, Stripe, auth, migrations.
+- [x] `bash scripts/relais/verifier.sh` OK.
 
 ## Reprise
 
-Fait : rien.
+Fait : métadonnées, JSON-LD, sitemap/robots, titres, CTA tarifs et réassurance ; tests ciblés et `bash scripts/relais/verifier.sh` OK.
+Reste : E2E navigateur et base réelle à lancer par Claude.
+Prochaine commande : `git diff --check` puis E2E Claude.

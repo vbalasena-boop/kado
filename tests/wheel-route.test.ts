@@ -66,7 +66,7 @@ function post(config: Record<string, unknown>) {
     method: "POST",
     body: JSON.stringify({
       config,
-      prizes: [{ label: "Lot", emoji: "🎁", weight: 1, color: "#ff5d73" }],
+      prizes: [{ label: "Lot", emoji: "🎁", weight: 1, color: "#e85b3d" }],
     }),
     headers: { "content-type": "application/json" },
   }) as any;

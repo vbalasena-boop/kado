@@ -11,14 +11,12 @@ import "./globals.css";
 
 const display = Bricolage_Grotesque({
   subsets: ["latin"],
-  weight: ["600", "700", "800"],
   variable: "--font-display",
   display: "swap",
 });
 
 const sans = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
   variable: "--font-sans",
   display: "swap",
 });
@@ -29,7 +27,6 @@ const sans = Plus_Jakarta_Sans({
 // « tell » IA le plus courant tout en gardant l'italique éditoriale.
 const serif = Playfair_Display({
   subsets: ["latin"],
-  weight: ["500", "600"],
   style: ["normal", "italic"],
   variable: "--font-serif",
   display: "swap",
@@ -38,7 +35,6 @@ const serif = Playfair_Display({
 // Mono pour les eyebrows / labels (uppercase, tracking large).
 const mono = JetBrains_Mono({
   subsets: ["latin"],
-  weight: ["500", "600"],
   variable: "--font-mono",
   display: "swap",
 });
@@ -46,11 +42,11 @@ const mono = JetBrains_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://kado-app.fr"),
   title: {
-    default: "Kado | Plus d'avis Google & d'abonnés Instagram pour votre commerce",
+    default: "Kado : avis Google et fidélité pour commerces",
     template: "%s | Kado",
   },
   description:
-    "Kado est le jeu de roue de la fortune qui transforme vos clients en avis Google 5★ et en abonnés Instagram. Sans application, installé en 2 minutes. Essai gratuit 14 jours.",
+    "Kado aide les commerces de proximité à fidéliser leurs clients avec des jeux, une carte digitale et un bipeur. Essai gratuit 14 jours, sans carte bancaire.",
   keywords: [
     "avis Google",
     "abonnés Instagram",

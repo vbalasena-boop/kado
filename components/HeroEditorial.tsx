@@ -28,7 +28,7 @@ export default function HeroEditorial() {
         </p>
         <div className="v-cta hero-actions">
           <a className="v-btn primary" href="/login?signup=1">
-            Créer mon compte <ArrowUpRight size={18} weight="bold" />
+            Commencer l'essai gratuit <ArrowUpRight size={18} weight="bold" />
           </a>
           <a className="v-btn ghost" href="/cafe-lumiere">
             <Play size={16} weight="fill" /> Voir le jeu en vrai

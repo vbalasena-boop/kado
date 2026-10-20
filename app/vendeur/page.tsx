@@ -1,3 +1,4 @@
+import { publicMetadata } from "@/lib/public-metadata";
 import {
   Gift,
   Handshake,
@@ -14,10 +15,7 @@ import JoinForm from "./JoinForm";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export const metadata = {
-  title: "Devenir promoteur",
-  description:
-    "Recommandez Kado aux commerçants autour de vous et touchez une commission à chaque abonnement signé.",
-  alternates: { canonical: "/vendeur" },
+  ...publicMetadata('Devenir promoteur Kado : commissions pour commerçants', 'Recommandez Kado aux commerces de proximité et touchez une commission sur chaque abonnement. Découvrez le programme promoteur.', '/vendeur'),
 };
 
 /** Présentation du programme + parcours d'inscription. */
