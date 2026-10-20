@@ -27,7 +27,17 @@ create index if not exists wheel_configs_draw_idx
   where monthly_draw;
 
 -- 4) Prospection (admin/cron) : filtres fréquents sans support.
-create index if not exists prospect_messages_chan_status_step_idx
-  on prospect_messages(channel, status, step);
-create index if not exists prospect_events_type_created_idx
-  on prospect_events(type, created_at);
+-- Tables historiques absentes avant 20261019135753 sur une base vierge :
+-- rejouer 0050 après leur création pour ajouter ces index facultatifs.
+do $$
+begin
+  if to_regclass('public.prospect_messages') is not null then
+    create index if not exists prospect_messages_chan_status_step_idx
+      on public.prospect_messages(channel, status, step);
+  end if;
+  if to_regclass('public.prospect_events') is not null then
+    create index if not exists prospect_events_type_created_idx
+      on public.prospect_events(type, created_at);
+  end if;
+end;
+$$;

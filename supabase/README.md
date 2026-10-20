@@ -77,6 +77,10 @@ correctif ponctuel.
 
 ## Règles
 
+Compatibilité base vierge : `0011` et `0050` gardent leurs noms et protègent les tables tardives par `to_regclass`, avec des ajouts `if not exists`.
+`0017` crée déjà `leads.unsubscribed_at` ; rejouer `0050` après les migrations horodatées ajoute les deux index facultatifs de prospection ignorés au premier passage.
+Vérification locale jetable, sans accès à la production : `bash scripts/relais/migrations-base-vierge.sh`.
+
 - **Idempotence** : toute migration doit être ré-exécutable sans erreur
   (`create table if not exists`, `add column if not exists`, `create index if not
   exists`, `create or replace function`, `drop policy if exists` avant
