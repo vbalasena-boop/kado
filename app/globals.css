@@ -10071,3 +10071,11 @@ body:has(.vitrine) {
   .tarif-hero .v-lede { margin-bottom: 0; }
   .tarif-hero-cta { margin-top: 12px; }
 }
+
+/* Vitrine : --cream y désigne le papier clair, donc ces textes étaient clairs sur fond clair. */
+.vitrine .tarif-re { background: var(--paper-light); border-color: var(--rule); }
+.vitrine .tarif-re b,
+.vitrine .v-multi-feats li { color: var(--ink); }
+.vitrine .tarif-re small,
+.vitrine .tarif-hero-cta small,
+.vitrine .tarif-cta-note { color: var(--ink-soft); opacity: 1; }
