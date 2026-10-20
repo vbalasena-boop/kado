@@ -6,7 +6,7 @@ status: ready-for-dev
 # Page tarifs : prix réel lisible et comparaison
 
 **Agent :** codex  
-**Niveau :** simple  
+**Niveau :** moyen  
 **Priorité :** normale
 
 ## Objectif
