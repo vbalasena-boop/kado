@@ -10079,3 +10079,4 @@ body:has(.vitrine) {
 .vitrine .tarif-re small,
 .vitrine .tarif-hero-cta small,
 .vitrine .tarif-cta-note { color: var(--ink-soft); opacity: 1; }
+.vitrine .v-badge { color: var(--ink-soft); }
