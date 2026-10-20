@@ -17,7 +17,7 @@ import SupportButton from "@/components/SupportButton";
 export const metadata: Metadata = {
   title: "Tarifs",
   description:
-    "Kado : 4 formules pour booster votre commerce : Jeux 29 €/mois, Fidélité 19 €/mois, Complet 44 €/mois, Comptoir (bipeur digital) 19 €/mois. Essai gratuit 14 jours, sans engagement.",
+    "Kado : 4 formules pour booster votre commerce : Jeux 19 €/mois, Fidélité 19 €/mois, Complet 44 €/mois, Comptoir (bipeur digital) 19 €/mois. Essai gratuit 14 jours, sans engagement.",
   alternates: { canonical: "/tarifs" },
 };
 
@@ -28,6 +28,7 @@ const PLANS = [
     price: "19",
     desc: "Idéal pour fidéliser vos clients réguliers",
     features: [
+      "Illimité, sans palier de clients ni de joueurs",
       "Carte à tampons digitale",
       "Récompense personnalisable",
       "Anniversaires automatiques & parrainage",
@@ -41,22 +42,25 @@ const PLANS = [
     id: "complet",
     name: "Complet",
     price: "44",
-    desc: "Tout Kado en un seul abonnement",
+    desc: "Tout inclus : jeux, fidélité, commande en ligne, bipeur",
     popular: true,
     features: [
+      "Illimité, sans palier de clients ni de joueurs",
       "Tout ce qui est dans Jeux",
       "Tout ce qui est dans Fidélité",
       "Commande en ligne (click & collect) incluse",
       "Suivi au comptoir + bipeur digital inclus",
       "Le meilleur rapport qualité/prix",
+      "Jeux + Fidélité séparément chez d'autres éditeurs : 55 à 80 €/mois",
     ],
   },
   {
     id: "roue",
     name: "Jeux",
-    price: "29",
+    price: "19",
     desc: "Boostez vos avis et vos abonnés",
     features: [
+      "Illimité, sans palier de clients ni de joueurs",
       "3 jeux : roue, grattage, machine à sous",
       "Avis Google + abonnés Instagram",
       "Personnalisation (logo, couleurs, fond)",

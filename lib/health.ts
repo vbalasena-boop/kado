@@ -50,7 +50,7 @@ const REQUIRED_TABLES = [
 
 /** Tarifs Stripe attendus : [variable, type attendu, libellé]. */
 const STRIPE_PRICES: [string, "recurring" | "one_time", string][] = [
-  ["STRIPE_PRICE_ROUE", "recurring", "Jeux 29 €"],
+  ["STRIPE_PRICE_ROUE", "recurring", "Jeux 19 €"],
   ["STRIPE_PRICE_FIDELITE", "recurring", "Fidélité 19 €"],
   ["STRIPE_PRICE_COMPLET", "recurring", "Complet 44 €"],
   ["STRIPE_PRICE_COMPTOIR", "recurring", "Comptoir 19 €"],

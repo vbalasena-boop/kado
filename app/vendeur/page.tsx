@@ -59,8 +59,8 @@ function Pitch({ loggedIn }: { loggedIn: boolean }) {
         <div className="dash-card">
           <h2><CurrencyEur className="ico" size={22} weight="bold" /> Vos commissions</h2>
           <p>
-            Fidélité (19 €/mois) → <b>20 €</b> · Jeux (29 €/mois) →{" "}
-            <b>30 €</b> · Complet (44 €/mois) → <b>45 €</b> par client signé.
+            Fidélité (19 €/mois) → <b>20 €</b> · Jeux (19 €/mois) →{" "}
+            <b>20 €</b> · Complet (44 €/mois) → <b>45 €</b> par client signé.
           </p>
           <p className="muted">
             Exemple : 10 commerces signés en Complet = 450 €. Suivi en temps

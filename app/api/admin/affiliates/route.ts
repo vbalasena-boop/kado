@@ -2,6 +2,7 @@ import { z } from "zod";
 import { adminRoute } from "@/lib/api";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { sendEmail, emailLayout } from "@/lib/email";
+import { DEFAULT_COMMISSIONS } from "@/lib/affiliates";
 
 const PostBody = z.object({
   name: z.any().optional(),
@@ -34,7 +35,7 @@ export const POST = adminRoute({
       .slice(0, 40);
     if (!code) return Response.json({ error: "code_required" }, { status: 400 });
 
-    // Montants en euros → centimes (bornés 0..1000 €), défauts 30/20/45
+    // Montants en euros → centimes (bornés 0..1000 €), défauts 20/20/45
     // (≈ 1er mois d'abonnement arrondi, versé après le 2e prélèvement).
     const cents = (v: unknown, dflt: number) => {
       const n = Number(v);
@@ -49,9 +50,9 @@ export const POST = adminRoute({
         name,
         email,
         code,
-        commission_roue_cents: cents(body.commission_roue, 3000),
-        commission_fidelite_cents: cents(body.commission_fidelite, 2000),
-        commission_complet_cents: cents(body.commission_complet, 4500),
+        commission_roue_cents: cents(body.commission_roue, DEFAULT_COMMISSIONS.roue),
+        commission_fidelite_cents: cents(body.commission_fidelite, DEFAULT_COMMISSIONS.fidelite),
+        commission_complet_cents: cents(body.commission_complet, DEFAULT_COMMISSIONS.complet),
       })
       .select("id, code")
       .single();
@@ -158,7 +159,7 @@ export const PATCH = adminRoute({
               preview: "Vous pouvez commencer à recommander Kado.",
               heading: "Bienvenue dans le programme ! 🤝",
               emoji: "🚀",
-              bodyHtml: `Bonjour ${aff.name},<br><br>Votre profil promoteur est <b>activé</b>. Votre lien personnel :<br><br><b>https://kado-app.fr?ref=${aff.code}</b><br><br>Chaque commerce qui s'inscrit via ce lien puis s'abonne vous rapporte une commission (Fidélité 20&nbsp;€ · Jeux 30&nbsp;€ · Complet 45&nbsp;€), versée après son 2ᵉ prélèvement sur simple facture.<br><br>Suivez vos résultats en temps réel sur <a href="https://kado-app.fr/vendeur">kado-app.fr/vendeur</a> (connectez-vous avec cet e-mail) — la plaquette de vente y est téléchargeable.`,
+              bodyHtml: `Bonjour ${aff.name},<br><br>Votre profil promoteur est <b>activé</b>. Votre lien personnel :<br><br><b>https://kado-app.fr?ref=${aff.code}</b><br><br>Chaque commerce qui s'inscrit via ce lien puis s'abonne vous rapporte une commission (Fidélité 20&nbsp;€ · Jeux 20&nbsp;€ · Complet 45&nbsp;€), versée après son 2ᵉ prélèvement sur simple facture.<br><br>Suivez vos résultats en temps réel sur <a href="https://kado-app.fr/vendeur">kado-app.fr/vendeur</a> (connectez-vous avec cet e-mail) — la plaquette de vente y est téléchargeable.`,
             }),
           });
         } catch {

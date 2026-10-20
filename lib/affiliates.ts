@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 /** Barème par défaut (centimes) : ≈ 1er mois arrondi, versé après le 2e
  *  prélèvement du client. */
 export const DEFAULT_COMMISSIONS = {
-  roue: 3000,
+  roue: 2000,
   fidelite: 2000,
   complet: 4500,
 };

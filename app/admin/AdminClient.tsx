@@ -29,7 +29,7 @@ export type AdminBusiness = {
 };
 
 const PLAN_LABEL: Record<string, string> = {
-  roue: "Jeux 29 €",
+  roue: "Jeux 19 €",
   fidelite: "Fidélité 19 €",
   complet: "Complet 44 €",
   comptoir: "Comptoir 19 €",
@@ -278,7 +278,7 @@ export default function AdminClient({
         ? "4"
         : "1";
     const raw = window.prompt(
-      `Changer la formule de « ${name} ».\n\n1 = Jeux (29 €)\n2 = Fidélité (19 €)\n3 = Complet (44 €)\n4 = Comptoir (19 €)\n\nSi un abonnement Stripe est actif, la facturation est ajustée (prorata).\n\nVotre choix :`,
+      `Changer la formule de « ${name} ».\n\n1 = Jeux (19 €)\n2 = Fidélité (19 €)\n3 = Complet (44 €)\n4 = Comptoir (19 €)\n\nSi un abonnement Stripe est actif, la facturation est ajustée (prorata).\n\nVotre choix :`,
       def
     );
     if (raw === null) return;
