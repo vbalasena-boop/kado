@@ -88,6 +88,9 @@ development_status:
   12-1-migrations-base-vierge: done
   13-1-tarifs-lisibles: done
   13-2-prix-jeux-19: done
+  13-5-seo-conversion: done
+  13-4-performance: done
+  13-3-roue-couleurs-site: done
 action_items:
   - id: "epic-11-retro-item-1-f1-résumé-ui-d-annulation-signaler-rembo"
     epic: 11

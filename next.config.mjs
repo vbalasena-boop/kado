@@ -23,6 +23,14 @@ const nextConfig = {
   async headers() {
     return [
       {
+        source: "/:path*\\.(png|jpg|jpeg|webp|avif|svg|mp4)",
+        headers: [{ key: "Cache-Control", value: "public, max-age=604800, stale-while-revalidate=86400" }],
+      },
+      {
+        source: "/pro/:path*\\.(css|js)",
+        headers: [{ key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=3600" }],
+      },
+      {
         source: "/:path*",
         headers: [
           { key: "X-Frame-Options", value: "DENY" },

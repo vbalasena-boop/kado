@@ -10061,3 +10061,13 @@ body:has(.vitrine) {
     padding: 14mm 16mm;
   }
 }
+
+/* CTA tarifs accessible dès le premier écran sur mobile. */
+.tarif-hero-cta { display: flex; flex-direction: column; align-items: center; gap: 7px; margin-top: 18px; }
+.tarif-hero-cta small, .tarif-cta-note { color: var(--cream); opacity: .78; font-size: .8rem; }
+.tarif-cta-note { display: block; text-align: center; margin-top: 7px; }
+@media (max-width: 640px) {
+  .tarif-hero { padding-top: 20px; }
+  .tarif-hero .v-lede { margin-bottom: 0; }
+  .tarif-hero-cta { margin-top: 12px; }
+}

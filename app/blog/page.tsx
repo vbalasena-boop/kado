@@ -1,14 +1,12 @@
+import { publicMetadata } from "@/lib/public-metadata";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BookOpen } from "@phosphor-icons/react/dist/ssr";
 import { Logo } from "@/components/Logo";
 import { ARTICLES } from "@/lib/blog";
 
-export const metadata: Metadata = {
-  title: "Blog | Conseils pour votre commerce",
-  description:
-    "Avis Google, fidélisation, Instagram, réglementation : nos guides pratiques pour attirer plus de clients et les faire revenir. Par Kado.",
-  alternates: { canonical: "/blog" },
+export const metadata = {
+  ...publicMetadata('Blog Kado : conseils pour commerces de proximité', 'Guides pratiques sur les avis Google, la fidélisation, Instagram et les jeux pour attirer plus de clients dans votre commerce.', '/blog'),
 };
 
 function fmt(d: string) {

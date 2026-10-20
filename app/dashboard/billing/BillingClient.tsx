@@ -34,9 +34,9 @@ const PLANS = [
     price: "44",
     features: [
       "Jeux + carte de fidélité",
-      "Toutes les fonctionnalités",
+      "Commande en ligne + bipeur digital inclus",
       "Le meilleur tarif combiné",
-      "4 € d'économie / mois",
+      "13 € d'économie / mois vs 3 formules",
     ],
     recommended: true,
   },

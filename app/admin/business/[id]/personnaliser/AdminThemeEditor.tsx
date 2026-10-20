@@ -43,8 +43,8 @@ export default function AdminThemeEditor({
   initial: Initial;
 }) {
   const [primary, setPrimary] = useState(initial.primary || "#ffc24d");
-  const [accent, setAccent] = useState(initial.accent || "#ff5d73");
-  const [bg, setBg] = useState(initial.bg || "#150c29");
+  const [accent, setAccent] = useState(initial.accent || "#e85b3d");
+  const [bg, setBg] = useState(initial.bg || "#292331");
   const [decor, setDecor] = useState(initial.decor || "");
   const [locked, setLocked] = useState(initial.locked);
   const [busy, setBusy] = useState(false);

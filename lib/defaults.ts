@@ -1,13 +1,13 @@
 /** Cadeaux par défaut d'une nouvelle roue. */
 export const DEFAULT_PRIZES = [
-  { label: "Café offert", emoji: "☕", weight: 22, color: "#ff5d73" },
-  { label: "-10 %", emoji: "🏷️", weight: 20, color: "#8b6cff" },
-  { label: "Dessert offert", emoji: "🍰", weight: 12, color: "#39d98a" },
-  { label: "Rien cette fois", emoji: "🎯", weight: 14, color: "#5a4a86" },
-  { label: "Boisson offerte", emoji: "🍹", weight: 8, color: "#ffc24d" },
-  { label: "-20 %", emoji: "💸", weight: 10, color: "#4fc3f7" },
-  { label: "Cadeau surprise", emoji: "🎁", weight: 6, color: "#ff8a5c" },
-  { label: "1 visite -15 %", emoji: "⭐", weight: 8, color: "#ff5d73" },
+  { label: "Café offert", emoji: "☕", weight: 22, color: "#e85b3d" },
+  { label: "-10 %", emoji: "🏷️", weight: 20, color: "#efc64f" },
+  { label: "Dessert offert", emoji: "🍰", weight: 12, color: "#6d9273" },
+  { label: "Rien cette fois", emoji: "🎯", weight: 14, color: "#33204d" },
+  { label: "Boisson offerte", emoji: "🍹", weight: 8, color: "#ddd2bf" },
+  { label: "-20 %", emoji: "💸", weight: 10, color: "#e85b3d" },
+  { label: "Cadeau surprise", emoji: "🎁", weight: 6, color: "#efc64f" },
+  { label: "1 visite -15 %", emoji: "⭐", weight: 8, color: "#6d9273" },
 ];
 
 /** Transforme un nom en slug d'URL (sans accents, minuscules, tirets). */

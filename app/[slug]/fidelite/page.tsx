@@ -63,8 +63,8 @@ export default async function FidelitePage(
   // Même thème que la page de jeu → expérience cohérente pour le client.
   const themeCss = buildTheme(
     (cfg as any).primary_color || "#ffc24d",
-    (cfg as any).accent_color || "#ff5d73",
-    (cfg as any).bg_color || "#150c29",
+    (cfg as any).accent_color || "#e85b3d",
+    (cfg as any).bg_color || "#292331",
     (cfg as any).bg_image_url || null
   );
 

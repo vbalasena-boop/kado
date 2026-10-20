@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import HomeWheel from "./HomeWheel";
+import dynamic from "next/dynamic";
+
+const HomeWheel = dynamic(() => import("./HomeWheel"));
 
 const PRIZES = [
   { emoji: "🎁", label: "Cadeau surprise" },

@@ -8,6 +8,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const routes: { path: string; priority: number; lastModified?: string }[] = [
     { path: "/", priority: 1 },
     { path: "/tarifs", priority: 0.8 },
+    { path: "/temoignages", priority: 0.5 },
     { path: "/blog", priority: 0.7 },
     // Chaque article porte sa vraie date de publication (meilleur signal SEO
     // que la date du jour).

@@ -5,7 +5,9 @@ import { getAdminClient } from "@/lib/supabase/admin";
 import { hasAccess, hasModule, hasClickCollect, getSessionUser } from "@/lib/auth";
 import { isAdminEmail } from "@/lib/admin-guard";
 import { visibleHighlight } from "@/lib/highlight";
-import Game from "./Game";
+import nextDynamic from "next/dynamic";
+
+const Game = nextDynamic(() => import("./Game"));
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -212,8 +214,8 @@ export default async function Page(
       config={
         config ?? {
           primary_color: "#ffc24d",
-          accent_color: "#ff5d73",
-          bg_color: "#150c29",
+          accent_color: "#e85b3d",
+          bg_color: "#292331",
           instagram_url: null,
           review_url: null,
           compliance_note: "Le cadeau n'est pas conditionné à la note laissée.",

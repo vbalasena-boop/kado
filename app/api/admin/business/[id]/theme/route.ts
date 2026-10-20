@@ -41,8 +41,8 @@ export const POST = adminRoute({
     const payload: Record<string, unknown> = {
       business_id: params.id,
       primary_color: hex(body.primary, "#ffc24d"),
-      accent_color: hex(body.accent, "#ff5d73"),
-      bg_color: hex(body.bg, "#150c29"),
+      accent_color: hex(body.accent, "#e85b3d"),
+      bg_color: hex(body.bg, "#292331"),
       theme_locked: true,
       decor_emojis: (body.decor || "").trim().slice(0, 40) || null,
     };

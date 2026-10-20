@@ -1,3 +1,4 @@
+import { publicMetadata } from "@/lib/public-metadata";
 import type { Metadata } from "next";
 import { PencilSimple, Play } from "@phosphor-icons/react/dist/ssr";
 import { Logo } from "@/components/Logo";
@@ -5,10 +6,8 @@ import { Logo } from "@/components/Logo";
 // ⚠️ Page en `noindex` tant qu'elle contient des exemples. Une fois remplie
 // de VRAIS témoignages, retirez le bloc `robots` ci-dessous et le bandeau
 // « à personnaliser », puis ajoutez le lien dans la navigation.
-export const metadata: Metadata = {
-  title: "Témoignages",
-  description:
-    "Ils utilisent Kado pour récolter plus d'avis Google, d'abonnés Instagram et fidéliser leurs clients.",
+export const metadata = {
+  ...publicMetadata('Témoignages de commerçants | Kado', 'Découvrez les retours des commerçants qui utilisent Kado pour développer les avis Google, fidéliser leurs clients et animer leur boutique.', '/temoignages'),
   robots: { index: false, follow: false },
 };
 

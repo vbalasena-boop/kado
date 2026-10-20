@@ -34,8 +34,8 @@ export default async function AdminPersonalisePage(
 
   // Config actuelle (couleurs + décor + verrou) — lecture tolérante.
   let primary = "#ffc24d";
-  let accent = "#ff5d73";
-  let bg = "#150c29";
+  let accent = "#e85b3d";
+  let bg = "#292331";
   let decor = "";
   let locked = false;
   const { data: cfg } = await db

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/icons";
 import { GAME_THEMES, matchTheme } from "@/lib/themes";
+import { wheelTextColor } from "@/lib/wheel-face";
 import { EnableNotifications } from "@/components/EnableNotifications";
 import {
   isTriggerActionSelectable,
@@ -102,14 +103,11 @@ const GAME_TYPES = [
 const FONT =
   '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
 const SWATCHES = [
-  "#ff5d73",
-  "#8b6cff",
-  "#39d98a",
-  "#4fc3f7",
-  "#ffc24d",
-  "#ff8a5c",
-  "#5a4a86",
-  "#f06292",
+  "#e85b3d",
+  "#efc64f",
+  "#6d9273",
+  "#33204d",
+  "#ddd2bf",
 ];
 
 const STAMP_EMOJIS = [
@@ -160,7 +158,7 @@ export default function WheelEditor({
   const [prizes, setPrizes] = useState<Prize[]>(
     initialPrizes.length
       ? initialPrizes
-      : [{ label: "Café offert", emoji: "☕", weight: 20, color: "#ff5d73" }]
+      : [{ label: "Café offert", emoji: "☕", weight: 20, color: "#e85b3d" }]
   );
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -252,7 +250,7 @@ export default function WheelEditor({
       ctx.moveTo(0, 0);
       ctx.arc(0, 0, R - 4, a0, a0 + seg);
       ctx.closePath();
-      ctx.fillStyle = p.color || "#ff5d73";
+      ctx.fillStyle = p.color || "#e85b3d";
       ctx.fill();
       ctx.strokeStyle = "rgba(21,12,41,.55)";
       ctx.lineWidth = 3;
@@ -260,7 +258,7 @@ export default function WheelEditor({
       ctx.save();
       ctx.rotate(a0 + seg / 2);
       ctx.textAlign = "right";
-      ctx.fillStyle = "#150c29";
+      ctx.fillStyle = wheelTextColor(p.color || "#e85b3d");
       ctx.font = `700 24px ${FONT}`;
       ctx.fillText(p.emoji || "🎁", R - 22, 8);
       ctx.restore();
@@ -348,7 +346,7 @@ export default function WheelEditor({
   const activeTheme = matchTheme(config);
   // Aperçu thématisé : le fond et les textes suivent le thème choisi, pour
   // que le commerçant voie l'effet en direct.
-  const pvBg = config.bg_color || "#150c29";
+  const pvBg = config.bg_color || "#292331";
   const pvLight = hexLum(pvBg) > 0.55;
   const pvInk = pvLight ? "#241b35" : "#fdf4e3";
   const pvInkDim = pvLight ? "rgba(36,27,53,.6)" : "rgba(253,244,227,.7)";

@@ -1,9 +1,5 @@
-export const metadata = {
-  title: "CGU",
-  description:
-    "Conditions générales d'utilisation du service Kado par les commerçants.",
-  alternates: { canonical: "/legal/cgu" },
-};
+import { publicMetadata } from "@/lib/public-metadata";
+export const metadata = publicMetadata('Conditions générales d’utilisation | Kado', 'Consultez les conditions d’utilisation de Kado pour les comptes commerçants, les abonnements et la résiliation.', "/legal/cgu");
 
 export default function CGU() {
   return (
