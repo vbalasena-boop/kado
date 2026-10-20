@@ -21,8 +21,15 @@ alter table businesses
   add column if not exists referral_rewarded_at timestamptz;
 
 -- Désinscription des e-mails capturés par la roue
-alter table leads
-  add column if not exists unsubscribed_at timestamptz;
+-- Sur base vierge, 0017 crée leads avec cette colonne.
+do $$
+begin
+  if to_regclass('public.leads') is not null then
+    alter table public.leads
+      add column if not exists unsubscribed_at timestamptz;
+  end if;
+end;
+$$;
 
 -- Historique des campagnes e-mail
 create table if not exists campaigns (

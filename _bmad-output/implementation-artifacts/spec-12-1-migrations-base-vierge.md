@@ -1,6 +1,6 @@
 ---
 title: "Migrations rejouables sur une base vierge"
-status: ready-for-dev
+status: in-progress
 ---
 
 # Migrations rejouables sur une base vierge
@@ -25,8 +25,8 @@ Une base Supabase neuve doit pouvoir être construite en appliquant `supabase/mi
 
 - [ ] `bash scripts/relais/migrations-base-vierge.sh` sort 0 (aucune erreur).
 - [ ] Les correctifs sont idempotents (`if not exists`, blocs gardés) : rejouer une migration sur une base déjà à jour ne change rien.
-- [ ] Préférer déplacer/garder les statements (ex. `to_regclass(...) is not null`) plutôt que renommer des fichiers déjà appliqués en prod : le suivi `supabase_migrations` repose sur les noms de fichiers.
-- [ ] Documenter le choix dans `supabase/README.md` (3 lignes) et mentionner le script.
+- [x] Préférer déplacer/garder les statements (ex. `to_regclass(...) is not null`) plutôt que renommer des fichiers déjà appliqués en prod : le suivi `supabase_migrations` repose sur les noms de fichiers.
+- [x] Documenter le choix dans `supabase/README.md` (3 lignes) et mentionner le script.
 - [ ] `bash scripts/relais/verifier.sh` OK.
 
 ## Fichiers
@@ -39,6 +39,6 @@ Ne pas toucher aux autres migrations ni au code applicatif. Sécurité base de d
 
 ## Reprise
 
-- Fait : banc d'essai écrit, deux erreurs identifiées.
-- Reste : corriger 0011 et 0050, documenter.
-- Prochaine commande : `bash scripts/relais/migrations-base-vierge.sh`
+- Fait : 0002 récupérée à l’identique depuis origin/fix/migration-plays-redeemed-at via git show (checkout interdit par les permissions de l’index) ; gardes 0011/0050 et README (3 lignes) ; banc jetable isolé par socket, échecs psql détectés, rejeu et comparaison de schéma ajoutés ; bash -n et git diff --check OK. Aucun commit/push.
+- Reste : valider SQL et idempotence hors sandbox (initdb bloqué : shmget Operation not permitted), puis vérification complète et E2E par Claude ; verifier.sh lancé mais Vitest absent, npm ci impossible (cache absent / ENOTFOUND registry.npmjs.org). Les index facultatifs de prospection nécessitent un rejeu de 0050 après les migrations horodatées, documenté.
+- Prochaine commande : `bash scripts/relais/migrations-base-vierge.sh` hors sandbox, puis `npm ci && bash scripts/relais/verifier.sh` et E2E par Claude.

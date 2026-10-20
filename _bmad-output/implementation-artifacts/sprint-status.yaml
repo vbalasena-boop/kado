@@ -85,7 +85,7 @@ development_status:
   epic-11-retrospective: done
   vitrine-kado-signature: done
   audit-global-securite-rgpd-a11y: done
-  12-1-migrations-base-vierge: ready-for-dev
+  12-1-migrations-base-vierge: review
 action_items:
   - id: "epic-11-retro-item-1-f1-résumé-ui-d-annulation-signaler-rembo"
     epic: 11
