@@ -30,3 +30,5 @@ But du fondateur : avancer le plus longtemps possible en dépensant le moins pos
 
 **Connexion Codex locale** (si `codex login status` échoue et qu'un `codex exec` en session est utile) : `codex login --device-auth > <scratchpad>/codex-login.log 2>&1` en arrière-plan, donner au fondateur le lien et le code (valables 15 min) ; en attendant, passer par l'autopilote.
 <!-- relais:fin -->
+
+**Experts spécialisés** : `ROUTING.md` indique quel agent de `.claude/agents/` appeler selon la phase BMAD (1 pilote + 1 ou 2 experts max, jamais en masse). Ils conseillent ou relisent ; Codex code toujours. En fin de tâche, ajouter 3 lignes à `LECONS.md` (ce qui a marché, piège, décision) ; la relire avant la tâche suivante.
