@@ -127,7 +127,7 @@ class EtatTest(unittest.TestCase):
         self.fiche('6-2', '**Agent :** codex')
         self.fiche('6-3', '**Agent :** codex\n**Priorité :** haute\n**Niveau :** simple')
         self.assertEqual(etat.prochaine(), '6-3')
-        self.assertEqual(etat.meta('6-3')['modele'], 'gpt-5.5')
+        self.assertEqual(etat.meta('6-3')['modele'], 'gpt-6-luna')
         self.fiche('6-3', '**Agent :** codex\n**Niveau :** simple\n## Reprise\n- Autopilote : échec 1 (x)\n')
         self.assertEqual(etat.meta('6-3')['modele'], 'gpt-6-astra')
         self.assertEqual(etat.prochaine(), '6-2')

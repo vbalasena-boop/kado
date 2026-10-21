@@ -10,7 +10,7 @@ import subprocess
 import time
 
 STATUTS = ('backlog', 'ready-for-dev', 'in-progress', 'review', 'done')
-MODELES = {'simple': 'gpt-5.5', 'moyen': 'gpt-6-sol', 'complexe': 'gpt-6-astra'}
+MODELES = {'simple': 'gpt-6-luna', 'moyen': 'gpt-6-sol', 'complexe': 'gpt-6-astra'}
 
 
 def chemin():

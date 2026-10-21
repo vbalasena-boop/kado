@@ -94,7 +94,7 @@ sys.exit(int(os.environ.get('MOCK_CODEX_EXIT','0')))
         sortie = self.decide(GH_TOKEN='', GITHUB_TOKEN='', GITHUB_REPOSITORY='')
         self.assertIn('go=true', sortie)
         self.assertIn('story=6-1', sortie)
-        self.assertIn('modele=gpt-5.5', sortie)
+        self.assertIn('modele=gpt-6-luna', sortie)
         output = self.root / 'output'
         self.assertEqual(self.decide(GITHUB_OUTPUT=str(output)), '')
         self.assertIn('go=true', output.read_text())
