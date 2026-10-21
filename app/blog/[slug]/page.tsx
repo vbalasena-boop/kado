@@ -17,14 +17,18 @@ export async function generateMetadata(
   const params = await props.params;
   const a = getArticle(params.slug);
   if (!a) return { title: "Article introuvable" };
+  const base = publicMetadata(a.metaTitle, a.description, `/blog/${a.slug}`);
   return {
-    ...publicMetadata(a.metaTitle, a.description, `/blog/${a.slug}`),
+    ...base,
     keywords: a.keywords,
     openGraph: {
-      ...publicMetadata(a.metaTitle, a.description, `/blog/${a.slug}`).openGraph,
+      ...base.openGraph,
       type: "article",
       publishedTime: a.date,
+      ...(a.modifiedDate ? { modifiedTime: a.modifiedDate } : {}),
+      images: ["https://kado-app.fr/opengraph-image.png"],
     },
+    twitter: { ...base.twitter, images: ["https://kado-app.fr/opengraph-image.png"] },
   };
 }
 
@@ -68,16 +72,10 @@ export default async function ArticlePage(
     headline: a.title,
     description: a.description,
     datePublished: a.date,
-    dateModified: a.date,
-    author: { "@type": "Organization", name: "Kado", url: "https://kado-app.fr" },
-    publisher: {
-      "@type": "Organization",
-      name: "Kado",
-      logo: {
-        "@type": "ImageObject",
-        url: "https://kado-app.fr/icon-512.png",
-      },
-    },
+    ...(a.modifiedDate ? { dateModified: a.modifiedDate } : {}),
+    image: "https://kado-app.fr/opengraph-image.png",
+    author: { "@type": "Organization", "@id": "https://kado-app.fr/#organization", name: "Kado", url: "https://kado-app.fr", logo: "https://kado-app.fr/icon-512.png" },
+    publisher: { "@type": "Organization", "@id": "https://kado-app.fr/#organization", name: "Kado", url: "https://kado-app.fr", logo: "https://kado-app.fr/icon-512.png" },
     mainEntityOfPage: `https://kado-app.fr/blog/${a.slug}`,
   };
 
@@ -130,8 +128,8 @@ export default async function ArticlePage(
           <div>
             <b>Envie de passer à l'action ?</b>
             <p>
-              Kado transforme vos clients en avis Google, en abonnés et en
-              habitués, avec un simple jeu à scanner en caisse. Essai gratuit
+              Kado associe un petit jeu à une carte de fidélité pour donner à
+              vos clients une vraie raison de revenir. Essai gratuit
               14 jours, sans carte bancaire.
             </p>
             <a className="v-btn primary" href="/login?signup=1">Créer mon compte gratuit →</a>

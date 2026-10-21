@@ -2,13 +2,12 @@ import type { MetadataRoute } from "next";
 import { ARTICLES } from "@/lib/blog";
 
 const BASE = "https://kado-app.fr";
+const STATIC_LAST_MODIFIED = "2026-10-21";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const now = new Date();
   const routes: { path: string; priority: number; lastModified?: string }[] = [
     { path: "/", priority: 1 },
     { path: "/tarifs", priority: 0.8 },
-    { path: "/temoignages", priority: 0.5 },
     { path: "/blog", priority: 0.7 },
     // Chaque article porte sa vraie date de publication (meilleur signal SEO
     // que la date du jour).
@@ -17,6 +16,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.6,
       lastModified: a.date,
     })),
+    // /temoignages et /cafe-lumiere sont en noindex.
     // Page marketing du programme promoteur (indexable).
     { path: "/vendeur", priority: 0.5 },
     { path: "/legal/mentions", priority: 0.3 },
@@ -27,7 +27,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   ];
   return routes.map((r) => ({
     url: `${BASE}${r.path}`,
-    lastModified: r.lastModified ? new Date(r.lastModified) : now,
+    lastModified: r.lastModified ?? STATIC_LAST_MODIFIED,
     changeFrequency: "monthly" as const,
     priority: r.priority,
   }));

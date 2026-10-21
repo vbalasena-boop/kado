@@ -14,6 +14,7 @@ export type Article = {
   description: string; // meta description
   keywords: string[];
   date: string; // ISO
+  modifiedDate?: string; // ISO, seulement si l'article a été mis à jour
   readMinutes: number;
   category: string;
   emoji: string;
@@ -36,6 +37,7 @@ export const ARTICLES: Article[] = [
       "augmenter le chiffre d'affaires commerce",
     ],
     date: "2026-08-21",
+    modifiedDate: "2026-10-21",
     readMinutes: 6,
     category: "Chiffre d'affaires",
     emoji: "🛒",
@@ -63,7 +65,7 @@ export const ARTICLES: Article[] = [
       },
       { h: "5. Récompensez sur place pour la prochaine fois" },
       {
-        p: "Offrir un petit gain (réduction, cadeau) valable à la visite suivante augmente à la fois le panier et la fréquence de retour. Un jeu en caisse qui récompense chaque client fait exactement cela, tout en collectant avis et contacts.",
+        p: "Offrir un petit gain (réduction, cadeau) valable à la visite suivante augmente à la fois le panier et la fréquence de retour. Un jeu en caisse associé à une carte de fidélité donne aux clients une raison de revenir.",
       },
       { h: "6. Formez (un peu) votre équipe" },
       {
@@ -154,6 +156,7 @@ export const ARTICLES: Article[] = [
       "solliciter avis client",
     ],
     date: "2026-08-21",
+    modifiedDate: "2026-10-21",
     readMinutes: 5,
     category: "Avis Google",
     emoji: "✍️",
@@ -212,7 +215,7 @@ export const ARTICLES: Article[] = [
       },
       { h: "En résumé" },
       {
-        p: "Un bon message, au bon moment, rendu simple : c'est ce qui transforme un client content en avis Google. Kado automatise exactement ça — un QR code « scannez, jouez, gagnez » qui invite à laisser un avis de façon ludique et conforme, sans conditionner le cadeau à la note.",
+        p: "Un bon message, au bon moment, rendu simple : c'est ce qui transforme un client content en avis Google. Kado automatise exactement ça — un QR code « scannez, jouez, gagnez » qui invite à laisser un avis de façon ludique et conforme, le jeu restant accessible avec ou sans avis.",
       },
     ],
   },
@@ -409,6 +412,7 @@ export const ARTICLES: Article[] = [
       "fidélisation esthétique",
     ],
     date: "2026-08-19",
+    modifiedDate: "2026-10-21",
     readMinutes: 6,
     category: "Fidélisation",
     emoji: "💇",
@@ -432,7 +436,7 @@ export const ARTICLES: Article[] = [
       },
       { h: "4. Récompensez les avis et les recommandations" },
       {
-        p: "Vos clients satisfaits sont vos meilleurs ambassadeurs. Un jeu qui récompense un avis Google ou un abonnement Instagram booste votre visibilité — essentielle dans un métier où l'on choisit son salon sur photos et avis.",
+        p: "Vos clients satisfaits sont vos meilleurs ambassadeurs. Un jeu qui récompense la participation, avec une invitation libre à laisser un avis ou à suivre Instagram, booste votre visibilité — essentielle dans un métier où l'on choisit son salon sur photos et avis.",
       },
       { h: "5. Personnalisez la relation" },
       {
@@ -466,6 +470,7 @@ export const ARTICLES: Article[] = [
       "e-réputation commerce",
     ],
     date: "2026-08-18",
+    modifiedDate: "2026-10-21",
     readMinutes: 6,
     category: "E-réputation",
     emoji: "⭐",
@@ -485,7 +490,7 @@ export const ARTICLES: Article[] = [
       },
       { h: "3. Donnez une raison de le faire" },
       {
-        p: "Soyons honnêtes : laisser un avis, c'est un petit effort dont le client ne retire rien. Sauf si vous le récompensez. Un jeu — une roue de la fortune, une carte à gratter — transforme l'avis en moment ludique : le client joue, gagne un petit cadeau, et repart avec le sourire. C'est exactement le principe de Kado.",
+        p: "Un jeu — une roue de la fortune, une carte à gratter — rend le passage en caisse plus agréable : le client joue et peut gagner un cadeau. Vous pouvez ensuite l'inviter à laisser un avis, librement, sans que le jeu ou le gain en dépende.",
       },
       {
         quote:
@@ -509,7 +514,7 @@ export const ARTICLES: Article[] = [
       },
       { h: "En résumé" },
       {
-        p: "Plus d'avis Google, ce n'est pas une question de chance : c'est une question de méthode. Demander au bon moment, simplifier au maximum, récompenser la participation. C'est précisément ce que Kado automatise pour vous — un QR code en caisse, un jeu, et vos clients deviennent vos meilleurs ambassadeurs.",
+        p: "Plus d'avis Google, ce n'est pas une question de chance : c'est une question de méthode. Demandez au bon moment et simplifiez la démarche. Avec Kado, le jeu et la carte de fidélité donnent une raison de revenir ; chacun reste libre de laisser un avis, sans récompense liée à ce choix.",
       },
     ],
   },
@@ -527,6 +532,7 @@ export const ARTICLES: Article[] = [
       "carte de fidélité digitale",
     ],
     date: "2026-08-18",
+    modifiedDate: "2026-10-21",
     readMinutes: 7,
     category: "Fidélisation",
     emoji: "🎟️",
@@ -554,7 +560,7 @@ export const ARTICLES: Article[] = [
       },
       { h: "5. Le jeu en caisse" },
       {
-        p: "Une roue de la fortune ou une carte à gratter transforme le passage en caisse en moment ludique. Le client gagne un cadeau à venir chercher — donc il revient. Et au passage, il laisse un avis ou vous suit sur Instagram.",
+        p: "Une roue de la fortune ou une carte à gratter transforme le passage en caisse en moment ludique. Le client gagne un cadeau à venir chercher et peut aussi utiliser sa carte de fidélité. Un avis ou un abonnement Instagram reste facultatif.",
       },
       { h: "6. Les offres réservées aux fidèles" },
       {
@@ -918,6 +924,7 @@ ARTICLES.push(
       "marketing restaurant",
     ],
     date: "2026-08-18",
+    modifiedDate: "2026-10-21",
     readMinutes: 6,
     category: "Restauration",
     emoji: "🍽️",
@@ -941,7 +948,7 @@ ARTICLES.push(
       },
       { h: "4. Transformez chaque table en avis Google" },
       {
-        p: "Plus d'avis = plus de visibilité = plus de nouveaux clients à fidéliser ensuite. Un QR sur la table qui propose de laisser un avis (contre un tour de jeu) alimente votre réputation en continu.",
+        p: "Plus d'avis = plus de visibilité = plus de nouveaux clients à fidéliser ensuite. Un QR sur la table peut proposer un jeu et, séparément, inviter le client à laisser un avis librement.",
       },
       { h: "5. Activez le bouche-à-oreille" },
       {
