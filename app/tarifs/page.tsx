@@ -152,7 +152,7 @@ export default function Tarifs() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         "@context": "https://schema.org",
         "@graph": [
-          { "@type": "SoftwareApplication", name: "Kado", applicationCategory: "BusinessApplication", operatingSystem: "Web", description: "Un petit jeu et une carte de fidélité digitale donnent aux clients une vraie raison de revenir dans votre commerce.", url: "https://kado-app.fr/tarifs", publisher: { "@id": "https://kado-app.fr/#organization" }, offers: PLANS.map((p) => ({ "@type": "Offer", name: p.name, price: p.price, priceCurrency: "EUR", url: "https://kado-app.fr/tarifs", priceSpecification: { "@type": "UnitPriceSpecification", price: p.price, priceCurrency: "EUR", billingDuration: "P1M" } })) },
+          { "@type": "SoftwareApplication", name: "Kado", applicationCategory: "BusinessApplication", operatingSystem: "Web", description: "Un petit jeu et une carte de fidélité digitale donnent aux clients une vraie raison de revenir dans votre commerce.", url: "https://kado-app.fr/tarifs", publisher: { "@type": "Organization", "@id": "https://kado-app.fr/#organization", name: "Kado", url: "https://kado-app.fr", logo: "https://kado-app.fr/icon-512.png" }, offers: PLANS.map((p) => ({ "@type": "Offer", name: p.name, price: p.price, priceCurrency: "EUR", url: "https://kado-app.fr/tarifs", priceSpecification: { "@type": "UnitPriceSpecification", price: p.price, priceCurrency: "EUR", billingDuration: "P1M" } })) },
           { "@type": "FAQPage", mainEntity: FAQ.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })) },
         ],
       }) }} />

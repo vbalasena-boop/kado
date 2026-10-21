@@ -74,8 +74,8 @@ export default async function ArticlePage(
     datePublished: a.date,
     ...(a.modifiedDate ? { dateModified: a.modifiedDate } : {}),
     image: "https://kado-app.fr/opengraph-image.png",
-    author: { "@id": "https://kado-app.fr/#organization" },
-    publisher: { "@id": "https://kado-app.fr/#organization" },
+    author: { "@type": "Organization", "@id": "https://kado-app.fr/#organization", name: "Kado", url: "https://kado-app.fr", logo: "https://kado-app.fr/icon-512.png" },
+    publisher: { "@type": "Organization", "@id": "https://kado-app.fr/#organization", name: "Kado", url: "https://kado-app.fr", logo: "https://kado-app.fr/icon-512.png" },
     mainEntityOfPage: `https://kado-app.fr/blog/${a.slug}`,
   };
 

@@ -54,7 +54,6 @@ export const metadata: Metadata = {
     "bipeur restaurant",
     "QR code restaurant",
     "marketing local",
-    "e-réputation",
   ],
   applicationName: "Kado",
   icons: {
