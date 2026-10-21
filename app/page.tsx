@@ -57,8 +57,8 @@ function Ico({ name }: { name: string }) {
 
 const STEPS = [
   { n: "1", t: "Vos clients scannent", d: "Un QR code sur la table, le ticket ou un sticker. Aucune application à installer." },
-  { n: "2", t: "Ils réalisent une action & jouent", d: "Un tour de roue pour un suivi Instagram (ou l’inscription à votre fidélité). L’avis Google reste proposé, libre et sans obligation." },
-  { n: "3", t: "Ils gagnent, vous fidélisez", d: "Un cadeau à récupérer en boutique. Plus d'avis, plus d'abonnés, plus de visites." },
+  { n: "2", t: "Ils découvrent votre jeu", d: "Un tour de roue, une carte de fidélité à retrouver au prochain passage. L’avis Google reste une option libre et facultative." },
+  { n: "3", t: "Ils gagnent, vous fidélisez", d: "Un cadeau à récupérer en boutique et une bonne raison de revenir." },
 ];
 
 const AUDIENCE = [
@@ -67,8 +67,8 @@ const AUDIENCE = [
 ];
 
 const BENEFITS = [
-  { i: "star", t: "Plus d'avis Google", d: "Invitez chaque client à laisser un avis Google libre et sincère." },
-  { i: "insta", t: "Plus d'abonnés Insta", d: "Faites grandir votre communauté à chaque visite." },
+  { i: "star", t: "Une carte qui donne envie de revenir", d: "Chaque passage compte avec une carte de fidélité digitale." },
+  { i: "insta", t: "Un jeu à partager", d: "Offrez à vos clients un petit moment à votre image." },
   { i: "repeat", t: "Plus de visites", d: "Un cadeau peut donner envie à vos clients de revenir." },
   { i: "lock", t: "Vos avis Google en sécurité", d: "Le cadeau n’est jamais lié à l’avis : pas de « review gating », donc aucun risque de voir vos avis supprimés par Google." },
   { i: "mail", t: "Campagnes e-mail & notifs (option)", d: "Envoyez vos offres par e-mail et notification sur le téléphone de vos clients (+15 €/mois)." },
@@ -83,10 +83,10 @@ const PLANS = [
     id: "roue",
     name: "Jeux",
     price: "19",
-    desc: "Boostez vos avis & abonnés",
+    desc: "Un petit jeu pour vos clients",
     features: [
       "3 jeux : roue, grattage, machine à sous",
-      "Avis Google + Instagram",
+      "Avis Google facultatif + Instagram",
       "Option campagnes e-mail + notifs (+15 €)",
       "QR code, stats, validation",
     ],
@@ -185,7 +185,7 @@ const JSON_LD = {
       url: "https://kado-app.fr",
       logo: "https://kado-app.fr/icon-512.png",
       description:
-        "Kado est la solution tout-en-un de fidélisation pour les commerces de proximité : jeux, avis Google, carte de fidélité digitale, campagnes et commande en ligne.",
+        "Kado propose aux commerces de proximité un petit jeu et une carte de fidélité digitale : une vraie raison de revenir.",
       areaServed: "FR",
       email: "vbalasena@instant-events.fr",
       address: {
@@ -254,7 +254,7 @@ export default async function Home(
       )}
       <header className="v-topbar">
         <Logo size={42} />
-        <span className="nav-note">Le jeu qui fait parler de vous.</span>
+        <span className="nav-note">Un petit jeu. Une vraie raison de revenir.</span>
         <nav className="v-topnav">
           <a href="/blog">Blog</a>
           <a href="/tarifs">Tarifs</a>
@@ -341,8 +341,8 @@ export default async function Home(
         <p className="v-audience-lead">
           Roue de la fortune ou carte de fidélité : Kado s'adapte à votre
           activité, vos couleurs et vos récompenses. Peu importe votre métier,
-          l'objectif est le même : <b>plus d'avis, plus d'abonnés, plus de
-          clients qui reviennent</b>.
+          l’objectif est le même : <b>un petit jeu et une carte de fidélité
+          qui donnent envie à vos clients de revenir</b>.
         </p>
         <div className="v-audience">
           {AUDIENCE.map((a) => (

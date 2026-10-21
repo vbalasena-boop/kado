@@ -57,11 +57,11 @@ const PLANS = [
     id: "roue",
     name: "Jeux",
     price: "19",
-    desc: "Boostez vos avis et vos abonnés",
+    desc: "Un petit jeu qui donne envie de revenir",
     features: [
       "Illimité, sans palier de clients ni de joueurs",
       "3 jeux : roue, grattage, machine à sous",
-      "Avis Google + abonnés Instagram",
+      "Avis Google facultatif + Instagram",
       "Personnalisation (logo, couleurs, fond)",
       "Affiche & QR code à imprimer",
       "Validation en caisse (scan)",
@@ -96,12 +96,12 @@ const REASSURE = [
 
 const VALUE = [
   {
-    t: "Les avis font venir les clients",
-    d: "Selon les études du secteur, la grande majorité des clients consultent les avis avant de choisir un commerce. Chaque avis 5★ supplémentaire vous rend plus visible sur Google Maps.",
+    t: "Un petit jeu pour créer un nouveau rituel",
+    d: "Vos clients jouent en quelques instants et repartent avec une raison de revenir en boutique.",
   },
   {
-    t: "Une communauté qui revient",
-    d: "Un abonné Instagram, c'est un client que vous pouvez toucher gratuitement à chaque promo, nouveauté ou événement.",
+    t: "Une carte qui accompagne chaque visite",
+    d: "Une carte de fidélité digitale retrouve vos clients à chaque passage, sans application à installer.",
   },
   {
     t: "La fidélité qui rapporte",
@@ -152,14 +152,14 @@ export default function Tarifs() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         "@context": "https://schema.org",
         "@graph": [
-          { "@type": "Organization", "@id": "https://kado-app.fr/#organization", name: "Kado", url: "https://kado-app.fr", logo: "https://kado-app.fr/icon-512.png" },
-          { "@type": "SoftwareApplication", name: "Kado", applicationCategory: "BusinessApplication", operatingSystem: "Web", url: "https://kado-app.fr/tarifs", publisher: { "@id": "https://kado-app.fr/#organization" }, offers: PLANS.map((p) => ({ "@type": "Offer", name: p.name, price: p.price, priceCurrency: "EUR", url: "https://kado-app.fr/tarifs", priceSpecification: { "@type": "UnitPriceSpecification", price: p.price, priceCurrency: "EUR", billingDuration: "P1M" } })) },
+          { "@type": "SoftwareApplication", name: "Kado", applicationCategory: "BusinessApplication", operatingSystem: "Web", description: "Un petit jeu et une carte de fidélité digitale donnent aux clients une vraie raison de revenir dans votre commerce.", url: "https://kado-app.fr/tarifs", publisher: { "@id": "https://kado-app.fr/#organization" }, offers: PLANS.map((p) => ({ "@type": "Offer", name: p.name, price: p.price, priceCurrency: "EUR", url: "https://kado-app.fr/tarifs", priceSpecification: { "@type": "UnitPriceSpecification", price: p.price, priceCurrency: "EUR", billingDuration: "P1M" } })) },
+          { "@type": "FAQPage", mainEntity: FAQ.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })) },
         ],
       }) }} />
       <section className="v-hero tarif-hero" style={{ paddingBottom: 10 }}>
         <div className="v-badge">4 formules, sans engagement</div>
         <h1>
-          Choisissez votre <span>formule</span>
+          Découvrez les <span>tarifs Kado</span>
         </h1>
         <p className="v-lede">
           Essai gratuit de 14 jours avec toutes les fonctionnalités, puis
@@ -198,7 +198,7 @@ export default function Tarifs() {
                   <li key={f}>✓ {f}</li>
                 ))}
               </ul>
-              <a className="v-btn primary" href="/login" style={{ display: "block" }}>
+              <a className="v-btn primary" href="/login?signup=1" style={{ display: "block" }}>
                 Commencer l'essai gratuit
               </a>
               <small className="tarif-cta-note">14 jours, sans carte bancaire</small>
@@ -334,6 +334,7 @@ export default function Tarifs() {
 
       <footer className="v-footer">
         <a href="/">Accueil</a>
+        <a href="/blog">Blog</a>
         <a href="/legal/cgu">CGU</a>
         <a href="/legal/cgv">CGV</a>
         <a href="/legal/confidentialite">Confidentialité</a>
