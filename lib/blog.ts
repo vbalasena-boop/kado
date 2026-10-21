@@ -77,7 +77,7 @@ export const ARTICLES: Article[] = [
       },
       { h: "En résumé" },
       {
-        p: "Augmenter le panier moyen repose sur la suggestion au bon moment (montée en gamme, ventes croisées), les offres qui donnent envie, et des raisons de revenir dépenser à nouveau. Kado y contribue avec un jeu en caisse qui récompense chaque client — panier plus élevé, retour plus fréquent, avis Google en prime — sans application ni budget pub.",
+        p: "Augmenter le panier moyen repose sur la suggestion au bon moment (montée en gamme, ventes croisées), les offres qui donnent envie, et des raisons de revenir dépenser à nouveau. Kado associe un jeu en caisse à une carte de fidélité digitale : le gain obtenu donne une raison de revenir et de découvrir d'autres produits, sans application ni budget pub.",
       },
     ],
   },
@@ -215,7 +215,7 @@ export const ARTICLES: Article[] = [
       },
       { h: "En résumé" },
       {
-        p: "Un bon message, au bon moment, rendu simple : c'est ce qui transforme un client content en avis Google. Kado automatise exactement ça — un QR code « scannez, jouez, gagnez » qui invite à laisser un avis de façon ludique et conforme, le jeu restant accessible avec ou sans avis.",
+        p: "Un bon message, au bon moment, rendu simple : c'est ce qui transforme un client content en avis Google. Avec Kado, le QR code donne accès à un jeu et à une carte de fidélité qui invitent le client à revenir. Une demande d'avis peut être proposée séparément : chacun reste libre de répondre ou non, sans que le jeu en dépende.",
       },
     ],
   },
@@ -233,6 +233,7 @@ export const ARTICLES: Article[] = [
       "marketing commerce de proximité",
     ],
     date: "2026-08-19",
+    modifiedDate: "2026-10-21",
     readMinutes: 7,
     category: "Acquisition",
     emoji: "🧲",
@@ -272,7 +273,7 @@ export const ARTICLES: Article[] = [
       },
       { h: "En résumé" },
       {
-        p: "Attirer de nouveaux clients, c'est combiner visibilité en ligne (Google, réseaux) et bouche-à-oreille (avis, parrainage, expérience mémorable). Kado réunit ces leviers dans un seul outil : un jeu en caisse qui génère avis Google, abonnés Instagram, e-mails clients et parrainages — sans application ni budget publicitaire.",
+        p: "Attirer de nouveaux clients, c'est combiner visibilité en ligne (Google, réseaux) et bouche-à-oreille (avis, parrainage, expérience mémorable). Kado prolonge la première visite avec un jeu en caisse et une carte de fidélité digitale : le client repart avec une raison concrète de revenir, sans application ni budget publicitaire.",
       },
     ],
   },
@@ -290,6 +291,7 @@ export const ARTICLES: Article[] = [
       "e-réputation",
     ],
     date: "2026-08-19",
+    modifiedDate: "2026-10-21",
     readMinutes: 5,
     category: "E-réputation",
     emoji: "💬",
@@ -325,7 +327,7 @@ export const ARTICLES: Article[] = [
       },
       { h: "En résumé" },
       {
-        p: "Un avis négatif bien géré est une publicité gratuite pour votre sérieux. Répondez vite, avec calme et empathie, et surtout : générez en continu de nouveaux avis positifs. C'est ce que Kado automatise — chaque client satisfait devient une chance d'avis 5★, sans effort de votre part.",
+        p: "Un avis négatif bien géré est une publicité gratuite pour votre sérieux. Répondez vite, avec calme et empathie, et surtout : générez en continu de nouveaux avis positifs. Kado peut accompagner la suite de la visite avec un jeu et une carte de fidélité qui donnent envie de revenir. Si vous invitez aussi vos clients à donner leur avis, leur choix et leur note restent entièrement libres.",
       },
     ],
   },
@@ -343,6 +345,7 @@ export const ARTICLES: Article[] = [
       "promouvoir son commerce",
     ],
     date: "2026-08-19",
+    modifiedDate: "2026-10-21",
     readMinutes: 8,
     category: "Marketing",
     emoji: "📣",
@@ -394,7 +397,7 @@ export const ARTICLES: Article[] = [
       },
       { h: "En résumé" },
       {
-        p: "Le marketing local efficace tient en trois mots : visibilité, fidélité, régularité. Kado en automatise une bonne partie — avis Google, abonnés Instagram, e-mails clients, fidélité et parrainage — à partir d'un simple QR code en caisse, sans compétences techniques.",
+        p: "Le marketing local efficace tient en trois mots : visibilité, fidélité, régularité. Kado aide à entretenir cette régularité : un QR code en caisse ouvre un jeu et une carte de fidélité digitale, pour donner au client une raison de revenir, sans compétences techniques.",
       },
     ],
   },
@@ -452,7 +455,7 @@ export const ARTICLES: Article[] = [
       },
       { h: "En résumé" },
       {
-        p: "Fidéliser en coiffure et esthétique, c'est soigner la relation (rendez-vous, personnalisation, anniversaires) et récompenser l'engagement (fidélité, avis, parrainage). Kado réunit tout ça sans application : carte de fidélité digitale, anniversaires automatiques, avis Google, abonnés Instagram et parrainage, à partir d'un QR code à votre accueil.",
+        p: "Fidéliser en coiffure et esthétique, c'est soigner la relation (rendez-vous, personnalisation, anniversaires) et récompenser l'engagement (fidélité, avis, parrainage). Kado associe, depuis un QR code à l'accueil, un jeu et une carte de fidélité digitale. Le client découvre une attention sur place et garde une raison de revenir au salon, sans application.",
       },
     ],
   },
@@ -671,6 +674,7 @@ export const ARTICLES: Article[] = [
       "marketing instagram commerce",
     ],
     date: "2026-08-18",
+    modifiedDate: "2026-10-21",
     readMinutes: 6,
     category: "Réseaux sociaux",
     emoji: "📸",
@@ -682,7 +686,7 @@ export const ARTICLES: Article[] = [
       },
       { h: "1. Convertissez les clients présents en boutique" },
       {
-        p: "C'est le levier le plus sous-exploité. Un client qui vient de vivre une bonne expérience est le plus susceptible de vous suivre — s'il y pense et si c'est facile. Un QR code en caisse qui ouvre directement votre profil, ou mieux, un jeu qui offre un tour de roue contre un abonnement, transforme ce moment en abonné.",
+        p: "C'est le levier le plus sous-exploité. Un client qui vient de vivre une bonne expérience est le plus susceptible de vous suivre — s'il y pense et si c'est facile. Un QR code en caisse qui ouvre directement votre profil facilite ce geste. Vous pouvez aussi proposer un jeu sur place pour rendre la visite mémorable, sans conditionner la participation à un abonnement.",
       },
       { h: "2. Publiez régulièrement, même simplement" },
       {
@@ -710,7 +714,7 @@ export const ARTICLES: Article[] = [
       },
       { h: "Le raccourci : transformer chaque visite en abonné" },
       {
-        p: "Toutes ces méthodes prennent du temps. Le raccourci le plus efficace pour un commerce, c'est de capter l'abonnement au moment où le client est physiquement là et content. C'est exactement ce que fait Kado : le client scanne un QR en caisse, suit votre Instagram, et tourne une roue pour gagner un cadeau. Vous gagnez un abonné réel, local et déjà client — le plus précieux qui soit.",
+        p: "Toutes ces méthodes prennent du temps. En caisse, un QR code peut rendre votre profil Instagram facile à trouver pendant que le client est encore sur place. Avec Kado, ce même moment ouvre un jeu et une carte de fidélité : le gain et les prochaines récompenses lui donnent une raison de revenir. La proposition de suivre votre compte reste séparée et libre.",
       },
       { h: "En résumé" },
       {
@@ -797,6 +801,7 @@ ARTICLES.push(
       "qr code fidélité",
     ],
     date: "2026-08-18",
+    modifiedDate: "2026-10-21",
     readMinutes: 5,
     category: "Outils",
     emoji: "📱",
@@ -835,11 +840,11 @@ ARTICLES.push(
       },
       { h: "Le QR code qui fait tout à la fois" },
       {
-        p: "L'idéal, c'est un seul QR qui enchaîne plusieurs bénéfices : le client scanne, on lui propose de suivre votre Instagram ou de laisser un avis, il joue à une roue, gagne un cadeau, et sa carte de fidélité se crée au passage. C'est exactement le principe de Kado : un QR, et vous récoltez avis, abonnés et fidélité en même temps.",
+        p: "Un même QR peut ouvrir une expérience simple : le client scanne, participe à un jeu et découvre sa carte de fidélité digitale. C'est le principe de Kado : un moment agréable sur place et une raison de revenir. Une invitation à laisser un avis ou à suivre Instagram peut rester distincte et facultative.",
       },
       { h: "En résumé" },
       {
-        p: "Le QR code est le pont le plus simple entre votre boutique et le digital. Bien placé, avec un appel clair et un parcours sans friction, il devient une machine à avis, à abonnés et à clients fidèles. Encore faut-il qu'il mène à la bonne expérience — c'est là que se joue toute la différence.",
+        p: "Le QR code est le pont le plus simple entre votre boutique et le digital. Bien placé, avec un appel clair et un parcours sans friction, il donne accès à une expérience qui peut faire revenir les clients. Encore faut-il qu'il mène à la bonne expérience — c'est là que se joue toute la différence.",
       },
     ],
   },
@@ -968,7 +973,7 @@ ARTICLES.push(
       },
       { h: "En résumé" },
       {
-        p: "Faire revenir ses clients repose sur deux piliers : capter le contact au bon moment, puis donner des raisons de revenir (cadeau, anniversaire, offres, rituels). Kado réunit ces leviers pour la restauration — jeu en caisse, carte de fidélité, anniversaires, avis Google et click & collect — dans un seul outil, sans application.",
+        p: "Faire revenir ses clients repose sur deux piliers : capter le contact au bon moment, puis donner des raisons de revenir (cadeau, anniversaire, offres, rituels). Kado réunit pour la restauration un jeu en caisse, une carte de fidélité digitale, les anniversaires et le click & collect : autant d'occasions de donner envie de revenir, sans application.",
       },
     ],
   },

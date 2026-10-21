@@ -22,9 +22,9 @@ Positionnement : « Un petit jeu. Une vraie raison de revenir. » (jeu + carte d
 
 ## Critères vérifiables
 
-- [ ] Plus aucune phrase présentant Kado comme moyen d'obtenir « plus d'avis / d'abonnés » (`grep -n "Kado" lib/blog.ts`, relu).
-- [ ] `modifiedDate` présent sur chaque article modifié.
-- [ ] `bash scripts/relais/verifier.sh` OK.
+- [x] Plus aucune phrase présentant Kado comme moyen d'obtenir « plus d'avis / d'abonnés » (`grep -n "Kado" lib/blog.ts`, relu).
+- [x] `modifiedDate` présent sur chaque article modifié.
+- [x] `bash scripts/relais/verifier.sh` OK.
 
 ## Fichiers
 
@@ -36,6 +36,6 @@ Slugs, titres de métadonnées, structure des données, autres fichiers.
 
 ## Reprise
 
-- Fait : rien.
-- Reste : tout.
-- Prochaine commande : `scripts/relais/codex-session.sh lancer 13-9-blog-recentrage`
+- Fait : corps recentrés sur le jeu et la carte de fidélité ; avis et abonnements facultatifs ; articles modifiés datés du 2026-10-21 ; 708 tests, lint et types OK.
+- Reste : E2E à lancer par Claude, puis revue.
+- Prochaine commande : lancer les E2E de Claude et relire `git diff -- lib/blog.ts`.
