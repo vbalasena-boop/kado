@@ -23,11 +23,11 @@ Depuis la PR #217, l'image de partage annonce « Un petit jeu. Une vraie raison 
 
 ## Critères vérifiables
 
-- [ ] Aucune occurrence de « abonnés Instagram », « roue de la fortune » ni « avis 5★ » dans `title`, `description`, `keywords`, `openGraph`, `twitter` de `app/layout.tsx`.
-- [ ] Titre et description cohérents avec le texte de `opengraph-image.png.alt.txt`.
-- [ ] `title.default` ≤ 60 caractères, descriptions ≤ 160.
-- [ ] Un test existant sur les métadonnées, s'il y en a, est mis à jour et passe.
-- [ ] `bash scripts/relais/verifier.sh` OK.
+- [x] Aucune occurrence de « abonnés Instagram », « roue de la fortune » ni « avis 5★ » dans `title`, `description`, `keywords`, `openGraph`, `twitter` de `app/layout.tsx`.
+- [x] Titre et description cohérents avec le texte de `opengraph-image.png.alt.txt`.
+- [x] `title.default` ≤ 60 caractères, descriptions ≤ 160.
+- [x] Un test existant sur les métadonnées, s'il y en a, est mis à jour et passe.
+- [x] `bash scripts/relais/verifier.sh` OK.
 
 ## Fichiers
 

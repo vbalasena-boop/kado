@@ -42,16 +42,16 @@ const mono = JetBrains_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://kado-app.fr"),
   title: {
-    default: "Kado : avis Google et fidélité pour commerces",
+    default: "Kado : un petit jeu et une carte de fidélité",
     template: "%s | Kado",
   },
   description:
     "Kado aide les commerces de proximité à fidéliser leurs clients avec des jeux, une carte digitale et un bipeur. Essai gratuit 14 jours, sans carte bancaire.",
   keywords: [
-    "avis Google",
-    "abonnés Instagram",
-    "roue de la fortune",
+    "carte de fidélité digitale",
+    "jeu client commerce",
     "fidélisation commerce",
+    "bipeur restaurant",
     "QR code restaurant",
     "marketing local",
     "e-réputation",
@@ -73,9 +73,9 @@ export const metadata: Metadata = {
   authors: [{ name: "Kado" }],
   alternates: { canonical: "/" },
   openGraph: {
-    title: "Kado | Plus d'avis Google & d'abonnés Instagram",
+    title: "Kado | Un petit jeu. Une vraie raison de revenir.",
     description:
-      "Le jeu de roue qui transforme vos clients en avis 5★ et en abonnés, sans application, à chaque visite. Essai gratuit 14 jours.",
+      "Un petit jeu et une carte de fidélité qui donnent à vos clients une vraie raison de revenir, sans application. Essai gratuit 14 jours.",
     url: "https://kado-app.fr",
     siteName: "Kado",
     locale: "fr_FR",
@@ -83,9 +83,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Kado | Plus d'avis Google & d'abonnés Instagram",
+    title: "Kado | Un petit jeu. Une vraie raison de revenir.",
     description:
-      "Le jeu de roue qui transforme vos clients en avis 5★ et en abonnés, sans application. Essai gratuit 14 jours.",
+      "Un petit jeu et une carte de fidélité qui donnent à vos clients une vraie raison de revenir, sans application. Essai gratuit 14 jours.",
   },
   robots: {
     index: true,
