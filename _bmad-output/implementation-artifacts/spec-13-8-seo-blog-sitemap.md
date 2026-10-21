@@ -28,10 +28,10 @@ Positionnement : « Un petit jeu. Une vraie raison de revenir. » (jeu + carte d
 
 ## Critères vérifiables
 
-- [ ] `grep -n "avis" app/blog/page.tsx "app/blog/[slug]/page.tsx"` ne renvoie plus de message principal sur les avis.
-- [ ] Une page article rendue expose `og:image` et `twitter:image`.
-- [ ] Le sitemap ne contient que des URLs existantes et plus de `new Date()` pour les pages statiques.
-- [ ] Aucun texte ne promet un cadeau en échange d'un avis.
+- [x] `grep -n "avis" app/blog/page.tsx "app/blog/[slug]/page.tsx"` ne renvoie plus de message principal sur les avis.
+- [x] Une page article rendue expose `og:image` et `twitter:image`.
+- [x] Le sitemap ne contient que des URLs existantes et plus de `new Date()` pour les pages statiques.
+- [x] Aucun texte ne promet un cadeau en échange d'un avis.
 - [ ] Tests existants mis à jour et passent ; `bash scripts/relais/verifier.sh` OK.
 
 ## Fichiers
@@ -44,6 +44,6 @@ Positionnement : « Un petit jeu. Une vraie raison de revenir. » (jeu + carte d
 
 ## Reprise
 
-- Fait : rien.
-- Reste : tout.
-- Prochaine commande : `scripts/relais/codex-session.sh lancer 13-8-seo-blog-sitemap`
+- Fait : messages blog, métadonnées images et Article JSON-LD, sitemap indexable, formulations avis corrigés ; 708 tests, lint et types OK.
+- Reste : E2E par Claude ; `verifier.sh` échoue sur `npm test` (EPERM Vite dans le `node_modules` lié hors sandbox), tests complets passés avec un chargeur Vitest temporaire.
+- Prochaine commande : `bash scripts/relais/verifier.sh` dans un environnement où `node_modules/.vite-temp` est inscriptible.

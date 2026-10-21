@@ -6,7 +6,7 @@ export function publicMetadata(title: string, description: string, path: string)
     title: { absolute: title },
     description,
     alternates: { canonical: path },
-    openGraph: { title, description, url, siteName: "Kado", locale: "fr_FR", type: "website" },
-    twitter: { card: "summary_large_image", title, description },
+    openGraph: { title, description, url, siteName: "Kado", locale: "fr_FR", type: "website", images: ["https://kado-app.fr/opengraph-image.png"] },
+    twitter: { card: "summary_large_image", title, description, images: ["https://kado-app.fr/opengraph-image.png"] },
   };
 }

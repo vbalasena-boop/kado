@@ -6,7 +6,7 @@ import { Logo } from "@/components/Logo";
 import { ARTICLES } from "@/lib/blog";
 
 export const metadata = {
-  ...publicMetadata('Blog Kado : conseils pour commerces de proximité', 'Guides pratiques sur les avis Google, la fidélisation, Instagram et les jeux pour attirer plus de clients dans votre commerce.', '/blog'),
+  ...publicMetadata('Blog Kado : conseils pour commerces de proximité', 'Un petit jeu et une carte de fidélité pour donner à vos clients une vraie raison de revenir. Guides pratiques pour commerces de proximité.', '/blog'),
 };
 
 function fmt(d: string) {
@@ -34,8 +34,8 @@ export default function BlogIndex() {
         <div className="v-badge"><BookOpen className="ico" size={16} weight="bold" /> Le blog Kado</div>
         <h1>Conseils pour faire grandir votre commerce</h1>
         <p className="v-lede">
-          Avis Google, fidélisation, Instagram, réglementation : des guides
-          concrets, écrits pour les commerçants de proximité.
+          Un petit jeu, une carte de fidélité et des idées concrètes pour donner
+          à vos clients une vraie raison de revenir.
         </p>
       </section>
 
@@ -54,7 +54,7 @@ export default function BlogIndex() {
       </section>
 
       <section className="blog-cta">
-        <h2>Prêt à transformer vos clients en avis et en abonnés ?</h2>
+        <h2>Prêt à donner à vos clients une raison de revenir ?</h2>
         <p>Essai gratuit 14 jours, sans carte bancaire.</p>
         <a className="v-btn primary" href="/login?signup=1">Créer mon compte gratuit →</a>
       </section>
