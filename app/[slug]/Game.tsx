@@ -1314,7 +1314,7 @@ export default function Game({
                   <p className="sub">
                     {fingerprintConsent === "yes"
                       ? "Vous avez autorisé l'empreinte technique de ce navigateur pour limiter les tours répétés. Vous pouvez retirer votre accord à tout moment."
-                      : "Sans empreinte de navigateur, le jeu reste accessible et utilise uniquement son cookie technique pour mémoriser vos tours."}
+                      : "Sans empreinte de navigateur, le jeu reste accessible : un code envoyé par e-mail vous sera demandé avant de jouer, pour garantir un seul essai par personne."}
                   </p>
                   <button type="button" className="btn" onClick={() => setEditingFingerprintConsent(true)}>
                     {fingerprintConsent === "yes" ? "Modifier mon choix" : "Choisir"}
@@ -1323,7 +1323,7 @@ export default function Game({
               ) : (
                 <>
                   <p className="sub">
-                    Autoriser calcule une empreinte à partir de caractéristiques techniques du navigateur (agent utilisateur, langue, plateforme, écran, fuseau horaire et rendu graphique). Elle sert à retrouver les tours et limiter les répétitions, même après suppression du cookie. Le jeu fonctionne aussi si vous refusez. Un retrait efface l'empreinte des tours associés à cet identifiant de jeu.
+                    Autoriser calcule une empreinte à partir de caractéristiques techniques du navigateur (agent utilisateur, langue, plateforme, écran, fuseau horaire et rendu graphique). Elle sert à retrouver les tours et limiter les répétitions, même après suppression du cookie. Le jeu fonctionne aussi si vous refusez : un code envoyé par e-mail vous sera alors demandé avant de jouer, pour garantir un seul essai par personne. Un retrait efface l'empreinte des tours associés à cet identifiant de jeu.
                   </p>
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                     <button type="button" className="btn" disabled={fingerprintConsentBusy} onClick={() => void saveFingerprintConsent(true)}>
@@ -1663,15 +1663,22 @@ export default function Game({
                 ))}
 
               {emailStep && (
-                <form onSubmit={verifyPlayEmail}>
-                  <p>Pour garantir un seul essai par personne, saisissez votre e-mail. Il n'est pas utilisé pour vous envoyer de publicité.</p>
-                  {challengeId ? <label>Code reçu par e-mail
-                    <input required inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} value={verificationCode} onChange={(e) => setVerificationCode(e.target.value)} />
-                  </label> : <label>E-mail
-                    <input required type="email" autoComplete="email" maxLength={254} value={verificationEmail} onChange={(e) => setVerificationEmail(e.target.value)} />
-                  </label>}
-                  <button type="submit" disabled={verificationBusy}>{verificationBusy ? "Patientez…" : challengeId ? "Vérifier et jouer" : "Recevoir mon code"}</button>
-                  {challengeId && <button type="button" disabled={verificationBusy} onClick={() => { setChallengeId(null); setVerificationCode(""); setError(null); }}>Demander un nouveau code</button>}
+                <form className="lead-form" onSubmit={verifyPlayEmail}>
+                  <label className="lead-label" htmlFor="play-email-field">
+                    {challengeId ? "Code reçu par e-mail" : "Votre e-mail"}
+                  </label>
+                  <p className="lead-consent">
+                    Pour garantir un seul essai par personne, saisissez votre e-mail. Il n'est pas utilisé pour vous envoyer de publicité.
+                  </p>
+                  <div className="lead-row">
+                    {challengeId ? (
+                      <input id="play-email-field" required inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} placeholder="123456" value={verificationCode} onChange={(e) => setVerificationCode(e.target.value)} />
+                    ) : (
+                      <input id="play-email-field" required type="email" inputMode="email" autoComplete="email" maxLength={254} placeholder="votre@email.fr" value={verificationEmail} onChange={(e) => setVerificationEmail(e.target.value)} />
+                    )}
+                    <button className="btn" type="submit" disabled={verificationBusy}>{verificationBusy ? "Patientez…" : challengeId ? "Vérifier et jouer" : "Recevoir mon code"}</button>
+                  </div>
+                  {challengeId && <button type="button" className="btn ghost" disabled={verificationBusy} onClick={() => { setChallengeId(null); setVerificationCode(""); setError(null); }}>Demander un nouveau code</button>}
                 </form>
               )}
               {error && <p className="err" role="alert">{error}</p>}
