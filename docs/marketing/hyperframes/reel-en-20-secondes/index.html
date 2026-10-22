@@ -4,23 +4,24 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=1080, height=1920" />
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
-    <style>
-      :root { --ground:#130a20; --ink:#f2edfb; --dim:#a99cc6; --gold:#ecc474; --coral:#f2657f; --mint:#46caa0; --violet:#8f74ff; }
-      * { margin:0; padding:0; box-sizing:border-box; }
-      html, body { width:1080px; height:1920px; overflow:hidden; background:var(--ground); }
-      #root { position:relative; width:100%; height:100%; background:radial-gradient(900px 800px at 80% 0,#2c1c52,#130a20 70%); font-family:Georgia,serif; color:var(--ink); }
-      .scene { position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:100px; }
-      h1 { font-size:110px; line-height:1.1; font-weight:700; }
-      h1 em { color:var(--gold); font-style:italic; }
-      p { font-family:Helvetica,Arial,sans-serif; font-size:52px; line-height:1.3; color:var(--dim); margin-top:44px; }
-      .qr { width:380px; height:380px; background:#f2edfb; border-radius:28px; margin-top:60px; display:grid; grid-template-columns:repeat(7,1fr); gap:10px; padding:34px; }
-      .qr i { background:#130a20; border-radius:6px; } .qr i.o { background:transparent; }
-      .wheel { width:560px; height:560px; border-radius:50%; margin-top:60px; border:14px solid var(--ink); background:conic-gradient(#ecc474 0 60deg,#f2657f 0 120deg,#46caa0 0 180deg,#8f74ff 0 240deg,#ecc474 0 300deg,#f2657f 0 360deg); }
-      .card { width:620px; padding:50px; margin-top:60px; border-radius:36px; background:#1c1333; border:3px solid #ecc474; font-family:Helvetica; font-size:44px; }
-      .dots { display:flex; gap:22px; justify-content:center; margin-top:34px; } .dots b { width:64px; height:64px; border-radius:50%; background:#ecc474; } .dots b.e { background:transparent; border:4px solid #a99cc6; }
-      .cta { margin-top:60px; background:var(--gold); color:#130a20; font-family:Helvetica; font-weight:700; font-size:52px; padding:32px 64px; border-radius:70px; }
-      .logo { position:absolute; right:70px; bottom:70px; font-size:56px; font-weight:700; color:var(--gold); }
-    </style>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Playfair+Display:ital,wght@1,700&display=swap">
+<style>
+:root{--paper:#f4efe5;--ink:#292331;--plum:#33204d;--pepper:#e85b3d;--sun:#efc64f;--soft:#665c61}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1080px;height:1920px;overflow:hidden;background:var(--paper)}
+#root{position:relative;width:100%;height:100%;background:var(--paper) radial-gradient(#d9cebf 1.5px,transparent 1.5px) 0 0/28px 28px;font-family:'Plus Jakarta Sans',sans-serif;color:var(--ink)}
+.scene{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:100px}
+h1{font-size:118px;line-height:1.04;font-weight:800;letter-spacing:-4px;color:var(--plum)}
+h1 em{font-family:'Playfair Display',serif;font-style:italic;color:var(--pepper);letter-spacing:-1px}
+p{font-size:52px;line-height:1.3;color:var(--soft);margin-top:44px;font-weight:500}
+.qr{width:380px;height:380px;background:#fbf8f1;border:4px solid var(--plum);border-radius:28px;margin-top:60px;display:grid;grid-template-columns:repeat(7,1fr);gap:10px;padding:34px;box-shadow:14px 14px 0 var(--sun)}
+.qr i{background:var(--plum);border-radius:6px}.qr i.o{background:transparent}
+.wheel{width:560px;height:560px;border-radius:50%;margin-top:60px;border:14px solid #fbf8f1;box-shadow:0 0 0 7px var(--plum),16px 18px 0 var(--sun);background:conic-gradient(#dc563d 0 60deg,#5d795f 0 120deg,#e9b849 0 180deg,#82709a 0 240deg,#d28068 0 300deg,#33294a 0 360deg)}
+.card{width:640px;padding:50px;margin-top:60px;border-radius:32px;background:#fbf8f1;border:4px solid var(--plum);box-shadow:16px 16px 0 var(--sun);font-size:46px;font-weight:700}
+.dots{display:flex;gap:22px;justify-content:center;margin-top:34px}.dots b{width:64px;height:64px;border-radius:50%;background:var(--pepper)}.dots b.e{background:transparent;border:4px solid var(--soft)}
+.cta{margin-top:60px;background:var(--pepper);color:#fff;font-weight:800;font-size:56px;padding:32px 64px;border-radius:24px;box-shadow:9px 9px 0 var(--plum)}
+.logo{position:absolute;right:70px;bottom:70px;font-size:60px;font-weight:800;color:var(--plum)}
+</style>
   </head>
   <body>
     <div id="root" data-composition-id="main" data-start="0" data-duration="20" data-width="1080" data-height="1920">
@@ -31,7 +32,7 @@
       <div id="s4" class="scene clip" data-start="12" data-duration="4" data-track-index="0"><h1>Et une carte de <em>fidélité.</em></h1>
         <div class="card" id="card">Carte de fidélité<div class="dots"><b></b><b></b><b></b><b class="e"></b><b class="e"></b></div></div></div>
       <div id="s5" class="scene clip" data-start="16" data-duration="4" data-track-index="0"><h1>Un petit jeu.<br><em>Une vraie raison de revenir.</em></h1><p>Essai 14 jours gratuit, sans CB</p><div class="cta">kado-app.fr</div></div>
-      <div class="logo">Kado</div>
+      <div class="logo">kado</div>
     </div>
     <script>
       const q = document.getElementById("qr"); const pat="1110111101010111010100010101101110101011101"; 
