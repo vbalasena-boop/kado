@@ -19,11 +19,11 @@ Répartition du contenu (règle des tiers) : un tiers produit (Kado en action), 
 
 **Identifiant** : `@kado.app` (ou `@kado_fidelite` si pris). Rester identique partout.
 
-**Bio (136 caractères)** :
+**Bio (140 caractères, limite 150)** :
 ```
 Un petit jeu. Une vraie raison de revenir.
 Roue, carte fidélité, bipeur digital pour commerces de proximité.
-Essai 14 j gratuit, sans CB
+Essai gratuit 14 jours, sans CB
 ```
 
 **Catégorie** : Logiciel / Application (ou "Entreprise de services aux entreprises").
@@ -98,7 +98,7 @@ Légendes : à copier telles quelles ; remplacer les [crochets].
 - Accroche : "5 cadeaux qui ne coûtent presque rien et qui font revenir."
 - Slides (adapter par métier, une idée par slide) : un café offert (café/resto), une viennoiserie du lendemain (boulangerie), un soin express (coiffure), un sticker ou un petit goodie, un -10 % valable sur la prochaine visite. Slide finale : "À configurer dans Kado en quelques minutes."
 - Légende : "Un cadeau n'a pas besoin d'être gros. Il doit être simple à récupérer et donner envie de repasser la porte. Voici 5 idées à adapter à votre commerce. Laquelle vous tente ?"
-- Hashtags : `#idee #fidelisationclient #restaurateur #boulangerie #salondecoiffure #cafeindependant`
+- Hashtags : `#ideecadeau #fidelisationclient #restaurateur #boulangerie #salondecoiffure #cafeindependant`
 - CTA : "Enregistrez pour votre prochaine promo."
 
 **S2-J2 (mercredi) : Reel, "Le bipeur digital, c'est quoi ?"**
@@ -120,7 +120,7 @@ Légendes : à copier telles quelles ; remplacer les [crochets].
 **S2-J4 (dimanche) : Reel coulisses, "Je configure Kado en direct"**
 - Format : Reel 30 s, enregistrement d'écran (iPhone/Android natif, gratuit).
 - Accroche : "On configure un jeu pour une boulangerie. Chrono."
-- Script : montrer en accéléré (CapCut, vitesse x2) : choix du jeu, choix du cadeau, génération du QR code. Texte final : "Le chrono affiché est celui de votre propre enregistrement, ne pas annoncer un temps non mesuré."
+- Script : montrer en accéléré (CapCut, vitesse ×2) : choix du jeu, choix du cadeau, génération du QR code. Texte final : "Mis en place en [votre temps réel]" (ne citer qu'un temps que vous avez vraiment chronométré).
 - Légende : "Voici à quoi ressemble la mise en place d'un jeu pour un commerce. Vous choisissez le jeu, le cadeau, et vous imprimez votre QR code. 14 jours d'essai gratuit pour tester chez vous."
 - Hashtags : `#kadoapp #boulangerie #commercedeproximite #fidelisationclient #unpetitjeu`
 - CTA : "Lien en bio pour essayer."
@@ -222,18 +222,18 @@ Interdit : "Suivez-moi", "Regardez mon profil", liens, mention de Kado dans le p
 **3 modèles de DM non spammy** (envoyer uniquement après 2 ou 3 interactions réelles sur le compte)
 
 Modèle 1, curiosité locale :
-> Bonjour [Prénom], je suis [Prénom], je travaille sur un petit outil pour aider les commerces de proximité à donner envie à leurs clients de revenir (un petit jeu et une carte de fidélité digitale). J'aime beaucoup ce que vous faites à [nom du commerce]. Est-ce un sujet qui vous parle ? Si non, aucun souci, je vous souhaite une très belle semaine.
+> Bonjour [Prénom du commerçant], je suis [votre prénom] et je travaille sur un petit outil pour aider les commerces de proximité à donner envie à leurs clients de revenir (un petit jeu et une carte de fidélité digitale). J'aime beaucoup ce que vous faites à [nom du commerce]. Est-ce un sujet qui vous parle ? Si non, aucun souci, je vous souhaite une très belle semaine.
 
 Modèle 2, après un échange sous un post :
 > Merci pour votre réponse sous mon post ! Vous me disiez que [reprendre sa phrase]. Si ça peut vous aider, je peux vous montrer en 5 minutes comment Kado fonctionne, sans engagement, et sans carte bancaire pour l'essai de 14 jours. Dites-moi si vous préférez que je vous envoie juste un lien.
 
 Modèle 3, demande de retour (zéro vente) :
-> Bonjour [Prénom], je prépare une version de Kado pensée pour les [boulangers / coiffeurs / cafés]. Pourriez-vous me dire en une phrase ce qui vous fait le plus revenir des clients chez vous ? Votre avis m'aide vraiment, et je vous partagerai ce que j'ai appris si ça vous intéresse.
+> Bonjour [Prénom], je prépare une version de Kado pensée pour les [boulangers / coiffeurs / cafés]. Pourriez-vous me dire en une phrase ce qui fait le plus revenir vos clients chez vous ? Votre avis m'aide vraiment, et je vous ferai part de ce que j'ai appris si ça vous intéresse.
 
 **Relance** : une seule, 5 à 7 jours plus tard, courte et sans pression. Ensuite, on arrête. Si la personne dit non ou ne répond pas, ne plus la contacter.
 
 **Collaborations gratuites**
-- Échanges de stories avec 3 à 5 comptes complémentaires non concurrents (comptables, graphistes, fournisseurs, associations de commerçants, UCAL/unions commerciales de la ville, newsletters locales).
+- Échanges de stories avec 3 à 5 comptes complémentaires non concurrents (comptables, graphistes, fournisseurs, associations de commerçants, unions commerciales de la ville, newsletters locales).
 - Proposition type : "On met en avant votre commerce / votre service dans notre story, et inversement ?"
 - Offrir (et non vendre) un accès d'essai de 14 jours à 3 commerçants pilotes contre un retour d'expérience honnête. Si un retour positif arrive, demander une autorisation écrite avant de le citer, avec ses mots exacts. Pas d'autorisation, pas de publication.
 - Rejoindre des groupes Facebook/LinkedIn de commerçants de proximité pour y répondre à des questions, sans vendre.
@@ -272,7 +272,7 @@ Modèle 3, demande de retour (zéro vente) :
 
 **Stories**
 - Fond uni de marque, un message, un sticker (sondage, question, lien).
-- Couvertures de stories à la une : cercles de 1080x1920, icône centrale blanche, même couleur de fond.
+- Couvertures de stories à la une : image de 1080x1920 (Instagram la recadre en cercle), icône ou mot au centre, même couleur de fond.
 
 **Photos "humaines"** : votre bureau, vos mains qui scannent un QR code, un comptoir (avec l'accord du commerçant). La lumière naturelle suffit. Pas de visage de client sans autorisation.
 
