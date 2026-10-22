@@ -96,6 +96,7 @@ development_status:
   13-9-blog-recentrage: done
   13-3-roue-couleurs-site: done
   13-10-limite-tours-sans-empreinte: done
+  13-11-un-essai-par-email-verifie: ready-for-dev
 action_items:
   - id: "epic-11-retro-item-1-f1-résumé-ui-d-annulation-signaler-rembo"
     epic: 11
