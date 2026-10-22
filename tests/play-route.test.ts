@@ -209,6 +209,14 @@ describe("POST /api/play — garde des actions déclenchantes", () => {
     expect(await res.json()).toEqual({ alreadyPlayed: true, label: "Café offert", code: "EXISTANT" });
   });
 
+  it("rend le lot du cookie sans redemander d'e-mail à un joueur déjà passé", async () => {
+    CONSENT = null;
+    COOKIE_PRIZE = { prize_label: "Café offert", prize_code: "DEJA" };
+    const res = await POST(post("instagram", undefined, null));
+    expect(res.status).toBe(409);
+    expect(await res.json()).toEqual({ alreadyPlayed: true, label: "Café offert", code: "DEJA" });
+  });
+
   it("refuse un jeton destiné à un autre commerce", async () => {
     const res = await POST(post("instagram", undefined, signPlayEmailToken("autre", playEmailHash("a@example.com"))));
     expect(res.status).toBe(409);

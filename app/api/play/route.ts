@@ -108,6 +108,11 @@ export const POST = publicRoute({
 
     const emailHash = !isDemo && !deviceHash ? readPlayEmailToken(body.emailToken, biz.id) : null;
     if (!isDemo && !deviceHash && !emailHash) {
+      // Ce navigateur a déjà joué (cookie) : on rend le lot sans redemander d'e-mail.
+      const { data: own } = await supa.from("plays")
+        .select("prize_label, prize_code").eq("business_id", biz.id)
+        .eq("player_id", playerId).eq("play_type", playType).maybeSingle();
+      if (own) return Response.json({ alreadyPlayed: true, label: own.prize_label, code: own.prize_code }, { status: 409 });
       return Response.json({ error: "email_required" }, { status: 409 });
     }
     if (emailHash) {

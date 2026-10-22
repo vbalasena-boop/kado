@@ -1678,7 +1678,7 @@ export default function Game({
                     )}
                     <button className="btn" type="submit" disabled={verificationBusy}>{verificationBusy ? "Patientez…" : challengeId ? "Vérifier et jouer" : "Recevoir mon code"}</button>
                   </div>
-                  {challengeId && <button type="button" className="btn ghost" disabled={verificationBusy} onClick={() => { setChallengeId(null); setVerificationCode(""); setError(null); }}>Demander un nouveau code</button>}
+                  {challengeId && <button type="button" className="link-back" disabled={verificationBusy} onClick={() => { setChallengeId(null); setVerificationCode(""); setError(null); }}>Demander un nouveau code</button>}
                 </form>
               )}
               {error && <p className="err" role="alert">{error}</p>}
