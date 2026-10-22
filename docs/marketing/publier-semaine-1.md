@@ -6,7 +6,7 @@ Avant chaque publication : relire la légende, ajouter le texte alternatif sur c
 ---
 
 ## Mardi 12h15 : Reel « En 20 secondes »
-**Fichier** : `reel-en-20-secondes.mp4` (ajouter une musique de la bibliothèque Instagram)
+**Fichier** : `reel-en-20-secondes.mp4` (musique originale et effets sonores déjà inclus, sans droits à vérifier ; version muette : `reel-en-20-secondes-sans-son.mp4` si vous préférez choisir un titre dans la bibliothèque Instagram)
 
 **Légende**
 ```
