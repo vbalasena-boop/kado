@@ -580,6 +580,12 @@ export default function Game({
     []
   );
   const [error, setError] = useState<string | null>(null);
+  const [emailStep, setEmailStep] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
+  const [challengeId, setChallengeId] = useState<string | null>(null);
+  const [emailToken, setEmailToken] = useState<string | undefined>();
+  const [verificationBusy, setVerificationBusy] = useState(false);
   const [leadEmail, setLeadEmail] = useState("");
   const [leadConsent, setLeadConsent] = useState(false);
   // E-mail capté à l'étape « collect » (Offres/Fidélité) : alimente l'auto-envoi
@@ -1003,7 +1009,39 @@ export default function Game({
     return prizes.length - 1;
   }
 
-  async function spin() {
+  async function verifyPlayEmail(e: React.FormEvent) {
+    e.preventDefault();
+    if (verificationBusy) return;
+    setVerificationBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/play-email/${challengeId ? "verify" : "send"}`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(challengeId
+          ? { slug, challengeId, code: verificationCode }
+          : { slug, email: verificationEmail }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(res.status === 429 ? "Trop de demandes. Réessayez dans une heure."
+          : challengeId ? "Code incorrect ou expiré. Après cinq essais, demandez un nouveau code."
+          : "Envoi impossible. Réessayez.");
+        return;
+      }
+      if (!challengeId) setChallengeId(data.challengeId);
+      else {
+        setEmailToken(data.token);
+        setEmailStep(false);
+        setChallengeId(null);
+        setVerificationCode("");
+        setVerificationEmail("");
+        await spin(data.token);
+      }
+    } catch { setError("Connexion impossible. Réessayez."); }
+    finally { setVerificationBusy(false); }
+  }
+
+  async function spin(verifiedToken?: string) {
     if (spinning || !current) return;
     setSpinning(true);
     setError(null);
@@ -1024,10 +1062,16 @@ export default function Game({
       const res = await fetch("/api/play", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug, playType: current, deviceHash: fp }),
+        body: JSON.stringify({ slug, playType: current, deviceHash: fp, emailToken: verifiedToken ?? emailToken }),
       });
       const data = await res.json();
 
+      if (res.status === 409 && data.error === "email_required") {
+        setEmailToken(undefined);
+        setEmailStep(true);
+        setSpinning(false);
+        return;
+      }
       if (res.status === 409 && data.alreadyPlayed) {
         setPlayed((p) => ({
           ...p,
@@ -1042,7 +1086,7 @@ export default function Game({
       }
       if (!res.ok) {
         setError(res.status === 429
-          ? "La limite de participations est atteinte. Réessayez plus tard."
+          ? "Trop de demandes. Réessayez plus tard."
           : "Le jeu est indisponible pour le moment.");
         setSpinning(false);
         return;
@@ -1618,7 +1662,19 @@ export default function Game({
                   </div>
                 ))}
 
-              {error && <p className="err">{error}</p>}
+              {emailStep && (
+                <form onSubmit={verifyPlayEmail}>
+                  <p>Pour garantir un seul essai par personne, saisissez votre e-mail. Il n'est pas utilisé pour vous envoyer de publicité.</p>
+                  {challengeId ? <label>Code reçu par e-mail
+                    <input required inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} value={verificationCode} onChange={(e) => setVerificationCode(e.target.value)} />
+                  </label> : <label>E-mail
+                    <input required type="email" autoComplete="email" maxLength={254} value={verificationEmail} onChange={(e) => setVerificationEmail(e.target.value)} />
+                  </label>}
+                  <button type="submit" disabled={verificationBusy}>{verificationBusy ? "Patientez…" : challengeId ? "Vérifier et jouer" : "Recevoir mon code"}</button>
+                  {challengeId && <button type="button" disabled={verificationBusy} onClick={() => { setChallengeId(null); setVerificationCode(""); setError(null); }}>Demander un nouveau code</button>}
+                </form>
+              )}
+              {error && <p className="err" role="alert">{error}</p>}
 
               {gameType === "scratch" && scratchPrize ? (
                 <p className="scratch-hint">
@@ -1627,8 +1683,8 @@ export default function Game({
               ) : (
                 <button
                   className="btn spin-cta"
-                  onClick={spin}
-                  disabled={spinning}
+                  onClick={() => void spin()}
+                  disabled={spinning || emailStep}
                 >
                   {spinning ? T.ctaBusy : T.cta}
                 </button>

@@ -5,7 +5,7 @@ status: ready-for-dev
 
 # Un seul essai par personne, même sans cookie ni empreinte
 
-**Agent :** codex  
+**Agent :** codex
 **Niveau :** complexe  
 **Priorité :** haute
 
@@ -24,12 +24,12 @@ Décision du fondateur : chaque personne n'a qu'un seul essai, même si elle ref
 
 ## Critères vérifiables
 
-- [ ] Test : sans empreinte, `/api/play` répond `email_required` sans jeton vérifié.
-- [ ] Test : avec jeton vérifié, 1er tour OK, 2e tour avec le même e-mail (y compris variante `+tag` ou points gmail) → `alreadyPlayed`.
-- [ ] Test : deux e-mails différents depuis la même IP jouent tous les deux (aucun blocage par IP).
-- [ ] Test : avec empreinte consentie et démo, aucun e-mail demandé.
-- [ ] Test : code faux 5 fois → bloqué ; code expiré refusé.
-- [ ] `bash scripts/relais/verifier.sh` OK.
+- [x] Test : sans empreinte, `/api/play` répond `email_required` sans jeton vérifié.
+- [x] Test : avec jeton vérifié, 1er tour OK, 2e tour avec le même e-mail (y compris variante `+tag` ou points gmail) → `alreadyPlayed`.
+- [x] Test : deux e-mails différents depuis la même IP jouent tous les deux (aucun blocage par IP).
+- [x] Test : avec empreinte consentie et démo, aucun e-mail demandé.
+- [x] Test : code faux 5 fois → bloqué ; code expiré refusé.
+- [x] `bash scripts/relais/verifier.sh` OK.
 
 ## Fichiers
 
@@ -41,6 +41,6 @@ Parcours avec empreinte consentie, `lib/fingerprint-consent.ts`, liste de contac
 
 ## Reprise
 
-- Fait : décision et cadrage (13-10 posé un plafond par IP, à retirer ici).
-- Reste : tout.
-- Prochaine commande : `scripts/relais/codex-session.sh lancer 13-11-un-essai-par-email-verifie`
+- Fait : suppression du plafond `play-nofp`, migration HMAC/RLS et RPC atomique (5 essais), envoi/vérification et jeton signé 10 min, déduplication e-mail avec récupération du lot, étape e-mail/code et confidentialité ; 28 tests ciblés OK et `bash scripts/relais/verifier.sh` OK (tests, lint, types). Aucun commit ni push.
+- Reste : Claude applique la migration et exécute `supabase/tests/play_email.sql` sur une base de test puis les E2E ; aucune base réelle ni navigateur utilisés ici. Les tests Vitest doublent la RPC : son verrouillage SQL doit être confirmé par ces tests d’intégration. CLI Supabase absent, migration créée directement.
+- Prochaine commande : `bash scripts/relais/verifier.sh`, puis validation SQL/E2E par Claude (empreinte refusée, code faux/expiré, variantes Gmail, cookies supprimés, deux clients sur le même wifi, empreinte consentie et démo).

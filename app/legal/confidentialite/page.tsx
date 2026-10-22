@@ -27,6 +27,7 @@ export default function Confidentialite() {
 
       <h2>Données collectées</h2>
       <h3>Joueurs (clients des commerces)</h3>
+      <p>Sans empreinte consentie, un e-mail vérifié par code garantit un seul essai : seule son empreinte HMAC est conservée pour cet usage anti-rejeu, sans stockage de l’adresse en clair dans le jeu ni ajout aux contacts publicitaires.</p>
       <ul>
         <li>
           L'adresse IP de la requête est utilisée pour limiter les abus et les

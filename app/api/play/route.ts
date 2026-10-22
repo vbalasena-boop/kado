@@ -1,3 +1,4 @@
+import { readPlayEmailToken } from "@/lib/play-email";
 import { z } from "zod";
 import { publicRoute } from "@/lib/api";
 import { getAdminClient } from "@/lib/supabase/admin";
@@ -13,8 +14,6 @@ export const dynamic = "force-dynamic";
 
 // L'avis (`review`) ne débloque plus jamais de tour : il est retiré des types
 // acceptés. Les tours sont désormais pilotés par `trigger_actions`.
-// Plafond partagé par les joueurs sans empreinte sur le réseau du commerce.
-const NO_FINGERPRINT_DAILY_LIMIT = 20;
 
 const VALID_TYPES = ["instagram", "loyalty", "optin"] as const;
 
@@ -23,6 +22,7 @@ const Body = z.object({
   slug: z.string().optional(),
   playType: z.string().optional(),
   deviceHash: z.string().nullish(),
+  emailToken: z.string().max(2048).optional(),
 });
 
 /**
@@ -90,7 +90,7 @@ export const POST = publicRoute({
       : await getOrCreatePlayerId();
 
     // Empreinte d'appareil (verrou secondaire). On n'accepte qu'un hex SHA-256
-    // bien formé ; toute autre valeur est ignorée (repli sur le cookie seul).
+    // bien formé ; toute autre valeur impose la vérification par e-mail.
     // En démo, on la neutralise (aucun re-verrouillage).
     let deviceHash =
       !isDemo && isValidDeviceHash(body.deviceHash) ? body.deviceHash : null;
@@ -104,6 +104,18 @@ export const POST = publicRoute({
       if (consentError || consent?.consented !== true || consent.policy_version !== FINGERPRINT_CONSENT_VERSION) {
         deviceHash = null;
       }
+    }
+
+    const emailHash = !isDemo && !deviceHash ? readPlayEmailToken(body.emailToken, biz.id) : null;
+    if (!isDemo && !deviceHash && !emailHash) {
+      return Response.json({ error: "email_required" }, { status: 409 });
+    }
+    if (emailHash) {
+      const { data: dup, error } = await supa.from("plays")
+        .select("prize_label, prize_code").eq("business_id", biz.id)
+        .eq("play_type", playType).eq("email_hash", emailHash).maybeSingle();
+      if (error) return Response.json({ error: "play_save_unavailable" }, { status: 503 });
+      if (dup) return Response.json({ alreadyPlayed: true, label: dup.prize_label, code: dup.prize_code }, { status: 409 });
     }
 
     // Cet APPAREIL a-t-il déjà joué ce type ? Attrape le rejeu en navigation
@@ -164,18 +176,6 @@ export const POST = publicRoute({
       return Response.json({ error: "rate_limited" }, { status: 429 });
     }
 
-    if (
-      !isDemo &&
-      !deviceHash &&
-      !(await rateLimit(
-        `play-nofp:${biz.id}:${hashRateLimitKey(clientIp(req))}`,
-        NO_FINGERPRINT_DAILY_LIMIT,
-        24 * 3600
-      ))
-    ) {
-      return Response.json({ error: "rate_limited" }, { status: 429 });
-    }
-
     if (!prizes || prizes.length === 0) {
       return Response.json({ error: "no_prizes" }, { status: 409 });
     }
@@ -216,6 +216,7 @@ export const POST = publicRoute({
       p_prize_code: code,
       p_is_losing: prizeIsLosing(prizes[idx]),
       p_device_hash: deviceHash,
+      p_email_hash: emailHash,
       p_daily_limit: isDemo ? null : limit,
     });
 
@@ -236,13 +237,14 @@ export const POST = publicRoute({
     }
 
     if (recordStatus === "already_played") {
-      const { data: existing } = await supa
-        .from("plays")
-        .select("prize_label, prize_code")
-        .eq("business_id", biz.id)
-        .eq("player_id", playerId)
-        .eq("play_type", playType)
-        .maybeSingle();
+      const findExisting = (column: string, value: string) => supa.from("plays")
+        .select("prize_label, prize_code").eq("business_id", biz.id)
+        .eq(column, value).eq("play_type", playType).maybeSingle();
+      // Le conflit peut venir du cookie, même si un nouvel e-mail a été vérifié.
+      let { data: existing } = await findExisting("player_id", playerId);
+      if (!existing && (emailHash || deviceHash)) {
+        ({ data: existing } = await findExisting(emailHash ? "email_hash" : "device_hash", (emailHash ?? deviceHash)!));
+      }
       return Response.json(
         {
           alreadyPlayed: true,

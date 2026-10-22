@@ -261,3 +261,13 @@ export function emailLayout(opts: {
 </body>
 </html>`;
 }
+
+/** Vérification anti-rejeu uniquement ; aucun ajout aux contacts marketing. */
+export function sendPlayEmailCode(to: string, code: string): Promise<SendResult> {
+  return sendEmail({
+    to,
+    subject: "Votre code pour jouer",
+    text: `Votre code est ${code}. Il expire dans 10 minutes. Cet e-mail sert uniquement à garantir un seul essai par personne.`,
+    html: emailLayout({ heading: "Votre code pour jouer", bodyHtml: `<p>Votre code : <strong>${code}</strong></p><p>Il expire dans 10 minutes. Votre e-mail n'est pas utilisé pour vous envoyer de publicité.</p>` }),
+  });
+}
