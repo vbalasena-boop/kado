@@ -1041,7 +1041,9 @@ export default function Game({
         return;
       }
       if (!res.ok) {
-        setError("Le jeu est indisponible pour le moment.");
+        setError(res.status === 429
+          ? "La limite de participations est atteinte. Réessayez plus tard."
+          : "Le jeu est indisponible pour le moment.");
         setSpinning(false);
         return;
       }

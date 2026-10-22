@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { FINGERPRINT_CONSENT_VERSION } from "@/lib/fingerprint-consent";
 import { NextRequest } from "next/server";
 
 // Vérifie la GARDE d'autorisation de POST /api/play (story 9.2) :
@@ -18,6 +19,8 @@ let DAILY_LIMIT: number | null = null;
 let CLAIM_ERROR = false;
 let CLAIMED = true;
 let INSERT_STATUS = "inserted";
+let DEMO = false;
+let CONSENT: { consented: boolean; policy_version: string } | null = null;
 
 const WINNING_PRIZE = {
   id: "p1",
@@ -33,7 +36,7 @@ let PRIZES = [
 ];
 
 const mocks = vi.hoisted(() => ({
-  rateLimit: vi.fn(async () => true),
+  rateLimit: vi.fn(async (_key: string, _limit: number, _window: number) => true),
 }));
 
 // Client Supabase minimal : route les lectures selon la table + les colonnes.
@@ -48,6 +51,7 @@ function makeClient() {
         },
         eq: () => b,
         in: () => b,
+        limit: () => b,
         gte: () => b,
         gt: () => b,
         is: () => b,
@@ -57,9 +61,11 @@ function makeClient() {
         maybeSingle: () => {
           if (table === "businesses")
             return Promise.resolve({
-              data: { id: "biz1", status: "active" },
+              data: { id: "biz1", status: "active", demo: DEMO },
               error: null,
             });
+          if (table === "player_fingerprint_consents")
+            return Promise.resolve({ data: CONSENT, error: null });
           if (table === "wheel_configs") {
             if (cols.includes("trigger_actions"))
               return Promise.resolve({
@@ -110,16 +116,18 @@ vi.mock("@/lib/report", () => ({ reportError: () => {} }));
 
 import { POST } from "@/app/api/play/route";
 
-function post(playType: string) {
+function post(playType: string, deviceHash?: string) {
   return new NextRequest("http://localhost/api/play", {
     method: "POST",
-    body: JSON.stringify({ slug: "demo", playType }),
+    body: JSON.stringify({ slug: "demo", playType, deviceHash }),
     headers: { "content-type": "application/json" },
   });
 }
 
 describe("POST /api/play — garde des actions déclenchantes", () => {
   beforeEach(() => {
+    DEMO = false;
+    CONSENT = null;
     TRIGGER = ["instagram"];
     LOYALTY_ENABLED = true;
     INSTAGRAM_URL = "https://instagram.com/cafe";
@@ -145,6 +153,41 @@ describe("POST /api/play — garde des actions déclenchantes", () => {
       80,
       3600
     );
+  });
+
+  it.each([
+    ["absente", undefined, null],
+    ["refusée", "a".repeat(64), { consented: false, policy_version: FINGERPRINT_CONSENT_VERSION }],
+    ["sans consentement", "a".repeat(64), null],
+    ["obsolète", "a".repeat(64), { consented: true, policy_version: "obsolete" }],
+  ])("limite le 21e tour avec empreinte %s", async (_label, hash, consent) => {
+    CONSENT = consent;
+    let count = 0;
+    mocks.rateLimit.mockImplementation(async (key, limit) =>
+      key.startsWith("play-nofp:") ? ++count <= limit : true
+    );
+    for (let i = 0; i < 20; i++) {
+      expect((await POST(post("instagram", hash))).status).toBe(200);
+    }
+    const res = await POST(post("instagram", hash));
+    expect(res.status).toBe(429);
+    expect(await res.json()).toEqual({ error: "rate_limited" });
+    expect(mocks.rateLimit).toHaveBeenLastCalledWith("play-nofp:biz1:hashed:test-ip", 20, 86400);
+  });
+
+  it("ne consomme pas le plafond sans empreinte avec un consentement valide", async () => {
+    CONSENT = { consented: true, policy_version: FINGERPRINT_CONSENT_VERSION };
+    expect((await POST(post("instagram", "a".repeat(64)))).status).toBe(200);
+    expect(mocks.rateLimit.mock.calls.some(([key]) => key.startsWith("play-nofp:"))).toBe(false);
+  });
+
+  it("exempte les démos des plafonds par commerce", async () => {
+    DEMO = true;
+    mocks.rateLimit.mockImplementation(async (key) => key.startsWith("play:"));
+    for (let i = 0; i < 21; i++) {
+      expect((await POST(post("instagram"))).status).toBe(200);
+    }
+    expect(mocks.rateLimit.mock.calls.every(([key]) => key.startsWith("play:"))).toBe(true);
   });
 
   it("échoue fermé si l'enregistrement transactionnel est indisponible", async () => {

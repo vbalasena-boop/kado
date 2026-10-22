@@ -13,6 +13,9 @@ export const dynamic = "force-dynamic";
 
 // L'avis (`review`) ne débloque plus jamais de tour : il est retiré des types
 // acceptés. Les tours sont désormais pilotés par `trigger_actions`.
+// Plafond partagé par les joueurs sans empreinte sur le réseau du commerce.
+const NO_FINGERPRINT_DAILY_LIMIT = 20;
+
 const VALID_TYPES = ["instagram", "loyalty", "optin"] as const;
 
 // Schéma permissif : la validation de playType (VALID_TYPES) reste dans le handler.
@@ -156,6 +159,18 @@ export const POST = publicRoute({
         `play-business:${biz.id}:${hashRateLimitKey(clientIp(req))}`,
         80,
         60 * 60
+      ))
+    ) {
+      return Response.json({ error: "rate_limited" }, { status: 429 });
+    }
+
+    if (
+      !isDemo &&
+      !deviceHash &&
+      !(await rateLimit(
+        `play-nofp:${biz.id}:${hashRateLimitKey(clientIp(req))}`,
+        NO_FINGERPRINT_DAILY_LIMIT,
+        24 * 3600
       ))
     ) {
       return Response.json({ error: "rate_limited" }, { status: 429 });
