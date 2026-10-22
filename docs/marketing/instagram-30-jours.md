@@ -17,7 +17,7 @@ Répartition du contenu (règle des tiers) : un tiers produit (Kado en action), 
 
 **Nom (champ "Nom", recherchable)** : `Kado | Fidélité commerces`
 
-**Identifiant** : `@kado.app` (ou `@kado_fidelite` si pris). Rester identique partout.
+**Identifiant** : `@kado_app.fr` (compte existant, à conserver). Rester identique partout.
 
 **Bio (140 caractères, limite 150)** :
 ```
