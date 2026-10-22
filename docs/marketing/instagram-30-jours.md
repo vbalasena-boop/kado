@@ -67,9 +67,9 @@ Légendes : à copier telles quelles ; remplacer les [crochets].
 - CTA : "Enregistrez ce Reel si vous connaissez un commerçant que ça intéresse."
 
 **S1-J2 (mercredi) : Carrousel, "3 jeux, 1 carte, 1 bipeur"**
-- Format : carrousel 6 slides 1080x1350.
+- Format : carrousel 7 slides 1080x1350.
 - Accroche (slide 1) : "Ce que Kado met sur votre comptoir."
-- Slides : 1) titre. 2) Roue de la fortune (capture). 3) Carte à gratter (capture). 4) Machine à sous (capture). 5) Carte de fidélité digitale : "chaque passage compte". 6) Bipeur digital : "sans boîtier" + CTA.
+- Slides : 1) titre. 2) Roue de la fortune (capture). 3) Les cadeaux à gagner en exemples avec icônes (cadeau surprise, café, dessert, -10 %, boisson). 4) Carte à gratter (capture). 5) Machine à sous (capture). 6) Carte de fidélité digitale : "chaque passage compte". 7) Bipeur digital : "sans boîtier" + CTA.
 - Légende : "Trois petits jeux, une carte de fidélité digitale, un bipeur digital. Vous choisissez ce qui colle à votre commerce. Vos clients scannent un QR code : pas d'application à installer, pas de compte à créer. Essai gratuit 14 jours, sans carte bancaire."
 - Hashtags : `#kadoapp #commercedeproximite #restaurateur #boulangerie #salondecoiffure #cartedefidelite`
 - CTA : "Quel jeu irait le mieux dans votre commerce ? Dites-le en commentaire."
