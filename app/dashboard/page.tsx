@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { beeperPilot } from "@/lib/beeper";
 import { getMyBusiness, hasModule } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { Icon } from "@/components/icons";
@@ -360,6 +361,7 @@ export default async function DashboardHome(
   return (
     <>
       <h1 className="dash-h1">Vue d'ensemble</h1>
+      {beeperPilot(business.slug) && <div className="dash-card"><Link className="btn" href="/dashboard/beeper">Beeper virtuel : numéros et QR</Link></div>}
       <p className="dash-sub">
         {bizRef && (
           <>
