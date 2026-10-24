@@ -6,7 +6,7 @@ status: 'ready-for-dev'
 context: []
 ---
 
-**Agent :** codex
+**Agent :** autopilote
 **Niveau :** complexe
 **Priorité :** normale
 
