@@ -57,6 +57,8 @@ export async function GET(req: NextRequest) {
   }
 
   const db = getAdminClient();
+  const { error: beeperPurgeError } = await db.rpc("purge_beeper_orders");
+  if (beeperPurgeError) reportError(beeperPurgeError, { where: "cron/daily/beeper-purge" });
   const cronStartedAt = Date.now();
   const out = {
     reminders: 0,
